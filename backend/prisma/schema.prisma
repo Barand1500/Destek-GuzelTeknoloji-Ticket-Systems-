@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  importFileExtension = "js"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  ADMIN
+  SUPERVISOR
+  AGENT
+  CUSTOMER
+}
+enum TicketStatus {
+  OPEN
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  passwordHash String
+  role Role @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  departments DepartmentAgent[]
+  customerTickets Ticket[] @relation("CustomerTickets")
+  assignedTickets Ticket[] @relation("AssignedTickets")
+  messages TicketMessage[]
+  sessions Session[]
+  logs ActivityLog[]
+}
+model Session {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+model Department {
+  id String @id @default(uuid())
+  name String @unique
+  agents DepartmentAgent[]
+  tickets Ticket[]
+}
+model DepartmentAgent {
+  departmentId String
+  userId String
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([departmentId, userId])
+  @@index([userId])
+}
+model Ticket {
+  id String @id @default(uuid())
+  number Int @unique @default(autoincrement())
+  subject String
+  searchSubject String
+  customerId String
+  customer User @relation("CustomerTickets", fields: [customerId], references: [id])
+  departmentId String
+  department Department @relation(fields: [departmentId], references: [id])
+  assignedAgentId String?
+  assignedAgent User? @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
+  status TicketStatus @default(OPEN)
+  priority TicketPriority @default(NORMAL)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  closedAt DateTime?
+  deletedAt DateTime?
+  messages TicketMessage[]
+  @@index([customerId, deletedAt, updatedAt])
+  @@index([assignedAgentId, deletedAt, updatedAt])
+  @@index([departmentId, status])
+  @@index([deletedAt, updatedAt])
+}
+model TicketMessage {
+  id String @id @default(uuid())
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  authorId String
+  author User @relation(fields: [authorId], references: [id])
+  body String
+  isInternalNote Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([ticketId, createdAt])
+}
+model ActivityLog {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  action String
+  entityId String
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([entityId, createdAt])
+}
