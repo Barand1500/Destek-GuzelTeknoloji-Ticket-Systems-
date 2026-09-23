@@ -1,12 +1,26 @@
 export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
-export type User = { id: string; name: string; email: string; role: Role };
+export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role };
 export type Department = { id: string; name: string };
-export type Status = "OPEN" | "PENDING" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-export type Priority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
-export type Ticket = {
+export type Tag={id:string;name:string;code:string;color:string};
+export type Website={id:string;name:string;url:string;isActive:boolean};
+export type Attachment={id:string;originalName:string;size:number;mimeType:string};
+export type Status = string;
+export type Priority = string;
+export type ConversationChannel = "TICKET" | "EMAIL" | "LIVE_CHAT";
+export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
+export const channels: Record<ConversationChannel,string> = {TICKET:"Destek talebi",EMAIL:"E-posta",LIVE_CHAT:"Canlı sohbet"};
+export type Conversation = {
+  channel: ConversationChannel;
+  customerId: string;
+  assignedAgentId: string | null;
+  departmentId: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
   id: string;
   number: number;
   subject: string;
+  websiteUrl?: string | null;
+  website?: Website | null;
   customer: User;
   assignedAgent: User | null;
   department: Department;
@@ -14,13 +28,19 @@ export type Ticket = {
   priority: Priority;
   createdAt: string;
   updatedAt: string;
+  firstResponseAt?: string | null;
+  customerMessageCount?: number;
+  assignedAgentMessageCount?: number;
+  tags:{tag:Tag;tagId:string}[];
 };
 export type Message = {
+  type: MessageType;
+  conversationId: string;
   id: string;
-  author: User;
+  author: User | null;
   body: string;
-  isInternalNote: boolean;
   createdAt: string;
+  attachments:Attachment[];
 };
 export type Page<T> = {
   data: T[];

@@ -1,0 +1,5 @@
+ALTER TABLE `IntegrationSettings`
+  ADD COLUMN `imapConnectionName` VARCHAR(191) NOT NULL DEFAULT '',
+  ADD COLUMN `imapAuthType` VARCHAR(191) NOT NULL DEFAULT 'BASIC',
+  ADD COLUMN `imapCreateTickets` BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN `imapCreateReplies` BOOLEAN NOT NULL DEFAULT true;

@@ -10,7 +10,7 @@ process.env.NODE_ENV = "test";
 const { app } = await import("../src/app.js");
 const { db } = await import("../src/config/db.js");
 
-test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
+test("MySQL: ticket lifecycle and authorization boundaries", async (t) => {
   const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1`;
@@ -19,7 +19,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
   const hash = await bcrypt.hash(password, 12);
   const userIds: string[] = [];
   const departmentIds: string[] = [];
-  const ticketIds: string[] = [];
+  const conversationIds: string[] = [];
   type Login = {
     accessToken: string;
     cookie: string;
@@ -102,11 +102,11 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
       "SUPERVISOR",
       otherDepartment.id,
     );
-    let ticketId = "";
+    let conversationId = "";
     await t.test(
       "unauthenticated access is rejected and role escalation cannot be registered",
       async () => {
-        assert.equal((await request("/tickets")).status, 401);
+        assert.equal((await request("/conversations")).status, 401);
         assert.equal(
           (
             await request("/auth/register", "POST", {
@@ -132,7 +132,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
       "customer creates a persisted ticket with its first message",
       async () => {
         const r = await request(
-          "/tickets",
+          "/conversations",
           "POST",
           {
             subject: "Ödeme sırasında hata alıyorum",
@@ -143,15 +143,15 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           owner,
         );
         assert.equal(r.status, 201);
-        ticketId = r.json.data.id;
-        ticketIds.push(ticketId);
+        conversationId = r.json.data.id;
+        conversationIds.push(conversationId);
         assert.equal(r.json.data.customer.id, owner.user.id);
         assert.equal(r.json.data.status, "OPEN");
         assert.ok(Number.isInteger(r.json.data.number));
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "GET",
               undefined,
               owner,
@@ -159,22 +159,22 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           ).json.data[0].body,
           "Kartımdan ödeme yapamıyorum.",
         );
-        assert.equal(await db.ticket.count({ where: { id: ticketId } }), 1);
+        assert.equal(await db.conversation.count({ where: { id: conversationId } }), 1);
       },
     );
     await t.test(
-      "other customers and unassigned agents cannot read or reply to the ticket",
+      "other customers and staff outside the department cannot read or reply",
       async () => {
-        for (const actor of [outsider, agent, otherAgent, outsideSupervisor]) {
+        for (const actor of [outsider, otherAgent, outsideSupervisor]) {
           assert.equal(
-            (await request(`/tickets/${ticketId}`, "GET", undefined, actor))
+            (await request(`/conversations/${conversationId}`, "GET", undefined, actor))
               .status,
             404,
           );
           assert.equal(
             (
               await request(
-                `/tickets/${ticketId}/messages`,
+                `/conversations/${conversationId}/messages`,
                 "GET",
                 undefined,
                 actor,
@@ -185,18 +185,18 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           assert.equal(
             (
               await request(
-                `/tickets/${ticketId}/messages`,
+                `/conversations/${conversationId}/messages`,
                 "POST",
                 { body: "Unauthorized reply" },
                 actor,
               )
             ).status,
-            409,
+            404,
           );
           assert.equal(
             (
               await request(
-                `/tickets?search=${encodeURIComponent("Ödeme sırasında")}`,
+                `/conversations?search=${encodeURIComponent("Ödeme sırasında")}`,
                 "GET",
                 undefined,
                 actor,
@@ -213,7 +213,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { assignedAgentId: agent.user.id },
               owner,
@@ -224,7 +224,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { assignedAgentId: agent.user.id },
               agent,
@@ -235,7 +235,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { assignedAgentId: agent.user.id },
               outsideSupervisor,
@@ -246,7 +246,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { assignedAgentId: otherAgent.user.id },
               admin,
@@ -257,7 +257,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { assignedAgentId: agent.user.id },
               supervisor,
@@ -266,7 +266,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           200,
         );
         assert.equal(
-          (await request(`/tickets/${ticketId}`, "GET", undefined, agent))
+          (await request(`/conversations/${conversationId}`, "GET", undefined, agent))
             .status,
           200,
         );
@@ -278,7 +278,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "POST",
               { body: "Bankanızla kontrol ediyoruz." },
               agent,
@@ -289,7 +289,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "POST",
               { body: "Private investigation", isInternalNote: true },
               agent,
@@ -298,32 +298,32 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           201,
         );
         const visible = await request(
-          `/tickets/${ticketId}/messages`,
+          `/conversations/${conversationId}/messages`,
           "GET",
           undefined,
           owner,
         );
-        assert.equal(visible.json.pagination.total, 2);
+        assert.equal(visible.json.pagination.total, 3);
         assert.ok(
           visible.json.data.every(
-            (m: { isInternalNote: boolean }) => !m.isInternalNote,
+            (m: { type: string }) => m.type !== 'INTERNAL_NOTE',
           ),
         );
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "GET",
               undefined,
               agent,
             )
           ).json.pagination.total,
-          3,
+          4,
         );
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "POST",
               { body: "Forged note", isInternalNote: true },
               owner,
@@ -339,7 +339,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { status: "RESOLVED" },
               owner,
@@ -350,7 +350,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { priority: "URGENT" },
               owner,
@@ -361,7 +361,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { status: "RESOLVED" },
               agent,
@@ -370,12 +370,12 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           200,
         );
         assert.equal(
-          (await request(`/tickets/${ticketId}`, "GET", undefined, owner)).json
+          (await request(`/conversations/${conversationId}`, "GET", undefined, owner)).json
             .data.status,
           "RESOLVED",
         );
         const closed = await request(
-          `/tickets/${ticketId}`,
+          `/conversations/${conversationId}`,
           "PATCH",
           { status: "CLOSED" },
           agent,
@@ -384,7 +384,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "POST",
               { body: "After close" },
               owner,
@@ -393,7 +393,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           409,
         );
         const reopened = await request(
-          `/tickets/${ticketId}`,
+          `/conversations/${conversationId}`,
           "PATCH",
           { status: "OPEN" },
           agent,
@@ -401,11 +401,11 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(reopened.json.data.closedAt, null);
       },
     );
-    await t.test("unassignment immediately revokes agent access", async () => {
+    await t.test("unassignment preserves queue visibility but revokes reply permission", async () => {
       assert.equal(
         (
           await request(
-            `/tickets/${ticketId}`,
+            `/conversations/${conversationId}`,
             "PATCH",
             { assignedAgentId: null },
             admin,
@@ -414,13 +414,13 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         200,
       );
       assert.equal(
-        (await request(`/tickets/${ticketId}`, "GET", undefined, agent)).status,
-        404,
+        (await request(`/conversations/${conversationId}`, "GET", undefined, agent)).status,
+        200,
       );
       assert.equal(
         (
           await request(
-            `/tickets/${ticketId}/messages`,
+            `/conversations/${conversationId}/messages`,
             "POST",
             { body: "Stale access" },
             agent,
@@ -433,7 +433,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
       "pagination, server-side search and strict input validation work",
       async () => {
         const r = await request(
-          "/tickets",
+          "/conversations",
           "POST",
           {
             subject: "İkinci test talebim",
@@ -443,15 +443,15 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           owner,
         );
         assert.equal(r.status, 201);
-        ticketIds.push(r.json.data.id);
+        conversationIds.push(r.json.data.id);
         const page1 = await request(
-          "/tickets?limit=1&page=1",
+          "/conversations?limit=1&page=1",
           "GET",
           undefined,
           owner,
         );
         const page2 = await request(
-          "/tickets?limit=1&page=2",
+          "/conversations?limit=1&page=2",
           "GET",
           undefined,
           owner,
@@ -460,24 +460,24 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(page1.json.pagination.total, 2);
         assert.notEqual(page1.json.data[0].id, page2.json.data[0].id);
         assert.equal(
-          (await request("/tickets?limit=1000", "GET", undefined, owner))
+          (await request("/conversations?limit=1000", "GET", undefined, owner))
             .status,
           400,
         );
         assert.equal(
-          (await request("/tickets/not-a-uuid", "GET", undefined, owner))
+          (await request("/conversations/not-a-uuid", "GET", undefined, owner))
             .status,
           400,
         );
         assert.equal(
-          (await request("/tickets?search=ikinci", "GET", undefined, owner))
+          (await request("/conversations?search=ikinci", "GET", undefined, owner))
             .json.pagination.total,
           1,
         );
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}`,
+              `/conversations/${conversationId}`,
               "PATCH",
               { customerId: outsider.user.id },
               admin,
@@ -488,7 +488,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
         assert.equal(
           (
             await request(
-              `/tickets/${ticketId}/messages`,
+              `/conversations/${conversationId}/messages`,
               "POST",
               { body: "   " },
               owner,
@@ -512,7 +512,7 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
           0,
         );
         assert.ok(
-          (await db.activityLog.count({ where: { entityId: ticketId } })) >= 7,
+          (await db.activityLog.count({ where: { entityId: conversationId } })) >= 7,
         );
       },
     );
@@ -575,10 +575,10 @@ test("PostgreSQL: ticket lifecycle and authorization boundaries", async (t) => {
     );
   } finally {
     await db.activityLog.deleteMany({ where: { userId: { in: userIds } } });
-    await db.ticketMessage.deleteMany({
-      where: { ticketId: { in: ticketIds } },
+    await db.conversationMessage.deleteMany({
+      where: { conversationId: { in: conversationIds } },
     });
-    await db.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+    await db.conversation.deleteMany({ where: { id: { in: conversationIds } } });
     await db.user.deleteMany({ where: { id: { in: userIds } } });
     await db.department.deleteMany({ where: { id: { in: departmentIds } } });
     await db.$disconnect();

@@ -1,0 +1,2 @@
+ALTER TABLE `SystemSettings`
+  ADD COLUMN `supportPhone` VARCHAR(191) NOT NULL DEFAULT '';

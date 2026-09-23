@@ -6,6 +6,7 @@ export type Actor = {
   role: Role;
   departmentIds: string[];
   sessionId: string;
+  ipAddress?: string | null;
 };
 declare global {
   namespace Express {

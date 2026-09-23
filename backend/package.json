@@ -10,20 +10,28 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/client": "^7.0.0",
-    "@prisma/adapter-pg": "^7.0.0",
-    "pg": "^8.16.3",
+    "@types/nodemailer": "^8.0.2",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
+    "file-type": "^22.1.1",
     "helmet": "^8.1.0",
+    "imapflow": "^2.0.5",
     "jsonwebtoken": "^9.0.2",
+    "mailparser": "^3.9.28",
+    "mariadb": "^3.5.4",
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.4",
+    "nodemailer": "^10.0.10",
+    "socket.io": "^4.8.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -32,8 +40,9 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/mailparser": "^3.4.6",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.19.0",
-    "@types/pg": "^8.15.6",
     "prisma": "^7.0.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"

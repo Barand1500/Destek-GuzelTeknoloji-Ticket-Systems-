@@ -6,16 +6,19 @@ import {
   type ReactNode,
   type FormEvent,
 } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Headphones, ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { api, errorText, setToken } from "../../services/api";
 import type { User } from "../../types";
+import { roleHome } from "../../router/paths";
+import { EmailInput } from "../../components/EmailInput";
 type AuthState = {
   user: User | null;
   loading: boolean;
   accept: (data: { user: User; accessToken: string }) => void;
   logout: () => Promise<void>;
+  updateUser: (user: User) => void;
 };
 const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -58,7 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.clear();
   }
   return (
-    <AuthContext.Provider value={{ user, loading, accept, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, accept, logout, updateUser: setUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -68,27 +73,20 @@ export function useAuth() {
   if (!value) throw new Error("AuthProvider missing");
   return value;
 }
-export function AuthPage({ register = false }: { register?: boolean }) {
+export function AuthPage() {
   const { user, loading, accept } = useAuth();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  if (loading)
-    return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
-  if (user) return <Navigate to="/tickets" replace />;
+  const [showPassword, setShowPassword] = useState(false);
+  if (loading) return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
+  if (user) return <Navigate to={roleHome(user.role)} replace />;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setError("");
     const form = new FormData(event.currentTarget);
     try {
-      const result = await api.post(
-        `/auth/${register ? "register" : "login"}`,
-        {
-          email: form.get("email"),
-          password: form.get("password"),
-          ...(register ? { name: form.get("name") } : {}),
-        },
-      );
+      const result = await api.post("/auth/login", { email: form.get("email"), password: form.get("password") });
       accept(result.data.data);
     } catch (e) {
       setError(errorText(e));
@@ -99,91 +97,24 @@ export function AuthPage({ register = false }: { register?: boolean }) {
   return (
     <main className="auth-layout">
       <section className="auth-story">
-        <div className="brand">
-          <Headphones /> destek<span className="brand-dot">.</span>
-        </div>
+        <div className="brand"><img src="/images/brand-mark.png" alt="" /> destek<span className="brand-dot">.</span></div>
         <div>
           <span className="eyebrow">DAHA İYİ BİR DESTEK DENEYİMİ</span>
-          <h1>
-            Her talep,
-            <br />
-            bir çözümün
-            <br />
-            başlangıcı.
-          </h1>
-          <p>
-            Sorularınız, konuşmalarınız ve çözümleriniz.
-            <br />
-            Hepsi tek bir yerde.
-          </p>
+          <h1>Her talep,<br />bir çözümün<br />başlangıcı.</h1>
+          <p>Sorularınız, konuşmalarınız ve çözümleriniz.<br />Hepsi tek bir yerde.</p>
         </div>
-        <div className="auth-caption">
-          <ShieldCheck size={18} /> Ekibinizle güvenli ve düzenli iletişim.
+        <div className="auth-support-photo" aria-hidden="true">
+          <img src="/images/support-agent.png" alt="" />
         </div>
+        <div className="auth-caption"><ShieldCheck size={18} /> Ekibinizle güvenli ve düzenli iletişim.</div>
       </section>
       <section className="auth-form-wrap">
         <form className="auth-form" onSubmit={submit}>
-          <span className="eyebrow">DESTEK MERKEZİ</span>
-          <h2>{register ? "Hesabınızı oluşturun" : "Tekrar hoş geldiniz"}</h2>
-          <p>
-            {register
-              ? "Destek taleplerinizi takip etmeye başlayın."
-              : "Destek alanınıza devam etmek için giriş yapın."}
-          </p>
-          {register && (
-            <label>
-              Ad soyad
-              <input
-                name="name"
-                required
-                minLength={2}
-                maxLength={100}
-                autoComplete="name"
-                placeholder="Adınız Soyadınız"
-              />
-            </label>
-          )}
-          <label>
-            E-posta adresi
-            <input
-              name="email"
-              required
-              type="email"
-              autoComplete="email"
-              placeholder="siz@sirket.com"
-            />
-          </label>
-          <label>
-            Şifre
-            <input
-              name="password"
-              required
-              type="password"
-              minLength={register ? 10 : 1}
-              maxLength={72}
-              autoComplete={register ? "new-password" : "current-password"}
-              placeholder={register ? "En az 10 karakter" : "Şifrenizi girin"}
-            />
-          </label>
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-          <button className="button primary" disabled={pending}>
-            {pending
-              ? "Lütfen bekleyin…"
-              : register
-                ? "Hesap oluştur"
-                : "Giriş yap"}
-            <ArrowRight size={17} />
-          </button>
-          <p className="auth-switch">
-            {register ? "Zaten hesabınız var mı?" : "Henüz hesabınız yok mu?"}{" "}
-            <Link to={register ? "/login" : "/register"}>
-              {register ? "Giriş yapın" : "Kayıt olun"}
-            </Link>
-          </p>
+          <h2>Tekrar hoş geldiniz</h2>
+          <label><span className="field-label">E-posta adresi</span><EmailInput name="email" required /></label>
+          <label><span className="field-label">Şifre</span><span className="password-field"><input name="password" required type={showPassword ? "text" : "password"} minLength={1} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+          {error && <p className="error" role="alert">{error}</p>}
+          <button className="button primary" disabled={pending}>{pending ? "Lütfen bekleyin…" : "Giriş yap"}<ArrowRight size={17} /></button>
         </form>
       </section>
     </main>

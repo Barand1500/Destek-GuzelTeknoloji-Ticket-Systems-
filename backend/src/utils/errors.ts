@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "../generated/prisma/client.js";
+import { MulterError } from 'multer';
 export class AppError extends Error {
   constructor(
     public status: number,
@@ -16,6 +17,8 @@ export const errorHandler: ErrorRequestHandler = (
   res,
   _next,
 ) => {
+  if(error instanceof MulterError){res.status(400).json({success:false,error:{code:'UPLOAD_LIMIT',message:'En fazla 5 dosya ekleyebilirsiniz; dosya başına sınır 10 MB.'}});return;}
+  if(error && typeof error==='object' && 'type' in error && error.type==='entity.too.large'){res.status(413).json({success:false,error:{code:'PAYLOAD_TOO_LARGE',message:'İstek çok büyük.'}});return;}
   if (error instanceof ZodError) {
     res.status(400).json({
       success: false,

@@ -3,12 +3,18 @@ export const api = axios.create({ baseURL: "/api/v1", withCredentials: true });
 let accessToken: string | null = null;
 export function setToken(token: string | null) {
   accessToken = token;
+  window.dispatchEvent(new Event('token-changed'));
 }
+export const getToken=()=>accessToken;
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   return config;
 });
 let refreshRequest: Promise<string> | null = null;
+export function refreshAccess(){
+  if(!refreshRequest)refreshRequest=api.post('/auth/refresh').then(r=>{setToken(r.data.data.accessToken);return r.data.data.accessToken as string;}).finally(()=>{refreshRequest=null;});
+  return refreshRequest;
+}
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -21,18 +27,8 @@ api.interceptors.response.use(
     )
       throw error;
     config._retried = true;
-    if (!refreshRequest)
-      refreshRequest = api
-        .post("/auth/refresh")
-        .then((r) => {
-          setToken(r.data.data.accessToken);
-          return r.data.data.accessToken as string;
-        })
-        .finally(() => {
-          refreshRequest = null;
-        });
     try {
-      await refreshRequest;
+      await refreshAccess();
       return await api(config);
     } catch (refreshError) {
       setToken(null);

@@ -1,0 +1,1 @@
+import { db } from "./src/config/db.ts"; console.log(await db.incomingEmail.count()); await db.$disconnect();

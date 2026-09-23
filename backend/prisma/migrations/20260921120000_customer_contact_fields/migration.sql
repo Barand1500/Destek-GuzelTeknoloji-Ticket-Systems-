@@ -1,0 +1,5 @@
+ALTER TABLE `User` ADD COLUMN `addressCity` VARCHAR(80) NULL,
+  ADD COLUMN `addressDistrict` VARCHAR(80) NULL,
+  ADD COLUMN `addressLine` VARCHAR(500) NULL,
+  ADD COLUMN `extraPhones` VARCHAR(500) NULL,
+  ADD COLUMN `extraEmails` VARCHAR(500) NULL;

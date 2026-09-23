@@ -27,21 +27,23 @@ try {
     update: {},
   });
   await db.user.upsert({
-    where: { email: config.SEED_ADMIN_EMAIL },
-    update: {},
+    where: { loginEmail: config.SEED_ADMIN_EMAIL },
+    update: { email: config.SEED_ADMIN_EMAIL },
     create: {
       name: "Sistem Yöneticisi",
       email: config.SEED_ADMIN_EMAIL,
+      loginEmail: config.SEED_ADMIN_EMAIL,
       passwordHash: await bcrypt.hash(config.SEED_ADMIN_PASSWORD, 12),
       role: "ADMIN",
     },
   });
   const agent = await db.user.upsert({
-    where: { email: config.SEED_AGENT_EMAIL },
-    update: {},
+    where: { loginEmail: config.SEED_AGENT_EMAIL },
+    update: { email: config.SEED_AGENT_EMAIL },
     create: {
       name: "Destek Uzmanı",
       email: config.SEED_AGENT_EMAIL,
+      loginEmail: config.SEED_AGENT_EMAIL,
       passwordHash: await bcrypt.hash(config.SEED_AGENT_PASSWORD, 12),
       role: "AGENT",
     },
@@ -53,6 +55,21 @@ try {
     update: {},
     create: { departmentId: department.id, userId: agent.id },
   });
+  const statuses = [
+    ["OPEN", "Açık", "#2f8f73"],
+    ["PENDING", "Beklemede", "#d49a2a"],
+    ["IN_PROGRESS", "İşlemde", "#3b82c4"],
+    ["RESOLVED", "Çözüldü", "#398571"],
+    ["CLOSED", "Kapalı", "#78848a"],
+  ] as const;
+  for (const [code, name, color] of statuses) await db.statusOption.upsert({ where: { code }, update: { name, color }, create: { code, name, color } });
+  const priorities = [
+    ["LOW", "Düşük", "#3b82c4"],
+    ["NORMAL", "Normal", "#78848a"],
+    ["HIGH", "Yüksek", "#dd7a2d"],
+    ["URGENT", "Acil", "#c94b4b"],
+  ] as const;
+  for (const [code, name, color] of priorities) await db.priorityOption.upsert({ where: { code }, update: { name, color }, create: { code, name, color } });
   console.log(
     "Departmanlar ve geliştirme kullanıcıları hazır. Mevcut hesapların şifreleri değiştirilmedi.",
   );

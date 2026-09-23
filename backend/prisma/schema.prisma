@@ -4,7 +4,7 @@ generator client {
   importFileExtension = "js"
 }
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 enum Role {
   ADMIN
@@ -12,32 +12,48 @@ enum Role {
   AGENT
   CUSTOMER
 }
-enum TicketStatus {
-  OPEN
-  PENDING
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
+enum ConversationChannel {
+  TICKET
+  EMAIL
+  SMS
+  WHATSAPP
+  LIVE_CHAT
 }
-enum TicketPriority {
-  LOW
-  NORMAL
-  HIGH
-  URGENT
+enum MessageType {
+  CUSTOMER_MESSAGE
+  AGENT_REPLY
+  INTERNAL_NOTE
+  SYSTEM
 }
 model User {
   id String @id @default(uuid())
   name String
-  email String @unique
+  // Contact information can belong to more than one person in a household or company.
+  email String?
+  phone String?
+  // Only accounts that can sign in receive a unique login identity.
+  loginEmail String? @unique
+  company String?
+  staffNote String?
+  extraPhones String?
+  extraEmails String?
+  deletedAt DateTime?
   passwordHash String
   role Role @default(CUSTOMER)
+  isActive Boolean @default(true)
+  updatedAt DateTime @default(now()) @updatedAt
   createdAt DateTime @default(now())
   departments DepartmentAgent[]
-  customerTickets Ticket[] @relation("CustomerTickets")
-  assignedTickets Ticket[] @relation("AssignedTickets")
-  messages TicketMessage[]
+  customerConversations Conversation[] @relation("CustomerConversations")
+  assignedConversations Conversation[] @relation("AssignedConversations")
+  messages ConversationMessage[]
   sessions Session[]
   logs ActivityLog[]
+  notifications Notification[]
+  savedReplies SavedReply[]
+  attachments ConversationAttachment[]
+  @@index([email])
+  @@index([phone])
 }
 model Session {
   id String @id @default(uuid())
@@ -52,8 +68,10 @@ model Session {
 model Department {
   id String @id @default(uuid())
   name String @unique
+  isActive Boolean @default(true)
+  deletedAt DateTime?
   agents DepartmentAgent[]
-  tickets Ticket[]
+  conversations Conversation[]
 }
 model DepartmentAgent {
   departmentId String
@@ -63,47 +81,220 @@ model DepartmentAgent {
   @@id([departmentId, userId])
   @@index([userId])
 }
-model Ticket {
+model Conversation {
   id String @id @default(uuid())
   number Int @unique @default(autoincrement())
   subject String
+  websiteUrl String?
+  websiteId String?
+  website Website? @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  channel ConversationChannel @default(TICKET)
   searchSubject String
   customerId String
-  customer User @relation("CustomerTickets", fields: [customerId], references: [id])
+  customer User @relation("CustomerConversations", fields: [customerId], references: [id])
   departmentId String
   department Department @relation(fields: [departmentId], references: [id])
   assignedAgentId String?
-  assignedAgent User? @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
-  status TicketStatus @default(OPEN)
-  priority TicketPriority @default(NORMAL)
+  assignedAgent User? @relation("AssignedConversations", fields: [assignedAgentId], references: [id])
+  status String @default("OPEN")
+  priority String @default("NORMAL")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   closedAt DateTime?
+  resolvedAt DateTime?
+  firstResponseAt DateTime?
   deletedAt DateTime?
-  messages TicketMessage[]
+  messages ConversationMessage[]
+  incomingEmails IncomingEmail[]
+  tags ConversationTag[]
+  notifications Notification[]
+  externalMessages ExternalMessage[]
   @@index([customerId, deletedAt, updatedAt])
   @@index([assignedAgentId, deletedAt, updatedAt])
   @@index([departmentId, status])
   @@index([deletedAt, updatedAt])
+  @@index([channel, status])
+  @@index([websiteId])
 }
-model TicketMessage {
+model StatusOption {
   id String @id @default(uuid())
-  ticketId String
-  ticket Ticket @relation(fields: [ticketId], references: [id])
+  code String @unique
+  name String
+  color String @default("#398571")
+  isActive Boolean @default(true)
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([isActive, sortOrder])
+  @@index([name])
+}
+model PriorityOption {
+  id String @id @default(uuid())
+  code String @unique
+  name String
+  color String @default("#64748b")
+  isActive Boolean @default(true)
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([isActive, sortOrder])
+  @@index([name])
+}
+model ConversationMessage {
+  id String @id @default(uuid())
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id])
   authorId String
   author User @relation(fields: [authorId], references: [id])
-  body String
-  isInternalNote Boolean @default(false)
+  body String @db.Text
+  type MessageType @default(CUSTOMER_MESSAGE)
   createdAt DateTime @default(now())
-  @@index([ticketId, createdAt])
+  attachments ConversationAttachment[]
+  @@index([conversationId, createdAt])
+}
+model IncomingEmail {
+  id String @id @default(uuid())
+  mailbox String @default("INBOX")
+  uid Int
+  messageId String?
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  receivedAt DateTime @default(now())
+  @@unique([mailbox, uid])
+  @@unique([messageId])
+  @@index([conversationId])
 }
 model ActivityLog {
   id String @id @default(uuid())
   userId String
   user User @relation(fields: [userId], references: [id])
   action String
+  entityType String @default("Conversation")
   entityId String
+  ipAddress String?
   metadata Json?
   createdAt DateTime @default(now())
   @@index([entityId, createdAt])
+}
+model ConversationAttachment {
+  id String @id @default(uuid())
+  messageId String
+  message ConversationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader User @relation(fields: [uploaderId], references: [id])
+  originalName String
+  mimeType String
+  size Int
+  storageKey String @unique
+  createdAt DateTime @default(now())
+  @@index([messageId])
+}
+model Tag {
+  id String @id @default(uuid())
+  name String @unique
+  code String @unique
+  color String @default("#64748b")
+  conversations ConversationTag[]
+}
+model Website {
+  id String @id @default(uuid())
+  name String
+  url String @unique
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  conversations Conversation[]
+  @@index([isActive])
+}
+model ConversationTag {
+  conversationId String
+  tagId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([conversationId, tagId])
+  @@index([tagId])
+}
+model Notification {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  type String
+  title String
+  message String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([userId, isRead, createdAt])
+}
+model SavedReply {
+  id String @id @default(uuid())
+  title String
+  body String
+  authorId String
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([authorId])
+}
+model SystemSettings {
+  id String @id @default("default")
+  companyName String @default("Destek Merkezi")
+  supportEmail String @default("")
+  supportPhone String @default("")
+  allowRegistration Boolean @default(true)
+}
+model IntegrationSettings {
+  id String @id @default("default")
+  smtpEnabled Boolean @default(false)
+  smtpHost String @default("")
+  smtpPort Int @default(587)
+  smtpSecure Boolean @default(false)
+  smtpUser String @default("")
+  smtpPassword String @default("")
+  smtpFromAddress String @default("")
+  smtpFromName String @default("")
+  imapEnabled Boolean @default(false)
+  imapConnectionName String @default("")
+  imapHost String @default("")
+  imapPort Int @default(993)
+  imapSecure Boolean @default(true)
+  imapAuthType String @default("BASIC")
+  imapUser String @default("")
+  imapPassword String @default("")
+  imapMailbox String @default("INBOX")
+  imapPollIntervalSeconds Int @default(60)
+  imapCreateTickets Boolean @default(true)
+  imapCreateReplies Boolean @default(true)
+  imapDepartmentId String?
+  smsEnabled Boolean @default(false)
+  smsApiUser String @default("")
+  smsApiPassword String @default("")
+  smsSender String @default("")
+  smsVirtualNumber String @default("")
+  smsWebhookSecret String @default("")
+  smsDepartmentId String?
+  whatsappEnabled Boolean @default(false)
+  whatsappAppId String @default("")
+  whatsappAppSecret String @default("")
+  whatsappPhoneNumberId String @default("")
+  whatsappAccessToken String @default("")
+  whatsappVerifyToken String @default("")
+  whatsappDepartmentId String?
+  lastTestChannel String?
+  lastTestSuccess Boolean?
+  lastTestMessage String?
+  lastTestedAt DateTime?
+  updatedAt DateTime @updatedAt
+}
+model ExternalMessage {
+  id String @id @default(uuid())
+  provider String
+  externalId String
+  channel ConversationChannel
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([provider, externalId])
+  @@index([conversationId])
 }

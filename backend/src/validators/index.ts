@@ -18,14 +18,8 @@ export const registerSchema = loginSchema.extend({
   name: z.string().trim().min(2).max(100),
   password,
 });
-export const statusSchema = z.enum([
-  "OPEN",
-  "PENDING",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "CLOSED",
-]);
-export const prioritySchema = z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]);
+export const statusSchema = z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/);
+export const prioritySchema = z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/);
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).max(100000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -35,28 +29,44 @@ export const listSchema = paginationSchema.extend({
   status: statusSchema.optional(),
   priority: prioritySchema.optional(),
   departmentId: idSchema.optional(),
+  tagId: idSchema.optional(),
   assignedAgentId: idSchema.optional(),
-  view: z.enum(["all", "mine", "unassigned"]).default("all"),
+  customerId: idSchema.optional(),
+  channel: z.enum(['TICKET','EMAIL','LIVE_CHAT']).optional(),
+  category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),
+  view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent"]).default("all"),
 });
-export const createTicketSchema = z
+export const createConversationSchema = z
   .object({
+    channel: z.literal('TICKET').default('TICKET'),
     subject: z.string().trim().min(5).max(200),
     message: z.string().trim().min(1).max(10000),
+    websiteUrl: z.string().trim().url().max(500).optional(),
+    websiteId: idSchema.optional(),
+    assignedAgentId: idSchema.optional(),
     departmentId: idSchema,
     priority: prioritySchema.default("NORMAL"),
+    tagIds: z.array(idSchema).max(20).optional(),
   })
   .strict();
+export const createStaffConversationSchema = createConversationSchema.extend({
+  customerId: idSchema,
+}).strict();
 export const messageSchema = z
   .object({
     body: z.string().trim().min(1).max(10000),
-    isInternalNote: z.boolean().default(false),
+    type: z.enum(['CUSTOMER_MESSAGE','AGENT_REPLY','INTERNAL_NOTE']).optional(),
+    isInternalNote: z.preprocess(v=>v==='true'?true:v==='false'?false:v,z.boolean()).optional(),
   })
   .strict();
-export const updateTicketSchema = z
+export const updateConversationSchema = z
   .object({
     status: statusSchema.optional(),
     priority: prioritySchema.optional(),
     assignedAgentId: idSchema.nullable().optional(),
+    departmentId: idSchema.optional(),
+    websiteId: idSchema.nullable().optional(),
+    tagIds: z.array(idSchema).max(20).optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0);

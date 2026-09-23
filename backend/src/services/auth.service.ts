@@ -41,6 +41,7 @@ export async function register(input: {
     data: {
       name: input.name,
       email: input.email,
+      loginEmail: input.email,
       passwordHash: await bcrypt.hash(input.password, 12),
     },
   });
@@ -49,12 +50,19 @@ export async function register(input: {
 // A constant work factor also applies when the email is unknown.
 const dummyHash = await bcrypt.hash(randomBytes(32).toString("hex"), 12);
 export async function login(input: { email: string; password: string }) {
-  const user = await db.user.findUnique({ where: { email: input.email } });
+  // `loginEmail` is unique. The fallback only supports imported accounts created
+  // before this field existed; new staff-created contacts never receive a usable password.
+  const user =
+    (await db.user.findUnique({ where: { loginEmail: input.email } })) ??
+    (await db.user.findFirst({
+      where: { loginEmail: null, email: input.email },
+      orderBy: { createdAt: "asc" },
+    }));
   const valid = await bcrypt.compare(
     input.password,
     user?.passwordHash ?? dummyHash,
   );
-  if (!user || !valid)
+  if (!user || !valid || !user.isActive)
     throw new AppError(
       401,
       "INVALID_CREDENTIALS",
@@ -83,8 +91,9 @@ export async function refresh(token: string) {
     throw new AppError(401, "UNAUTHENTICATED", "Oturum yenilenemedi.");
   const user = await db.user.findUniqueOrThrow({
     where: { id: session.userId },
-    select: publicUser,
+    select: {...publicUser,isActive:true},
   });
+  if(!user.isActive) throw new AppError(401,'UNAUTHENTICATED','Hesap pasif.');
   return { refreshToken, accessToken: access(user.id, session.id), user };
 }
 export async function logout(token: string | undefined) {

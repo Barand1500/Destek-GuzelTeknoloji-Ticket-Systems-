@@ -1523,3 +1523,923 @@ olmalıdır.
 UI bu sistemin üzerinde çalışan arayüzdür.
 
 Önce doğru backend ve veri modeli kurulmalı, ardından gelişmiş UI ve ek özellikler geliştirilmelidir.
+
+
+---
+
+
+------------------------------------------------
+
+# 43. Help Center, Kullanıcı Kaydı, Giriş ve Rol Bazlı Panel Yapısı
+
+Sistem BeDesk benzeri bir Helpdesk yapısına sahip olacaktır.
+
+Kullanıcıların tamamı aynı ekranları kullanmayacaktır. Sistemde public olarak erişilebilen bir **Help Center** bulunacak, giriş yapıldıktan sonra ise kullanıcının rolüne göre ilgili panel açılacaktır.
+
+Sistemde temel olarak dört kullanıcı rolü bulunmaktadır:
+
+```text
+CUSTOMER
+AGENT
+SUPERVISOR
+ADMIN
+```
+
+Bu rollerin sisteme dahil olma şekilleri birbirinden farklıdır.
+
+---
+
+## 43.1 Help Center
+
+Sistemin public olarak erişilebilen ana destek sayfası bulunmalıdır.
+
+Örnek:
+
+```text
+/
+```
+
+Bu ekran için kullanıcının giriş yapmış olması zorunlu değildir.
+
+Help Center sistemin müşteriye açık giriş noktasıdır.
+
+Kullanıcı burada:
+
+- Destek sistemine erişebilir
+- Bilgi bankasında arama yapabilir
+- Bilgi bankası makalelerini görüntüleyebilir
+- Giriş yapabilir
+- Kayıt olabilir
+- Destek talebi oluşturmak için Customer Portal'a geçebilir
+
+Örnek yapı:
+
+```text
+Help Center
+│
+├── Destek Ara
+│
+├── Bilgi Bankası
+│   ├── Kategoriler
+│   └── Makaleler
+│
+├── Giriş Yap
+│
+└── Kayıt Ol
+```
+
+Knowledge Base sistemi V2 kapsamında geliştirilebilir.
+
+V1 aşamasında Help Center daha basit tutulabilir ve temel olarak:
+
+```text
+Help Center
+│
+├── Destek Al
+├── Giriş Yap
+└── Kayıt Ol
+```
+
+yapısıyla başlayabilir.
+
+Daha sonra Knowledge Base eklendiğinde Help Center genişletilebilir.
+
+---
+
+## 43.2 Kullanıcı Neden Kayıt Olur?
+
+Public kayıt sistemi müşteriler içindir.
+
+Bir müşteri hesap oluşturduğunda sistemde kendi destek alanına sahip olur.
+
+Bu hesap sayesinde müşteri:
+
+- Yeni destek talebi oluşturabilir
+- Daha önce oluşturduğu talepleri görebilir
+- Taleplerinin durumlarını takip edebilir
+- Agent tarafından gönderilen cevapları görebilir
+- Taleplerine tekrar cevap verebilir
+- Dosya gönderebilir
+- Geçmiş destek konuşmalarına erişebilir
+- Profil bilgilerini yönetebilir
+
+Örnek:
+
+```text
+Customer
+   ↓
+Register
+   ↓
+Login
+   ↓
+Customer Portal
+   ↓
+Taleplerim
+   ↓
+Ticket / Conversation geçmişi
+```
+
+Böylece her destek talebi belirli bir Customer hesabına bağlanabilir.
+
+---
+
+## 43.3 Public Kayıt Sistemi
+
+Normal kullanıcıların erişebildiği:
+
+```text
+/register
+```
+
+ekranı yalnızca CUSTOMER hesabı oluşturmalıdır.
+
+Kullanıcı kayıt olurken:
+
+```text
+Customer
+Agent
+Supervisor
+Admin
+```
+
+şeklinde rol seçmemelidir.
+
+Public kayıt işleminin sonucu her zaman:
+
+```text
+role = CUSTOMER
+```
+
+olmalıdır.
+
+Örnek:
+
+```text
+/register
+   ↓
+Ad Soyad
+Email
+Şifre
+   ↓
+Backend
+   ↓
+User oluştur
+   ↓
+role = CUSTOMER
+   ↓
+Customer Portal
+```
+
+Rolün CUSTOMER olarak atanması yalnızca frontend tarafından yapılmamalıdır.
+
+Backend public register endpointinde rolü kendisi belirlemelidir.
+
+Örneğin kullanıcı request içerisine:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password",
+  "role": "ADMIN"
+}
+```
+
+göndermeye çalışsa bile public register endpointi ADMIN hesabı oluşturmamalıdır.
+
+Backend rolü güvenli şekilde:
+
+```text
+CUSTOMER
+```
+
+olarak belirlemelidir.
+
+---
+
+## 43.4 Agent Hesabı Nasıl Oluşturulur?
+
+AGENT public kayıt ekranından oluşturulmamalıdır.
+
+Agent şirketin destek personelidir.
+
+Agent hesabını ADMIN oluşturmalıdır.
+
+Örnek:
+
+```text
+Admin Panel
+    ↓
+Agents
+    ↓
+Create Agent
+    ↓
+Ad Soyad
+Email
+Department
+Role = AGENT
+    ↓
+Agent hesabı oluşturulur
+```
+
+Agent oluşturulduktan sonra kullanıcıya şifre belirleme bağlantısı gönderilebilir.
+
+Önerilen akış:
+
+```text
+Admin Agent oluşturur
+        ↓
+Agent email adresine davet gider
+        ↓
+Set Password
+        ↓
+Agent şifresini belirler
+        ↓
+Login
+        ↓
+Agent Inbox
+```
+
+Plaintext şifre email ile gönderilmemelidir.
+
+---
+
+## 43.5 Supervisor Hesabı Nasıl Oluşturulur?
+
+SUPERVISOR da public kayıt ekranından oluşturulmamalıdır.
+
+Supervisor destek ekibini veya belirli departmanları yöneten personeldir.
+
+Hesabı ADMIN tarafından oluşturulur.
+
+Örnek:
+
+```text
+Admin Panel
+    ↓
+Users
+    ↓
+Create User
+    ↓
+Role = SUPERVISOR
+    ↓
+Department / Permissions
+    ↓
+Supervisor hesabı
+```
+
+Supervisor giriş yaptıktan sonra yetkilerine göre Agent Workspace ve yönetim özelliklerine erişebilir.
+
+---
+
+## 43.6 Admin Hesabı Nasıl Oluşturulur?
+
+ADMIN hesabı public kayıt ekranından kesinlikle oluşturulmamalıdır.
+
+İlk ADMIN hesabı sistem kurulurken oluşturulmalıdır.
+
+Örneğin:
+
+```text
+Database Seed
+```
+
+veya güvenli başlangıç konfigürasyonu kullanılabilir.
+
+Örnek:
+
+```text
+npm run seed
+    ↓
+Initial Admin
+    ↓
+admin@example.com
+    ↓
+ADMIN
+```
+
+İlk Admin sisteme girdikten sonra diğer:
+
+```text
+AGENT
+SUPERVISOR
+ADMIN
+```
+
+hesaplarını yetkileri doğrultusunda oluşturabilir.
+
+Böylece dışarıdan kayıt olan bir kullanıcı kendi kendine çalışan veya yönetici yetkisi alamaz.
+
+---
+
+## 43.7 Tek Login Sistemi
+
+Sistemde bütün roller için ortak bir login sistemi kullanılabilir.
+
+Örnek route:
+
+```text
+/login
+```
+
+Login ekranında kullanıcının rol seçmesine gerek yoktur.
+
+Kullanıcı yalnızca:
+
+```text
+Email
+Password
+```
+
+bilgilerini girer.
+
+Backend kullanıcıyı doğruladıktan sonra kullanıcının rolünü veritabanından belirler.
+
+Örnek:
+
+```text
+Login
+  ↓
+Email + Password
+  ↓
+Backend Authentication
+  ↓
+JWT oluştur
+  ↓
+User bilgilerini getir
+  ↓
+Role kontrol et
+```
+
+Frontend daha sonra role göre doğru çalışma alanına yönlendirir.
+
+```text
+CUSTOMER
+    ↓
+/customer/dashboard
+
+AGENT
+    ↓
+/agent/inbox
+
+SUPERVISOR
+    ↓
+/agent/dashboard
+
+ADMIN
+    ↓
+/admin/dashboard
+```
+
+Kullanıcının rolü frontend tarafından belirlenmemelidir.
+
+Asıl rol ve permission kontrolü backend üzerinde yapılmalıdır.
+
+Frontend route koruması yalnızca kullanıcı deneyimi içindir.
+
+---
+
+## 43.8 Customer Portal
+
+Şu anda geliştirilen müşteri ekranları **Customer Portal** olarak kabul edilmelidir.
+
+Bu bölüm CUSTOMER rolüne sahip kullanıcıların giriş yaptıktan sonra kullandığı özel destek alanıdır.
+
+Örnek:
+
+```text
+Customer Portal
+
+├── Genel Bakış
+├── Taleplerim
+├── Yeni Talep
+├── Bildirimler
+└── Profil
+```
+
+Route yapısı:
+
+```text
+/customer/dashboard
+
+/customer/tickets
+
+/customer/tickets/new
+
+/customer/tickets/:id
+
+/customer/profile
+```
+
+Örneğin müşteri:
+
+```text
+Yeni Talep
+    ↓
+Konu
+Departman
+Öncelik
+Açıklama
+    ↓
+Gönder
+```
+
+işlemini yaptığında backend yeni bir Ticket / Conversation oluşturur.
+
+Bu kayıt:
+
+```text
+customerId = currentUser.id
+```
+
+ile giriş yapan müşteriye bağlanmalıdır.
+
+Customer yalnızca kendi taleplerini görebilmelidir.
+
+---
+
+## 43.9 Agent Workspace
+
+Agent giriş yaptığında Customer Portal'a gönderilmemelidir.
+
+Agent için ayrı çalışma alanı bulunmalıdır.
+
+Ana ekran:
+
+```text
+/agent/inbox
+```
+
+olacaktır.
+
+Bu alan BeDesk benzeri **Conversations / Unified Inbox** çalışma mantığına sahip olacaktır.
+
+Örnek:
+
+```text
+Agent Workspace
+
+├── Inbox
+│
+├── All
+├── Mine
+├── Unassigned
+├── Open
+├── Pending
+├── Resolved
+├── Closed
+└── Urgent
+```
+
+Örneğin müşteri Customer Portal üzerinden yeni destek talebi oluşturduğunda:
+
+```text
+Customer
+    ↓
+Yeni Talep
+    ↓
+Conversation oluşturulur
+    ↓
+Department
+    ↓
+Unassigned
+    ↓
+Agent Inbox
+```
+
+Agent talebi üzerine alabilir:
+
+```text
+Assign to me
+```
+
+Sonrasında:
+
+```text
+assignedAgentId = currentAgent.id
+```
+
+olur.
+
+Conversation artık Agent'ın:
+
+```text
+Mine
+```
+
+listesinde görüntülenebilir.
+
+Agent burada müşteriye cevap verebilir veya Internal Note oluşturabilir.
+
+---
+
+## 43.10 Admin Panel
+
+ADMIN için ayrı bir yönetim alanı bulunmalıdır.
+
+Örnek:
+
+```text
+/admin/dashboard
+```
+
+Admin Panel sistemin yönetildiği bölümdür.
+
+Örnek yapı:
+
+```text
+Admin Panel
+
+├── Dashboard
+├── Conversations / Tickets
+├── Customers
+├── Agents
+├── Supervisors
+├── Users
+├── Departments
+├── Tags
+├── Saved Replies
+├── Reports
+├── Activity Logs
+└── Settings
+```
+
+Admin buradan:
+
+- Agent oluşturabilir
+- Supervisor oluşturabilir
+- Gerekirse başka Admin oluşturabilir
+- Kullanıcıları yönetebilir
+- Departmanları yönetebilir
+- Agentları departmanlara bağlayabilir
+- Ticket / Conversation kayıtlarını görüntüleyebilir
+- Atama yapabilir
+- Raporları görüntüleyebilir
+- Sistem ayarlarını yönetebilir
+
+---
+
+## 43.11 Supervisor Workspace
+
+Supervisor destek ekibinin yönetiminde Agent ile Admin arasında konumlanır.
+
+Supervisor:
+
+- Kendi departmanındaki Conversationları görebilir
+- Agentlara Conversation atayabilir
+- Unassigned talepleri yönetebilir
+- Agent performansını görebilir
+- Ticket durumlarını değiştirebilir
+- Ticketları başka Agent veya departmana aktarabilir
+
+Supervisor'ın Admin'in bütün sistem ayarlarına erişmesi zorunlu değildir.
+
+Yetkiler backend Permission sistemi üzerinden kontrol edilmelidir.
+
+---
+
+## 43.12 Genel Kullanıcı Akışı
+
+Sistemin genel kullanıcı akışı aşağıdaki şekilde çalışmalıdır.
+
+```text
+                         HELP CENTER
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+           REGISTER                         LOGIN
+              │                               │
+              │                         Email + Password
+              │                               │
+              ▼                               ▼
+        CUSTOMER oluştur              Backend Authentication
+              │                               │
+              │                               ▼
+              │                           Role Kontrol
+              │                               │
+              │            ┌──────────────────┼──────────────────┐
+              │            │                  │                  │
+              │            ▼                  ▼                  ▼
+              │         CUSTOMER            AGENT         SUPERVISOR / ADMIN
+              │            │                  │                  │
+              ▼            ▼                  ▼                  ▼
+        CUSTOMER PORTAL              AGENT WORKSPACE       MANAGEMENT
+              │                           │                     │
+              │                           │                     │
+        ┌─────┴─────┐                     │                     │
+        │           │                     │                     │
+    Taleplerim   Yeni Talep               │                     │
+                    │                     │                     │
+                    ▼                     │                     │
+               CONVERSATION               │                     │
+                    │                     │                     │
+                    ▼                     │                     │
+                Department                │                     │
+                    │                     │                     │
+                    ▼                     │                     │
+                Unassigned ───────────────► Agent Inbox          │
+                                              │                  │
+                                              ▼                  │
+                                         Assign to Me            │
+                                              │                  │
+                                              ▼                  │
+                                             Mine                │
+                                              │                  │
+                                              ▼                  │
+                                          Agent Reply            │
+                                              │                  │
+                                              ▼                  │
+                                         Conversation            │
+                                              │                  │
+                                              ▼                  │
+                                      Customer Portal ◄──────────┘
+                                              │
+                                              ▼
+                                      Customer cevabı görür
+                                              │
+                                              ▼
+                                       Customer Reply
+                                              │
+                                              ▼
+                                         Agent Inbox
+                                              │
+                                              ▼
+                                           Resolve
+                                              │
+                                              ▼
+                                            Closed
+```
+
+Bu akış sistemin temel çalışma mantığıdır.
+
+### Örnek Gerçek Senaryo
+
+Müşteri sisteme ilk kez gelir:
+
+```text
+Help Center
+    ↓
+Register
+    ↓
+CUSTOMER hesabı
+    ↓
+Customer Portal
+```
+
+Müşteri:
+
+```text
+Yeni Talep
+
+Konu:
+Ödeme yapamıyorum
+
+Departman:
+Ödeme Sistemleri
+
+Öncelik:
+HIGH
+
+Açıklama:
+Ödeme sırasında hata alıyorum.
+```
+
+şeklinde talep oluşturur.
+
+Backend:
+
+```text
+Conversation oluşturur
+
+Customer:
+Yunus
+
+Department:
+Ödeme Sistemleri
+
+Status:
+OPEN
+
+Assigned Agent:
+null
+```
+
+Conversation Agent Workspace içerisindeki:
+
+```text
+Unassigned
+```
+
+listesine düşer.
+
+Ödeme Sistemleri departmanındaki Agent talebi açar:
+
+```text
+Assign to me
+```
+
+işlemini yapar.
+
+Conversation:
+
+```text
+assignedAgentId = agent.id
+```
+
+haline gelir.
+
+Artık Agent'ın:
+
+```text
+Mine
+```
+
+listesinde görünür.
+
+Agent:
+
+```text
+Merhaba,
+probleminizi kontrol ediyoruz.
+```
+
+şeklinde cevap gönderir.
+
+Müşteri Customer Portal içerisindeki:
+
+```text
+Taleplerim
+    ↓
+Ödeme yapamıyorum
+```
+
+Conversation detayına girdiğinde Agent'ın cevabını görür.
+
+Müşteri tekrar cevap verdiğinde mesaj aynı Conversation içerisinde Agent Inbox'a ulaşır.
+
+Sorun çözüldüğünde:
+
+```text
+OPEN
+  ↓
+IN_PROGRESS
+  ↓
+PENDING
+  ↓
+RESOLVED
+  ↓
+CLOSED
+```
+
+yaşam döngüsü tamamlanır.
+
+---
+
+## 43.13 Temel Güvenlik Kuralları
+
+Public kullanıcı hiçbir şekilde kendi rolünü belirleyememelidir.
+
+Public register:
+
+```text
+CUSTOMER
+```
+
+oluşturur.
+
+Aşağıdaki roller yalnızca yetkili sistem işlemleriyle oluşturulabilir:
+
+```text
+AGENT
+SUPERVISOR
+ADMIN
+```
+
+Ayrıca route erişimleri backend tarafından kontrol edilmelidir.
+
+Örneğin:
+
+```text
+CUSTOMER
+```
+
+kullanıcısı:
+
+```text
+/admin/users
+```
+
+endpointine istek gönderirse:
+
+```text
+403 Forbidden
+```
+
+dönmelidir.
+
+Aynı şekilde Customer:
+
+```text
+/agent/inbox
+```
+
+verilerine erişememelidir.
+
+Frontend üzerinde menüyü veya butonu gizlemek tek başına güvenlik değildir.
+
+Authorization backend üzerinde zorunlu olmalıdır.
+
+---
+
+## 43.14 Mimari Özet
+
+Sistemin kullanıcı tarafları şu şekilde ayrılmalıdır:
+
+```text
+PUBLIC
+│
+└── Help Center
+    ├── Login
+    ├── Register
+    └── Knowledge Base
+
+
+CUSTOMER
+│
+└── Customer Portal
+    ├── Dashboard
+    ├── Taleplerim
+    ├── Yeni Talep
+    └── Profil
+
+
+AGENT
+│
+└── Agent Workspace
+    ├── Inbox
+    ├── Mine
+    ├── Unassigned
+    └── Conversations
+
+
+SUPERVISOR
+│
+└── Agent / Supervisor Workspace
+    ├── Team Conversations
+    ├── Assignment
+    ├── Agents
+    └── Performance
+
+
+ADMIN
+│
+└── Admin Panel
+    ├── Dashboard
+    ├── Users
+    ├── Agents
+    ├── Supervisors
+    ├── Departments
+    ├── Conversations
+    ├── Reports
+    ├── Activity Logs
+    └── Settings
+```
+
+Bunların ayrı backend projeleri olması gerekmez.
+
+Aynı:
+
+```text
+React Frontend
+       +
+Node.js Backend
+       +
+PostgreSQL
+```
+
+altyapısı üzerinde role-based routing ve authorization kullanılarak geliştirilebilir.
+
+Temel prensip:
+
+```text
+Public kullanıcı
+      ↓
+Help Center
+
+Kayıt olan kullanıcı
+      ↓
+CUSTOMER
+
+Şirket destek personeli
+      ↓
+AGENT
+
+Destek yöneticisi
+      ↓
+SUPERVISOR
+
+Sistem yöneticisi
+      ↓
+ADMIN
+```
+
+Public kayıt sistemi hiçbir zaman doğrudan AGENT, SUPERVISOR veya ADMIN yetkisi vermemelidir.
