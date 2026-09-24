@@ -7,6 +7,7 @@ import { env } from "../config/env.js";
 import { notifyConversation, publishChange } from "./events.service.js";
 import type { Actor } from "../types/express.js";
 import { matchesSender, selectEmailCustomer } from './inbound-email-matching.js';
+import { replyAddressTicket } from './email-reply-address.js';
 
 let running = false;
 let timer: NodeJS.Timeout | undefined;
@@ -22,6 +23,7 @@ export async function persistInboundEmail(input: {
   messageId?: string;
   inReplyTo?: string;
   references?: string[];
+  recipients?: string[];
   from: { address: string; name?: string };
   subject: string;
   body: string;
@@ -36,7 +38,7 @@ export async function persistInboundEmail(input: {
   const matchingCustomers = (await db.user.findMany({ where: { role: "CUSTOMER", deletedAt: null, OR: [{ email }, { extraEmails: { contains: email } }] }, orderBy: { createdAt: "asc" } })).filter(customer => matchesSender(customer, email));
   const senderScope = { customerId: { in: matchingCustomers.map(customer => customer.id) }, deletedAt: null, status: { not: 'CLOSED' } };
 
-  const ticketNumber = /#(?:TK-)?0*(\d{1,10})\b|\[(?:TK-)?0*(\d{1,10})\]/i.exec(input.subject)?.slice(1).find(Boolean);
+  const ticketNumber = replyAddressTicket(input.recipients ?? [], env.JWT_ACCESS_SECRET) ?? /#(?:TK-)?0*(\d{1,10})\b|\[(?:TK-)?0*(\d{1,10})\]/i.exec(input.subject)?.slice(1).find(Boolean);
   let conversation = ticketNumber
     ? await db.conversation.findFirst({ where: { ...senderScope, number: Number(ticketNumber) } })
     : null;
@@ -51,6 +53,17 @@ export async function persistInboundEmail(input: {
     if (outgoing) conversation = await db.conversation.findFirst({ where: { ...senderScope, id: outgoing.entityId } });
   }
   let customer = conversation ? matchingCustomers.find(item => item.id === conversation!.customerId) : selectEmailCustomer(matchingCustomers, email, input.from.name);
+  // Some clients send a fresh message to the general mailbox with no threading
+  // information. Continue only an unambiguous, already answered active request.
+  // Never override an explicit (possibly foreign) ticket/reference with a guess.
+  if (!conversation && customer && !ticketNumber && !references.length && !(input.recipients ?? []).some(address => address.includes('+ticket-'))) {
+    const active = await db.conversation.findMany({
+      where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, messages: { some: { type: 'AGENT_REPLY' } } },
+      take: 2,
+      include: { messages: { where: { type: 'AGENT_REPLY' }, select: { id: true }, take: 1 } },
+    });
+    if (active.length === 1 && active[0].messages.length) conversation = active[0];
+  }
   if (conversation && input.createReplies === false) return conversation.id;
   if (!conversation && input.createTickets === false) return null;
   if (!customer) {
@@ -103,6 +116,11 @@ export async function syncInboundEmail() {
     auth: config.authType === "OAUTH2" ? { user: config.user!, accessToken: config.password! } : { user: config.user!, pass: config.password! },
     logger: false,
   });
+  // ImapFlow can emit an error after connect() has already rejected. Without
+  // a listener that background error terminates the entire API process.
+  client.on('error', (error: Error) => {
+    console.error('IMAP bağlantı hatası:', error.message);
+  });
   let processed = 0;
   try {
     await client.connect();
@@ -125,6 +143,7 @@ export async function syncInboundEmail() {
           messageId: parsed.messageId || undefined,
           inReplyTo: parsed.inReplyTo || undefined,
           references: typeof parsed.references === 'string' ? [parsed.references] : parsed.references,
+          recipients: (Array.isArray(parsed.to) ? parsed.to : parsed.to ? [parsed.to] : []).flatMap(group => group.value.map(recipient => recipient.address ?? '')),
           from: { address: sender, name: parsed.from?.value.find((value) => value.address)?.name },
           subject: parsed.subject || "E-posta desteği",
           body,
@@ -149,8 +168,10 @@ export async function syncInboundEmail() {
 }
 
 export function startInboundEmailPolling() {
-  void syncInboundEmail();
-  timer = setInterval(() => void syncInboundEmail(), 15_000);
+  if (timer) return;
+  const poll = () => { void syncInboundEmail().catch(error => console.error('E-posta taraması başarısız:', error instanceof Error ? error.message : String(error))); };
+  poll();
+  timer = setInterval(poll, 15_000);
   timer.unref();
 }
 

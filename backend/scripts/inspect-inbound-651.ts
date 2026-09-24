@@ -10,10 +10,10 @@ try {
   await client.connect();
   const lock = await client.getMailboxLock('[Gmail]/Tüm Postalar', { readOnly: true });
   try {
-    const message = await client.fetchOne(193, { source: true }, { uid: true });
+    const message = await client.fetchOne(197, { source: true }, { uid: true });
     if (!message || !message.source) throw new Error('Source message missing');
     const parsed = await simpleParser(message.source);
-    console.log(JSON.stringify({ from: parsed.from?.value, subject: parsed.subject, messageId: parsed.messageId, inReplyTo: parsed.inReplyTo, references: parsed.references, date: parsed.date }));
+    console.log(JSON.stringify({ from: parsed.from?.value, to: parsed.to, subject: parsed.subject, messageId: parsed.messageId, inReplyTo: parsed.inReplyTo, references: parsed.references, date: parsed.date }));
     console.log(JSON.stringify(await db.conversation.findMany({ where: { customer: { email: 'yunusdurgun22@gmail.com' }, deletedAt: null }, orderBy: { createdAt: 'desc' }, take: 5, select: { id: true, number: true, subject: true, createdAt: true, customer: { select: { id: true, name: true, email: true } } } })));
   } finally { lock.release(); }
 } finally { await client.logout().catch(() => {}); await db.$disconnect(); }

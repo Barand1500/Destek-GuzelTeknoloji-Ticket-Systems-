@@ -21,6 +21,8 @@ test('shared addresses cannot be assigned arbitrarily', () => {
 test('inbound threading validates the sender and preserves unthreaded mail as a new request', async t => {
   const { db } = await import('../src/config/db.js');
   const { persistInboundEmail } = await import('../src/services/inbound-email.service.js');
+  const { env } = await import('../src/config/env.js');
+  const { ticketReplyAddress } = await import('../src/services/email-reply-address.js');
   const restored: Array<() => void> = [];
   function stub(target: any, key: string, replacement: any) {
     const original = target[key]; target[key] = replacement;
@@ -30,6 +32,11 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
   const target = { id: 'ticket-650', customerId: adem.id, departmentId: 'technical', assignedAgentId: null };
   let duplicate = false;
   let foreignReference = false;
+  let activeTickets: any[] = [];
+  stub(db.conversation, 'findMany', async ({ where }: any) => {
+    assert.equal(where.messages.some.type, 'AGENT_REPLY');
+    return activeTickets.filter(ticket => ticket.messages.length);
+  });
   const messages: any[] = [];
   const newTickets: any[] = [];
   stub(db.incomingEmail, 'findFirst', async ({ where }: any) => where.OR && duplicate ? { conversationId: target.id } : null);
@@ -53,9 +60,19 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
   assert.equal(await persistInboundEmail({ ...base, inReplyTo: '<sent@example.test>' }), target.id);
   assert.equal(messages.at(-1).authorId, adem.id);
   assert.equal(newTickets.length, 0);
+  assert.equal(await persistInboundEmail({ ...base, recipients: [ticketReplyAddress('support@gmail.com', 650, env.JWT_ACCESS_SECRET)!] }), target.id);
   assert.equal(await persistInboundEmail({ ...base, subject: 'Re: (#650)', from: { address: 'alias@example.test' } }), target.id);
   assert.equal(await persistInboundEmail(base), 'new-ticket');
   assert.equal(newTickets.at(-1).customerId, adem.id);
+  activeTickets = [{ ...target, messages: [{ id: 'staff-reply' }] }];
+  assert.equal(await persistInboundEmail(base), target.id);
+  activeTickets = [{ ...target, messages: [] }];
+  assert.equal(await persistInboundEmail(base), 'new-ticket');
+  activeTickets = [{ ...target, messages: [{ id: 'staff-reply' }] }, { ...target, id: 'another-active-ticket', messages: [] }];
+  assert.equal(await persistInboundEmail(base), target.id);
+  activeTickets[1].messages = [{ id: 'another-staff-reply' }];
+  assert.equal(await persistInboundEmail(base), 'new-ticket');
+  activeTickets = [{ ...target, messages: [{ id: 'staff-reply' }] }];
   foreignReference = true;
   assert.equal(await persistInboundEmail({ ...base, references: ['<foreign@example.test>'] }), 'new-ticket');
   duplicate = true;

@@ -59,14 +59,13 @@ const durationBetween = (from: string, to: string) => {
   const hours = Math.floor(minutes / 60), remainder = minutes % 60;
   return hours < 24 ? `${hours} sa${remainder ? ` ${remainder} dk` : ""}` : `${Math.floor(hours / 24)} gün`;
 };
-const responseTime = (openedAt: string, firstResponseAt?: string | null) => {
-  if (!firstResponseAt) return "Yanıt bekliyor";
-  const minutes = Math.max(0, Math.floor((new Date(firstResponseAt).getTime() - new Date(openedAt).getTime()) / 60000));
+const responseTime = (minutes?: number | null, pending?: boolean) => {
+  if (minutes == null) return "Yanıt yok";
   if (minutes < 1) return "1 dk'dan kısa";
   if (minutes < 60) return `${minutes} dk`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} sa`;
-  return `${Math.floor(hours / 24)} gün`;
+  const duration = hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`;
+  return pending ? `${duration} bekliyor` : duration;
 };
 export function Badge({ status }: { status: Conversation["status"] }) {
   return (
@@ -355,7 +354,7 @@ export function TicketList() {
                       )}
                     </td>
                     <td className="muted">{date(ticket.createdAt)}</td>
-                    <td className={ticket.firstResponseAt ? "ticket-response" : "muted"}>{responseTime(ticket.createdAt, ticket.firstResponseAt)}</td>
+                    <td className={ticket.latestCustomerResponseMinutes != null ? "ticket-response" : "muted"}>{responseTime(ticket.latestCustomerResponseMinutes, ticket.latestCustomerResponsePending)}</td>
                     <td className="muted">{date(ticket.updatedAt)}</td>
                   </tr>
                 ))}
