@@ -1022,7 +1022,15 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
 .notification-grid .management-notification small { grid-column:3; color:#687a72; font-size:11px; }
 .notification-grid .management-notification > div:first-child > div { grid-column:5; }
 .notification-grid .management-notification > button { grid-column:5; }
+.notification-conversation-actions { grid-column:5 !important; display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(0, .65fr); align-items:stretch; justify-self:start; align-self:center; width:170px; height:36px; white-space:nowrap; }
+.notification-conversation-actions .button { width:100%; min-width:0; min-height:36px; height:36px; box-sizing:border-box; padding:0 3px; border-radius:7px 0 0 7px; font-size:10px; }
+.notification-conversation-link { display:grid; width:100%; height:36px; place-items:center; box-sizing:border-box; border:1px solid #cfe3d8; border-left:0; border-radius:0 7px 7px 0; background:#eef8f3; color:#146b59; font-size:14px; font-weight:700; line-height:1; text-decoration:none; }
+.notification-conversation-link.standalone { display:inline-flex; flex:1 1 auto; align-items:center; justify-content:center; gap:5px; width:170px; min-width:170px; padding:0 8px; border-left:1px solid #cfe3d8; border-radius:7px; font-size:11px; font-weight:650; }
+.notification-conversation-link:hover { background:#dff1e8; color:#0d5848; }
+.notification-conversation-link:focus-visible { position:relative; z-index:1; outline:2px solid #218675; outline-offset:2px; }
 .notification-grid .management-notification.unread { background:#f5fbf7; }
+.management-table tr.inactive-record { opacity:.52; }
+.management-table tr.inactive-record:hover { opacity:.68; }
 .confirm-backdrop { position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:24px; background:rgba(22, 42, 34, .28); }
 .confirm-modal { position:relative; width:min(420px, 100%); padding:28px; border-radius:14px; background:#fff; box-shadow:0 22px 60px rgba(25,48,39,.25); }
 .confirm-modal h2 { margin:0 34px 10px 0; font-size:19px; color:#263a36; }
@@ -2488,15 +2496,39 @@ html[data-theme="dark"] .notification-popover-item time,
 html[data-theme="dark"] .notification-popover-empty { color:#b8cdc3 !important; }
 
 .ticket-timing { display:grid; gap:4px; min-width:172px; color:#52645a; font-size:11px; }
-.ticket-response { min-width:96px; color:#16715d; font-weight:650; font-size:11px; white-space:nowrap; }
+.ticket-response { min-width:96px; font-weight:650; font-size:11px; white-space:nowrap; background:transparent !important; }
+.ticket-response.response-fast { color:#16715d; }
+.ticket-response.response-normal { color:#a86606; }
+.ticket-response.response-late, .ticket-response.response-waiting { color:#c2413c; }
 .ticket-timing small,
 .customer-name small,
 .management-table td > small { color:#8a9a90; font-size:10px; }
 html[data-theme="dark"] .ticket-timing { color:#c6d8cf; }
-html[data-theme="dark"] .ticket-response { color:#8dd0b8; }
+html[data-theme="dark"] .ticket-response.response-fast { color:#8dd0b8; }
+html[data-theme="dark"] .ticket-response.response-normal { color:#f4c46b; }
+html[data-theme="dark"] .ticket-response.response-late, html[data-theme="dark"] .ticket-response.response-waiting { color:#ff9c95; }
 html[data-theme="dark"] .ticket-timing small,
 html[data-theme="dark"] .customer-name small,
 html[data-theme="dark"] .management-table td > small { color:#a9beb4; }
+
+.response-rules-card .integration-heading p { margin:4px 0 0; color:#718178; font-size:12px; }
+.response-rule-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.response-rule-fields label { display:grid; gap:6px; }
+.response-rule-fields small { color:#718178; font-size:11px; }
+.response-color-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:14px; }
+.response-color-fields label { display:grid; gap:6px; }
+.response-color-fields input[type="color"] { width:100%; height:42px; padding:4px; cursor:pointer; }
+.response-range-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) minmax(150px,1fr) 120px; gap:14px; align-items:end; padding:14px 0; border-top:1px solid var(--border,#dbe6de); }
+.response-range-row:first-of-type { border-top:0; }
+.response-range-row strong { padding-bottom:11px; }
+.response-range-row label { display:grid; gap:6px; }
+.response-range-row label span { color:#60736a; font-size:12px; font-weight:650; }
+.response-color-picker input[type="color"] { width:100%; height:42px; padding:4px; cursor:pointer; }
+.response-rule-preview { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.response-rule-preview span { border:1px solid; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:650; background:transparent; }
+html[data-theme="dark"] .response-rules-card .integration-heading p,
+html[data-theme="dark"] .response-rule-fields small { color:#b8cdc3; }
+@media (max-width:700px) { .response-rule-fields, .response-color-fields, .response-range-row { grid-template-columns:1fr; } .response-range-row strong { padding-bottom:0; } }
 
 /* Keep the record-limit picker consistent with the app's custom dropdown. */
 .notification-limit .styled-dropdown { width: 58px; min-width: 58px; }

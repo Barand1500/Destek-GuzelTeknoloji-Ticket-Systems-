@@ -7,5 +7,6 @@ backend/src/generated/
 .local/
 uploads/
 *.log
+*.zip
 test-results/
 *.tsbuildinfo

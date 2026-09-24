@@ -29,8 +29,6 @@ export type Conversation = {
   createdAt: string;
   updatedAt: string;
   firstResponseAt?: string | null;
-  latestCustomerResponseMinutes?: number | null;
-  latestCustomerResponsePending?: boolean;
   customerMessageCount?: number;
   assignedAgentMessageCount?: number;
   tags:{tag:Tag;tagId:string}[];
@@ -46,6 +44,7 @@ export type Message = {
 };
 export type Page<T> = {
   data: T[];
+  responseTimeRules?: { responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string };
   pagination: {
     page: number;
     limit: number;

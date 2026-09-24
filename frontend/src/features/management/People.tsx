@@ -200,7 +200,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 </thead>
                 <tbody>
                   {list.data.data.map((person) => (
-                    <tr key={person.id}>
+                    <tr key={person.id} className={!person.isActive ? "inactive-record" : undefined}>
                       <td>
                         <strong>{person.name}</strong>
                         <small>{person.email}</small>
@@ -394,7 +394,7 @@ export function CustomersPage() {
               </thead>
               <tbody>
                 {list.data.data.map((customer) => (
-                  <tr key={customer.id}>
+                  <tr key={customer.id} className={!customer.isActive ? "inactive-record" : undefined}>
                     <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
                       {bulkSelectionMode && <input type="checkbox" checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>

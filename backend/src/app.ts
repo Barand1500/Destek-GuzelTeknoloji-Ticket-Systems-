@@ -20,7 +20,13 @@ app.use(
 app.get("/api/health", async (_req, res, next) => {
   try {
     const [version] = await db.$queryRawUnsafe<Array<{ version: string }>>("SELECT VERSION() AS version");
-    const database = version?.version?.toLowerCase().includes("mysql") ? "mysql" : "unknown";
+    const versionString = version?.version?.toLowerCase() ?? "";
+
+const database = versionString.includes("mariadb")
+  ? "mariadb"
+  : versionString.includes("mysql")
+    ? "mysql"
+    : "unknown";
     res.json({ success: true, data: { status: "ok", database }, ...(env.NODE_ENV==='development'?{instance:createHash('sha256').update(path.resolve(process.cwd(),'..').toLowerCase()).digest('hex').slice(0,16)}:{}) });
   } catch (error) {
     next(error);

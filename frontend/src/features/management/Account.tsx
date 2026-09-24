@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Eye, EyeOff, Mail, MessageCircle, MessageSquare, Search, Trash2 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Mail, MessageCircle, MessageSquare, Search, Timer, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "../../services/api";
@@ -20,6 +20,7 @@ import { conversationPath } from "../../router/paths";
 import { EmailInput } from "../../components/EmailInput";
 import { DropdownSelect } from "../../components/DropdownSelect";
 type IntegrationSettings = {
+  responseFastMinutes: number; responseNormalMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string; responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number;
   smtpEnabled: boolean; smtpHost: string; smtpPort: number; smtpSecure: boolean; smtpUser: string; smtpPassword: string; smtpFromAddress: string; smtpFromName: string;
   imapEnabled: boolean; imapConnectionName: string; imapHost: string; imapPort: number; imapSecure: boolean; imapAuthType: "BASIC" | "OAUTH2"; imapUser: string; imapPassword: string; imapMailbox: string; imapPollIntervalSeconds: number; imapCreateTickets: boolean; imapCreateReplies: boolean; imapDepartmentId: string | null;
   smsEnabled: boolean; smsApiUser: string; smsApiPassword: string; smsSender: string; smsVirtualNumber: string; smsWebhookSecret: string; smsDepartmentId: string | null;
@@ -117,16 +118,29 @@ export function NotificationsPage() {
                 </small>
                 <span className="notification-read-state">{notification.isRead ? "Okundu" : "Okunmadı"}</span>
                 {notification.conversationId && (
-                  <div>
+                  <div className="notification-conversation-actions">
+                    {!notification.isRead && (
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={read.isPending}
+                        onClick={() => read.mutate(notification.id)}
+                      >
+                        Okundu işaretle
+                      </button>
+                    )}
                     <Link
+                      className={`notification-conversation-link${notification.isRead ? " standalone" : ""}`}
                       to={conversationPath(user!.role, notification.conversationId)}
+                      aria-label="Görüşmeye git"
+                      title="Görüşmeye git"
                     >
-                      Görüşmeye git →
+                      {notification.isRead ? "Görüşmeye git →" : "→"}
                     </Link>
                   </div>
                 )}
               </div>
-              {!notification.isRead && (
+              {!notification.isRead && !notification.conversationId && (
                 <button
                   className="button secondary"
                   disabled={read.isPending}
@@ -196,7 +210,7 @@ export function IntegrationsPage() {
   const test = useMutation({ mutationFn: (channel: "SMTP" | "IMAP" | "SMS" | "WHATSAPP") => api.post("/integrations/test", { channel }), onSuccess: (response) => { const value = response.data.data; setResult(value.success ? `Bağlantı başarılı: ${value.message}` : `Bağlantı başarısız: ${value.message}`); void client.invalidateQueries({ queryKey: ["/integrations"] }); }, onError: (error: unknown) => { const response = error as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string }; setResult(`Bağlantı testi başlatılamadı: ${response.response?.data?.error?.message ?? response.response?.data?.message ?? response.message ?? "Bilinmeyen hata"}`); } });
   function submit(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event); const current = settings.data!;
-    const { lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...data } = current;
+    const { id: _id, lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...data } = current as IntegrationSettings & { id?: string };
     if (tab === "email" && emailTab === "outgoing") Object.assign(data, {
       smtpEnabled: values.get("smtpEnabled") === "on", smtpHost: fieldValue(values, "smtpHost"), smtpPort: numberValue(values, "smtpPort", 587), smtpSecure: values.get("smtpSecure") === "on", smtpUser: fieldValue(values, "smtpUser"), smtpPassword: fieldValue(values, "smtpPassword"), smtpFromAddress: fieldValue(values, "smtpFromAddress"), smtpFromName: fieldValue(values, "smtpFromName"),
     });
@@ -224,6 +238,35 @@ export function IntegrationsPage() {
       {tab === "whatsapp" && <section className="integration-card whatsapp-card"><div className="integration-heading"><h2>Meta WhatsApp Cloud API</h2><IntegrationToggle name="whatsappEnabled" label="WhatsApp entegrasyonunu etkinleştir" defaultChecked={settings.data.whatsappEnabled} /></div><div className="integration-fields"><label><span className="field-label">Meta uygulama kimliği</span><input name="whatsappAppId" defaultValue={settings.data.whatsappAppId} /></label><label><span className="field-label">Uygulama gizli anahtarı</span><input name="whatsappAppSecret" defaultValue={settings.data.whatsappAppSecret} /></label><label><span className="field-label">Telefon numarası kimliği</span><input name="whatsappPhoneNumberId" defaultValue={settings.data.whatsappPhoneNumberId} /></label><label><span className="field-label">Erişim belirteci</span><input name="whatsappAccessToken" defaultValue={settings.data.whatsappAccessToken} /></label><label><span className="field-label">Webhook doğrulama belirteci</span><input name="whatsappVerifyToken" defaultValue={settings.data.whatsappVerifyToken} /></label><IntegrationDepartment value={whatsappDepartment || settings.data.whatsappDepartmentId || ""} options={departmentOptions} onChange={setWhatsappDepartment} /></div></section>}
       <div className="integration-footer">{visibleTestMessage && <p className={settings.data.lastTestSuccess === false && !result ? "error" : "muted"}>{visibleTestMessage}</p>}<button className="button primary" disabled={save.isPending || test.isPending}>{save.isPending || test.isPending ? "Kaydediliyor…" : "Kaydet ve test et"}</button></div>
     </form>}</main>;
+}
+
+export function ResponseTimeRulesPage() {
+  const client = useQueryClient();
+  const [saved, setSaved] = useState(false);
+  const settings = useQuery({ queryKey: ["/integrations"], queryFn: async () => (await api.get("/integrations")).data.data as IntegrationSettings });
+  const save = useMutation({
+    mutationFn: (rules: Pick<IntegrationSettings, "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor">) => {
+      const current = settings.data!;
+      const { id: _id, lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...data } = current as IntegrationSettings & { id?: string };
+      return api.put("/integrations", { ...data, ...rules });
+    },
+    onSuccess: async () => { setSaved(true); await client.invalidateQueries({ queryKey: ["/integrations"] }); await client.invalidateQueries({ queryKey: ["conversations"] }); },
+  });
+  function submit(event: FormEvent<HTMLFormElement>) {
+    const values = formValues(event);
+    setSaved(false);
+    save.mutate({ responseFastFromMinutes: numberValue(values, "responseFastFromMinutes", 0), responseFastToMinutes: numberValue(values, "responseFastToMinutes", 15), responseNormalFromMinutes: numberValue(values, "responseNormalFromMinutes", 16), responseNormalToMinutes: numberValue(values, "responseNormalToMinutes", 60), responseLateFromMinutes: numberValue(values, "responseLateFromMinutes", 61), responseLateToMinutes: numberValue(values, "responseLateToMinutes", 10080), responseFastColor: fieldValue(values, "responseFastColor"), responseNormalColor: fieldValue(values, "responseNormalColor"), responseLateColor: fieldValue(values, "responseLateColor") });
+  }
+  const fast = [settings.data?.responseFastFromMinutes ?? 0, settings.data?.responseFastToMinutes ?? 15];
+  const normal = [settings.data?.responseNormalFromMinutes ?? 16, settings.data?.responseNormalToMinutes ?? 60];
+  const late = [settings.data?.responseLateFromMinutes ?? 61, settings.data?.responseLateToMinutes ?? 10080];
+  const fastColor = settings.data?.responseFastColor ?? "#16715d";
+  const normalColor = settings.data?.responseNormalColor ?? "#a86606";
+  const lateColor = settings.data?.responseLateColor ?? "#c2413c";
+  return <main className="page response-rules-page"><Heading title="Yanıt süresi kuralları" description="Talep açılışı ile ilk personel yanıtı arasındaki süreyi sınıflandırın." />
+    <ListState loading={settings.isPending} error={settings.error} empty={false} />
+    {settings.data && <form className="management-form response-rules-form" onSubmit={submit}><section className="integration-card response-rules-card"><div className="integration-heading"><div><h2><Timer size={18} /> Renk ve süre eşikleri</h2><p>Her seviye için dakika aralığını ve yalnız yanıt yazısının rengini seçin.</p></div></div><div className="response-range-row"><strong>Hızlı yanıt</strong><label><span>Başlangıç dk</span><input name="responseFastFromMinutes" type="number" min="0" defaultValue={fast[0]} /></label><label><span>Bitiş dk</span><input name="responseFastToMinutes" type="number" min="0" defaultValue={fast[1]} /></label><label className="response-color-picker"><span>Renk</span><input name="responseFastColor" type="color" defaultValue={fastColor} /></label></div><div className="response-range-row"><strong>Normal yanıt</strong><label><span>Başlangıç dk</span><input name="responseNormalFromMinutes" type="number" min="0" defaultValue={normal[0]} /></label><label><span>Bitiş dk</span><input name="responseNormalToMinutes" type="number" min="0" defaultValue={normal[1]} /></label><label className="response-color-picker"><span>Renk</span><input name="responseNormalColor" type="color" defaultValue={normalColor} /></label></div><div className="response-range-row"><strong>Çok geç yanıt</strong><label><span>Başlangıç dk</span><input name="responseLateFromMinutes" type="number" min="0" defaultValue={late[0]} /></label><label><span>Bitiş dk</span><input name="responseLateToMinutes" type="number" min="0" defaultValue={late[1]} /></label><label className="response-color-picker"><span>Renk</span><input name="responseLateColor" type="color" defaultValue={lateColor} /></label></div><ErrorMessage error={save.error} />{saved && <p className="management-success">Yanıt süresi kuralları kaydedildi.</p>}</section><FormActions pending={save.isPending} submitLabel="Kuralları kaydet" /></form>}
+  </main>;
 }
 
 export function ProfilePage() {

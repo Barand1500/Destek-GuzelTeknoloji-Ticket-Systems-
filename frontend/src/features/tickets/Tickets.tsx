@@ -59,13 +59,13 @@ const durationBetween = (from: string, to: string) => {
   const hours = Math.floor(minutes / 60), remainder = minutes % 60;
   return hours < 24 ? `${hours} sa${remainder ? ` ${remainder} dk` : ""}` : `${Math.floor(hours / 24)} gün`;
 };
-const responseTime = (minutes?: number | null, pending?: boolean) => {
-  if (minutes == null) return "Yanıt yok";
-  if (minutes < 1) return "1 dk'dan kısa";
-  if (minutes < 60) return `${minutes} dk`;
-  const hours = Math.floor(minutes / 60);
-  const duration = hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`;
-  return pending ? `${duration} bekliyor` : duration;
+const responseTime = (openedAt: string, firstResponseAt: string | null | undefined, rules?: { responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string }) => {
+  if (!firstResponseAt) return { label: "Yanıt bekliyor", state: "waiting", color: rules?.responseLateColor ?? "#c2413c" };
+  const minutes = Math.max(0, Math.floor((new Date(firstResponseAt).getTime() - new Date(openedAt).getTime()) / 60000));
+  const label = minutes < 1 ? "1 dk'dan kısa" : minutes < 60 ? `${minutes} dk` : (() => { const hours = Math.floor(minutes / 60); return hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`; })();
+  const fast = !rules || (minutes >= rules.responseFastFromMinutes && minutes <= rules.responseFastToMinutes);
+  const normal = rules && minutes >= rules.responseNormalFromMinutes && minutes <= rules.responseNormalToMinutes;
+  return fast ? { label, state: "fast", color: rules?.responseFastColor ?? "#16715d" } : normal ? { label, state: "normal", color: rules.responseNormalColor } : { label, state: "late", color: rules?.responseLateColor ?? "#c2413c" };
 };
 export function Badge({ status }: { status: Conversation["status"] }) {
   return (
@@ -354,7 +354,7 @@ export function TicketList() {
                       )}
                     </td>
                     <td className="muted">{date(ticket.createdAt)}</td>
-                    <td className={ticket.latestCustomerResponseMinutes != null ? "ticket-response" : "muted"}>{responseTime(ticket.latestCustomerResponseMinutes, ticket.latestCustomerResponsePending)}</td>
+                    <td className={`ticket-response response-${responseTime(ticket.createdAt, ticket.firstResponseAt, query.data.responseTimeRules).state}`} style={{ color: responseTime(ticket.createdAt, ticket.firstResponseAt, query.data.responseTimeRules).color }}>{responseTime(ticket.createdAt, ticket.firstResponseAt, query.data.responseTimeRules).label}</td>
                     <td className="muted">{date(ticket.updatedAt)}</td>
                   </tr>
                 ))}

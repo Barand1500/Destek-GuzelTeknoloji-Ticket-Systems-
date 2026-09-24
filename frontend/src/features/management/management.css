@@ -209,6 +209,10 @@
   display: inline-block;
   margin-top: 8px;
 }
+.notification-conversation-link {
+  display: grid !important;
+  margin-top: 0 !important;
+}
 .management-narrow {
   max-width: 650px;
 }

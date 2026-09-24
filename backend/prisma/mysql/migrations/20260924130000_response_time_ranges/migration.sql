@@ -1,0 +1,7 @@
+ALTER TABLE `IntegrationSettings`
+  ADD COLUMN `responseFastFromMinutes` INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN `responseFastToMinutes` INTEGER NOT NULL DEFAULT 15,
+  ADD COLUMN `responseNormalFromMinutes` INTEGER NOT NULL DEFAULT 16,
+  ADD COLUMN `responseNormalToMinutes` INTEGER NOT NULL DEFAULT 60,
+  ADD COLUMN `responseLateFromMinutes` INTEGER NOT NULL DEFAULT 61,
+  ADD COLUMN `responseLateToMinutes` INTEGER NOT NULL DEFAULT 10080;

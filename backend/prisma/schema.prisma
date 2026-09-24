@@ -246,6 +246,17 @@ model SystemSettings {
 }
 model IntegrationSettings {
   id String @id @default("default")
+  responseFastMinutes Int @default(15)
+  responseNormalMinutes Int @default(60)
+  responseFastColor String @default("#16715d")
+  responseNormalColor String @default("#a86606")
+  responseLateColor String @default("#c2413c")
+  responseFastFromMinutes Int @default(0)
+  responseFastToMinutes Int @default(15)
+  responseNormalFromMinutes Int @default(16)
+  responseNormalToMinutes Int @default(60)
+  responseLateFromMinutes Int @default(61)
+  responseLateToMinutes Int @default(10080)
   smtpEnabled Boolean @default(false)
   smtpHost String @default("")
   smtpPort Int @default(587)

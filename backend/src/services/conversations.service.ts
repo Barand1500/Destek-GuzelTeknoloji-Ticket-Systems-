@@ -118,29 +118,12 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         where: { conversationId: { in: data.map((conversation) => conversation.id) }, type: { in: ["CUSTOMER_MESSAGE", "AGENT_REPLY"] } },
         _count: { _all: true },
       }) : [];
-      // This is separate from firstResponseAt: the inbox must show how long it
-      // took to answer the most recent customer message.
-      const messageTimeline = data.length ? await tx.conversationMessage.findMany({
-        where: {
-          conversationId: { in: data.map((conversation) => conversation.id) },
-          type: { in: ["CUSTOMER_MESSAGE", "AGENT_REPLY"] },
-        },
-        select: { conversationId: true, type: true, createdAt: true },
-        orderBy: [{ conversationId: "asc" }, { createdAt: "asc" }, { id: "asc" }],
-      }) : [];
       const statsByConversation = new Map<string, typeof messageStats>();
       for (const stat of messageStats) {
         const current = statsByConversation.get(stat.conversationId) ?? [];
         current.push(stat);
         statsByConversation.set(stat.conversationId, current);
       }
-      const timelineByConversation = new Map<string, typeof messageTimeline>();
-      for (const message of messageTimeline) {
-        const current = timelineByConversation.get(message.conversationId) ?? [];
-        current.push(message);
-        timelineByConversation.set(message.conversationId, current);
-      }
-      const now = Date.now();
       const enriched = data.map((conversation) => {
         const stats = statsByConversation.get(conversation.id) ?? [];
         const customerStats = stats.filter((stat) => stat.type === "CUSTOMER_MESSAGE");
@@ -148,24 +131,12 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         const assignedStats = conversation.assignedAgentId
           ? staffReplyStats.filter((stat) => stat.authorId === conversation.assignedAgentId)
           : [];
-        const timeline = timelineByConversation.get(conversation.id) ?? [];
-        const lastCustomerIndex = timeline.map((message) => message.type).lastIndexOf("CUSTOMER_MESSAGE");
-        const lastCustomerMessage = lastCustomerIndex >= 0 ? timeline[lastCustomerIndex] : undefined;
-        const followingAgentReply = lastCustomerMessage
-          ? timeline.slice(lastCustomerIndex + 1).find((message) => message.type === "AGENT_REPLY")
-          : undefined;
-        const responseReference = followingAgentReply?.createdAt.getTime() ?? now;
-        const latestCustomerResponseMinutes = lastCustomerMessage
-          ? Math.max(0, Math.floor((responseReference - lastCustomerMessage.createdAt.getTime()) / 60_000))
-          : null;
         return {
           ...conversation,
           customerMessageCount: customerStats.reduce((sum, stat) => sum + stat._count._all, 0),
           // An earlier reply can predate a reassignment. In that case, show the
           // conversation's staff-reply total instead of a misleading zero.
           assignedAgentMessageCount: (assignedStats.length ? assignedStats : staffReplyStats).reduce((sum, stat) => sum + stat._count._all, 0),
-          latestCustomerResponseMinutes,
-          latestCustomerResponsePending: Boolean(lastCustomerMessage && !followingAgentReply),
         };
       });
       return [enriched, total] as const;
@@ -174,6 +145,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   );
   return {
     data,
+    responseTimeRules: await db.integrationSettings.findUnique({ where: { id: "default" }, select: { responseFastFromMinutes: true, responseFastToMinutes: true, responseNormalFromMinutes: true, responseNormalToMinutes: true, responseLateFromMinutes: true, responseLateToMinutes: true, responseFastColor: true, responseNormalColor: true, responseLateColor: true } }) ?? { responseFastFromMinutes: 0, responseFastToMinutes: 15, responseNormalFromMinutes: 16, responseNormalToMinutes: 60, responseLateFromMinutes: 61, responseLateToMinutes: 10080, responseFastColor: "#16715d", responseNormalColor: "#a86606", responseLateColor: "#c2413c" },
     pagination: {
       page: q.page,
       limit: q.limit,
