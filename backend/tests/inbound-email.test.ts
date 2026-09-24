@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { matchesSender, selectEmailCustomer } from '../src/services/inbound-email-matching.js';
+import { inboundReplyText } from '../src/services/inbound-email.service.js';
 
 const adem = { id: 'adem', name: 'ADEM DURGUN', email: 'yunusdurgun22@gmail.com', extraEmails: 'alias@example.test, other@example.test' };
 const yunus = { id: 'yunus', name: 'YUNUS DURGUN', email: 'durgunyunus4@gmail.com', extraEmails: null };
@@ -13,6 +14,13 @@ test('exact sender address wins even when display name matches another customer'
 test('additional addresses use full tokens rather than substring matching', () => {
   assert.equal(matchesSender(adem, 'alias@example.test'), true);
   assert.equal(matchesSender(adem, 'lias@example.test'), false);
+});
+
+test('inbound email saves only the new reply, not Gmail quoted history', () => {
+  assert.equal(inboundReplyText('merhabalar çözüldü mü\n\n24 Eyl 2026 Per 09:29 tarihinde Ercan Güzel şunu yazdı:\n> önceki yanıt\n> devamı'), 'merhabalar çözüldü mü');
+  assert.equal(inboundReplyText('Yeni cevabım\n\nOn Tue, Sep 24, 2026 at 09:29 Ercan wrote:\n> Previous reply'), 'Yeni cevabım');
+  assert.equal(inboundReplyText('<p>Yeni cevabım</p><br><div>24 Eyl 2026 tarihinde Ercan şunu yazdı:</div><blockquote>Önceki yanıt</blockquote>'), 'Yeni cevabım');
+  assert.equal(inboundReplyText('hayır\n\nErcan Güzel, 24 Eyl 2026 Per, 09:41 tarihinde\nönceki e-posta'), 'hayır');
 });
 test('shared addresses cannot be assigned arbitrarily', () => {
   assert.throws(() => selectEmailCustomer([adem, { ...adem, id: 'another', name: 'Someone else' }], adem.email), /belirsiz/);

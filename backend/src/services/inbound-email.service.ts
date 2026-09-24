@@ -13,8 +13,33 @@ let running = false;
 let timer: NodeJS.Timeout | undefined;
 let lastStoredPollAt = 0;
 
-function plainText(value: string) {
-  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 10_000);
+export function inboundReplyText(value: string) {
+  const text = value
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/p\s*>/gi, "\n")
+    .replace(/<\/(?:div|blockquote|li|tr|h[1-6])\s*>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[\u00a0\u202f]/g, " ")
+    .replace(/\r\n?/g, "\n");
+  const lines = text.split("\n");
+  // Gmail adds one of these lines before the quoted original message. Do not
+  // store that original message as a second customer reply in the ticket.
+  const quoteStart = lines.findIndex((line) => {
+    const normalized = line.trim();
+    return normalized.startsWith(">")
+      || /(?:şunu yazdı|wrote):\s*$/i.test(normalized)
+      // Gmail can omit the trailing “şunu yazdı” portion when it creates its
+      // plain-text alternative, leaving only this localized date header.
+      || /\d{1,2}\s+\S+\s+\d{4}.*\btarihinde\b/i.test(normalized)
+      || /^(?:-{2,}\s*)?(?:original message|forwarded message)/i.test(normalized);
+  });
+  return lines
+    .slice(0, quoteStart >= 0 ? quoteStart : undefined)
+    .join("\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 10_000);
 }
 
 export async function persistInboundEmail(input: {
@@ -134,7 +159,7 @@ export async function syncInboundEmail() {
         if (!message || !message.source || !message.uid) continue;
         const parsed = await simpleParser(message.source);
         const sender = parsed.from?.value.find((value) => value.address)?.address;
-        const body = plainText(parsed.text || parsed.html || "");
+        const body = inboundReplyText(parsed.text || parsed.html || "");
         if (!sender || !body) continue;
         if (sender.trim().toLowerCase() === config.user!.trim().toLowerCase()) continue;
         await persistInboundEmail({
