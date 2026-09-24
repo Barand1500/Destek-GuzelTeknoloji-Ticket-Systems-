@@ -363,6 +363,7 @@ export async function testIntegration(actor: Actor, channel: "SMTP" | "IMAP" | "
       await nodemailer.createTransport({ host: settings.smtpHost, port: settings.smtpPort, secure: useTls && settings.smtpPort === 465, requireTLS: useTls && settings.smtpPort !== 465, ...(settings.smtpUser ? { auth: { user: settings.smtpUser, pass: settings.smtpPassword } } : {}) }).verify();
     } else if (channel === "IMAP") {
       if (!settings.imapHost || !settings.imapUser || !settings.imapPassword) throw new Error("IMAP bağlantı bilgileri zorunludur.");
+      if (settings.imapSecure && settings.imapPort !== 993) throw new Error("IMAP SSL/TLS için 993 portunu kullanın; 587 SMTP portudur.");
       const client = new ImapFlow({ host: settings.imapHost, port: settings.imapPort, secure: settings.imapSecure, auth: settings.imapAuthType === "OAUTH2" ? { user: settings.imapUser, accessToken: settings.imapPassword } : { user: settings.imapUser, pass: settings.imapPassword }, logger: false });
       await client.connect(); await client.logout();
     } else if (channel === "SMS") {

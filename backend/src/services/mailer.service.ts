@@ -6,17 +6,18 @@ import { ticketReplyAddress } from './email-reply-address.js';
 
 async function transportForSettings() {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
-  const stored = Boolean(settings?.smtpEnabled && settings.smtpHost && settings.smtpFromAddress && (!settings.smtpUser || settings.smtpPassword));
-  const host = stored ? settings!.smtpHost : env.SMTP_HOST;
-  const from = stored ? settings!.smtpFromAddress : env.SMTP_FROM;
-  const user = stored ? settings!.smtpUser : env.SMTP_USER;
-  const password = stored ? settings!.smtpPassword : env.SMTP_PASSWORD ?? env.SMTP_PASS;
-  const port = stored ? settings!.smtpPort : env.SMTP_PORT;
-  const useTls = stored ? settings!.smtpSecure : env.SMTP_SECURE || env.SMTP_PORT === 465;
+  const hasStored = Boolean(settings && (settings.smtpHost || settings.smtpFromAddress || settings.smtpUser || settings.smtpPassword));
+  if (hasStored && !settings!.smtpEnabled) return null;
+  const host = settings?.smtpHost || env.SMTP_HOST;
+  const from = settings?.smtpFromAddress || env.SMTP_FROM;
+  const user = settings?.smtpUser || env.SMTP_USER;
+  const password = settings?.smtpPassword || env.SMTP_PASSWORD || env.SMTP_PASS;
+  const port = settings?.smtpPort || env.SMTP_PORT;
+  const useTls = hasStored ? settings!.smtpSecure : (env.SMTP_SECURE || env.SMTP_PORT === 465);
   if (!host || !from || (user && !password)) return null;
   // Gmail and most providers use STARTTLS on 587; implicit TLS is only used on 465.
   const secure = useTls && port === 465;
-  return { from: stored && settings!.smtpFromName ? `${settings!.smtpFromName} <${from}>` : from, transport: nodemailer.createTransport({
+  return { from: settings?.smtpFromName ? `${settings.smtpFromName} <${from}>` : from, transport: nodemailer.createTransport({
   host, port,
   secure,
   requireTLS: useTls && port !== 465,

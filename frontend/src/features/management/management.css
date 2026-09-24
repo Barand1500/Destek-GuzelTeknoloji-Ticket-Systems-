@@ -786,8 +786,10 @@ html[data-theme="dark"] .notification-read-state { color: #8dd0b8; }
 .integration-toggle input:checked + i { background:#167766; }
 .integration-toggle input:checked + i::after { transform:translateX(16px); }
 .integration-department { display:grid; grid-template-columns:1fr minmax(190px,1fr); align-items:center; gap:14px; font-size:12px; font-weight:650; color:#334a41; }
-.integration-footer { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:0 2px; }
-.integration-footer p { margin:0; font-size:12px; }
+.integration-footer { display:grid; grid-template-columns:1fr auto; align-items:center; gap:16px; padding:0 2px; }
+.integration-footer p { grid-column:2; grid-row:1; margin:0; font-size:12px; justify-self:end; text-align:right; }
+.integration-footer .button { grid-column:1; grid-row:1; justify-self:start; }
+@media(max-width:700px) { .integration-footer { grid-template-columns:1fr; } .integration-footer p,.integration-footer .button { grid-column:1; grid-row:auto; justify-self:stretch; text-align:left; } }
 html[data-theme="dark"] .integration-tabs,html[data-theme="dark"] .integration-subtabs { border-color:#31463d; }
 html[data-theme="dark"] .integration-tabs button,html[data-theme="dark"] .integration-subtabs button { color:#a9beb4; }
 html[data-theme="dark"] .integration-tabs button.active,html[data-theme="dark"] .integration-subtabs button.active { border-color:#8dd0b8; color:#8dd0b8; }

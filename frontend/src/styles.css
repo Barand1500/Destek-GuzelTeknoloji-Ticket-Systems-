@@ -169,6 +169,8 @@ label:has(> .field-label) > textarea:focus {
   background: #edf5ef;
   color: #166b5c;
 }
+.integration-password-field { width:100%; }
+.integration-password-field input { flex:1; min-width:0; }
 .email-field {
   position: relative;
   display: block;

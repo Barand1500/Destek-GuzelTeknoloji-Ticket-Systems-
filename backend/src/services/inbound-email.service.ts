@@ -127,8 +127,10 @@ export async function persistInboundEmail(input: {
 
 export async function syncInboundEmail() {
   const integration = await db.integrationSettings.findUnique({ where: { id: "default" } });
-  const useStored = Boolean(integration?.imapEnabled && integration.imapHost && integration.imapUser && integration.imapPassword);
-  const config = useStored ? { host: integration!.imapHost, port: integration!.imapPort, secure: integration!.imapSecure, authType: integration!.imapAuthType, user: integration!.imapUser, password: integration!.imapPassword, mailbox: integration!.imapMailbox, interval: integration!.imapPollIntervalSeconds, departmentId: integration!.imapDepartmentId, createTickets: integration!.imapCreateTickets, createReplies: integration!.imapCreateReplies } : { host: env.IMAP_HOST, port: env.IMAP_PORT, secure: env.IMAP_SECURE || env.IMAP_PORT === 993, authType: "BASIC", user: env.IMAP_USER, password: env.IMAP_PASSWORD ?? env.IMAP_PASS, mailbox: env.IMAP_MAILBOX, interval: env.IMAP_POLL_INTERVAL_SECONDS, departmentId: null, createTickets: true, createReplies: true };
+  const hasStored = Boolean(integration && (integration.imapHost || integration.imapUser || integration.imapPassword));
+  const useStored = Boolean(hasStored && integration?.imapEnabled);
+  if (hasStored && !integration!.imapEnabled) return { configured: false, processed: 0 };
+  const config = { host: integration?.imapHost || env.IMAP_HOST, port: hasStored ? integration!.imapPort : env.IMAP_PORT, secure: hasStored ? integration!.imapSecure : (env.IMAP_SECURE || env.IMAP_PORT === 993), authType: hasStored ? integration!.imapAuthType : "BASIC", user: integration?.imapUser || env.IMAP_USER, password: integration?.imapPassword || env.IMAP_PASSWORD || env.IMAP_PASS, mailbox: hasStored ? integration!.imapMailbox : env.IMAP_MAILBOX, interval: hasStored ? integration!.imapPollIntervalSeconds : env.IMAP_POLL_INTERVAL_SECONDS, departmentId: integration?.imapDepartmentId || null, createTickets: hasStored ? integration!.imapCreateTickets : true, createReplies: hasStored ? integration!.imapCreateReplies : true };
   const configured = Boolean(config.host && config.user && config.password);
   if (!configured || running) return { configured, processed: 0 };
   if (useStored && Date.now() - lastStoredPollAt < config.interval * 1000) return { configured, processed: 0 };
