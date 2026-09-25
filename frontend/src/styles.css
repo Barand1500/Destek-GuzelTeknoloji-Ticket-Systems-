@@ -2379,9 +2379,9 @@ html[data-theme="dark"] .management-bar-track { background: #2b493c; }
 .message-list { display:flex; flex:1 1 auto; min-height:0; flex-direction:column; gap:12px; padding-top:18px; overflow-y:auto; scrollbar-width:none; }
 .message-list::-webkit-scrollbar { display:none; width:0; height:0; }
 .message { width:100%; padding:0; border:0; }
-.message-content { flex:0 1 min(76%, 720px); padding:12px 14px; border:1px solid #e1e8e2; border-radius:16px 16px 16px 5px; background:#f7faf8; box-shadow:0 2px 8px rgba(27,61,45,.04); }
+.message-content { flex:0 1 min(76%, 720px); padding:12px 14px; border:1px solid #e1e8e2; border-radius:16px; background:#f7faf8; box-shadow:0 2px 8px rgba(27,61,45,.04); }
 .message.outgoing { flex-direction:row-reverse; }
-.message.outgoing .message-content { border-color:#b8dfd0; border-radius:16px 16px 5px 16px; background:#e4f4ec; }
+.message.outgoing .message-content { border-color:#b8dfd0; border-radius:16px; background:#e4f4ec; }
 .message.incoming .avatar { background:#edf3ea; color:#236b58; }
 .message header { align-items:center; }
 .message.outgoing header { flex-direction:row-reverse; }
