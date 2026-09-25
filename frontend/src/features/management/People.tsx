@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { Info, Pencil, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import {
@@ -119,6 +119,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState<ManagedUser | null>(null);
+  const [roleInfoOpen, setRoleInfoOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
   const remove = useDelete('/users', ['/customers']);
   const [formVersion, setFormVersion] = useState(0);
@@ -169,6 +170,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   }
   return (
     <main className="page">
+      <button type="button" className="role-info-button" aria-label="Roller ve yetkiler" title="Roller ve yetkiler" onClick={() => setRoleInfoOpen(true)}><Info size={17} /></button>
+      {roleInfoOpen && <div className="confirm-backdrop" role="presentation" onMouseDown={() => setRoleInfoOpen(false)}><section className="role-info-modal" role="dialog" aria-modal="true" aria-labelledby="role-info-title" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="confirm-close" aria-label="Kapat" onClick={() => setRoleInfoOpen(false)}><X size={18} /></button><h2 id="role-info-title">Roller ve yetkiler</h2><div className="role-info-list"><article><strong>Yönetici</strong><p>Tüm talepleri, kullanıcıları, departmanları ve sistem ayarlarını yönetir.</p></article><article><strong>Departman sorumlusu</strong><p>Kendi departmanındaki talepleri görür; atama, departmana aktarma ve web bilgilerini yönetebilir.</p></article><article><strong>Destek uzmanı</strong><p>Kendisine atanan veya departman kuyruğundaki talepleri görür ve yanıtlar.</p></article></div></section></div>}
       <Heading
         title={defaultRole === "AGENT" ? "Destek uzmanları" : defaultRole === "SUPERVISOR" ? "Departman sorumluları" : "Personeller"}
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."

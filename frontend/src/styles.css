@@ -326,6 +326,28 @@ html[data-theme="dark"] .internal-note-input::placeholder { color:#ff9d91; }
   overflow: hidden;
   font-size: 0;
 }
+.role-info-button {
+  position:absolute;
+  top:18px;
+  right:24px;
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  padding:0;
+  border:1px solid #dce5df;
+  border-radius:8px;
+  background:#fff;
+  color:#176f5d;
+  cursor:pointer;
+}
+.role-info-button:hover { background:#edf7f2; }
+.role-info-modal { position:relative; width:min(520px,100%); padding:28px; border-radius:14px; background:#fff; box-shadow:0 22px 60px rgba(25,48,39,.25); }
+.role-info-modal h2 { margin:0 34px 18px 0; font-size:20px; color:#263a36; }
+.role-info-list { display:grid; gap:12px; }
+.role-info-list article { padding:12px 14px; border:1px solid #e0e9e3; border-radius:9px; background:#f7faf8; }
+.role-info-list strong { display:block; margin-bottom:4px; color:#176f5d; font-size:13px; }
+.role-info-list p { margin:0; color:#687a72; font-size:12px; line-height:1.5; }
 .management-table .management-actions > button.button.secondary {
   border: 1px solid #e0e6e2;
   border-radius: 6px;
@@ -1183,6 +1205,7 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
   font-weight: 700;
 }
 .page {
+  position:relative;
   padding: 35px 36px 28px;
   max-width: 1800px;
   margin: 0 auto;
@@ -1904,6 +1927,23 @@ html[data-theme="dark"] .conversation-log-entry p, html[data-theme="dark"] .conv
 }
 .ticket-properties label > .badge {
   align-self: start;
+}
+.ticket-properties > div > label {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-height:38px;
+  padding:8px 11px;
+  box-sizing:border-box;
+  border:1px solid #b8c6d5;
+  border-radius:8px;
+  background:#fff;
+}
+.ticket-properties > div > label > a,
+.ticket-properties > div > label > span {
+  color:#526847;
+  font-size:12px;
+  font-weight:400;
 }
 .ticket-properties select {
   font-size: 12px;
