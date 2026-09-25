@@ -244,6 +244,19 @@ model SystemSettings {
   supportPhone String @default("")
   allowRegistration Boolean @default(true)
 }
+model ResponseTimeSettings {
+  id String @id @default("default")
+  responseFastFromMinutes Int @default(0)
+  responseFastToMinutes Int @default(15)
+  responseNormalFromMinutes Int @default(16)
+  responseNormalToMinutes Int @default(60)
+  responseLateFromMinutes Int @default(61)
+  responseLateToMinutes Int @default(10080)
+  responseFastColor String @default("#16715d")
+  responseNormalColor String @default("#a86606")
+  responseLateColor String @default("#c2413c")
+  updatedAt DateTime @updatedAt
+}
 model IntegrationSettings {
   id String @id @default("default")
   responseFastMinutes Int @default(15)
@@ -294,7 +307,7 @@ model IntegrationSettings {
   whatsappDepartmentId String?
   lastTestChannel String?
   lastTestSuccess Boolean?
-  lastTestMessage String?
+  lastTestMessage String? @db.Text
   lastTestedAt DateTime?
   updatedAt DateTime @updatedAt
 }

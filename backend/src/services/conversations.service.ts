@@ -145,7 +145,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   );
   return {
     data,
-    responseTimeRules: await db.integrationSettings.findUnique({ where: { id: "default" }, select: { responseFastFromMinutes: true, responseFastToMinutes: true, responseNormalFromMinutes: true, responseNormalToMinutes: true, responseLateFromMinutes: true, responseLateToMinutes: true, responseFastColor: true, responseNormalColor: true, responseLateColor: true } }) ?? { responseFastFromMinutes: 0, responseFastToMinutes: 15, responseNormalFromMinutes: 16, responseNormalToMinutes: 60, responseLateFromMinutes: 61, responseLateToMinutes: 10080, responseFastColor: "#16715d", responseNormalColor: "#a86606", responseLateColor: "#c2413c" },
+    responseTimeRules: await db.responseTimeSettings.findUnique({ where: { id: "default" }, select: { responseFastFromMinutes: true, responseFastToMinutes: true, responseNormalFromMinutes: true, responseNormalToMinutes: true, responseLateFromMinutes: true, responseLateToMinutes: true, responseFastColor: true, responseNormalColor: true, responseLateColor: true } }) ?? { responseFastFromMinutes: 0, responseFastToMinutes: 15, responseNormalFromMinutes: 16, responseNormalToMinutes: 60, responseLateFromMinutes: 61, responseLateToMinutes: 10080, responseFastColor: "#16715d", responseNormalColor: "#a86606", responseLateColor: "#c2413c" },
     pagination: {
       page: q.page,
       limit: q.limit,

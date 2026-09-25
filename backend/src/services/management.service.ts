@@ -340,6 +340,14 @@ export async function integrationSettings(actor: Actor) {
   requireAdmin(actor);
   return db.integrationSettings.upsert({ where: { id: "default" }, create: { id: "default" }, update: {} });
 }
+export async function responseTimeSettings(actor: Actor) {
+  requireAdmin(actor);
+  return db.responseTimeSettings.upsert({ where: { id: "default" }, create: { id: "default" }, update: {} });
+}
+export async function updateResponseTimeSettings(actor: Actor, input: z.infer<typeof schema.responseTimeSettingsSchema>) {
+  requireAdmin(actor);
+  return db.responseTimeSettings.upsert({ where: { id: "default" }, create: { id: "default", ...input }, update: input });
+}
 export async function updateIntegrationSettings(actor: Actor, input: z.infer<typeof schema.integrationSettingsSchema>) {
   requireAdmin(actor);
   return db.$transaction(async tx => {
@@ -377,7 +385,7 @@ export async function testIntegration(actor: Actor, channel: "SMTP" | "IMAP" | "
     success = true; message ||= "Bağlantı başarıyla doğrulandı.";
   } catch (error) { const detail = error instanceof Error ? error.message : "Bağlantı testi başarısız oldu."; message = /EACCES/.test(detail) ? "SMTP ağı bu sunucuda engelli. Güvenlik duvarında smtp.gmail.com için TCP 587 veya 465 çıkışına izin verin; uygulama parolası bu hatayı çözmez." : detail; }
   const result = { channel, success, message, testedAt: new Date() };
-  await db.integrationSettings.update({ where: { id: "default" }, data: { lastTestChannel: channel, lastTestSuccess: success, lastTestMessage: message, lastTestedAt: result.testedAt } });
+    await db.integrationSettings.update({ where: { id: "default" }, data: { lastTestChannel: channel, lastTestSuccess: success, lastTestMessage: message.slice(0, 5000), lastTestedAt: result.testedAt } });
   return result;
 }
 export async function profile(actor: Actor) { return db.user.findUniqueOrThrow({ where: { id: actor.id }, select: person }); }

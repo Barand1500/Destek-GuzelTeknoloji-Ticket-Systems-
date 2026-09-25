@@ -245,14 +245,12 @@ export function IntegrationsPage() {
 export function ResponseTimeRulesPage() {
   const client = useQueryClient();
   const [saved, setSaved] = useState(false);
-  const settings = useQuery({ queryKey: ["/integrations"], queryFn: async () => (await api.get("/integrations")).data.data as IntegrationSettings });
+  const settings = useQuery({ queryKey: ["/response-time-settings"], queryFn: async () => (await api.get("/response-time-settings")).data.data as Pick<IntegrationSettings, "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor"> });
   const save = useMutation({
     mutationFn: (rules: Pick<IntegrationSettings, "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor">) => {
-      const current = settings.data!;
-      const { id: _id, lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...data } = current as IntegrationSettings & { id?: string };
-      return api.put("/integrations", { ...data, ...rules });
+      return api.put("/response-time-settings", rules);
     },
-    onSuccess: async () => { setSaved(true); await client.invalidateQueries({ queryKey: ["/integrations"] }); await client.invalidateQueries({ queryKey: ["conversations"] }); },
+    onSuccess: async () => { setSaved(true); await client.invalidateQueries({ queryKey: ["/response-time-settings"] }); await client.invalidateQueries({ queryKey: ["conversations"] }); },
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
