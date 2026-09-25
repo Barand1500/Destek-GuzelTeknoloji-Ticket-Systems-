@@ -203,8 +203,9 @@ export async function createConversation(
   });
   publishChange(result.id);
   if (result.customer.email) {
-    const contact = await supportContact();
-    queueSupportEmail(result.customer.email, `Talebiniz oluşturuldu (#${result.number})`, `Merhaba ${result.customer.name},\n\n"${result.subject}" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Talep oluşturma", { conversationId: result.id, userId: actor.id });
+    const contact = await supportContact(); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
+    const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
+    queueSupportEmail(result.customer.email, replace(template.ticketCreatedSubject), `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Talep oluşturma", { conversationId: result.id, userId: actor.id });
   }
   return result;
 }
@@ -303,8 +304,9 @@ export async function addMessage(
       where: { id }, include: { customer: { select: { name: true, email: true, phone: true } } },
     });
     if (conversation?.channel !== "SMS" && conversation?.channel !== "WHATSAPP" && conversation?.customer.email) {
-      const contact = await supportContact();
-      queueSupportEmail(conversation.customer.email, `Talebinize yeni yanıt geldi (#${conversation.number})`, `Merhaba ${conversation.customer.name},\n\n${conversation.subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n${result.body}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });
+      const contact = await supportContact(); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
+      const replace = (value: string) => value.replaceAll("{name}", conversation.customer.name).replaceAll("{subject}", conversation.subject).replaceAll("{number}", String(conversation.number)).replaceAll("{reply}", result.body);
+      queueSupportEmail(conversation.customer.email, replace(template.ticketReplySubject), `${replace(template.ticketReplyBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });
     }
   }
   if (type === 'AGENT_REPLY') {

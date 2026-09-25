@@ -316,6 +316,55 @@ html[data-theme="dark"] .conversation-log-response { color:#8dd0b8; }
 html[data-theme="dark"] .internal-note-input::placeholder { color:#ff9d91; }
 .danger-icon { color:#b34a40; border-color:#f0d4cf; background:#fff5f2; }
 .danger-icon:hover { background:#ffe9e4; }
+.management-table .management-actions > button.button.secondary,
+.management-table .management-actions > button.button.management-danger {
+  box-sizing: border-box;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0;
+}
+.management-table .management-actions > button.button.secondary {
+  border: 1px solid #e0e6e2;
+  border-radius: 6px;
+  background: #fff;
+  color: #61726a;
+  position: relative;
+}
+.management-table .management-actions > button.button.secondary:hover {
+  background: #f7faf8;
+}
+.management-table .management-actions > button.button.management-danger {
+  border: 1px solid #f0d4cf;
+  border-radius: 6px;
+  background: #fff5f2;
+  color: #b34a40;
+  position: relative;
+}
+.management-table .management-actions > button.button.secondary::before,
+.management-table .management-actions > button.button.management-danger::before {
+  content: "";
+  display: block;
+  width: 15px;
+  height: 15px;
+  background: center / contain no-repeat;
+}
+.management-table .management-actions > button.button.secondary::before {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2361726a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E");
+}
+.management-table .management-actions > button.button.management-danger::before {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b34a40' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/%3E%3Cpath d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' x2='10' y1='11' y2='17'/%3E%3Cline x1='14' x2='14' y1='11' y2='17'/%3E%3C/svg%3E");
+}
 .resolved-icon { color:#176f5d; border-color:#c9e5d9; background:#eff9f4; }
 .resolved-icon:hover { background:#def2e9; }
 .error {
@@ -1024,6 +1073,13 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
 .notification-grid .management-notification small { grid-column:3; color:#687a72; font-size:11px; }
 .notification-grid .management-notification > div:first-child > div { grid-column:5; }
 .notification-grid .management-notification > button { grid-column:5; }
+.notification-grid .management-notification > button.button.secondary {
+  width:170px;
+  min-width:170px;
+  height:36px;
+  min-height:36px;
+  box-sizing:border-box;
+}
 .notification-conversation-actions { grid-column:5 !important; display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(0, .65fr); align-items:stretch; justify-self:start; align-self:center; width:170px; height:36px; white-space:nowrap; }
 .notification-conversation-actions .button { width:100%; min-width:0; min-height:36px; height:36px; box-sizing:border-box; padding:0 3px; border-radius:7px 0 0 7px; font-size:10px; }
 .notification-conversation-link { display:grid; width:100%; height:36px; place-items:center; box-sizing:border-box; border:1px solid #cfe3d8; border-left:0; border-radius:0 7px 7px 0; background:#eef8f3; color:#146b59; font-size:14px; font-weight:700; line-height:1; text-decoration:none; }

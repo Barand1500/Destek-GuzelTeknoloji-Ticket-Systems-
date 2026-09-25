@@ -39,9 +39,15 @@ export async function users(actor: Actor, q: z.infer<typeof schema.directoryQuer
   const formatPhone = (digits: string) => digits.length > 4 ? [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 9), digits.slice(9, 11)].filter(Boolean).join(" ") : digits;
   const formattedPhone = formatPhone(phoneDigits);
   const formattedPhoneWithoutZero = formatPhone(phoneWithoutZero);
+  const roleSearch = q.search?.trim().toLocaleLowerCase("tr-TR");
+  const roleMatches = roleSearch ? [
+    ...(roleSearch.includes("yönetici") || roleSearch.includes("yonetici") || roleSearch === "admin" ? ["ADMIN" as const] : []),
+    ...(roleSearch.includes("departman") || roleSearch.includes("sorumlu") || roleSearch === "supervisor" ? ["SUPERVISOR" as const] : []),
+    ...(roleSearch.includes("destek") || roleSearch.includes("uzman") || roleSearch === "agent" ? ["AGENT" as const] : []),
+  ] : [];
   const where: Prisma.UserWhereInput = {
-    id: q.id, role: customersOnly ? "CUSTOMER" : q.role, isActive: customersOnly ? undefined : q.isActive, deletedAt: null,
-    ...(q.search ? { OR: [{ name: { contains: q.search } }, { email: { contains: q.search } }, { phone: { contains: q.search } }, { company: { contains: q.search } }, ...(phoneDigits ? [{ phone: { contains: phoneDigits } }, { phone: { contains: formattedPhone } }, { phone: { contains: phoneWithoutZero } }, { phone: { contains: formattedPhoneWithoutZero } }] : [])] } : {}),
+    id: q.id, role: customersOnly ? "CUSTOMER" : (q.role ?? { in: ["ADMIN", "SUPERVISOR", "AGENT"] }), isActive: customersOnly ? undefined : q.isActive, deletedAt: null,
+    ...(q.search ? { OR: [{ name: { contains: q.search } }, { email: { contains: q.search } }, { phone: { contains: q.search } }, { company: { contains: q.search } }, ...(roleMatches.length ? [{ role: { in: roleMatches } }] : []), ...(phoneDigits ? [{ phone: { contains: phoneDigits } }, { phone: { contains: formattedPhone } }, { phone: { contains: phoneWithoutZero } }, { phone: { contains: formattedPhoneWithoutZero } }] : [])] } : {}),
     ...(customersOnly && actor.role !== "ADMIN" ? { customerConversations: { some: visibility(actor) } } : {}),
   };
   const [data, total] = await db.$transaction([db.user.findMany({ where, select: person, orderBy: customersOnly ? [{ createdAt: "desc" }, { id: "desc" }] : [{ name: "asc" }, { id: "asc" }], ...paging(q) }), db.user.count({ where })]);
@@ -347,6 +353,14 @@ export async function responseTimeSettings(actor: Actor) {
 export async function updateResponseTimeSettings(actor: Actor, input: z.infer<typeof schema.responseTimeSettingsSchema>) {
   requireAdmin(actor);
   return db.responseTimeSettings.upsert({ where: { id: "default" }, create: { id: "default", ...input }, update: input });
+}
+export async function notificationSettings(actor: Actor) {
+  requireAdmin(actor);
+  return db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
+}
+export async function updateNotificationSettings(actor: Actor, input: z.infer<typeof schema.notificationSettingsSchema>) {
+  requireAdmin(actor);
+  return db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ...input }, update: input });
 }
 export async function updateIntegrationSettings(actor: Actor, input: z.infer<typeof schema.integrationSettingsSchema>) {
   requireAdmin(actor);

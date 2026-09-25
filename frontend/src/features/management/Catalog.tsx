@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../auth/Auth";
 import { DeleteModal } from '../../components/DeleteModal';
 import type { Department } from "../../types";
@@ -83,21 +84,27 @@ export function DepartmentsPage() {
                       <td>
                         <div className="management-actions">
                           <button
-                            className="button secondary"
+                            type="button"
+                            className="icon-button"
+                            aria-label={`${item.name} düzenle`}
+                            title="Düzenle"
                             onClick={() => {
                               setEditing(item);
                               setVersion((v) => v + 1);
                               save.reset();
                             }}
                           >
-                            Düzenle
+                            <Pencil size={15} aria-hidden="true" />
                           </button>
                           <button
-                            className="button management-danger"
+                            type="button"
+                            className="icon-button danger-icon"
+                            aria-label={`${item.name} sil`}
+                            title="Sil"
                             disabled={remove.isPending}
                             onClick={() => { remove.reset(); setDeleteTarget(item); }}
                           >
-                            Sil
+                            <Trash2 size={15} aria-hidden="true" />
                           </button>
                         </div>
                       </td>

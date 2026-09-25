@@ -20,6 +20,7 @@ import {
   Sun,
   Search,
   Timer,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -173,6 +174,7 @@ export function Layout() {
                 <div className="settings-nav-links" id="admin-settings-nav">
                   <NavLink to={path("integrations")}><Settings size={16} />Entegrasyonlar</NavLink>
                   <NavLink to={path("response-time-rules")}><Timer size={16} />Yanıt süreleri</NavLink>
+                  <NavLink to={path("notification-settings")}><Mail size={16} />E-posta bildirimleri</NavLink>
                   <NavLink to={path("users")}><Users size={16} />Personeller</NavLink>
                   <NavLink to={path("tags")}><Tags size={16} />Kategoriler</NavLink>
                   <NavLink to={path("websites")}><Tags size={16} />Web siteleri</NavLink>

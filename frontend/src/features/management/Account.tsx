@@ -269,6 +269,14 @@ export function ResponseTimeRulesPage() {
   </main>;
 }
 
+export function NotificationSettingsPage() {
+  const settings = useQuery({ queryKey: ["/notification-settings"], queryFn: async () => (await api.get("/notification-settings")).data.data as { ticketCreatedSubject: string; ticketCreatedBody: string; ticketReplySubject: string; ticketReplyBody: string } });
+  const save = useMutation({ mutationFn: (data: { ticketCreatedSubject: string; ticketCreatedBody: string; ticketReplySubject: string; ticketReplyBody: string }) => api.put("/notification-settings", data) });
+  useEffect(() => { if (!save.isSuccess) return; const timer = window.setTimeout(() => save.reset(), 3000); return () => window.clearTimeout(timer); }, [save.isSuccess, save.reset]);
+  function submit(event: FormEvent<HTMLFormElement>) { const values = formValues(event); save.mutate({ ticketCreatedSubject: fieldValue(values, "ticketCreatedSubject"), ticketCreatedBody: fieldValue(values, "ticketCreatedBody"), ticketReplySubject: fieldValue(values, "ticketReplySubject"), ticketReplyBody: fieldValue(values, "ticketReplyBody") }); }
+  return <main className="page"><Heading title="E-posta bildirimleri" description="Talep oluşturulunca ve yanıt verilince gönderilen mesajları özelleştirin." /><ListState loading={settings.isPending} error={settings.error} empty={false} />{settings.data && <form className="management-form" onSubmit={submit}><section className="integration-card notification-settings-card"><div className="integration-fields"><label><span className="field-label">Talep oluşturma konu başlığı</span><input name="ticketCreatedSubject" defaultValue={settings.data.ticketCreatedSubject} /></label><label><span className="field-label">Talep oluşturma mesajı</span><textarea name="ticketCreatedBody" rows={6} defaultValue={settings.data.ticketCreatedBody} /></label><label><span className="field-label">Yanıt konu başlığı</span><input name="ticketReplySubject" defaultValue={settings.data.ticketReplySubject} /></label><label><span className="field-label">Yanıt mesajı</span><textarea name="ticketReplyBody" rows={8} defaultValue={settings.data.ticketReplyBody} /></label><p className="notification-help"><strong>Mesaj değişkenleri nasıl çalışır?</strong><code>&#123;name&#125;</code> müşterinin adını, <code>&#123;subject&#125;</code> talep başlığını, <code>&#123;number&#125;</code> talep numarasını ekler. Yanıt mesajında <code>&#123;reply&#125;</code> kullanırsanız personelin yazdığı yanıt eklenir. Değişkenleri silerseniz ilgili bilgi e-postada görünmez.</p></div></section><FormActions pending={save.isPending} submitLabel="Bildirimleri kaydet" />{save.isSuccess && <p className="management-success">Bildirim metinleri kaydedildi.</p>}{save.error && <ErrorMessage error={save.error} />}</form>}</main>;
+}
+
 export function ProfilePage() {
   const { updateUser } = useAuth();
   const [formVersion, setFormVersion] = useState(0);

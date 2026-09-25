@@ -36,6 +36,7 @@ import {
   ActivityLogsPage,
   IntegrationsPage,
   ResponseTimeRulesPage,
+  NotificationSettingsPage,
   ProfilePage,
   PhoneSupportPage,
 } from "./pages/Management";
@@ -132,6 +133,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/admin/settings" element={<Navigate to="/admin/integrations" replace />} />
               <Route path="/admin/integrations" element={<IntegrationsPage />} />
               <Route path="/admin/response-time-rules" element={<ResponseTimeRulesPage />} />
+              <Route path="/admin/notification-settings" element={<NotificationSettingsPage />} />
               <Route path="/admin/profile" element={<ProfilePage />} />
               <Route
                 path="/admin/notifications"

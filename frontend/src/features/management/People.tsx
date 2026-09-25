@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import {
@@ -123,7 +123,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const remove = useDelete('/users', ['/customers']);
   const [formVersion, setFormVersion] = useState(0);
   const [role, setRole] = useState<Role>(defaultRole ?? "AGENT");
-  const list = useList<ManagedUser>("/users", defaultRole ? {role:defaultRole} : {});
+  const list = useList<ManagedUser>("/users", defaultRole ? { role: defaultRole } : {});
   const departments = useQuery({
     queryKey: ["/departments", "all-options"],
     queryFn: async () => {
@@ -179,7 +179,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
           <Search
             value={list.search}
             onChange={list.setSearch}
-            label="Ad veya e-posta ile ara"
+            label="Genel personel araması"
           />
           <ErrorMessage error={changeStatus.error} />
           <ListState
@@ -219,19 +219,25 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                       <td>
                         <div className="management-actions">
                           <button
-                            className="button secondary"
+                            type="button"
+                            className="icon-button"
+                            aria-label={`${person.name} düzenle`}
+                            title="Düzenle"
                             onClick={() => edit(person)}
-                          >
-                            Düzenle
+                          ><Pencil size={15} aria-hidden="true" />
+                            
                           </button>
                           <button
-                            className="button management-danger"
+                            type="button"
+                            className="icon-button danger-icon"
+                            aria-label={`${person.name} sil`}
+                            title="Sil"
                             disabled={
                               remove.isPending || person.id === user?.id
                             }
                             onClick={() => { remove.reset(); setDeleteTarget(person); }}
-                          >
-                            Sil
+                          ><Trash2 size={15} aria-hidden="true" />
+                            
                           </button>
                         </div>
                       </td>
@@ -410,8 +416,8 @@ export function CustomersPage() {
                         Görüşmeleri aç
                       </Link>
                       <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>
-                      <button className="button secondary" type="button" onClick={() => edit(customer)}>Düzenle</button>
-                      <button className="button danger" type="button" onClick={() => setDeleteTarget(customer)}>Sil</button>
+                      <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>
+                      <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>

@@ -9,6 +9,7 @@ export {
   NotificationsPage,
   IntegrationsPage,
   ResponseTimeRulesPage,
+  NotificationSettingsPage,
   ProfilePage,
 } from "../features/management/Account";
 export {

@@ -239,6 +239,14 @@ model ResponseTimeSettings {
   responseLateColor String @default("#c2413c")
   updatedAt DateTime @updatedAt
 }
+model NotificationSettings {
+  id String @id @default("default")
+  ticketCreatedSubject String @db.VarChar(191)
+  ticketCreatedBody String @db.Text
+  ticketReplySubject String @db.VarChar(191)
+  ticketReplyBody String @db.Text
+  updatedAt DateTime @updatedAt
+}
 model IntegrationSettings {
   id String @id @default("default")
   smtpEnabled Boolean @default(false)

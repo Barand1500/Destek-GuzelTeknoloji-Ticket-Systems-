@@ -790,6 +790,26 @@ html[data-theme="dark"] .notification-read-state { color: #8dd0b8; }
 .integration-footer p { grid-column:2; grid-row:1; margin:0; font-size:12px; justify-self:end; text-align:right; }
 .integration-footer .button { grid-column:1; grid-row:1; justify-self:start; }
 @media(max-width:700px) { .integration-footer { grid-template-columns:1fr; } .integration-footer p,.integration-footer .button { grid-column:1; grid-row:auto; justify-self:stretch; text-align:left; } }
+.notification-settings-card .integration-fields { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+.notification-settings-card .integration-fields > label:nth-child(1),
+.notification-settings-card .integration-fields > label:nth-child(2) { grid-column:1; }
+.notification-settings-card .integration-fields > label:nth-child(3),
+.notification-settings-card .integration-fields > label:nth-child(4) { grid-column:2; }
+.notification-settings-card .integration-fields > label:nth-child(2),
+.notification-settings-card .integration-fields > label:nth-child(4) { min-height:190px; }
+.notification-settings-card .notification-help { grid-column:1/-1; margin:0; padding:14px 16px; border:1px solid #d7e7df; border-radius:10px; background:#f2f8f5; color:#52685f; line-height:1.55; }
+.notification-settings-card .notification-help strong { display:block; margin-bottom:5px; color:#1d5f50; }
+html[data-theme="dark"] .notification-settings-card .notification-help { border-color:#426356; background:#20382f; color:#b8cdc4; }
+html[data-theme="dark"] .notification-settings-card .notification-help strong { color:#8dd0b8; }
+@media(max-width:700px) { .notification-settings-card .integration-fields { grid-template-columns:1fr; } .notification-settings-card .integration-fields > label:nth-child(n),.notification-settings-card .notification-help { grid-column:1; } }
+.notification-settings-card .integration-fields { grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(250px,.8fr); gap:16px; }
+.notification-settings-card .integration-fields > label:nth-child(1) { grid-column:1; grid-row:1; }
+.notification-settings-card .integration-fields > label:nth-child(2) { grid-column:1; grid-row:2; min-height:0; }
+.notification-settings-card .integration-fields > label:nth-child(3) { grid-column:2; grid-row:1; }
+.notification-settings-card .integration-fields > label:nth-child(4) { grid-column:2; grid-row:2; min-height:0; }
+.notification-settings-card .integration-fields > .notification-help { grid-column:3; grid-row:1 / span 2; align-self:center; font-size:11px; padding:14px; }
+@media(max-width:900px) { .notification-settings-card .integration-fields { grid-template-columns:repeat(2,minmax(0,1fr)); } .notification-settings-card .integration-fields > label:nth-child(1),.notification-settings-card .integration-fields > label:nth-child(2) { grid-column:1; } .notification-settings-card .integration-fields > label:nth-child(3),.notification-settings-card .integration-fields > label:nth-child(4) { grid-column:2; } .notification-settings-card .integration-fields > .notification-help { grid-column:1/-1; grid-row:auto; } }
+@media(max-width:700px) { .notification-settings-card .integration-fields { grid-template-columns:1fr; } .notification-settings-card .integration-fields > label:nth-child(n),.notification-settings-card .integration-fields > .notification-help { grid-column:1; grid-row:auto; } }
 html[data-theme="dark"] .integration-tabs,html[data-theme="dark"] .integration-subtabs { border-color:#31463d; }
 html[data-theme="dark"] .integration-tabs button,html[data-theme="dark"] .integration-subtabs button { color:#a9beb4; }
 html[data-theme="dark"] .integration-tabs button.active,html[data-theme="dark"] .integration-subtabs button.active { border-color:#8dd0b8; color:#8dd0b8; }
@@ -892,3 +912,23 @@ html[data-theme="dark"] .imap-card .imap-secure { background:#20352e; }
 @media(max-width:1050px) { .smtp-card .integration-fields > .integration-toggle { grid-column:auto; } }
 @media(max-width:1050px) { .imap-card .integration-fields { grid-template-columns:repeat(2,minmax(0,1fr)); } .imap-card .integration-fields > :nth-child(n),.imap-card .imap-secure,.imap-card .imap-folder,.imap-card .imap-poll,.imap-card .imap-create-ticket,.imap-card .imap-create-reply,.imap-card .imap-department { grid-column:auto; grid-row:auto; } .imap-card .imap-folder { margin-right:0; border-radius:8px; } .imap-card .imap-poll { border-radius:8px; } }
 @media(max-width:700px) { .integration-card > div:first-child { display:grid; gap:6px; } .integration-card small { white-space:normal; } .integration-fields { grid-template-columns:1fr; } .integration-fields > .integration-toggle,.integration-fields > .integration-department { grid-column:auto; } .integration-card .integration-heading { align-items:start; } .integration-card .integration-heading .integration-toggle { justify-content:space-between; } .smtp-host-port { grid-template-columns:minmax(0,1fr) 82px; } .smtp-host-port > label:first-child { margin-right:-10px; } }
+.notification-settings-card .integration-fields { grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(240px,.75fr); grid-template-rows:auto auto; align-items:start; align-content:start; }
+.notification-settings-card .integration-fields > label { align-self:start; }
+.notification-settings-card .integration-fields > label:nth-child(1) { grid-column:1; grid-row:1; }
+.notification-settings-card .integration-fields > label:nth-child(2) { grid-column:1; grid-row:2; }
+.notification-settings-card .integration-fields > label:nth-child(3) { grid-column:2; grid-row:1; }
+.notification-settings-card .integration-fields > label:nth-child(4) { grid-column:2; grid-row:2; }
+.notification-settings-card .integration-fields > .notification-help { grid-column:3; grid-row:1 / span 2; align-self:center; max-width:300px; }
+@media(max-width:900px) { .notification-settings-card .integration-fields { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:auto auto auto; } .notification-settings-card .integration-fields > label:nth-child(1) { grid-column:1; grid-row:1; } .notification-settings-card .integration-fields > label:nth-child(2) { grid-column:1; grid-row:2; } .notification-settings-card .integration-fields > label:nth-child(3) { grid-column:2; grid-row:1; } .notification-settings-card .integration-fields > label:nth-child(4) { grid-column:2; grid-row:2; } .notification-settings-card .integration-fields > .notification-help { grid-column:1/-1; grid-row:3; max-width:none; } }
+@media(max-width:700px) { .notification-settings-card .integration-fields { grid-template-columns:1fr; grid-template-rows:none; } .notification-settings-card .integration-fields > label:nth-child(n),.notification-settings-card .integration-fields > .notification-help { grid-column:1; grid-row:auto; max-width:none; } }
+.notification-settings-card .integration-fields { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(240px,.75fr) !important; grid-template-rows:auto auto !important; align-items:start !important; }
+.notification-settings-card .integration-fields > label:has(input[name="ticketCreatedSubject"]) { grid-column:1 !important; grid-row:1 !important; }
+.notification-settings-card .integration-fields > label:has(textarea[name="ticketCreatedBody"]) { grid-column:1 !important; grid-row:2 !important; }
+.notification-settings-card .integration-fields > label:has(input[name="ticketReplySubject"]) { grid-column:2 !important; grid-row:1 !important; }
+.notification-settings-card .integration-fields > label:has(textarea[name="ticketReplyBody"]) { grid-column:2 !important; grid-row:2 !important; }
+.notification-settings-card .integration-fields > .notification-help { grid-column:3 !important; grid-row:1 / span 2 !important; }
+.notification-settings-card .integration-fields > .notification-help { align-self:stretch !important; min-height:0; height:auto; display:flex; flex-direction:column; justify-content:center; box-sizing:border-box; }
+.notification-settings-card .integration-fields > .notification-help { justify-self:end; width:100%; margin-left:auto; }
+.notification-settings-card .integration-fields { column-gap:28px; row-gap:28px; }
+.notification-settings-card .integration-fields { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 280px !important; column-gap:16px; }
+.notification-settings-card textarea { height:220px; min-height:220px; box-sizing:border-box; }
