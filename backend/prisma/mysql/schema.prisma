@@ -49,6 +49,7 @@ model User {
   notifications Notification[]
   savedReplies SavedReply[]
   attachments ConversationAttachment[]
+  customerFiles CustomerAttachment[]
   @@index([email])
   @@index([phone])
 }
@@ -180,6 +181,17 @@ model ConversationAttachment {
   storageKey String @unique
   createdAt DateTime @default(now())
   @@index([messageId])
+}
+model CustomerAttachment {
+  id String @id @default(uuid())
+  customerId String
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  originalName String
+  mimeType String
+  size Int
+  storageKey String @unique
+  createdAt DateTime @default(now())
+  @@index([customerId, createdAt])
 }
 model Tag {
   id String @id @default(uuid())

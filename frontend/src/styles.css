@@ -1108,6 +1108,8 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
 .notification-conversation-link.standalone { display:inline-flex; flex:1 1 auto; align-items:center; justify-content:center; gap:5px; width:170px; min-width:170px; padding:0 8px; border-left:1px solid #cfe3d8; border-radius:7px; font-size:11px; font-weight:650; }
 .notification-conversation-link:hover { background:#dff1e8; color:#0d5848; }
 .notification-conversation-link:focus-visible { position:relative; z-index:1; outline:2px solid #218675; outline-offset:2px; }
+html[data-theme="dark"] .notification-conversation-link { border-color:#466056; background:#dce9e2; color:#245b47; }
+html[data-theme="dark"] .notification-conversation-link:hover { background:#c9ded3; color:#174c3b; }
 .notification-grid .management-notification.unread { background:#f5fbf7; }
 .management-table tr.inactive-record { opacity:.52; }
 .management-table tr.inactive-record:hover { opacity:.68; }
@@ -1271,6 +1273,40 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
   font-weight: 500;
   letter-spacing: 0;
 }
+html[data-theme="dark"] .count { border-color:#4f7668; background:#284238; color:#c9e2d7; }
+html[data-theme="dark"] .management-pill { border:1px solid #46695c; background:#244037; color:#aee0cf; }
+html[data-theme="dark"] .badge.status-OPEN { border:1px solid #345f88; background:#203a52; color:#9dcbf4; }
+html[data-theme="dark"] .badge.status-PENDING { border:1px solid #725b2f; background:#443a24; color:#f0ce86; }
+html[data-theme="dark"] .badge.status-IN_PROGRESS { border:1px solid #5d5185; background:#393250; color:#c5b9ef; }
+html[data-theme="dark"] .badge.status-RESOLVED { border:1px solid #3e7054; background:#244535; color:#9ed8b4; }
+html[data-theme="dark"] .badge.status-CLOSED { border:1px solid #52645a; background:#303c36; color:#bdcbc3; }
+html[data-theme="dark"] .profile-security h2 { color:#e5eee9; }
+html[data-theme="dark"] .confirm-modal h2 { color:#e5eee9; }
+html[data-theme="dark"] .confirm-modal p { color:#b7c9c0; }
+html[data-theme="dark"] .confirm-modal .confirm-close { color:#9eb5aa; }
+html[data-theme="dark"] .confirm-modal .confirm-close:hover { color:#e5eee9; background:#2b493c; }
+html[data-theme="dark"] .confirm-backdrop { background:rgba(4,12,9,.72); backdrop-filter:blur(2px); }
+html[data-theme="dark"] .confirm-modal { border:1px solid #4b6b5e; background:#203129; box-shadow:0 24px 70px rgba(0,0,0,.58),0 0 0 1px rgba(126,179,157,.08); }
+html[data-theme="dark"] .confirm-modal strong { color:#f0f6f3; }
+html[data-theme="dark"] .confirm-modal .confirm-actions .button.secondary { background:#243a31; border-color:#557568; color:#d3e2db; }
+html[data-theme="dark"] .confirm-modal .confirm-actions .button.secondary:hover { background:#2e493d; border-color:#72a18e; }
+html[data-theme="dark"] .confirm-modal .confirm-actions .button.danger { background:#552f2c; border-color:#85504a; color:#ffd2cd; }
+html[data-theme="dark"] .confirm-modal .confirm-actions .button.danger:hover { background:#6a3934; border-color:#ad6961; }
+.saved-reply-action { position:relative; box-sizing:border-box; width:32px; min-width:32px; height:32px; padding:0 !important; overflow:hidden; border-radius:6px !important; font-size:0 !important; }
+.saved-reply-action > svg { display:none; }
+.saved-reply-action::before { content:""; position:absolute; left:50%; top:50%; display:block; width:15px; height:15px; transform:translate(-50%,-50%); background:center/contain no-repeat; }
+.saved-reply-action-edit { border:1px solid #e0e6e2 !important; background:#fff !important; color:#61726a !important; }
+.saved-reply-action-edit:hover { background:#f7faf8 !important; }
+.saved-reply-action-edit::before { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2361726a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E"); }
+.saved-reply-action-delete { border:1px solid #f0d4cf !important; background:#fff5f2 !important; color:#b34a40 !important; }
+.saved-reply-action-delete:hover { background:#ffe9e4 !important; }
+.saved-reply-action-delete::before { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b34a40' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/%3E%3Cpath d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' x2='10' y1='11' y2='17'/%3E%3Cline x1='14' x2='14' y1='11' y2='17'/%3E%3C/svg%3E"); }
+html[data-theme="dark"] .saved-reply-action-edit { background:#22342c !important; border-color:#466056 !important; }
+html[data-theme="dark"] .saved-reply-action-edit:hover { background:#2b493c !important; border-color:#6cae9a !important; }
+html[data-theme="dark"] .saved-reply-action-edit::before { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d7e5df' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E"); }
+html[data-theme="dark"] .saved-reply-action-delete { background:#382725 !important; border-color:#744b45 !important; }
+html[data-theme="dark"] .saved-reply-action-delete:hover { background:#51302b !important; border-color:#bd7067 !important; }
+html[data-theme="dark"] .saved-reply-action-delete::before { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb5ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/%3E%3Cpath d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' x2='10' y1='11' y2='17'/%3E%3Cline x1='14' x2='14' y1='11' y2='17'/%3E%3C/svg%3E"); }
 .ticket-panel {
   background: white;
   border: 1px solid #e0e7e1;
@@ -2519,8 +2555,13 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
 .attachment-preview-modal { display:grid; grid-template-rows:auto minmax(0,1fr); width:min(960px,100%); height:min(760px,calc(100vh - 48px)); overflow:hidden; border:1px solid #d5e2da; border-radius:14px; background:#fff; box-shadow:0 24px 70px rgba(12,29,21,.35); }
 .attachment-preview-modal header { display:flex; align-items:center; gap:16px; min-width:0; padding:13px 16px; border-bottom:1px solid #e0e9e3; }
 .attachment-preview-modal header strong { min-width:0; overflow-wrap:anywhere; color:#263a36; font-size:14px; }
+.attachment-preview-name { min-width:0; overflow-wrap:anywhere; padding:0; border:0; background:transparent; color:#263a36; font:inherit; font-size:14px; font-weight:700; text-align:left; cursor:pointer; }
+.attachment-preview-modal header .attachment-preview-name { flex:1 1 auto; width:auto; height:auto; min-width:0; margin-left:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.attachment-preview-modal header .attachment-preview-name + button { margin-left:auto; }
+.attachment-preview-name:hover { color:#14745f; text-decoration:underline; }
 .attachment-preview-modal header button { margin-left:auto; flex:0 0 auto; width:30px; height:30px; border:0; border-radius:7px; background:transparent; color:#60736a; font-size:23px; line-height:1; cursor:pointer; }
 .attachment-preview-modal header button:hover { background:#edf4ef; color:#176f5d; }
+.attachment-preview-modal header .attachment-preview-name { font-size:14px; line-height:1.3; font-weight:700; color:#263a36; }
 .attachment-preview-content { display:grid; min-height:0; overflow:hidden; place-items:center; padding:16px; background:#f7faf8; }
 .attachment-preview-content img { display:block; width:100%; height:100%; min-width:0; min-height:0; object-fit:contain; }
 .attachment-preview-content iframe { width:100%; height:100%; border:0; background:#fff; }
@@ -2627,6 +2668,56 @@ html[data-theme="dark"] .management-table td > small { color:#a9beb4; }
 html[data-theme="dark"] .response-rules-card .integration-heading p,
 html[data-theme="dark"] .response-rule-fields small { color:#b8cdc3; }
 @media (max-width:700px) { .response-rule-fields, .response-color-fields, .response-range-row { grid-template-columns:1fr; } .response-range-row strong { padding-bottom:0; } }
+
+/* Management table actions need their own dark-theme contrast. Keep the
+   edit, attachment/eye and delete controls visually consistent on every
+   management screen. */
+html[data-theme="dark"] .management-table .management-actions > button.button.secondary,
+html[data-theme="dark"] .management-table .management-actions > button.button.management-danger,
+html[data-theme="dark"] .management-table .management-actions > .icon-button {
+  background: #22342c !important;
+  border-color: #466056 !important;
+  color: #d7e5df !important;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .management-table .management-actions > button.button.secondary:hover:not(:disabled),
+html[data-theme="dark"] .management-table .management-actions > button.button.management-danger:hover:not(:disabled),
+html[data-theme="dark"] .management-table .management-actions > .icon-button:hover:not(:disabled) {
+  background: #2b493c !important;
+  border-color: #6cae9a !important;
+  color: #f2faf5 !important;
+}
+
+html[data-theme="dark"] .management-table .management-actions > button.button.management-danger,
+html[data-theme="dark"] .management-table .management-actions > .icon-button.danger-icon {
+  background: #382725 !important;
+  border-color: #744b45 !important;
+  color: #ffb5ad !important;
+}
+
+html[data-theme="dark"] .management-table .management-actions > button.button.management-danger:hover:not(:disabled),
+html[data-theme="dark"] .management-table .management-actions > .icon-button.danger-icon:hover:not(:disabled) {
+  background: #51302b !important;
+  border-color: #bd7067 !important;
+  color: #ffd8d3 !important;
+}
+
+html[data-theme="dark"] .management-table .management-actions > .icon-button.is-muted,
+html[data-theme="dark"] .management-table .management-actions > .icon-button:disabled {
+  background: #263831 !important;
+  border-color: #41574f !important;
+  color: #91a69d !important;
+  opacity: .55;
+}
+
+html[data-theme="dark"] .management-table .management-actions > button.button.secondary::before {
+  filter: brightness(0) saturate(100%) invert(86%) sepia(8%) saturate(490%) hue-rotate(101deg) brightness(94%);
+}
+
+html[data-theme="dark"] .management-table .management-actions > button.button.management-danger::before {
+  filter: brightness(0) saturate(100%) invert(78%) sepia(19%) saturate(1057%) hue-rotate(313deg) brightness(103%);
+}
 
 /* Keep the record-limit picker consistent with the app's custom dropdown. */
 .notification-limit .styled-dropdown { width: 58px; min-width: 58px; }

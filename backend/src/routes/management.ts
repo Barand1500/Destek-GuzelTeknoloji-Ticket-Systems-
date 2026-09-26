@@ -3,6 +3,8 @@ import { authorize } from "../middleware/auth.js";
 import * as service from "../services/management.service.js";
 import * as schema from "../validators/management.js";
 import { idSchema, paginationSchema } from "../validators/index.js";
+import { upload, withStoredUploads, uploadRoot } from '../services/uploads.service.js';
+import path from 'node:path';
 
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
@@ -14,8 +16,16 @@ managementRouter.patch("/users/:id", admin, async (req, res) => res.json({ succe
 managementRouter.delete('/users/:id', admin, async (req, res) => res.json({ success: true, data: await service.deleteUser(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.get("/customers", staff, async (req, res) => res.json({ success: true, ...await service.users(req.actor, schema.directoryQuery.parse(req.query), true) }));
 managementRouter.get("/customers/:id", staff, async (req, res) => res.json({ success: true, data: await service.customer(req.actor, idSchema.parse(req.params.id)) }));
-managementRouter.post("/customers", staff, async (req, res) => res.status(201).json({ success: true, data: await service.createCustomer(req.actor, schema.createCustomerSchema.parse(req.body)) }));
-managementRouter.patch("/customers/:id", staff, async (req, res) => res.json({ success: true, data: await service.updateCustomer(req.actor, idSchema.parse(req.params.id), schema.updateCustomerSchema.parse(req.body)) }));
+managementRouter.get("/customers/:id/files", staff, async (req, res) => res.json({ success: true, data: await service.customerFiles(req.actor, idSchema.parse(req.params.id)) }));
+managementRouter.delete("/customers/:id/files/:fileId", staff, async (req, res) => { await service.deleteCustomerFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId)); res.json({ success: true, data: null }); });
+managementRouter.get("/customers/:id/files/:fileId/download", staff, async (req, res, next) => {
+  const file = await service.customerFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId));
+  res.type(file.mimeType);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.download(path.join(uploadRoot, file.storageKey), file.originalName, error => { if (error && !res.headersSent) next(error); });
+});
+managementRouter.post("/customers", staff, upload, async (req, res) => res.status(201).json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => service.createCustomer(req.actor, schema.createCustomerSchema.parse(req.body), files)) }));
+managementRouter.patch("/customers/:id", staff, upload, async (req, res) => res.json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => service.updateCustomer(req.actor, idSchema.parse(req.params.id), schema.updateCustomerSchema.parse(req.body), files)) }));
 managementRouter.delete("/customers/:id", staff, async (req, res) => res.json({ success: true, data: await service.deleteCustomer(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.get("/departments/:id/agents", staff, async (req, res) => res.json({ success: true, ...await service.departmentAgents(req.actor, idSchema.parse(req.params.id), schema.searchQuery.parse(req.query)) }));
 managementRouter.patch("/departments/:id", admin, async (req, res) => res.json({ success: true, data: await service.updateDepartment(req.actor, idSchema.parse(req.params.id), schema.departmentSchema.parse(req.body)) }));

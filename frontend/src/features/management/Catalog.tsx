@@ -418,17 +418,23 @@ export function SavedRepliesPage() {
                   {canEdit && (
                     <div className="management-actions">
                       <button
-                        className="button secondary"
+                        className="button secondary saved-reply-action saved-reply-action-edit"
+                        type="button"
+                        aria-label={`${reply.title} düzenle`}
+                        title="Düzenle"
                         onClick={() => {
                           setEditing(reply);
                           setVersion((v) => v + 1);
                           save.reset();
                         }}
                       >
-                        Düzenle
+                        <Pencil size={15} aria-hidden="true" />
                       </button>
                       <button
-                        className="button management-danger"
+                        className="button management-danger saved-reply-action saved-reply-action-delete"
+                        type="button"
+                        aria-label={`${reply.title} sil`}
+                        title="Sil"
                         disabled={remove.isPending}
                         onClick={() => {
                           if (
@@ -439,7 +445,7 @@ export function SavedRepliesPage() {
                             remove.mutate(reply.id);
                         }}
                       >
-                        Sil
+                        <Trash2 size={15} aria-hidden="true" />
                       </button>
                     </div>
                   )}

@@ -31,7 +31,7 @@ type ActivityLog = {
   user?: { id: string; name: string; email: string } | null;
   actor?: { name: string; email: string } | null;
   conversationId?: string | null;
-  metadata?: { name?: string; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[] } | null;
+  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number } | null;
 };
 const actionLabels: Record<string, string> = {
   "tag.created": "Etiket oluşturuldu",
@@ -57,6 +57,13 @@ const actionLabels: Record<string, string> = {
   "conversation.claimed": "Talep üstlenildi",
   "conversation.deleted": "Talep silindi",
   "conversation.email_received": "E-posta alındı",
+  "conversation.replied": "Talebe yanıt verildi",
+  "conversation.note_added": "Dahili not eklendi",
+  "conversation.email_sent": "E-posta gönderildi",
+  "conversation.email_failed": "E-posta gönderilemedi",
+  "conversation.updated": "Talep bilgileri güncellendi",
+  "customer.file_deleted": "Müşteri dosyası silindi",
+  "integrations.updated": "Entegrasyon ayarları güncellendi",
   TICKET_CREATED: "Görüşme oluşturuldu",
   TICKET_UPDATED: "Görüşme güncellendi",
   CONVERSATION_CREATED: "Görüşme oluşturuldu",
@@ -76,6 +83,27 @@ const actionLabels: Record<string, string> = {
   LOGOUT: "Oturum kapatıldı",
 };
 const entityLabels: Record<string, string> = { Tag: "Etiket", StatusOption: "Durum", PriorityOption: "Öncelik", User: "Kullanıcı", Department: "Departman", Website: "Web sitesi", SavedReply: "Hazır yanıt", SystemSettings: "Sistem ayarları" };
+function richDescriptionFor(log: ActivityLog) {
+  const metadata = log.metadata;
+  const details = [
+    metadata?.name && `Ad: ${metadata.name}`,
+    metadata?.title && `Baslik: ${metadata.title}`,
+    metadata?.subject && `Konu: ${metadata.subject}`,
+    metadata?.number && `Talep no: #TK-${String(metadata.number).padStart(5, "0")}`,
+    metadata?.phone && `Telefon: ${metadata.phone}`,
+    metadata?.email && `E-posta: ${metadata.email}`,
+    metadata?.company && `Sirket: ${metadata.company}`,
+    metadata?.changes && Object.entries(metadata.changes).map(([field, change]) => `${field}: ${change.from ?? "boş"} → ${change.to ?? "boş"}`).join(" · "),
+  ].filter(Boolean).join(" · ");
+  if (details) return details;
+  if (log.action === "customer.file_deleted") return [metadata?.customerName && `Musteri: ${metadata.customerName}`, metadata?.originalName && `Silinen dosya: ${metadata.originalName}`].filter(Boolean).join(" · ") || "Musteri dosyasi silindi.";
+  if (log.action === "conversation.replied") return metadata?.attachmentCount ? `Yanıt ve ${metadata.attachmentCount} ek dosya gönderildi.` : "Talebe yanıt gönderildi.";
+  if (log.action === "conversation.email_sent") return metadata?.recipient ? `Alıcı: ${metadata.recipient}` : "E-posta gönderildi.";
+  if (log.action === "conversation.email_received") return "Müşteriden e-posta alındı.";
+  if (log.action === "conversation.email_failed") return metadata?.reason ? `Gönderilemedi: ${metadata.reason}` : "E-posta gönderilemedi.";
+  return actionLabels[log.action] ? "Ayrıntı kaydı bulunmuyor." : "Sistem işlemi kaydedildi.";
+}
+
 function descriptionFor(log: ActivityLog) {
   const record = log.metadata?.name ?? log.metadata?.title ?? log.metadata?.subject ?? log.metadata?.code;
   if (record) return [
@@ -87,7 +115,12 @@ function descriptionFor(log: ActivityLog) {
     log.metadata?.company && `Şirket: ${log.metadata.company}`,
   ].filter(Boolean).join(" · ");
   if (log.metadata?.fields?.length) return `Değişen alanlar: ${log.metadata.fields.join(", ")}`;
-  return "Bu eski kayıt için ayrıntı bulunmuyor.";
+  if (log.action === "customer.file_deleted") return [log.metadata?.customerName && `Müşteri: ${log.metadata.customerName}`, log.metadata?.originalName && `Silinen dosya: ${log.metadata.originalName}`].filter(Boolean).join(" · ") || "Müşteri dosyası silindi.";
+  if (log.action === "conversation.replied") return log.metadata?.attachmentCount ? `Yanıt ve ${log.metadata.attachmentCount} ek dosya gönderildi.` : "Talebe yanıt gönderildi.";
+  if (log.action === "conversation.email_sent") return log.metadata?.recipient ? `Alıcı: ${log.metadata.recipient}` : "E-posta gönderildi.";
+  if (log.action === "conversation.email_received") return "Müşteriden e-posta alındı.";
+  if (log.action === "conversation.email_failed") return log.metadata?.reason ? `Gönderilemedi: ${log.metadata.reason}` : "E-posta gönderilemedi.";
+  return actionLabels[log.action] ? "Ayrıntı kaydı bulunmuyor." : "Sistem işlemi kaydedildi.";
 }
 export function ActivityLogsPage() {
   const {user} = useAuth();
@@ -145,7 +178,7 @@ export function ActivityLogsPage() {
                         </Link>
                       ) : (
                         <>
-                          <span>{descriptionFor(log)}</span>
+                          <span>{richDescriptionFor(log)}</span>
                         </>
                       )}
                     </td>

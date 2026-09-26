@@ -14,7 +14,8 @@ export const env = z
     // Extra development origins are deliberately fixed; production accepts only FRONTEND_URL.
     DEV_FRONTEND_URLS: z.string().default("http://localhost:5173,http://127.0.0.1:5173"),
     UPLOAD_DIR: z.string().default('uploads'),
-    MAX_FILE_SIZE: z.coerce.number().int().min(1024).max(10485760).default(10485760),
+    // 25 MB per file; cap the environment value to prevent unbounded uploads.
+    MAX_FILE_SIZE: z.coerce.number().int().min(1024).max(26214400).default(26214400),
     SMTP_HOST: z.string().trim().min(1).optional(),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_USER: z.string().trim().min(1).optional(),

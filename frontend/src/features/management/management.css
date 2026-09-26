@@ -932,3 +932,19 @@ html[data-theme="dark"] .imap-card .imap-secure { background:#20352e; }
 .notification-settings-card .integration-fields { column-gap:28px; row-gap:28px; }
 .notification-settings-card .integration-fields { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 280px !important; column-gap:16px; }
 .notification-settings-card textarea { height:220px; min-height:220px; box-sizing:border-box; }
+.customer-table-actions .icon-button.is-muted { opacity: .38; cursor: not-allowed; }
+.customer-files-modal { width: min(960px, calc(100vw - 48px)); height: min(760px, calc(100vh - 48px)); max-height: calc(100vh - 48px); padding: 0; overflow: hidden; }
+.customer-files-modal .customer-form-heading { flex: 0 0 auto; margin-bottom: 0; padding: 13px 16px; border-bottom: 1px solid #e0e9e3; }
+.customer-files-list { display: grid; justify-items: center; gap: 24px; max-height: calc(100vh - 150px); overflow: auto; padding: 16px 24px 24px; background: #f7faf8; }
+.customer-files-list { scrollbar-width: none; -ms-overflow-style: none; }
+.customer-files-list::-webkit-scrollbar { display: none; }
+.customer-file-row { display: grid; justify-items: center; width: 100%; gap: 10px; padding: 0; border: 0; border-radius: 0; }
+.customer-file-main { display: grid; justify-items: center; width: 100%; min-width: 0; gap: 10px; }
+.customer-file-main > div { display: grid; justify-items: center; width: 100%; min-width: 0; gap: 4px; }
+.customer-file-name { padding: 0; border: 0; background: transparent; color: var(--text, #173f38); cursor: pointer; font: inherit; font-weight: 700; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.customer-file-name:hover { text-decoration: underline; }
+.customer-file-preview, .customer-file-placeholder { display: block; width: auto; max-width: 100%; height: min(620px, calc(100vh - 190px)); border-radius: 0; object-fit: contain; border: 0; background: #fff; }
+.customer-file-placeholder { width: min(760px, 100%); display: grid; place-items: center; background: #eef5f1; color: #16715d; font-size: 12px; font-weight: 700; }
+.customer-file-row small { color: var(--muted, #64748b); text-align: center; }
+.customer-file-delete { display: block; margin: 5px auto 0; padding: 0; border: 0; background: transparent; color: #b64036; cursor: pointer; font-size: 11px; }
+.customer-file-delete:hover { text-decoration: underline; }

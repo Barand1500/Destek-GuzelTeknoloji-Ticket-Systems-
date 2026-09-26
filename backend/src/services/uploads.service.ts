@@ -6,7 +6,7 @@ import multer from 'multer';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
 export const uploadRoot=path.resolve(env.UPLOAD_DIR);
-export const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:env.MAX_FILE_SIZE,files:5,fields:10,parts:15,fieldSize:20000}}).array('files',5);
+export const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:env.MAX_FILE_SIZE,files:10,fields:15,parts:25,fieldSize:20000}}).array('files',10);
 export type StoredUpload={originalName:string;mimeType:string;size:number;storageKey:string};
 const mimeByExtension:Record<string,string>={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.pdf':'application/pdf','.docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.txt':'text/plain','.zip':'application/zip'};
 export async function validateFile(file:Express.Multer.File):Promise<Omit<StoredUpload,'storageKey'>>{

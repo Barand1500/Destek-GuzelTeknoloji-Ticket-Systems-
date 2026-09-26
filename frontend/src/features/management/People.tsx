@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Info, Pencil, Trash2, X } from "lucide-react";
+import { Eye, Info, Pencil, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import {
@@ -40,7 +40,19 @@ type ManagedUser = User & {
   createdAt: string;
   departments: { departmentId: string; department: Department }[];
   extraPhones?: string | null; extraEmails?: string | null;
+  customerFileCount?: number;
 };
+type CustomerFile = { id: string; originalName: string; mimeType: string; size: number; createdAt: string };
+const formatFileSize = (size: number) => size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+function CustomerFileRow({ customerId, file, onDelete }: { customerId: string; file: CustomerFile; onDelete: () => void }) {
+  const isImage = file.mimeType.startsWith('image/');
+  const preview = useQuery({ queryKey: ['/customers', customerId, 'file-preview', file.id], enabled: isImage, queryFn: async () => (await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' })).data });
+  const [previewUrl, setPreviewUrl] = useState<string>();
+  useEffect(() => { if (!preview.data) return; const url = URL.createObjectURL(preview.data); setPreviewUrl(url); return () => URL.revokeObjectURL(url); }, [preview.data]);
+  const triggerDownload = (blob: Blob) => { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.originalName; link.style.display = 'none'; document.body.appendChild(link); link.click(); window.setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 1000); };
+  const download = () => { if (preview.data) { triggerDownload(preview.data); return; } void (async () => { const response = await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' }); triggerDownload(response.data); })(); };
+  return <div className="customer-file-row"><div className="customer-file-main">{isImage && previewUrl ? <img className="customer-file-preview" src={previewUrl} alt="" /> : <span className="customer-file-placeholder">{isImage ? 'IMG' : 'FILE'}</span>}<div><button className="customer-file-name" type="button" onClick={download}>{file.originalName}</button><small>{file.mimeType} · {formatFileSize(file.size)}</small><button className="customer-file-delete" type="button" onClick={onDelete}>Dosyayı sil</button></div></div></div>;
+}
 type ManagedDepartment = Department & { isActive: boolean };
 const phoneDigits = (value: string) => value.replace(/\D/g, "");
 const isPhoneSearch = (value: string) => Boolean(value.trim()) && /^[+\d\s()-]+$/.test(value);
@@ -352,6 +364,7 @@ export function CustomersPage() {
   const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
   const save = useSave('/customers', () => {
     setEditing(null);
@@ -359,6 +372,8 @@ export function CustomersPage() {
     setFormVersion(version => version + 1);
   }, ['/customers']);
   const remove = useDelete('/customers', ['/customers']);
+  const files = useQuery({ queryKey: ['/customers', filesCustomer?.id, 'files'], enabled: Boolean(filesCustomer), queryFn: async () => (await api.get<{ data: CustomerFile[] }>(`/customers/${filesCustomer!.id}/files`)).data.data });
+  const deleteFile = useMutation({ mutationFn: async ({ customerId, fileId }: { customerId: string; fileId: string }) => api.delete(`/customers/${customerId}/files/${fileId}`), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['/customers', filesCustomer?.id, 'files'] }); await queryClient.invalidateQueries({ queryKey: ['/customers'] }); } });
   const bulkRemove = useMutation({
     mutationFn: async (ids: string[]) => Promise.all(ids.map((id) => api.delete(`/customers/${id}`))),
     onSuccess: async () => {
@@ -420,6 +435,7 @@ export function CustomersPage() {
                       </Link>
                       <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>
                       <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>
+                      <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları gör' : 'Dosya yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
                       <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>
                       </div>
                     </td>
@@ -459,9 +475,11 @@ export function CustomersPage() {
           <button className="customer-form-close" type="button" onClick={() => setCustomerModalOpen(false)} aria-label="Kapat" title="Kapat">×</button>
         </div>
         <form key={formVersion} className="management-form" onSubmit={event => {
-          const values = formValues(event);
-          const data = { name: values.get('name'), phone: values.get('phone'), email: values.get('email'), company: values.get('company'), staffNote: values.get('staffNote'), extraPhones: values.get('extraPhones') || undefined, extraEmails: values.get('extraEmails') || undefined };
-          save.mutate({ id: editing?.id, data: editing ? data : { ...data, email: data.email || undefined, company: data.company || undefined, staffNote: data.staffNote || undefined } });
+          const values = new FormData(event.currentTarget);
+          const data = new FormData();
+          for (const name of ['name', 'phone', 'email', 'company', 'staffNote', 'extraPhones', 'extraEmails']) { const value = values.get(name); if (typeof value === 'string' && value) data.append(name, value); }
+          for (const file of values.getAll('customerFiles')) if (file instanceof File && file.size) data.append('files', file);
+          save.mutate({ id: editing?.id, data });
         }}>
           <label><span className="field-label">Ad soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
           <label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
@@ -470,11 +488,12 @@ export function CustomersPage() {
           <label><span className="field-label">Ek e-posta adresleri</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>
           <label><span className="field-label">Şirket</span> <input name="company" maxLength={120} defaultValue={editing?.company ?? ""}/></label>
           <label><span className="field-label">Müşteri notu</span> <textarea name="staffNote" maxLength={2000} rows={4} defaultValue={editing?.staffNote ?? ""} placeholder="Örn. Arama nedeni, tercih ettiği dönüş saati veya personel için önemli bilgi"/></label>
-          <label><span className="field-label">Dosya ekle</span><input type="file" name="customerFile" /></label>
+          <label><span className="field-label">Dosya ekle</span><input type="file" name="customerFiles" multiple /></label>
           <ErrorMessage error={save.error}/><FormActions pending={save.isPending}/>
         </form>
       </section>
       </div>}
+      {filesCustomer && <div className="confirm-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="customer-form-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
     </main>
   );
 }

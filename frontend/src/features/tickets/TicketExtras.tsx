@@ -7,11 +7,11 @@ import { DropdownSelect, MultiDropdownSelect } from '../../components/DropdownSe
 import type { Attachment,Page,Tag,Conversation } from '../../types';
 export function FilePicker({files,setFiles,disabled=false}:{files:File[];setFiles:(files:File[])=>void;disabled?:boolean}){
   const [error,setError]=useState('');
-  return <div className="file-picker"><label><Paperclip size={14}/>Dosya ekle<input type="file" aria-label="Dosya ekle" multiple disabled={disabled} accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={e=>{const selected=Array.from(e.target.files??[]);if(selected.length>5||selected.some(f=>f.size>10485760)){setError('En fazla 5 dosya; her biri en fazla 10 MB olabilir.');setFiles([]);e.target.value='';}else{setError('');setFiles(selected);}}}/></label><small>JPG, PNG, WebP, PDF, DOCX, XLSX, TXT, ZIP · 10 MB / dosya</small>{files.length>0&&<ul>{files.map((file,i)=><li key={`${file.name}-${i}`}>{file.name}<button type="button" aria-label={`${file.name} kaldır`} disabled={disabled} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}>Kaldır</button></li>)}</ul>}{error&&<p className="error" role="alert">{error}</p>}</div>;
+  return <div className="file-picker"><label><Paperclip size={14}/>Dosya ekle<input type="file" aria-label="Dosya ekle" multiple disabled={disabled} accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={e=>{const selected=Array.from(e.target.files??[]);if(selected.length>10||selected.some(f=>f.size>26214400)){setError('En fazla 10 dosya; her biri en fazla 25 MB olabilir.');setFiles([]);e.target.value='';}else{setError('');setFiles(selected);}}}/></label><small>JPG, PNG, WebP, PDF, DOCX, XLSX, TXT, ZIP · En fazla 10 dosya · 25 MB / dosya</small>{files.length>0&&<ul>{files.map((file,i)=><li key={`${file.name}-${i}`}>{file.name}<button type="button" aria-label={`${file.name} kaldır`} disabled={disabled} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}>Kaldır</button></li>)}</ul>}{error&&<p className="error" role="alert">{error}</p>}</div>;
 }
 export function CompactFilePicker({setFiles,disabled=false}:{setFiles:(files:File[])=>void;disabled?:boolean}){
   const [error,setError]=useState('');
-  function onChange(e:ChangeEvent<HTMLInputElement>){const selected=Array.from(e.target.files??[]);if(selected.length>5||selected.some(f=>f.size>10485760)){setError('En fazla 5 dosya; her biri en fazla 10 MB olabilir.');setFiles([]);e.target.value='';}else{setError('');setFiles(selected);}}
+  function onChange(e:ChangeEvent<HTMLInputElement>){const selected=Array.from(e.target.files??[]);if(selected.length>10||selected.some(f=>f.size>26214400)){setError('En fazla 10 dosya; her biri en fazla 25 MB olabilir.');setFiles([]);e.target.value='';}else{setError('');setFiles(selected);}}
   return <div className="composer-file-picker"><label className={`composer-attachment-trigger ${disabled?'disabled':''}`} title="Dosya ekle"><Paperclip size={18}/><span className="sr-only">Dosya ekle</span><input type="file" aria-label="Dosya ekle" multiple disabled={disabled} accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={onChange}/></label>{error&&<p className="error" role="alert">{error}</p>}</div>;
 }
 type PreviewFile = { name: string; mimeType: string; data: Blob };
@@ -27,7 +27,7 @@ function FilePreviewModal({ file, onClose }: { file: PreviewFile; onClose: () =>
   if (!url) return null;
   return createPortal(<div className="attachment-preview-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="attachment-preview-modal" role="dialog" aria-modal="true" aria-label={`${file.name} önizlemesi`}>
-      <header><strong title={file.name}>{file.name}</strong><button type="button" onClick={onClose} aria-label="Önizlemeyi kapat">×</button></header>
+      <header><button type="button" className="attachment-preview-name" title={`${file.name} indir`} onClick={() => { const link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); }}>{file.name}</button><button type="button" onClick={onClose} aria-label="Önizlemeyi kapat">×</button></header>
       <div className="attachment-preview-content">{isImage ? <img src={url} alt={file.name} /> : canEmbed ? <iframe src={url} title={file.name} /> : <p>Bu dosya tarayıcıda önizlenemiyor. <a href={url} download={file.name}>İndir</a></p>}</div>
     </section>
   </div>, document.body);

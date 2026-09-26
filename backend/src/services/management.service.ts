@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
 import { randomBytes } from "node:crypto";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 import nodemailer from "nodemailer";
 import { ImapFlow } from "imapflow";
 import type { z } from "zod";
@@ -9,6 +11,7 @@ import type { Actor } from "../types/express.js";
 import { AppError } from "../utils/errors.js";
 import { visibility } from "./conversations.service.js";
 import { publishChange } from "./events.service.js";
+import { uploadRoot, type StoredUpload } from './uploads.service.js';
 import { queueSupportEmail } from "./mailer.service.js";
 import type * as schema from "../validators/management.js";
 
@@ -50,8 +53,11 @@ export async function users(actor: Actor, q: z.infer<typeof schema.directoryQuer
     ...(q.search ? { OR: [{ name: { contains: q.search } }, { email: { contains: q.search } }, { phone: { contains: q.search } }, { company: { contains: q.search } }, ...(roleMatches.length ? [{ role: { in: roleMatches } }] : []), ...(phoneDigits ? [{ phone: { contains: phoneDigits } }, { phone: { contains: formattedPhone } }, { phone: { contains: phoneWithoutZero } }, { phone: { contains: formattedPhoneWithoutZero } }] : [])] } : {}),
     ...(customersOnly && actor.role !== "ADMIN" ? { customerConversations: { some: visibility(actor) } } : {}),
   };
-  const [data, total] = await db.$transaction([db.user.findMany({ where, select: person, orderBy: customersOnly ? [{ createdAt: "desc" }, { id: "desc" }] : [{ name: "asc" }, { id: "asc" }], ...paging(q) }), db.user.count({ where })]);
-  return { data, pagination: pagination({ page: q.page, limit: q.limit }, total) };
+  const result = customersOnly
+    ? (await db.user.findMany({ where, select: { ...person, customerFiles: { select: { id: true } } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], ...paging(q) })).map(({ customerFiles, ...customer }) => ({ ...customer, customerFileCount: customerFiles.length }))
+    : await db.user.findMany({ where, select: person, orderBy: [{ name: "asc" }, { id: "asc" }], ...paging(q) });
+  const total = await db.user.count({ where });
+  return { data: result, pagination: pagination({ page: q.page, limit: q.limit }, total) };
 }
 async function validateDepartments(tx: Prisma.TransactionClient, ids: string[], role: string) {
   if (role === "CUSTOMER" && ids.length) throw new AppError(400, "INVALID_MEMBERSHIP", "Müşteriler personel departmanlarına atanamaz.");
@@ -69,13 +75,14 @@ export async function createUser(actor: Actor, input: z.infer<typeof schema.crea
     return data;
   });
 }
-export async function createCustomer(actor: Actor, input: z.infer<typeof schema.createCustomerSchema>) {
+export async function createCustomer(actor: Actor, input: z.infer<typeof schema.createCustomerSchema>, files: StoredUpload[] = []) {
   requireStaff(actor);
   const data = await serial(async tx => {
     const data = await tx.user.create({
       data: { ...input, role: "CUSTOMER", loginEmail: null, passwordHash: await bcrypt.hash(randomBytes(32).toString("hex"), 12) },
       select: person,
     });
+    if (files.length) await tx.customerAttachment.createMany({ data: files.map(file => ({ ...file, customerId: data.id })) });
     await audit(tx, actor, "customer.created", "User", data.id, { name: data.name, phone: data.phone, email: data.email, company: data.company });
     const recipients = await tx.user.findMany({ where: { isActive: true, role: { in: ["ADMIN", "SUPERVISOR"] } }, select: { id: true } });
     if (recipients.length) {
@@ -102,15 +109,37 @@ export async function customer(actor: Actor, id: string) {
   if (!data) throw notFound();
   return data;
 }
-export async function updateCustomer(actor: Actor, id: string, input: z.infer<typeof schema.updateCustomerSchema>) {
+export async function updateCustomer(actor: Actor, id: string, input: z.infer<typeof schema.updateCustomerSchema>, files: StoredUpload[] = []) {
   requireStaff(actor);
   return serial(async tx => {
-    const current = await tx.user.findFirst({ where: { id, role: "CUSTOMER", deletedAt: null }, select: { id: true } });
+    const current = await tx.user.findFirst({ where: { id, role: "CUSTOMER", deletedAt: null }, select: { id: true, name: true, phone: true, email: true, company: true, staffNote: true, extraPhones: true, extraEmails: true } });
     if (!current) throw notFound();
     const data = await tx.user.update({ where: { id }, data: input, select: person });
-    await audit(tx, actor, "customer.updated", "User", id, { name: data.name, fields: Object.keys(input) });
+    if (files.length) await tx.customerAttachment.createMany({ data: files.map(file => ({ ...file, customerId: id })) });
+    const changes = Object.fromEntries(Object.keys(input).filter(field => current[field as keyof typeof current] !== input[field as keyof typeof input]).map(field => [field, { from: current[field as keyof typeof current] ?? null, to: input[field as keyof typeof input] ?? null }]));
+    if (Object.keys(changes).length) await audit(tx, actor, "customer.updated", "User", id, { name: data.name, phone: data.phone, email: data.email, company: data.company, changes });
     return data;
   });
+}
+export async function customerFiles(actor: Actor, customerId: string) {
+  await customer(actor, customerId);
+  return db.customerAttachment.findMany({ where: { customerId }, select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] });
+}
+export async function customerFile(actor: Actor, customerId: string, fileId: string) {
+  await customer(actor, customerId);
+  const file = await db.customerAttachment.findFirst({ where: { id: fileId, customerId } });
+  if (!file) throw notFound();
+  return file;
+}
+export async function deleteCustomerFile(actor: Actor, customerId: string, fileId: string) {
+  await customer(actor, customerId);
+  const customerRecord = await db.user.findUnique({ where: { id: customerId }, select: { name: true } });
+  const file = await db.customerAttachment.findFirst({ where: { id: fileId, customerId } });
+  if (!file) throw notFound();
+  await db.customerAttachment.delete({ where: { id: file.id } });
+  await unlink(path.join(uploadRoot, file.storageKey)).catch(() => undefined);
+  await db.activityLog.create({ data: { userId: actor.id, action: 'customer.file_deleted', entityType: 'User', entityId: customerId, metadata: { fileId: file.id, originalName: file.originalName, customerName: customerRecord?.name ?? null }, ipAddress: actor.ipAddress ?? null } });
+  return { id: file.id };
 }
 export async function deleteCustomer(actor: Actor, id: string) {
   requireStaff(actor);
@@ -333,7 +362,21 @@ export async function deleteVisibleNotifications(actor: Actor, ids: string[]) {
 export async function activityLogs(actor: Actor, q: z.infer<typeof schema.activityQuery>) {
   requireAdmin(actor);
   const where: Prisma.ActivityLogWhereInput = { userId: q.userId, ...(q.action ? { action: { contains: q.action } } : {}), ...(q.search ? { OR: [{ action: { contains: q.search } }, { user: { name: { contains: q.search } } }, { user: { email: { contains: q.search } } }] } : {}) };
-  const [data, total] = await db.$transaction([db.activityLog.findMany({ where, include: { user: { select: { id: true, name: true, email: true } } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], ...paging(q) }), db.activityLog.count({ where })]);
+  const [rawData, total] = await db.$transaction([db.activityLog.findMany({ where, include: { user: { select: { id: true, name: true, email: true } } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], ...paging(q) }), db.activityLog.count({ where })]);
+  const customerIds = [...new Set(rawData.filter(log => log.entityType === "User" && log.entityId).map(log => log.entityId!))];
+  const conversationIds = [...new Set(rawData.filter(log => log.entityType === "Conversation" && log.entityId).map(log => log.entityId!))];
+  const [customers, conversations] = await Promise.all([
+    customerIds.length ? db.user.findMany({ where: { id: { in: customerIds } }, select: { id: true, name: true, phone: true, email: true, company: true } }) : [],
+    conversationIds.length ? db.conversation.findMany({ where: { id: { in: conversationIds } }, select: { id: true, subject: true, number: true } }) : [],
+  ]);
+  const customerNames = new Map(customers.map(item => [item.id, item]));
+  const conversationInfo = new Map(conversations.map(item => [item.id, item]));
+  const data = rawData.map(log => {
+    const oldMetadata = log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata) ? log.metadata as Record<string, unknown> : {};
+    const customer = log.entityId ? customerNames.get(log.entityId) : undefined;
+    const conversation = log.entityId ? conversationInfo.get(log.entityId) : undefined;
+    return { ...log, metadata: { ...oldMetadata, ...(customer ? { customerName: customer.name, ...(log.action === "customer.updated" || log.action === "customer.created" ? { name: customer.name, phone: customer.phone, email: customer.email, company: customer.company } : {}) } : {}), ...(conversation ? { subject: conversation.subject, number: conversation.number } : {}) } };
+  });
   return { data, pagination: pagination({ page: q.page, limit: q.limit }, total) };
 }
 export async function deleteActivityLogs(actor: Actor, period: "day" | "week" | "month" | "all") {
