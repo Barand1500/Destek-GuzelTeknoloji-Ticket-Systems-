@@ -764,6 +764,18 @@ html[data-theme="dark"] .notification-grid .management-notification p,
 html[data-theme="dark"] .notification-grid .management-notification small { color: #b6cbc1; }
 html[data-theme="dark"] .notification-grid .management-notification a,
 html[data-theme="dark"] .notification-read-state { color: #8dd0b8; }
+html[data-theme="dark"] .notification-grid .notification-conversation-link {
+  border-color: #466f60;
+  background: #29483c;
+  color: #a9dec8;
+}
+html[data-theme="dark"] .notification-grid .notification-conversation-link:hover {
+  background: #356052;
+  color: #d5f3e5;
+}
+html[data-theme="dark"] .notification-grid .notification-conversation-link:focus-visible {
+  outline-color: #8dd0b8;
+}
 
 .integration-shell { display:grid; gap:18px; }
 .integration-tabs,.integration-subtabs { display:flex; gap:8px; border-bottom:1px solid #dfe8e1; }

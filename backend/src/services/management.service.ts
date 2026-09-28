@@ -22,6 +22,8 @@ const person = { id: true, name: true, email: true, phone: true, company: true, 
 const requireStaff = (actor: Actor) => { if (actor.role === "CUSTOMER") throw new AppError(403, "FORBIDDEN", "Bu işlem için personel yetkisi gerekiyor."); };
 const requireAdmin = (actor: Actor) => { if (actor.role !== "ADMIN") throw new AppError(403, "FORBIDDEN", "Bu işlem için yönetici yetkisi gerekiyor."); };
 const notFound = () => new AppError(404, "NOT_FOUND", "Kayıt bulunamadı.");
+const normalizeCustomerName = (value: string) => value.trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+const normalizeCustomerPhone = (value: string) => value.replace(/\D/g, "");
 async function audit(tx: Prisma.TransactionClient, actor: Actor, action: string, entityType: string, entityId: string, metadata?: Prisma.InputJsonValue) {
   await tx.activityLog.create({ data: { userId: actor.id, action, entityType, entityId, metadata, ipAddress: actor.ipAddress ?? null } });
 }
@@ -78,6 +80,18 @@ export async function createUser(actor: Actor, input: z.infer<typeof schema.crea
 export async function createCustomer(actor: Actor, input: z.infer<typeof schema.createCustomerSchema>, files: StoredUpload[] = []) {
   requireStaff(actor);
   const data = await serial(async tx => {
+    if (input.email) {
+      const sameEmail = await tx.user.findMany({
+        where: { role: "CUSTOMER", deletedAt: null, email: input.email },
+        select: { name: true, email: true, phone: true },
+      });
+      const duplicate = sameEmail.some(customer =>
+        normalizeCustomerName(customer.name) === normalizeCustomerName(input.name) &&
+        normalizeCustomerPhone(customer.phone ?? "") === normalizeCustomerPhone(input.phone) &&
+        customer.email?.trim().toLocaleLowerCase("tr-TR") === input.email?.trim().toLocaleLowerCase("tr-TR"),
+      );
+      if (duplicate) throw new AppError(409, "DUPLICATE_CUSTOMER", "Ad soyad, telefon ve e-posta bilgileriyle kayıtlı bir müşteri zaten var.");
+    }
     const data = await tx.user.create({
       data: { ...input, role: "CUSTOMER", loginEmail: null, passwordHash: await bcrypt.hash(randomBytes(32).toString("hex"), 12) },
       select: person,

@@ -475,7 +475,7 @@ export function CustomersPage() {
           <button className="customer-form-close" type="button" onClick={() => setCustomerModalOpen(false)} aria-label="Kapat" title="Kapat">×</button>
         </div>
         <form key={formVersion} className="management-form" onSubmit={event => {
-          const values = new FormData(event.currentTarget);
+          const values = formValues(event);
           const data = new FormData();
           for (const name of ['name', 'phone', 'email', 'company', 'staffNote', 'extraPhones', 'extraEmails']) { const value = values.get(name); if (typeof value === 'string' && value) data.append(name, value); }
           for (const file of values.getAll('customerFiles')) if (file instanceof File && file.size) data.append('files', file);
