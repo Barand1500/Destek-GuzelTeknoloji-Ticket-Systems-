@@ -29,6 +29,8 @@ export type Conversation = {
   createdAt: string;
   updatedAt: string;
   firstResponseAt?: string | null;
+  responseTimeStartAt?: string | null;
+  responseTimeAt?: string | null;
   customerMessageCount?: number;
   assignedAgentMessageCount?: number;
   tags:{tag:Tag;tagId:string}[];

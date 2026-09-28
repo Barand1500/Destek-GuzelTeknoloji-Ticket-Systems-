@@ -118,6 +118,22 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         where: { conversationId: { in: data.map((conversation) => conversation.id) }, type: { in: ["CUSTOMER_MESSAGE", "AGENT_REPLY"] } },
         _count: { _all: true },
       }) : [];
+      const responseMessages = data.length ? await tx.conversationMessage.findMany({
+        where: { conversationId: { in: data.map((conversation) => conversation.id) }, type: { in: ["CUSTOMER_MESSAGE", "AGENT_REPLY"] } },
+        select: { conversationId: true, type: true, createdAt: true },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      }) : [];
+      const responseTimes = new Map<string, { start: Date; end: Date }>();
+      const pendingCustomerMessage = new Map<string, Date>();
+      for (const message of responseMessages) {
+        if (message.type === "CUSTOMER_MESSAGE") pendingCustomerMessage.set(message.conversationId, message.createdAt);
+        else {
+          const start = pendingCustomerMessage.get(message.conversationId);
+          if (start) responseTimes.set(message.conversationId, { start, end: message.createdAt });
+          pendingCustomerMessage.delete(message.conversationId);
+        }
+      }
+      for (const conversationId of pendingCustomerMessage.keys()) responseTimes.delete(conversationId);
       const statsByConversation = new Map<string, typeof messageStats>();
       for (const stat of messageStats) {
         const current = statsByConversation.get(stat.conversationId) ?? [];
@@ -131,8 +147,11 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         const assignedStats = conversation.assignedAgentId
           ? staffReplyStats.filter((stat) => stat.authorId === conversation.assignedAgentId)
           : [];
+        const responseTime = responseTimes.get(conversation.id);
         return {
           ...conversation,
+          responseTimeStartAt: responseTime?.start ?? null,
+          responseTimeAt: responseTime?.end ?? null,
           customerMessageCount: customerStats.reduce((sum, stat) => sum + stat._count._all, 0),
           // An earlier reply can predate a reassignment. In that case, show the
           // conversation's staff-reply total instead of a misleading zero.

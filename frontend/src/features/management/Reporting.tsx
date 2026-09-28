@@ -31,7 +31,7 @@ type ActivityLog = {
   user?: { id: string; name: string; email: string } | null;
   actor?: { name: string; email: string } | null;
   conversationId?: string | null;
-  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number } | null;
+  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number } | null;
 };
 const actionLabels: Record<string, string> = {
   "tag.created": "Etiket oluşturuldu",

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, Info, Pencil, Trash2, X } from "lucide-react";
+import { Eye, Pencil, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import {
@@ -131,7 +131,6 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState<ManagedUser | null>(null);
-  const [roleInfoOpen, setRoleInfoOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
   const remove = useDelete('/users', ['/customers']);
   const [formVersion, setFormVersion] = useState(0);
@@ -182,8 +181,6 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   }
   return (
     <main className="page">
-      <button type="button" className="role-info-button" aria-label="Roller ve yetkiler" title="Roller ve yetkiler" onClick={() => setRoleInfoOpen(true)}><Info size={17} /></button>
-      {roleInfoOpen && <div className="confirm-backdrop" role="presentation" onMouseDown={() => setRoleInfoOpen(false)}><section className="role-info-modal" role="dialog" aria-modal="true" aria-labelledby="role-info-title" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="confirm-close" aria-label="Kapat" onClick={() => setRoleInfoOpen(false)}><X size={18} /></button><h2 id="role-info-title">Roller ve yetkiler</h2><div className="role-info-list"><article><strong>Yönetici</strong><p>Tüm talepleri, kullanıcıları, departmanları ve sistem ayarlarını yönetir.</p></article><article><strong>Departman sorumlusu</strong><p>Kendi departmanındaki talepleri görür; atama, departmana aktarma ve web bilgilerini yönetebilir.</p></article><article><strong>Destek uzmanı</strong><p>Kendisine atanan veya departman kuyruğundaki talepleri görür ve yanıtlar.</p></article></div></section></div>}
       <Heading
         title={defaultRole === "AGENT" ? "Destek uzmanları" : defaultRole === "SUPERVISOR" ? "Departman sorumluları" : "Personeller"}
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."
@@ -229,7 +226,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                         </small>
                       </td>
                       <td>
-                        <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>
+                        {person.role !== "ADMIN" && <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>}
                       </td>
                       <td>
                         <div className="management-actions">
@@ -242,7 +239,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                           ><Pencil size={15} aria-hidden="true" />
                             
                           </button>
-                          <button
+                          {person.role !== "ADMIN" && <button
                             type="button"
                             className="icon-button danger-icon"
                             aria-label={`${person.name} sil`}
@@ -253,7 +250,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             onClick={() => { remove.reset(); setDeleteTarget(person); }}
                           ><Trash2 size={15} aria-hidden="true" />
                             
-                          </button>
+                          </button>}
                         </div>
                       </td>
                     </tr>
@@ -399,7 +396,7 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search value={list.search} onChange={(value) => list.setSearch(isPhoneSearch(value) ? formatPhone(value) : value)} label="Ad, telefon veya e-posta ile ara" placeholder="" /><button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button><button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button></div>
+        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" /><button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button><button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button></div>
         <ListState
           loading={list.isPending}
           error={list.error}
@@ -546,11 +543,12 @@ export function PhoneSupportPage() {
   useEffect(() => {
     if (showCreate) window.setTimeout(() => {
       const field = isPhoneSearch(search) || isEmailSearch(search) ? "name" : "phone";
-      document.querySelector<HTMLInputElement>(`.phone-support-create input[name='${field}']`)?.focus();
+      const candidates = Array.from(document.querySelectorAll<HTMLInputElement>(`.phone-support-create input[name='${field}']`));
+      candidates.find((input) => input.offsetParent !== null)?.focus();
     }, 0);
   }, [showCreate, search]);
   function searchCustomers(value: string) {
-    setSearch(isPhoneSearch(value) ? formatPhone(value) : value);
+    setSearch(value);
     setHasSearched(value.trim().length > 0);
     setPhonePage(1);
     setShowCreate(false);

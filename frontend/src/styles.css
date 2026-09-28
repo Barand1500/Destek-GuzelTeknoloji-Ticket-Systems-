@@ -1058,6 +1058,8 @@ html[data-theme="dark"] .notification-popover-item small { color: #a9beb4; }
 .notification-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:16px; padding:12px; border:1px solid #e1e8e2; border-radius:10px; background:#f8faf9; }
 .activity-log-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
 .activity-log-toolbar .notification-delete { margin-left:auto; }
+.activity-log-toolbar .management-search { flex:1; max-width:none; margin:0; }
+.activity-log-toolbar .notification-delete { flex:0 0 220px; width:220px; height:42px; }
 .notification-toolbar > label { flex-direction:row; }
 .notification-toolbar > label > svg { flex-shrink:0; }
 .notifications-page .page-heading > .button { display:none; }
@@ -2512,6 +2514,10 @@ html[data-theme="dark"] .searchable-dropdown-chevron { color: #b8cdc3; }
 .ticket-customer-summary span + span { padding-left:14px; border-left:1px solid #dce8df; }
 .composer { border-radius:16px; overflow:visible; background:#fff; box-shadow:0 8px 24px rgba(35,76,57,.06); }
 .composer textarea { min-height:82px; max-height:82px; padding:14px 16px 10px; border-bottom:0; resize:none; overflow-y:auto; }
+.notification-settings-card textarea { resize: none; overflow-y: auto; }
+.response-rules-form input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+.response-rules-form input[type="number"]::-webkit-inner-spin-button,
+.response-rules-form input[type="number"]::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 .composer-tabs { padding:0 16px; background:#f5f9f6; border-radius:16px 16px 0 0; }
 .composer-footer { display:flex; align-items:center; justify-content:flex-end; gap:9px; min-height:54px; padding:8px 12px; border-top:1px solid #e3ece5; border-radius:0 0 16px 16px; background:#f7faf8; }
 .composer-footer > span { margin-right:auto; color:#819187; font-size:10px; }

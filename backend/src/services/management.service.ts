@@ -158,7 +158,7 @@ export async function deleteCustomerFile(actor: Actor, customerId: string, fileI
 export async function deleteCustomer(actor: Actor, id: string) {
   requireStaff(actor);
   return serial(async tx => {
-    const current = await tx.user.findFirst({ where: { id, role: "CUSTOMER" }, select: { id: true } });
+    const current = await tx.user.findFirst({ where: { id, role: "CUSTOMER" }, select: { id: true, name: true, phone: true, email: true } });
     if (!current) throw notFound();
     const deletedAt = new Date();
     // Customer deletion follows the application's soft-delete model. Hide every
@@ -169,7 +169,26 @@ export async function deleteCustomer(actor: Actor, id: string) {
       data: { deletedAt },
     });
     const data = await tx.user.update({ where: { id }, data: { isActive: false, deletedAt }, select: person });
-    await audit(tx, actor, "customer.deleted", "User", id, { deletedConversationCount: conversations.count });
+    await audit(tx, actor, "customer.deleted", "User", id, {
+      name: current.name,
+      phone: current.phone,
+      email: current.email,
+      deletedConversationCount: conversations.count,
+    });
+    const recipients = await tx.user.findMany({
+      where: { isActive: true, id: { not: actor.id }, role: { in: ["ADMIN", "SUPERVISOR"] } },
+      select: { id: true },
+    });
+    if (recipients.length) {
+      await tx.notification.createMany({
+        data: recipients.map(recipient => ({
+          userId: recipient.id,
+          type: "CUSTOMER_DELETED",
+          title: "Müşteri silindi",
+          message: `${current.name} silindi`,
+        })),
+      });
+    }
     return data;
   });
 }

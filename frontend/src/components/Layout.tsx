@@ -109,6 +109,8 @@ export function Layout() {
     ] : []),
     ...(user.role === "ADMIN" ? [
       { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations") },
+      { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
+      { label: "E-posta bildirimleri", group: "Yönetim", to: path("notification-settings") },
       { label: "Personeller", group: "Yönetim", to: path("users") },
       { label: "Kategoriler", group: "Yönetim", to: path("tags") },
       { label: "Web siteleri", group: "Yönetim", to: path("websites") },
