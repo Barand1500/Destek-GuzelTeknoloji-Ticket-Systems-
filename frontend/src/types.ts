@@ -1,5 +1,5 @@
 export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
-export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role };
+export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; departmentIds?: string[] };
 export type Department = { id: string; name: string };
 export type Tag={id:string;name:string;code:string;color:string};
 export type Website={id:string;name:string;url:string;isActive:boolean};

@@ -118,9 +118,10 @@ router.get("/auth/me", (req, res) => {
 router.get('/departments',async(req,res)=>{
   const {page,limit}=paginationSchema.parse(req.query);
   const includeInactive=z.enum(['true','false']).optional().parse(req.query.includeInactive)==='true';
+  const accessibleOnly=z.enum(['true','false']).optional().parse(req.query.accessible)==='true';
   if(includeInactive&&req.actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Yetkiniz yok.');
   const search=z.string().max(100).optional().parse(req.query.search);
-  const where={deletedAt:null,...(includeInactive?{}:{isActive:true}),...(search?{name:{contains:search}}:{})};
+  const where={deletedAt:null,...(includeInactive?{}:{isActive:true}),...(accessibleOnly&&req.actor.role!=='ADMIN'?{id:{in:req.actor.departmentIds}}:{}),...(search?{name:{contains:search}}:{})};
   const data=await db.department.findMany({where,orderBy:{name:'asc'},skip:(page-1)*limit,take:limit});
   const total=await db.department.count({where});
   res.json({success:true,data,pagination:{page,limit,total,totalPages:Math.ceil(total/limit)}});
