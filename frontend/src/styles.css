@@ -1476,6 +1476,7 @@ html[data-theme="dark"] .tabs-modal-custom-list > div { background: #22342c; col
 .search-box input {
   border: none;
   box-shadow: none;
+  background: transparent;
   padding: 9px 0;
   font-size: 12px;
   min-width: 30px;
@@ -2355,8 +2356,9 @@ html[data-theme="dark"] .table-scroll { background: #1d2c26; color: #e5eee9; }
 html[data-theme="dark"] thead { background: #22342c !important; border-color: #466056 !important; }
 html[data-theme="dark"] th { color: #a9beb4 !important; }
 html[data-theme="dark"] td { border-color: #31463d !important; color: #e5eee9; }
-html[data-theme="dark"] .search-box,
+html[data-theme="dark"] .search-box { background: #22342c; border-color: #466056; }
 html[data-theme="dark"] .filters { background: #1d2c26; border-color: #31463d; }
+html[data-theme="dark"] .search-box input { background: transparent; }
 html[data-theme="dark"] .bar-track { background: #2b493c; }
 html[data-theme="dark"] .status-pie::after { background: #1d2c26; }
 html[data-theme="dark"] .status-chart-legend a { color: #c6d8cf; }

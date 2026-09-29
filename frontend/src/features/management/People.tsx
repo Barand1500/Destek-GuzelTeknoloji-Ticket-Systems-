@@ -531,7 +531,7 @@ export function PhoneSupportPage() {
   const createCustomer = useSave("/customers", undefined, ["/customers"]);
   const createConversation = useSave("/conversations");
   const results = customers.data?.data ?? [];
-  const displayResults = hasSearched ? results : [];
+  const displayResults = hasSearched && !showCreate ? results : [];
   const activeCustomer = selected ?? (!hasSearched ? initialCustomer.data : null) ?? displayResults.find(customer => customer.id === customerId) ?? null;
   const noResults = hasSearched && deferredSearch === search && !customers.isPending && !customers.isError && !displayResults.length;
   useEffect(() => {
@@ -601,8 +601,8 @@ export function PhoneSupportPage() {
           <label className="phone-support-search">
             Telefon, e-posta veya ad ile ara
             <span>
-              <input type="search" value={search} onChange={(event) => searchCustomers(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setEnterCreateRequested(true); searchCustomers(event.currentTarget.value); } }} placeholder="Arayanın telefonu, e-postası veya adı" autoFocus />
-              {noResults && <button type="button" className="button primary phone-support-add" onClick={() => setShowCreate(true)} aria-label="Yeni kişi ekle" title="Yeni kişi ekle">+</button>}
+              <input type="search" value={search} onChange={(event) => searchCustomers(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); searchCustomers(event.currentTarget.value); setEnterCreateRequested(false); setShowCreate(true); } }} placeholder="Arayanın telefonu, e-postası veya adı" autoFocus />
+              <button type="button" className="button primary phone-support-add" onClick={() => setShowCreate(true)} aria-label="Yeni kişi ekle" title="Yeni kişi ekle">+</button>
             </span>
           </label>
           {!hasSearched && <p className="management-empty phone-support-empty">Arayan kişinin bilgilerini yazmaya başlayın.</p>}
