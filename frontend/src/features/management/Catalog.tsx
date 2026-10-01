@@ -349,19 +349,19 @@ export function WebsitesPage() {
     save.mutate({ id: editing?.id, data: { name: form.get("name"), url: form.get("url"), ...(editing ? {} : { isActive: true }) } });
   }
   return <main className="page">
-    <Heading title="Web siteleri" description="Talep açarken seçilebilecek web sitelerini ve URL adreslerini yönetin." />
+    <Heading title="Projeler" description="Talep açarken seçilebilecek projeleri ve URL adreslerini yönetin." />
     <div className="management-grid">
       <section className="management-panel">
-        <Search value={list.search} onChange={list.setSearch} label="Web sitesi ara" />
+        <Search value={list.search} onChange={list.setSearch} label="Proje ara" />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
         {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="button secondary" onClick={() => { setEditing(site); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button><button className="button management-danger" disabled={remove.isPending} onClick={() => { if (window.confirm(`“${site.name}” web sitesi silinsin mi?`)) remove.mutate(site.id); }}>Sil</button></div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
       </section>
       <section className="management-panel">
-        <h2>{editing ? "Web sitesini düzenle" : "Web sitesi ekle"}</h2>
+        <h2>{editing ? "Projeyi düzenle" : "Proje ekle"}</h2>
         <form key={version} className="management-form" onSubmit={submit}>
-          <label><span className="field-label">Web sitesi adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
+          <label><span className="field-label">Proje adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
           <label><span className="field-label">URL</span><input name="url" type="url" required maxLength={500} placeholder="https://ornek.com" defaultValue={editing?.url} /></label>
           <ErrorMessage error={save.error} />
           <FormActions pending={save.isPending} onCancel={editing ? reset : undefined} />

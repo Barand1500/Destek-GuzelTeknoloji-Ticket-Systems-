@@ -6,8 +6,80 @@ import { notifyConversation, publishChange } from "./events.service.js";
 import type { ConversationChannel } from "../generated/prisma/enums.js";
 
 type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null };
+type NetgsmResponse = { code?: string; description?: string; jobid?: string; msgheaders?: string[] };
+type MetaResponse = { id?: string; display_phone_number?: string; verified_name?: string; messages?: Array<{ id?: string }>; error?: { message?: string; code?: number } };
+const NETGSM_API = "https://api.netgsm.com.tr/sms/rest/v2";
+const META_GRAPH_API = "https://graph.facebook.com/v25.0";
 const ticketNumber = (value: string) => /#(?:TK-)?0*(\d{1,10})\b|\[(?:TK-)?0*(\d{1,10})\]/i.exec(value)?.slice(1).find(Boolean);
 const normalizedPhone = (value?: string) => value?.replace(/\D/g, "") ?? "";
+
+export function netgsmRecipient(value?: string) {
+  const digits = normalizedPhone(value);
+  if (digits.startsWith("0090") && digits.length === 14) return digits.slice(4);
+  if (digits.startsWith("90") && digits.length === 12) return digits.slice(2);
+  if (digits.startsWith("0") && digits.length === 11) return digits.slice(1);
+  return digits;
+}
+
+export function whatsappRecipient(value?: string) {
+  const digits = normalizedPhone(value);
+  if (digits.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("0") && digits.length === 11) return `90${digits.slice(1)}`;
+  if (digits.length === 10 && digits.startsWith("5")) return `90${digits}`;
+  return digits;
+}
+
+function providerMessage(prefix: string, response: Response, data: NetgsmResponse | MetaResponse) {
+  const meta = data as MetaResponse;
+  const netgsm = data as NetgsmResponse;
+  const detail = meta.error?.message ?? netgsm.description;
+  const code = meta.error?.code ?? netgsm.code;
+  return `${prefix}${detail ? `: ${detail}` : code ? ` (kod: ${code})` : ` (HTTP ${response.status})`}`;
+}
+
+async function responseJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  try { return JSON.parse(text) as T; }
+  catch { throw new Error(`Sağlayıcı geçersiz yanıt verdi${text ? `: ${text.slice(0, 200)}` : "."}`); }
+}
+
+export async function testNetgsmConnection(settings: { smsApiUser: string; smsApiPassword: string; smsSender: string }) {
+  const response = await fetch(`${NETGSM_API}/msgheader`, {
+    headers: { Authorization: `Basic ${Buffer.from(`${settings.smsApiUser}:${settings.smsApiPassword}`).toString("base64")}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await responseJson<NetgsmResponse>(response);
+  if (!response.ok || data.code !== "00") throw new Error(providerMessage("Netgsm bağlantısı doğrulanamadı", response, data));
+  const headers = data.msgheaders ?? [];
+  if (!headers.some(header => header.toLocaleUpperCase("tr-TR") === settings.smsSender.toLocaleUpperCase("tr-TR"))) {
+    throw new Error(`Netgsm hesabında “${settings.smsSender}” adlı onaylı gönderici başlığı bulunamadı.`);
+  }
+  return headers;
+}
+
+async function sendNetgsm(settings: { smsApiUser: string; smsApiPassword: string; smsSender: string }, phone: string, text: string) {
+  const no = netgsmRecipient(phone);
+  if (!/^5\d{9}$/.test(no)) throw new Error("SMS alıcısının telefonu 5XXXXXXXXX biçiminde geçerli bir Türkiye cep telefonu olmalıdır.");
+  const response = await fetch(`${NETGSM_API}/send`, {
+    method: "POST",
+    headers: { Authorization: `Basic ${Buffer.from(`${settings.smsApiUser}:${settings.smsApiPassword}`).toString("base64")}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ msgheader: settings.smsSender, messages: [{ msg: text, no }], encoding: "TR", iysfilter: "0" }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await responseJson<NetgsmResponse>(response);
+  if (!response.ok || data.code !== "00") throw new Error(providerMessage("Netgsm SMS gönderimi başarısız", response, data));
+  return data.jobid;
+}
+
+export async function testWhatsappConnection(settings: { whatsappPhoneNumberId: string; whatsappAccessToken: string }) {
+  const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}?fields=id,display_phone_number,verified_name`, {
+    headers: { Authorization: `Bearer ${settings.whatsappAccessToken}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await responseJson<MetaResponse>(response);
+  if (!response.ok || !data.id) throw new Error(providerMessage("Meta WhatsApp bağlantısı doğrulanamadı", response, data));
+  return data;
+}
 
 async function defaultDepartment(id?: string | null) {
   const selected = id ? await db.department.findFirst({ where: { id, isActive: true, deletedAt: null } }) : null;
@@ -52,9 +124,9 @@ const equalsSecret = (provided: string | undefined, expected: string) => {
 export async function receiveNetgsmMessage(body: Record<string, unknown>, secret?: string) {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
   if (!settings?.smsEnabled || !equalsSecret(secret, settings.smsWebhookSecret)) throw new AppError(401, "INVALID_WEBHOOK", "Netgsm webhook doğrulaması başarısız.");
-  const phone = String(body.msisdn ?? body.from ?? body.sender ?? "");
+  const phone = String(body.sourceNumber ?? body.msisdn ?? body.from ?? body.sender ?? "");
   const text = String(body.message ?? body.text ?? body.content ?? "").trim();
-  const externalId = String(body.messageId ?? body.id ?? `${phone}:${body.timestamp ?? text}`);
+  const externalId = String(body.messageId ?? body.id ?? `${phone}:${body.messageDateTime ?? body.timestamp ?? text}`);
   if (!phone || !text) throw new AppError(400, "INVALID_MESSAGE", "Netgsm mesajı eksik.");
   return persistInboundMessage({ provider: "netgsm", externalId, channel: "SMS", sender: { phone, name: String(body.name ?? "") || undefined }, body: text, subject: "SMS desteği", departmentId: settings.smsDepartmentId });
 }
@@ -82,12 +154,19 @@ export async function sendChannelReply(channel: ConversationChannel, recipient: 
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
   if (channel === "SMS") {
     if (!settings?.smsEnabled || !recipient.phone) throw new Error("SMS gönderim ayarı veya alıcı telefonu eksik.");
-    const query = new URLSearchParams({ usercode: settings.smsApiUser, password: settings.smsApiPassword, gsmno: normalizedPhone(recipient.phone), message: text, msgheader: settings.smsSender, dil: "TR" });
-    const response = await fetch(`https://api.netgsm.com.tr/sms/send/get/?${query}`); if (!response.ok) throw new Error("Netgsm SMS gönderimi başarısız.");
+    await sendNetgsm(settings, recipient.phone, text);
   }
   if (channel === "WHATSAPP") {
-    if (!settings?.whatsappEnabled || !recipient.phone) throw new Error("WhatsApp gönderim ayarı veya alıcı telefonu eksik.");
-    const response = await fetch(`https://graph.facebook.com/v20.0/${settings.whatsappPhoneNumberId}/messages`, { method: "POST", headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ messaging_product: "whatsapp", to: normalizedPhone(recipient.phone), type: "text", text: { body: text } }) });
-    if (!response.ok) throw new Error("WhatsApp mesajı gönderilemedi.");
+    if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !recipient.phone) throw new Error("WhatsApp gönderim ayarı veya alıcı telefonu eksik.");
+    const to = whatsappRecipient(recipient.phone);
+    if (!/^\d{10,15}$/.test(to)) throw new Error("WhatsApp alıcısının telefon numarası ülke koduyla birlikte geçerli değil.");
+    const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, type: "text", text: { preview_url: false, body: text } }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    const data = await responseJson<MetaResponse>(response);
+    if (!response.ok || !data.messages?.[0]?.id) throw new Error(providerMessage("WhatsApp mesajı gönderilemedi", response, data));
   }
 }

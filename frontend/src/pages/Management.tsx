@@ -10,6 +10,7 @@ export {
   IntegrationsPage,
   ResponseTimeRulesPage,
   NotificationSettingsPage,
+  StaffPresencePage,
   ProfilePage,
 } from "../features/management/Account";
 export {

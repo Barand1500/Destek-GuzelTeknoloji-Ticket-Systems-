@@ -17,6 +17,7 @@ import {
   TicketList,
 } from "./features/tickets/Tickets";
 import { Dashboard } from "./pages/Dashboard";
+import { GuidePage } from "./pages/Guide";
 import { Realtime } from "./components/Realtime";
 import { RequireRole } from "./components/RequireRole";
 import {
@@ -37,6 +38,7 @@ import {
   IntegrationsPage,
   ResponseTimeRulesPage,
   NotificationSettingsPage,
+  StaffPresencePage,
   ProfilePage,
   PhoneSupportPage,
 } from "./pages/Management";
@@ -108,6 +110,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
             </Route>
             <Route element={<RequireRole roles={["ADMIN"]} />}>
+              <Route path="/admin/guide" element={<GuidePage />} />
               <Route path="/admin" element={<LegacyRedirect />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />
               <Route path="/admin/conversations" element={<TicketList />} />
@@ -134,6 +137,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/admin/integrations" element={<IntegrationsPage />} />
               <Route path="/admin/response-time-rules" element={<ResponseTimeRulesPage />} />
               <Route path="/admin/notification-settings" element={<NotificationSettingsPage />} />
+              <Route path="/admin/staff-presence" element={<StaffPresencePage />} />
               <Route path="/admin/profile" element={<ProfilePage />} />
               <Route
                 path="/admin/notifications"
@@ -160,6 +164,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             "websites",
             "activity-logs",
             "settings",
+            "staff-presence",
           ].map((suffix) => (
             <Route
               key={suffix}

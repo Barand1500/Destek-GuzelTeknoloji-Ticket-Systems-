@@ -4,6 +4,7 @@ import { unlink } from "node:fs/promises";
 import path from "node:path";
 import nodemailer from "nodemailer";
 import { ImapFlow } from "imapflow";
+import { testNetgsmConnection, testWhatsappConnection } from "./integrations.service.js";
 import type { z } from "zod";
 import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -466,11 +467,12 @@ export async function testIntegration(actor: Actor, channel: "SMTP" | "IMAP" | "
       await client.connect(); await client.logout();
     } else if (channel === "SMS") {
       if (!settings.smsApiUser || !settings.smsApiPassword || !settings.smsSender) throw new Error("Netgsm API bilgileri ve gönderici başlığı zorunludur.");
-      message = "Netgsm bilgileri kaydedildi. Test mesajı göndermek için bir alıcı numarası gerekir.";
+      const headers = await testNetgsmConnection(settings);
+      message = `Netgsm hesabı doğrulandı. Kullanılabilir gönderici başlığı: ${headers.join(", ")}`;
     } else {
-      if (!settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !settings.whatsappVerifyToken) throw new Error("Meta WhatsApp bağlantı bilgileri eksik.");
-      const response = await fetch(`https://graph.facebook.com/v20.0/${settings.whatsappPhoneNumberId}?fields=id`, { headers: { Authorization: `Bearer ${settings.whatsappAccessToken}` } });
-      if (!response.ok) throw new Error("Meta WhatsApp erişim belirteci doğrulanamadı.");
+      if (!settings.whatsappAppId || !settings.whatsappAppSecret || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !settings.whatsappVerifyToken) throw new Error("Meta WhatsApp bağlantı bilgileri eksik.");
+      const phone = await testWhatsappConnection(settings);
+      message = `Meta WhatsApp hesabı doğrulandı${phone.display_phone_number ? `: ${phone.display_phone_number}` : ""}${phone.verified_name ? ` · ${phone.verified_name}` : ""}`;
     }
     success = true; message ||= "Bağlantı başarıyla doğrulandı.";
   } catch (error) { const detail = error instanceof Error ? error.message : "Bağlantı testi başarısız oldu."; message = /EACCES/.test(detail) ? "SMTP ağı bu sunucuda engelli. Güvenlik duvarında smtp.gmail.com için TCP 587 veya 465 çıkışına izin verin; uygulama parolası bu hatayı çözmez." : detail; }

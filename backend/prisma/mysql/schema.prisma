@@ -237,6 +237,7 @@ model SystemSettings {
   supportEmail String @default("")
   supportPhone String @default("")
   allowRegistration Boolean @default(true)
+  presenceIdleMinutes Int @default(5)
 }
 model ResponseTimeSettings {
   id String @id @default("default")

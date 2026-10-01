@@ -59,7 +59,12 @@ export async function getConversation(actor: Actor, id: string) {
       "TICKET_NOT_FOUND",
       "Talep bulunamadı veya erişim yetkiniz yok.",
     );
-  return conversation;
+  const creation = await db.activityLog.findFirst({
+    where: { entityId: id, entityType: "Conversation", action: "conversation.created" },
+    orderBy: { createdAt: "asc" },
+    include: { user: { select: person } },
+  });
+  return { ...conversation, createdBy: creation?.user ?? null };
 }
 export async function listConversations(actor: Actor, q: z.infer<typeof listSchema>) {
   const normalizedSearch = q.search ? normalizeSearch(q.search) : "";

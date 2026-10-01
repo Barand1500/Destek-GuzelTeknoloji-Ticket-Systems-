@@ -15,6 +15,7 @@ app.use(
   helmet(),
   cors({ origin: (origin, done) => done(null, !origin || allowedOrigins.has(origin)), credentials: true }),
   express.json({ limit: "100kb", verify: (req, _res, buffer) => { (req as any).rawBody = Buffer.from(buffer); } }),
+  express.urlencoded({ extended: false, limit: "100kb" }),
   cookieParser(),
 );
 app.get("/api/health", async (_req, res, next) => {

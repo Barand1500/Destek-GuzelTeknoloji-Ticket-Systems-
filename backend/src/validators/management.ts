@@ -52,8 +52,22 @@ export const integrationSettingsSchema = z.object({
   imapEnabled: z.boolean(), imapConnectionName: integrationText, imapHost: integrationText, imapPort: z.number().int().min(1).max(65535), imapSecure: z.boolean(), imapAuthType: z.enum(["BASIC", "OAUTH2"]), imapUser: integrationText, imapPassword: integrationText, imapMailbox: z.string().trim().min(1).max(100), imapPollIntervalSeconds: z.number().int().min(15).max(3600), imapCreateTickets: z.boolean(), imapCreateReplies: z.boolean(), imapDepartmentId: integrationDepartment,
   smsEnabled: z.boolean(), smsApiUser: integrationText, smsApiPassword: integrationText, smsSender: integrationText, smsVirtualNumber: integrationText, smsWebhookSecret: integrationText, smsDepartmentId: integrationDepartment,
   whatsappEnabled: z.boolean(), whatsappAppId: integrationText, whatsappAppSecret: integrationText, whatsappPhoneNumberId: integrationText, whatsappAccessToken: integrationText, whatsappVerifyToken: integrationText, whatsappDepartmentId: integrationDepartment,
-}).strict().refine(value => value.responseFastFromMinutes <= value.responseFastToMinutes && value.responseNormalFromMinutes <= value.responseNormalToMinutes && value.responseLateFromMinutes <= value.responseLateToMinutes, { message: "Her aralığın başlangıcı bitişinden büyük olamaz.", path: ["responseFastToMinutes"] }).refine(value => value.responseFastToMinutes < value.responseNormalFromMinutes && value.responseNormalToMinutes < value.responseLateFromMinutes, { message: "Yanıt süre aralıkları çakışamaz; hızlı, normal ve çok geç sırasıyla ilerlemelidir.", path: ["responseNormalFromMinutes"] });
+}).strict().refine(value => value.responseFastFromMinutes <= value.responseFastToMinutes && value.responseNormalFromMinutes <= value.responseNormalToMinutes && value.responseLateFromMinutes <= value.responseLateToMinutes, { message: "Her aralığın başlangıcı bitişinden büyük olamaz.", path: ["responseFastToMinutes"] }).refine(value => value.responseFastToMinutes < value.responseNormalFromMinutes && value.responseNormalToMinutes < value.responseLateFromMinutes, { message: "Yanıt süre aralıkları çakışamaz; hızlı, normal ve çok geç sırasıyla ilerlemelidir.", path: ["responseNormalFromMinutes"] }).superRefine((value, context) => {
+  if (value.smsEnabled) {
+    if (!value.smsApiUser) context.addIssue({ code: "custom", message: "Netgsm API kullanıcı adı zorunludur.", path: ["smsApiUser"] });
+    if (!value.smsApiPassword) context.addIssue({ code: "custom", message: "Netgsm API parolası zorunludur.", path: ["smsApiPassword"] });
+    if (value.smsSender.length < 3 || value.smsSender.length > 11) context.addIssue({ code: "custom", message: "Gönderici başlığı 3-11 karakter olmalıdır.", path: ["smsSender"] });
+    if (value.smsWebhookSecret.length < 16) context.addIssue({ code: "custom", message: "Webhook gizli anahtarı en az 16 karakter olmalıdır.", path: ["smsWebhookSecret"] });
+  }
+  if (value.whatsappEnabled) {
+    for (const [field, label] of [["whatsappAppId", "Meta uygulama kimliği"], ["whatsappAppSecret", "Uygulama gizli anahtarı"], ["whatsappPhoneNumberId", "Telefon numarası kimliği"], ["whatsappAccessToken", "Erişim belirteci"]] as const) {
+      if (!value[field]) context.addIssue({ code: "custom", message: `${label} zorunludur.`, path: [field] });
+    }
+    if (value.whatsappVerifyToken.length < 16) context.addIssue({ code: "custom", message: "Webhook doğrulama belirteci en az 16 karakter olmalıdır.", path: ["whatsappVerifyToken"] });
+  }
+});
 export const integrationTestSchema = z.object({ channel: z.enum(["SMTP", "IMAP", "SMS", "WHATSAPP"]) }).strict();
+export const presenceSettingsSchema = z.object({ idleMinutes: z.number().int().min(1).max(120) }).strict();
 export const responseTimeSettingsSchema = z.object({
   responseFastFromMinutes: z.number().int().min(0).max(10080), responseFastToMinutes: z.number().int().min(0).max(10080),
   responseNormalFromMinutes: z.number().int().min(0).max(10080), responseNormalToMinutes: z.number().int().min(0).max(10080),

@@ -21,6 +21,8 @@ import {
   Search,
   Timer,
   Mail,
+  Activity,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -111,9 +113,10 @@ export function Layout() {
       { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations") },
       { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
       { label: "E-posta bildirimleri", group: "Yönetim", to: path("notification-settings") },
+      { label: "Personel aktivitesi", group: "Yönetim", to: path("staff-presence") },
       { label: "Personeller", group: "Yönetim", to: path("users") },
       { label: "Kategoriler", group: "Yönetim", to: path("tags") },
-      { label: "Web siteleri", group: "Yönetim", to: path("websites") },
+      { label: "Projeler", group: "Yönetim", to: path("websites") },
     ] : []),
   ].filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(globalSearch.toLocaleLowerCase("tr-TR")));
   const workspaceName =
@@ -177,9 +180,11 @@ export function Layout() {
                   <NavLink to={path("integrations")}><Settings size={16} />Entegrasyonlar</NavLink>
                   <NavLink to={path("response-time-rules")}><Timer size={16} />Yanıt süreleri</NavLink>
                   <NavLink to={path("notification-settings")}><Mail size={16} />E-posta bildirimleri</NavLink>
+                  <NavLink to={path("staff-presence")}><Activity size={16} />Personel aktivitesi</NavLink>
                   <NavLink to={path("users")}><Users size={16} />Personeller</NavLink>
                   <NavLink to={path("tags")}><Tags size={16} />Kategoriler</NavLink>
-                  <NavLink to={path("websites")}><Tags size={16} />Web siteleri</NavLink>
+                  <NavLink to={path("websites")}><Tags size={16} />Projeler</NavLink>
+                  <NavLink to={path("guide")}><BookOpen size={16} />Sistem rehberi</NavLink>
                 </div>
               )}
             </>

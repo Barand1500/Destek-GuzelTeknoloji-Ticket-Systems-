@@ -7,7 +7,7 @@ import { env } from "../config/env.js";
 import { notifyConversation, publishChange } from "./events.service.js";
 import type { Actor } from "../types/express.js";
 import { matchesSender, selectEmailCustomer } from './inbound-email-matching.js';
-import { replyAddressTicket } from './email-reply-address.js';
+import { hasTicketReplyTag, replyAddressTicket } from './email-reply-address.js';
 
 let running = false;
 let timer: NodeJS.Timeout | undefined;
@@ -81,7 +81,7 @@ export async function persistInboundEmail(input: {
   // Some clients send a fresh message to the general mailbox with no threading
   // information. Continue only an unambiguous, already answered active request.
   // Never override an explicit (possibly foreign) ticket/reference with a guess.
-  if (!conversation && customer && !ticketNumber && !references.length && !(input.recipients ?? []).some(address => address.includes('+ticket-'))) {
+  if (!conversation && customer && !ticketNumber && !references.length && !hasTicketReplyTag(input.recipients ?? [])) {
     const active = await db.conversation.findMany({
       where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, messages: { some: { type: 'AGENT_REPLY' } } },
       take: 2,

@@ -5,6 +5,7 @@ import * as schema from "../validators/management.js";
 import { idSchema, paginationSchema } from "../validators/index.js";
 import { upload, withStoredUploads, uploadRoot } from '../services/uploads.service.js';
 import path from 'node:path';
+import { staffPresence, updatePresenceSettings } from '../services/presence.service.js';
 
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
@@ -56,6 +57,11 @@ managementRouter.patch("/notifications/:id/read", async (req, res) => res.json({
 managementRouter.delete("/notifications", async (req, res) => res.json({ success: true, data: await service.deleteNotifications(req.actor, schema.notificationDeleteQuery.parse(req.query).period) }));
 managementRouter.delete("/notifications/visible", async (req, res) => res.json({ success: true, data: await service.deleteVisibleNotifications(req.actor, schema.notificationVisibleDeleteSchema.parse(req.body).ids) }));
 managementRouter.get("/activity-logs", admin, async (req, res) => res.json({ success: true, ...await service.activityLogs(req.actor, schema.activityQuery.parse(req.query)) }));
+managementRouter.get("/staff-presence", admin, async (_req, res) => res.json({ success: true, data: await staffPresence() }));
+managementRouter.put("/staff-presence/settings", admin, async (req, res) => {
+  const { idleMinutes } = schema.presenceSettingsSchema.parse(req.body);
+  res.json({ success: true, data: await updatePresenceSettings(idleMinutes) });
+});
 managementRouter.delete("/activity-logs", admin, async (req, res) => res.json({ success: true, data: await service.deleteActivityLogs(req.actor, schema.activityDeleteQuery.parse(req.query).period) }));
 managementRouter.get("/integrations", admin, async (req, res) => res.json({ success: true, data: await service.integrationSettings(req.actor) }));
 managementRouter.put("/integrations", admin, async (req, res) => res.json({ success: true, data: await service.updateIntegrationSettings(req.actor, schema.integrationSettingsSchema.parse(req.body)) }));

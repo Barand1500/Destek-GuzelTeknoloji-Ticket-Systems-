@@ -6,9 +6,9 @@ export type Website={id:string;name:string;url:string;isActive:boolean};
 export type Attachment={id:string;originalName:string;size:number;mimeType:string};
 export type Status = string;
 export type Priority = string;
-export type ConversationChannel = "TICKET" | "EMAIL" | "LIVE_CHAT";
+export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIVE_CHAT";
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
-export const channels: Record<ConversationChannel,string> = {TICKET:"Destek talebi",EMAIL:"E-posta",LIVE_CHAT:"Canlı sohbet"};
+export const channels: Record<ConversationChannel,string> = {TICKET:"Destek talebi",EMAIL:"E-posta",SMS:"SMS",WHATSAPP:"WhatsApp",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
   channel: ConversationChannel;
   customerId: string;
@@ -22,6 +22,7 @@ export type Conversation = {
   websiteUrl?: string | null;
   website?: Website | null;
   customer: User;
+  createdBy?: User | null;
   assignedAgent: User | null;
   department: Department;
   status: Status;

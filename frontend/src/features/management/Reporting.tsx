@@ -50,9 +50,9 @@ const actionLabels: Record<string, string> = {
   "customer.deleted": "Müşteri silindi",
   "department.updated": "Departman güncellendi",
   "department.archived": "Departman silindi",
-  "website.created": "Web sitesi oluşturuldu",
-  "website.updated": "Web sitesi güncellendi",
-  "website.deleted": "Web sitesi silindi",
+  "website.created": "Proje oluşturuldu",
+  "website.updated": "Proje güncellendi",
+  "website.deleted": "Proje silindi",
   "conversation.created": "Talep oluşturuldu",
   "conversation.claimed": "Talep üstlenildi",
   "conversation.deleted": "Talep silindi",
@@ -82,7 +82,7 @@ const actionLabels: Record<string, string> = {
   LOGIN: "Oturum açıldı",
   LOGOUT: "Oturum kapatıldı",
 };
-const entityLabels: Record<string, string> = { Tag: "Etiket", StatusOption: "Durum", PriorityOption: "Öncelik", User: "Kullanıcı", Department: "Departman", Website: "Web sitesi", SavedReply: "Hazır yanıt", SystemSettings: "Sistem ayarları" };
+const entityLabels: Record<string, string> = { Tag: "Etiket", StatusOption: "Durum", PriorityOption: "Öncelik", User: "Kullanıcı", Department: "Departman", Website: "Proje", SavedReply: "Hazır yanıt", SystemSettings: "Sistem ayarları" };
 function richDescriptionFor(log: ActivityLog) {
   const metadata = log.metadata;
   const details = [

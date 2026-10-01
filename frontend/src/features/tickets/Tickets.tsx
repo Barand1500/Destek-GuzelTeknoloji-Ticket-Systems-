@@ -643,7 +643,7 @@ export function TicketDetail() {
     ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name })),
   ];
   const websiteOptions = [
-    { value: "", label: "Web sitesi seçilmedi" },
+    { value: "", label: "Proje seçilmedi" },
     ...(t.website && !websites.data?.some((site) => site.id === t.website?.id) ? [{ value: t.website.id, label: t.website.name }] : []),
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
@@ -663,7 +663,7 @@ export function TicketDetail() {
           <h1>{t.subject}</h1>
         </div>
         <div className="ticket-status-cluster">
-          <span className="management-pill created-pill">{t.customer.name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
+          <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
           <span className="management-pill">{channels[t.channel]}</span>
           <Badge status={t.status} />
         </div>
@@ -827,7 +827,7 @@ export function TicketDetail() {
               <SearchableDropdown label="Öncelik" name="priority" value={t.priority} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=priorities")} onChange={(value) => { if (priorityOptions.some((option) => option.value === value)) update.mutate({ priority: value }); }} options={priorityOptions} />
             )}
           </div>
-          <div>
+          <div className="ticket-assignee-property">
             {manager ? (
               <SearchableDropdown label="Atanan personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
             ) : (
@@ -836,7 +836,7 @@ export function TicketDetail() {
           </div>
           {agents.isError && <QueryError error={agents.error} />}
           {manager&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
-          {manager ? <DropdownSelect label="Web" ariaLabel="Web sitesi" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : t.websiteUrl ? <label>Web<a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.websiteUrl}</a></label> : null}
+          {manager ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : t.websiteUrl ? <label>Proje<a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.websiteUrl}</a></label> : null}
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}
