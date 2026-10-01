@@ -17,3 +17,4 @@ export {
   ActivityLogsPage,
   ReportsPage,
 } from "../features/management/Reporting";
+export { ProjectGuidePage } from "../features/management/ProjectGuide";

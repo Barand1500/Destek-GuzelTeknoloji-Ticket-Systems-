@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../auth/Auth";
 import { DeleteModal } from '../../components/DeleteModal';
-import type { Department } from "../../types";
+import { api } from "../../services/api";
+import { ProjectGuideFileModal } from "./ProjectGuideFileModal";
+import type { Department, Website } from "../../types";
 import {
   ErrorMessage,
   FormActions,
@@ -19,7 +22,6 @@ import {
 
 type ManagedDepartment = Department & { isActive: boolean };
 type Tag = { id: string; name: string; code: string; color: string };
-type Website = { id: string; name: string; url: string; isActive: boolean };
 type SavedReply = {
   id: string;
   title: string;
@@ -337,16 +339,34 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
 }
 
 export function WebsitesPage() {
+  const navigate = useNavigate();
+  const client = useQueryClient();
   const list = useList<Website>("/websites");
   const [editing, setEditing] = useState<Website | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Website | null>(null);
+  const [previewProject, setPreviewProject] = useState<Website | null>(null);
   const [version, setVersion] = useState(0);
   function reset() { setEditing(null); setVersion((value) => value + 1); }
-  const save = useSave("/websites", reset, ["websites"]);
+  const save = useMutation({
+    mutationFn: async ({ id, name, url, files }: { id?: string; name: string; url: string; files: File[] }) => {
+      const response = id ? await api.patch(`/websites/${id}`, { name, url }) : await api.post("/websites", { name, url, isActive: true });
+      const websiteId = response.data.data.id as string;
+      if (files.length) {
+        const data = new FormData();
+        files.forEach(file => data.append("files", file));
+        try { await api.post(`/websites/${websiteId}/guide-files`, data); }
+        catch (error) { if (!id) await api.delete(`/websites/${websiteId}`).catch(() => undefined); throw error; }
+      }
+      return response.data.data as Website;
+    },
+    onSuccess: async () => { await client.invalidateQueries({ queryKey: ["/websites"] }); reset(); },
+    onError: async () => { await client.invalidateQueries({ queryKey: ["/websites"] }); },
+  });
   const changeStatus = useSave("/websites", undefined, ["websites"]);
   const remove = useDelete("/websites", ["websites"]);
   function submit(event: FormEvent<HTMLFormElement>) {
     const form = formValues(event);
-    save.mutate({ id: editing?.id, data: { name: form.get("name"), url: form.get("url"), ...(editing ? {} : { isActive: true }) } });
+    save.mutate({ id: editing?.id, name: String(form.get("name") ?? ""), url: String(form.get("url") ?? ""), files: form.getAll("guideFiles").filter((file): file is File => file instanceof File && file.size > 0) });
   }
   return <main className="page">
     <Heading title="Projeler" description="Talep açarken seçilebilecek projeleri ve URL adreslerini yönetin." />
@@ -355,7 +375,7 @@ export function WebsitesPage() {
         <Search value={list.search} onChange={list.setSearch} label="Proje ara" />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="button secondary" onClick={() => { setEditing(site); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button><button className="button management-danger" disabled={remove.isPending} onClick={() => { if (window.confirm(`“${site.name}” web sitesi silinsin mi?`)) remove.mutate(site.id); }}>Sil</button></div></td></tr>)}</tbody></table></div>}
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button><button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button><button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button></div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
       </section>
       <section className="management-panel">
@@ -363,11 +383,14 @@ export function WebsitesPage() {
         <form key={version} className="management-form" onSubmit={submit}>
           <label><span className="field-label">Proje adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
           <label><span className="field-label">URL</span><input name="url" type="url" required maxLength={500} placeholder="https://ornek.com" defaultValue={editing?.url} /></label>
+          <label><span className="field-label">Rehber dosyaları</span><input name="guideFiles" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" /><small>PDF, JPG, PNG veya WebP · Dosya başına en fazla 25 MB</small></label>
           <ErrorMessage error={save.error} />
           <FormActions pending={save.isPending} onCancel={editing ? reset : undefined} />
         </form>
       </section>
     </div>
+    {deleteTarget && <DeleteModal title="Projeyi sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> projesi ve bağlı rehber dosyaları silinecek.</p></DeleteModal>}
+    {previewProject && <ProjectGuideFileModal websiteId={previewProject.id} projectName={previewProject.name} canManage onClose={() => setPreviewProject(null)} />}
   </main>;
 }
 

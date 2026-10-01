@@ -23,6 +23,7 @@ import {
   Mail,
   Activity,
   BookOpen,
+  FolderOpen,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -108,8 +109,9 @@ export function Layout() {
     ...(user.role !== "CUSTOMER" ? [
       { label: "Müşteriler", group: "Sayfalar", to: path("customers") },
       { label: "Telefon talebi", group: "Sayfalar", to: path("phone-support") },
+      ...(user.role !== "ADMIN" ? [{ label: "Proje Rehberi", group: "Sayfalar", to: path("project-guide") }] : []),
     ] : []),
-    ...(user.role === "ADMIN" ? [
+    ...(user.role === "ADMIN" || user.role === "SUPERVISOR" ? [
       { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations") },
       { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
       { label: "E-posta bildirimleri", group: "Yönetim", to: path("notification-settings") },
@@ -117,6 +119,7 @@ export function Layout() {
       { label: "Personeller", group: "Yönetim", to: path("users") },
       { label: "Kategoriler", group: "Yönetim", to: path("tags") },
       { label: "Projeler", group: "Yönetim", to: path("websites") },
+      ...(user.role === "ADMIN" ? [{ label: "Proje Rehberi", group: "Yönetim", to: path("project-guide") }] : []),
     ] : []),
   ].filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(globalSearch.toLocaleLowerCase("tr-TR")));
   const workspaceName =
@@ -140,6 +143,12 @@ export function Layout() {
             <LayoutDashboard size={19} />
             Genel bakış
           </NavLink>
+          {(user.role === "ADMIN" || user.role === "SUPERVISOR") && (
+            <NavLink to={path("staff-presence")}>
+              <Activity size={19} />
+              Personel aktivitesi
+            </NavLink>
+          )}
           <NavLink to={inboxPath(user.role)} end>
             <Inbox size={19} />
             {user.role === "CUSTOMER" ? "Taleplerim" : "Gelen kutusu"}
@@ -160,6 +169,10 @@ export function Layout() {
                 <Plus size={19} />
                 Telefon talebi
               </NavLink>
+              {user.role !== "ADMIN" && <NavLink to={path("project-guide")}>
+                <FolderOpen size={19} />
+                Proje Rehberi
+              </NavLink>}
             </>
           )}
           {user.role === "ADMIN" && (
@@ -180,10 +193,10 @@ export function Layout() {
                   <NavLink to={path("integrations")}><Settings size={16} />Entegrasyonlar</NavLink>
                   <NavLink to={path("response-time-rules")}><Timer size={16} />Yanıt süreleri</NavLink>
                   <NavLink to={path("notification-settings")}><Mail size={16} />E-posta bildirimleri</NavLink>
-                  <NavLink to={path("staff-presence")}><Activity size={16} />Personel aktivitesi</NavLink>
                   <NavLink to={path("users")}><Users size={16} />Personeller</NavLink>
                   <NavLink to={path("tags")}><Tags size={16} />Kategoriler</NavLink>
                   <NavLink to={path("websites")}><Tags size={16} />Projeler</NavLink>
+                  <NavLink to={path("project-guide")}><FolderOpen size={16} />Proje Rehberi</NavLink>
                   <NavLink to={path("guide")}><BookOpen size={16} />Sistem rehberi</NavLink>
                 </div>
               )}

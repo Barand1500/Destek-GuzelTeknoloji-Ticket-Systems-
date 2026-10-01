@@ -40,7 +40,7 @@ export function visibility(actor: Actor): Prisma.ConversationWhereInput {
     case "CUSTOMER":
       return { deletedAt: null, customerId: actor.id };
     case "AGENT":
-      return { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { assignedAgentId: null, departmentId: { in: actor.departmentIds } }] };
+      return { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { assignedAgentId: null, departmentId: { in: actor.departmentIds } }, { participants: { some: { userId: actor.id } } }] };
     case "SUPERVISOR":
       return { deletedAt: null, departmentId: { in: actor.departmentIds } };
   }
@@ -59,12 +59,13 @@ export async function getConversation(actor: Actor, id: string) {
       "TICKET_NOT_FOUND",
       "Talep bulunamadı veya erişim yetkiniz yok.",
     );
+  const canAddInternalNote = actor.role !== "CUSTOMER" && (actor.role !== "AGENT" || conversation.assignedAgentId === actor.id || await db.conversationParticipant.count({ where: { conversationId: id, userId: actor.id } }) > 0);
   const creation = await db.activityLog.findFirst({
     where: { entityId: id, entityType: "Conversation", action: "conversation.created" },
     orderBy: { createdAt: "asc" },
     include: { user: { select: person } },
   });
-  return { ...conversation, createdBy: creation?.user ?? null };
+  return { ...conversation, createdBy: creation?.user ?? null, canAddInternalNote };
 }
 export async function listConversations(actor: Actor, q: z.infer<typeof listSchema>) {
   const normalizedSearch = q.search ? normalizeSearch(q.search) : "";
@@ -249,7 +250,7 @@ export async function messages(
     async (tx) => {
       const data = await tx.conversationMessage.findMany({
         where,
-        include: { author: { select: person },attachments:{select:{id:true,originalName:true,mimeType:true,size:true}} },
+        include: { author: { select: person },attachments:{select:{id:true,originalName:true,mimeType:true,size:true}},mentions:{select:{user:{select:{id:true,name:true}}}} },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
@@ -263,6 +264,23 @@ export async function messages(
     data,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   };
+}
+export async function mentionCandidates(actor: Actor, id: string, search: string, limit: number) {
+  if (actor.role === "CUSTOMER") throw new AppError(403, "FORBIDDEN", "Personel etiketleme yalnızca ekip üyelerine açıktır.");
+  const conversation = await getConversation(actor, id);
+  return db.user.findMany({
+    where: {
+      id: { not: actor.id },
+      role: { in: ["AGENT", "SUPERVISOR"] },
+      isActive: true,
+      deletedAt: null,
+      departments: { some: { departmentId: conversation.departmentId } },
+      ...(search ? { name: { contains: search } } : {}),
+    },
+    select: { id: true, name: true, role: true },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    take: limit,
+  });
 }
 // Keep the original messages in the timeline, including records written before audit metadata existed.
 export async function history(actor: Actor, id: string, page: number, limit: number) {
@@ -290,12 +308,18 @@ export async function addMessage(
   if (input.type && input.isInternalNote !== undefined && (input.type === 'INTERNAL_NOTE') !== input.isInternalNote)
     throw new AppError(400,'INVALID_MESSAGE_TYPE','Mesaj türü ve dahili not seçimi uyuşmuyor.');
   const internal = type === 'INTERNAL_NOTE';
+  const mentionUserIds = input.mentionUserIds ?? [];
+  if (mentionUserIds.length && !internal)
+    throw new AppError(400, "INVALID_MENTIONS", "Personel yalnızca dahili notlarda etiketlenebilir.");
   if ((actor.role === 'CUSTOMER' && type !== 'CUSTOMER_MESSAGE') || (actor.role !== 'CUSTOMER' && type === 'CUSTOMER_MESSAGE'))
     throw new AppError(403, "FORBIDDEN", "Dahili not ekleme yetkiniz yok.");
   const result=await db.$transaction(async (tx) => {
     // Authorized update obtains a row lock before writing a message, serializing assignment/status changes.
+    const agentWriteScope: Prisma.ConversationWhereInput = internal
+      ? { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { participants: { some: { userId: actor.id } } }] }
+      : mutationVisibility(actor);
     const lock = await tx.conversation.updateMany({
-      where: { AND: [mutationVisibility(actor), { id, status: { not: "CLOSED" } }] },
+      where: { AND: [actor.role === "AGENT" ? agentWriteScope : mutationVisibility(actor), { id, status: { not: "CLOSED" } }] },
       data: { updatedAt: new Date() },
     });
     if (lock.count !== 1)
@@ -304,10 +328,23 @@ export async function addMessage(
         "TICKET_UNAVAILABLE",
         "Talep kapalı veya erişilemiyor.",
       );
+    const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
+    const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
+      where: { id: { in: mentionUserIds, not: actor.id }, role: { in: ["AGENT", "SUPERVISOR"] }, isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
+      select: { id: true, name: true },
+    }) : [];
+    if (mentionedUsers.length !== mentionUserIds.length)
+      throw new AppError(400, "INVALID_MENTIONS", "Etiketlenen personel bu talebin departmanında aktif olarak görev yapmalıdır.");
     const message = await tx.conversationMessage.create({
-      data: { conversationId: id, authorId: actor.id, body:input.body,type,attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} },
-      include: { author: { select: person },attachments:{select:{id:true,originalName:true,mimeType:true,size:true}} },
+      data: { conversationId: id, authorId: actor.id, body:input.body,type,attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))},mentions:{create:mentionedUsers.map(user=>({userId:user.id}))} },
+      include: { author: { select: person },attachments:{select:{id:true,originalName:true,mimeType:true,size:true}},mentions:{select:{user:{select:{id:true,name:true}}}} },
     });
+    if (mentionedUsers.length) {
+      await tx.conversationParticipant.createMany({ data: mentionedUsers.map(user => ({ conversationId: id, userId: user.id })), skipDuplicates: true });
+      const ticketNumber = `#TK-${String(conversation.number).padStart(5, "0")}`;
+      const preview = input.body.length > 150 ? `${input.body.slice(0, 147)}…` : input.body;
+      await tx.notification.createMany({ data: mentionedUsers.map(user => ({ userId: user.id, conversationId: id, type: "MENTION", title: `${actor.name} sizi ${ticketNumber} talebinde etiketledi`, message: preview })) });
+    }
     await tx.activityLog.create({
       data: {
         userId: actor.id,
@@ -317,9 +354,8 @@ export async function addMessage(
         ipAddress:actor.ipAddress,
       },
     });
-    const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
     if(type==='AGENT_REPLY'&&!conversation.firstResponseAt)await tx.conversation.update({where:{id},data:{firstResponseAt:message.createdAt}});
-    await notifyConversation(tx,actor,conversation,internal?'NOTE':'REPLY',internal?'Yeni ekip notu':'Görüşmeye yeni yanıt',internal);
+    if (!internal) await notifyConversation(tx,actor,conversation,'REPLY','Görüşmeye yeni yanıt');
     return message;
   });
   publishChange(id,internal);
@@ -403,6 +439,10 @@ export async function updateConversation(
       },
       include: conversationInclude,
     });
+    if (updated.departmentId !== conversation.departmentId) {
+      const validParticipants = await tx.user.findMany({ where: { conversationParticipants: { some: { conversationId: id } }, departments: { some: { departmentId: updated.departmentId } } }, select: { id: true } });
+      await tx.conversationParticipant.deleteMany({ where: { conversationId: id, userId: { notIn: validParticipants.map(user => user.id) } } });
+    }
     await tx.activityLog.create({
       data: {
         userId: actor.id,

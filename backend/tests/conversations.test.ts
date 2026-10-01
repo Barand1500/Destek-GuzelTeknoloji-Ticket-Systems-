@@ -101,6 +101,33 @@ test('Conversation channels, atomic claims, inbox views and message roles', asyn
       assert.equal((await request('/users', winner.token)).status, 403);
       assert.equal((await request('/users', admin.token)).status, 200);
     });
+    await t.test('department mentions create targeted notifications and ticket-scoped participation', async () => {
+      const suggestions = await request(`/conversations/${id}/mention-candidates?limit=6`, winner.token);
+      assert.equal(suggestions.status, 200);
+      assert.ok(suggestions.json.data.some((candidate: { id: string }) => candidate.id === loser.id));
+      assert.ok(!suggestions.json.data.some((candidate: { id: string }) => candidate.id === winner.id || candidate.id === foreign.id));
+
+      const rejected = await request(`/conversations/${id}/messages`, winner.token, 'POST', { body: '@Foreign check', type: 'INTERNAL_NOTE', mentionUserIds: [foreign.id] });
+      assert.equal(rejected.status, 400);
+
+      const mentioned = await request(`/conversations/${id}/messages`, winner.token, 'POST', { body: '@Conversation test ödeme kaydını kontrol eder misin?', type: 'INTERNAL_NOTE', mentionUserIds: [loser.id] });
+      assert.equal(mentioned.status, 201);
+      assert.equal(mentioned.json.data.mentions[0].user.id, loser.id);
+      assert.ok(await db.conversationParticipant.findUnique({ where: { conversationId_userId: { conversationId: id, userId: loser.id } } }));
+      const notification = await db.notification.findFirst({ where: { userId: loser.id, conversationId: id, type: 'MENTION' }, orderBy: { createdAt: 'desc' } });
+      assert.ok(notification?.title.includes('etiketledi'));
+      assert.equal(await db.notification.count({ where: { conversationId: id, type: 'NOTE' } }), 0);
+
+      assert.equal((await request(`/conversations/${id}`, loser.token)).status, 200);
+      assert.equal((await request(`/conversations/${id}/messages`, loser.token, 'POST', { body: 'Kontrol ediyorum.', type: 'INTERNAL_NOTE' })).status, 201);
+      assert.equal((await request(`/conversations/${id}/messages`, loser.token, 'POST', { body: 'Public collaborator reply', type: 'AGENT_REPLY' })).status, 409);
+      const customerMessages = await request(`/conversations/${id}/messages`, customer.token);
+      assert.ok(customerMessages.json.data.every((message: { type: string }) => message.type !== 'INTERNAL_NOTE'));
+      await db.user.update({ where: { id: loser.id }, data: { name: 'Renamed specialist' } });
+      const staffMessages = await request(`/conversations/${id}/messages`, winner.token);
+      const mentionedMessage = staffMessages.json.data.find((message: { id: string }) => message.id === mentioned.json.data.id);
+      assert.equal(mentionedMessage.mentions[0].user.name, 'Renamed specialist');
+    });
   } finally {
     try {
       await db.activityLog.deleteMany({ where: { userId: { in: users } } });

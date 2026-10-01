@@ -48,7 +48,7 @@ test('ticket creation and staff replies reach the mail transport; internal notes
   const { env } = await import('../src/config/env.js');
   const nodemailer = (await import('nodemailer')).default;
   const { createConversation, addMessage } = await import('../src/services/conversations.service.js');
-  const sent: Array<{ to: string; subject: string; text: string }> = [];
+  const sent: Array<{ from: string; replyTo: string; to: string; subject: string; text: string }> = [];
   const audits: any[] = [];
   const customer = { id: 'customer', name: 'Test customer', email: 'customer@example.test' };
   const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', channel: 'TICKET', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
@@ -76,7 +76,7 @@ test('ticket creation and staff replies reach the mail transport; internal notes
   stub(db.user, 'findFirst', async () => customer);
   stub(db.conversation, 'findUnique', async () => conversation);
   stub(db.activityLog, 'create', log);
-  stub(db.integrationSettings, 'findUnique', async () => ({ smtpEnabled: true, smtpHost: 'smtp.example.test', smtpPort: 587, smtpSecure: true, smtpFromAddress: 'support@example.test', smtpFromName: 'Support', smtpUser: 'test', smtpPassword: 'fake' }));
+  stub(db.integrationSettings, 'findUnique', async () => ({ smtpEnabled: true, smtpHost: 'smtp.example.test', smtpPort: 587, smtpSecure: true, smtpFromAddress: 'guzelteknoloji50@gmail.com', smtpFromName: 'Güzel Teknoloji Destek', smtpUser: 'test', smtpPassword: 'fake' }));
   t.mock.method(nodemailer, 'createTransport', () => ({ sendMail: async (mail: any) => { sent.push(mail); return { accepted: [mail.to], rejected: [], response: '250 OK', messageId: '<test@example.test>' }; } }));
   const previous = env.NODE_ENV;
   env.NODE_ENV = 'development'; // Exercise the real queue, with all network and DB calls mocked.
@@ -86,12 +86,16 @@ test('ticket creation and staff replies reach the mail transport; internal notes
     await flush();
     assert.equal(sent.length, 1);
     assert.equal(sent[0].to, customer.email);
+    assert.equal(sent[0].from, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
+    assert.equal(sent[0].replyTo, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
+    assert.doesNotMatch(sent[0].replyTo, /\+(?:t-|ticket-)/i);
     assert.match(sent[0].subject, /#42/);
     await addMessage(actor, conversation.id, { body: 'Public answer', type: 'AGENT_REPLY' });
     await flush();
     assert.equal(sent.length, 2);
     assert.match(sent[1].text, /Public answer/);
     assert.equal(sent[1].to, customer.email);
+    assert.equal(sent[1].replyTo, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
     await addMessage(actor, conversation.id, { body: 'Private note', type: 'INTERNAL_NOTE' });
     await flush();
     assert.equal(sent.length, 2);

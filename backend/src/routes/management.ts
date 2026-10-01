@@ -5,10 +5,11 @@ import * as schema from "../validators/management.js";
 import { idSchema, paginationSchema } from "../validators/index.js";
 import { upload, withStoredUploads, uploadRoot } from '../services/uploads.service.js';
 import path from 'node:path';
-import { staffPresence, updatePresenceSettings } from '../services/presence.service.js';
+import { currentPresence, staffPresence, updatePresenceSettings } from '../services/presence.service.js';
 
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
+const presenceViewer = authorize("ADMIN", "SUPERVISOR");
 const staff = authorize("ADMIN", "SUPERVISOR", "AGENT");
 managementRouter.get("/users", admin, async (req, res) => res.json({ success: true, ...await service.users(req.actor, schema.directoryQuery.parse(req.query)) }));
 managementRouter.get("/users/:id", admin, async (req, res) => res.json({ success: true, data: await service.user(req.actor, idSchema.parse(req.params.id)) }));
@@ -28,7 +29,11 @@ managementRouter.get("/customers/:id/files/:fileId/download", staff, async (req,
 managementRouter.post("/customers", staff, upload, async (req, res) => res.status(201).json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => service.createCustomer(req.actor, schema.createCustomerSchema.parse(req.body), files)) }));
 managementRouter.patch("/customers/:id", staff, upload, async (req, res) => res.json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => service.updateCustomer(req.actor, idSchema.parse(req.params.id), schema.updateCustomerSchema.parse(req.body), files)) }));
 managementRouter.delete("/customers/:id", staff, async (req, res) => res.json({ success: true, data: await service.deleteCustomer(req.actor, idSchema.parse(req.params.id)) }));
-managementRouter.get("/departments/:id/agents", staff, async (req, res) => res.json({ success: true, ...await service.departmentAgents(req.actor, idSchema.parse(req.params.id), schema.searchQuery.parse(req.query)) }));
+managementRouter.get("/departments/:id/agents", staff, async (req, res) => {
+  const result = await service.departmentAgents(req.actor, idSchema.parse(req.params.id), schema.searchQuery.parse(req.query));
+  const data = await Promise.all(result.data.map(async (agent) => ({ ...agent, presence: (await currentPresence(agent.id)).state })));
+  res.json({ success: true, ...result, data });
+});
 managementRouter.patch("/departments/:id", admin, async (req, res) => res.json({ success: true, data: await service.updateDepartment(req.actor, idSchema.parse(req.params.id), schema.departmentSchema.parse(req.body)) }));
 managementRouter.delete("/departments/:id", admin, async (req, res) => res.json({ success: true, data: await service.deleteDepartment(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.get("/tags", async (req, res) => res.json({ success: true, ...await service.tags(schema.searchQuery.parse(req.query)) }));
@@ -47,6 +52,17 @@ managementRouter.get("/websites", staff, async (req, res) => res.json({ success:
 managementRouter.post("/websites", admin, async (req, res) => res.status(201).json({ success: true, data: await service.writeWebsite(req.actor, schema.websiteSchema.parse(req.body)) }));
 managementRouter.patch("/websites/:id", admin, async (req, res) => res.json({ success: true, data: await service.writeWebsite(req.actor, schema.updateWebsiteSchema.parse(req.body), idSchema.parse(req.params.id)) }));
 managementRouter.delete("/websites/:id", admin, async (req, res) => { await service.deleteWebsite(req.actor, idSchema.parse(req.params.id)); res.json({ success: true, data: null }); });
+managementRouter.get("/websites/:id/guide-files", staff, async (req, res) => res.json({ success: true, data: await service.projectGuideFiles(req.actor, idSchema.parse(req.params.id)) }));
+managementRouter.post("/websites/:id/guide-files", admin, upload, async (req, res) => res.status(201).json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => service.addProjectGuideFiles(req.actor, idSchema.parse(req.params.id), files)) }));
+managementRouter.get("/websites/:id/guide-files/:fileId/view", staff, async (req, res, next) => {
+  const file = await service.projectGuideFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId));
+  const encodedName = encodeURIComponent(file.originalName).replace(/[!'()*]/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+  res.type(file.mimeType);
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("Content-Disposition", `inline; filename="guide-file"; filename*=UTF-8''${encodedName}`);
+  res.sendFile(path.join(uploadRoot, file.storageKey), error => { if (error && !res.headersSent) next(error); });
+});
+managementRouter.delete("/websites/:id/guide-files/:fileId", admin, async (req, res) => { await service.deleteProjectGuideFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId)); res.json({ success: true, data: null }); });
 managementRouter.get("/saved-replies", staff, async (req, res) => res.json({ success: true, ...await service.savedReplies(req.actor, schema.searchQuery.parse(req.query)) }));
 managementRouter.post("/saved-replies", staff, async (req, res) => res.status(201).json({ success: true, data: await service.writeSavedReply(req.actor, schema.savedReplySchema.parse(req.body)) }));
 managementRouter.patch("/saved-replies/:id", staff, async (req, res) => res.json({ success: true, data: await service.writeSavedReply(req.actor, schema.updateSavedReplySchema.parse(req.body), idSchema.parse(req.params.id)) }));
@@ -57,7 +73,7 @@ managementRouter.patch("/notifications/:id/read", async (req, res) => res.json({
 managementRouter.delete("/notifications", async (req, res) => res.json({ success: true, data: await service.deleteNotifications(req.actor, schema.notificationDeleteQuery.parse(req.query).period) }));
 managementRouter.delete("/notifications/visible", async (req, res) => res.json({ success: true, data: await service.deleteVisibleNotifications(req.actor, schema.notificationVisibleDeleteSchema.parse(req.body).ids) }));
 managementRouter.get("/activity-logs", admin, async (req, res) => res.json({ success: true, ...await service.activityLogs(req.actor, schema.activityQuery.parse(req.query)) }));
-managementRouter.get("/staff-presence", admin, async (_req, res) => res.json({ success: true, data: await staffPresence() }));
+managementRouter.get("/staff-presence", presenceViewer, async (req, res) => res.json({ success: true, data: await staffPresence(req.actor) }));
 managementRouter.put("/staff-presence/settings", admin, async (req, res) => {
   const { idleMinutes } = schema.presenceSettingsSchema.parse(req.body);
   res.json({ success: true, data: await updatePresenceSettings(idleMinutes) });

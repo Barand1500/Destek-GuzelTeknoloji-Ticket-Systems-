@@ -114,7 +114,7 @@ function LocationFields({ city = "", district = "", idPrefix }: { city?: string 
 type Website = { id: string; name: string; url: string; isActive: boolean };
 function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, customer }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; customer?: ManagedUser | null }) {
   const websites = useQuery({ queryKey: ["websites", "phone-request"], queryFn: async () => (await api.get<Page<Website>>("/websites", { params: { limit: 100 } })).data });
-  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), queryFn: async () => (await api.get<Page<{ id: string; name: string }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
+  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE" }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
   return <>
     {customer && <label className="phone-request-selected"><span className="field-label">Seçilen kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
@@ -122,7 +122,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} /></label>
       <label className="phone-request-message"><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={4} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label>
       <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
-      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))]} /></div>
+      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence }))]} /></div>
     </div>
   </>;
 }

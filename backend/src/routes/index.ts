@@ -221,6 +221,13 @@ router.get("/conversations/:id/messages", async (req, res) => {
     )),
   });
 });
+router.get("/conversations/:id/mention-candidates", async (req, res) => {
+  const query = z.object({
+    search: z.string().trim().max(50).default(""),
+    limit: z.coerce.number().int().min(1).max(8).default(6),
+  }).parse(req.query);
+  res.json({ success: true, data: await conversations.mentionCandidates(req.actor, idSchema.parse(req.params.id), query.search, query.limit) });
+});
 router.post("/conversations/:id/messages",uploadLimiter,async(req,_res,next)=>{await conversations.getConversation(req.actor,idSchema.parse(req.params.id));next();},upload, async (req, res) =>
   res.status(201).json({
     success: true,

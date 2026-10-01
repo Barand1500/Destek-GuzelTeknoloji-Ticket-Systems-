@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-export function DropdownSelect({ label, value, options, onChange, ariaLabel }: { label?: string; value: string; options: Array<{ value: string; label: string }>; onChange: (value: string) => void; ariaLabel: string }) {
+export type DropdownOption = { value: string; label: string; presence?: "ONLINE" | "IDLE" | "OFFLINE" };
+const presenceLabels = { ONLINE: "Çevrim içi", IDLE: "Boşta", OFFLINE: "Çevrim dışı" } as const;
+export function DropdownSelect({ label, value, options, onChange, ariaLabel }: { label?: string; value: string; options: DropdownOption[]; onChange: (value: string) => void; ariaLabel: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -9,11 +11,12 @@ export function DropdownSelect({ label, value, options, onChange, ariaLabel }: {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-  const current = options.find(option => option.value === value)?.label ?? options[0]?.label ?? "Seçin";
+  const currentOption = options.find(option => option.value === value) ?? options[0];
+  const optionContent = (option: DropdownOption) => <>{option.label}{option.presence && <span className={`presence-option-status presence-${option.presence}`}><i />{presenceLabels[option.presence]}</span>}</>;
   return <div ref={ref} className={`styled-dropdown${open ? " open" : ""}`}>
     {label && <span className="styled-dropdown-label">{label}</span>}
-    <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(value => !value)}><span>{current}</span><ChevronDown size={15} /></button>
-    {open && <div className="styled-dropdown-menu" role="listbox">{options.map(option => <button type="button" role="option" aria-selected={option.value === value} key={option.value} onClick={() => { onChange(option.value); setOpen(false); }}>{option.label}</button>)}</div>}
+    <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(value => !value)}><span>{currentOption ? optionContent(currentOption) : "Seçin"}</span><ChevronDown size={15} /></button>
+    {open && <div className="styled-dropdown-menu" role="listbox">{options.map(option => <button type="button" role="option" aria-selected={option.value === value} key={option.value} onClick={() => { onChange(option.value); setOpen(false); }}>{optionContent(option)}</button>)}</div>}
   </div>;
 }
 

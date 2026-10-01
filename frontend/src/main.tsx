@@ -41,6 +41,7 @@ import {
   StaffPresencePage,
   ProfilePage,
   PhoneSupportPage,
+  ProjectGuidePage,
 } from "./pages/Management";
 import "./styles.css";
 const client = new QueryClient({
@@ -108,6 +109,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/agent/notifications"
                 element={<NotificationsPage />}
               />
+              <Route path="/agent/staff-presence" element={<StaffPresencePage />} />
+              <Route path="/agent/project-guide" element={<ProjectGuidePage />} />
             </Route>
             <Route element={<RequireRole roles={["ADMIN"]} />}>
               <Route path="/admin/guide" element={<GuidePage />} />
@@ -125,6 +128,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/admin/departments" element={<DepartmentsPage />} />
               <Route path="/admin/tags" element={<TagsPage />} />
               <Route path="/admin/websites" element={<WebsitesPage />} />
+              <Route path="/admin/project-guide" element={<ProjectGuidePage />} />
               <Route
                 path="/admin/saved-replies"
                 element={<SavedRepliesPage />}
@@ -165,6 +169,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             "activity-logs",
             "settings",
             "staff-presence",
+            "project-guide",
           ].map((suffix) => (
             <Route
               key={suffix}

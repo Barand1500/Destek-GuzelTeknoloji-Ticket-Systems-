@@ -2,7 +2,7 @@ export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
 export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; departmentIds?: string[] };
 export type Department = { id: string; name: string };
 export type Tag={id:string;name:string;code:string;color:string};
-export type Website={id:string;name:string;url:string;isActive:boolean};
+export type Website={id:string;name:string;url:string;isActive:boolean;guideFileCount?:number};
 export type Attachment={id:string;originalName:string;size:number;mimeType:string};
 export type Status = string;
 export type Priority = string;
@@ -34,6 +34,7 @@ export type Conversation = {
   responseTimeAt?: string | null;
   customerMessageCount?: number;
   assignedAgentMessageCount?: number;
+  canAddInternalNote?: boolean;
   tags:{tag:Tag;tagId:string}[];
 };
 export type Message = {
@@ -44,6 +45,7 @@ export type Message = {
   body: string;
   createdAt: string;
   attachments:Attachment[];
+  mentions?: Array<{ user: { id: string; name: string } }>;
 };
 export type Page<T> = {
   data: T[];

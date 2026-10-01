@@ -1,5 +1,6 @@
 import { db } from "../config/db.js";
 import { EventEmitter } from "node:events";
+import type { Actor } from "../types/express.js";
 
 type PresenceUpdate = {
   path: string;
@@ -123,6 +124,11 @@ export function disconnectPresence(userId: string, socketId: string) {
   publishPresence(userId);
 }
 
+export async function currentPresence(userId: string): Promise<PresenceChanged> {
+  await ensurePresenceSettings();
+  return presenceChanged(userId);
+}
+
 export async function getPresenceSettings() {
   return db.systemSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
 }
@@ -135,11 +141,16 @@ export async function updatePresenceSettings(idleMinutes: number) {
   return settings;
 }
 
-export async function staffPresence() {
+export async function staffPresence(actor?: Pick<Actor, "role" | "departmentIds">) {
   const [settings, staff] = await Promise.all([
     ensurePresenceSettings(),
     db.user.findMany({
-      where: { role: { in: ["ADMIN", "SUPERVISOR", "AGENT"] }, isActive: true, deletedAt: null },
+      where: {
+        role: { in: ["ADMIN", "SUPERVISOR", "AGENT"] },
+        isActive: true,
+        deletedAt: null,
+        ...(actor?.role === "SUPERVISOR" ? { departments: { some: { departmentId: { in: actor.departmentIds } } } } : {}),
+      },
       select: { id: true, name: true, email: true, role: true, departments: { select: { department: { select: { name: true } } } } },
       orderBy: { name: "asc" },
     }),

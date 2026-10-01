@@ -10,6 +10,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "import:project-guides": "tsx scripts/import-project-guides.ts",
     "test": "tsx --test --test-concurrency=1 tests/*.test.ts"
   },
   "dependencies": {

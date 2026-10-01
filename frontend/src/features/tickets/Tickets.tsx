@@ -9,6 +9,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import {
   ArrowLeft,
   ArrowRight,
+  AtSign,
   CheckCheck,
   ChevronDown,
   ChevronLeft,
@@ -81,6 +82,93 @@ export function QueryError({ error }: { error: unknown }) {
       {errorText(error)}
     </div>
   );
+}
+type MentionCandidate = { id: string; name: string; role: "AGENT" | "SUPERVISOR" };
+type SelectedMention = Pick<MentionCandidate, "id" | "name">;
+type MentionTrigger = { start: number; end: number; search: string };
+const mentionTriggerAt = (value: string, caret: number): MentionTrigger | null => {
+  const beforeCaret = value.slice(0, caret);
+  const match = beforeCaret.match(/(?:^|[\s(])@([^\s@\n]{0,50})$/);
+  if (!match) return null;
+  return { start: caret - match[1].length - 1, end: caret, search: match[1] };
+};
+function MentionTextarea({ conversationId, value, onChange, selected, onSelectedChange, disabled, placeholder, onSubmit }: { conversationId: string; value: string; onChange: (value: string) => void; selected: SelectedMention[]; onSelectedChange: (value: SelectedMention[]) => void; disabled: boolean; placeholder: string; onSubmit: () => void }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [trigger, setTrigger] = useState<MentionTrigger | null>(null);
+  const [search, setSearch] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(trigger?.search.trim() ?? ""), 140);
+    return () => window.clearTimeout(timer);
+  }, [trigger?.search]);
+  const candidates = useQuery({
+    queryKey: ["mention-candidates", conversationId, search],
+    queryFn: async () => (await api.get<{ data: MentionCandidate[] }>(`/conversations/${conversationId}/mention-candidates`, { params: { search, limit: search ? 8 : 6 } })).data.data,
+    enabled: Boolean(trigger) && !disabled,
+    staleTime: 30_000,
+  });
+  const options = (candidates.data ?? []).filter((candidate) => !selected.some((item) => item.id === candidate.id));
+  useEffect(() => setActiveIndex(0), [search]);
+  const updateTrigger = (text: string, caret: number) => {
+    const nextTrigger = mentionTriggerAt(text, caret);
+    if (!nextTrigger) { setTrigger(null); return; }
+    const completedMention = selected.some((mention) => {
+      const token = `@${mention.name}`;
+      return text.startsWith(token, nextTrigger.start) && caret > nextTrigger.start + token.length;
+    });
+    setTrigger(completedMention ? null : nextTrigger);
+  };
+  const choose = (candidate: MentionCandidate) => {
+    if (!trigger) return;
+    const next = `${value.slice(0, trigger.start)}@${candidate.name} ${value.slice(trigger.end)}`;
+    const caret = trigger.start + candidate.name.length + 2;
+    onChange(next);
+    onSelectedChange([...selected, { id: candidate.id, name: candidate.name }]);
+    setTrigger(null);
+    requestAnimationFrame(() => { textareaRef.current?.focus(); textareaRef.current?.setSelectionRange(caret, caret); });
+  };
+  return <div className="mention-composer">
+    <textarea
+      ref={textareaRef}
+      className="internal-note-input"
+      aria-label="Dahili not"
+      aria-autocomplete="list"
+      aria-controls={trigger ? "mention-suggestions" : undefined}
+      aria-expanded={Boolean(trigger)}
+      value={value}
+      onChange={(event) => {
+        const next = event.target.value;
+        onChange(next);
+        onSelectedChange(selected.filter((mention) => next.includes(`@${mention.name}`)));
+        updateTrigger(next, event.target.selectionStart);
+      }}
+      onClick={(event) => updateTrigger(event.currentTarget.value, event.currentTarget.selectionStart)}
+      onKeyUp={(event) => { if (!["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(event.key)) updateTrigger(event.currentTarget.value, event.currentTarget.selectionStart); }}
+      onKeyDown={(event) => {
+        if (trigger) {
+          if (event.key === "Escape") { event.preventDefault(); setTrigger(null); return; }
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((index) => options.length ? (index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length : 0); return; }
+          if ((event.key === "Enter" || event.key === "Tab") && options[activeIndex]) { event.preventDefault(); choose(options[activeIndex]); return; }
+        }
+        if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); if (!event.repeat) onSubmit(); }
+      }}
+      title="@ ile personel etiketleyin · Enter ile gönderin · Shift+Enter ile yeni satır"
+      placeholder={placeholder}
+      disabled={disabled}
+      required
+      maxLength={10000}
+      rows={3}
+    />
+    {trigger && <div className="mention-suggestions" id="mention-suggestions" role="listbox" aria-label="Etiketlenebilecek personeller">
+      <div className="mention-suggestions-heading"><AtSign size={14}/><span>{search ? `“${search}” için sonuçlar` : "Departmandaki kişiler"}</span><small>En fazla {search ? 8 : 6} kişi</small></div>
+      {candidates.isPending && <p className="mention-state">Kişiler yükleniyor…</p>}
+      {!candidates.isPending && options.map((candidate, index) => <button key={candidate.id} type="button" role="option" aria-selected={index === activeIndex} className={index === activeIndex ? "active" : ""} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(candidate)}>
+        <span className="mention-avatar">{candidate.name.slice(0, 1).toLocaleUpperCase("tr-TR")}</span>
+        <span><strong>{candidate.name}</strong><small>{candidate.role === "SUPERVISOR" ? "Departman sorumlusu" : "Destek uzmanı"}</small></span>
+      </button>)}
+      {!candidates.isPending && !options.length && <p className="mention-state">Uygun personel bulunamadı.</p>}
+    </div>}
+  </div>;
 }
 export function TicketList() {
   const { user } = useAuth();
@@ -551,6 +639,7 @@ export function TicketDetail() {
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [internal, setInternal] = useState(false);
+  const [selectedMentions, setSelectedMentions] = useState<SelectedMention[]>([]);
   const [page, setPage] = useState(1);
   const messageListRef = useRef<HTMLDivElement>(null);
   const sending = useRef(false);
@@ -593,6 +682,8 @@ export function TicketDetail() {
       ).data.data as User[],
     enabled: manager && !!ticket.data,
   });
+  const presence = useQuery({ queryKey: ["/staff-presence"], enabled: manager && !!ticket.data, queryFn: async () => (await api.get<{ data: { staff: Array<{ id: string; state: "ONLINE" | "IDLE" | "OFFLINE" }> } }>("/staff-presence")).data.data });
+  const presenceById = new Map((presence.data?.staff ?? []).map((person) => [person.id, person.state]));
   const websites = useQuery({
     queryKey: ["websites", "conversation-picker"],
     queryFn: async () => (await api.get<Page<{ id: string; name: string; url: string; isActive: boolean }>>("/websites", { params: { limit: 100 } })).data.data,
@@ -604,11 +695,12 @@ export function TicketDetail() {
   }
   const reply = useMutation({
     mutationFn: async () => {
-      const form=new FormData();form.set('body',body);form.set('type',internal ? 'INTERNAL_NOTE' : user?.role === 'CUSTOMER' ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY');for(const file of files)form.append('files',file);
+      const form=new FormData();form.set('body',body);form.set('type',internal ? 'INTERNAL_NOTE' : user?.role === 'CUSTOMER' ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY');if(internal&&selectedMentions.length)form.set('mentionUserIds',JSON.stringify(selectedMentions.map(mention=>mention.id)));for(const file of files)form.append('files',file);
       return api.post(`/conversations/${id}/messages`,form);
     },
     onSuccess: () => {
       setBody("");
+      setSelectedMentions([]);
       setFiles([]);setFileKey(key=>key+1);
       stickToBottom.current = true;
       const total = messages.data?.pagination.total ?? 0;
@@ -639,8 +731,8 @@ export function TicketDetail() {
   const t = ticket.data;
   const assigneeOptions = [
     { value: '', label: 'Atanmamış' },
-    ...(t.assignedAgent ? [{ value: t.assignedAgent.id, label: t.assignedAgent.name }] : []),
-    ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name })),
+    ...(t.assignedAgent ? [{ value: t.assignedAgent.id, label: t.assignedAgent.name, presence: presenceById.get(t.assignedAgent.id) }] : []),
+    ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id) })),
   ];
   const websiteOptions = [
     { value: "", label: "Proje seçilmedi" },
@@ -648,7 +740,9 @@ export function TicketDetail() {
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
   const agentNeedsClaim = user?.role === 'AGENT' && !t.assignedAgentId;
-  const canWrite = !agentNeedsClaim && t.status !== 'CLOSED';
+  const canPublicReply = t.status !== 'CLOSED' && (user?.role !== 'AGENT' || t.assignedAgentId === user.id);
+  const canInternalNote = t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
+  const canWrite = internal ? canInternalNote : canPublicReply;
   return (
     <main className="page conversation-page">
       <Link className="back-link" to={inboxPath(user!.role)}>
@@ -669,6 +763,7 @@ export function TicketDetail() {
         </div>
       </div>
       <section className="ticket-customer-summary">
+        <span className="ticket-number">#TK-{String(t.number).padStart(5, "0")}</span>
         <strong>{t.customer.name}</strong>
         {t.customer.phone && <span>{t.customer.phone}</span>}
         {t.customer.email && <span>{t.customer.email}</span>}
@@ -719,6 +814,7 @@ export function TicketDetail() {
                     </span>
                   )}
                   <p>{message.body}</p>
+                  {message.type === "INTERNAL_NOTE" && message.mentions?.length ? <div className="message-mentions" aria-label="Etiketlenen personeller">{message.mentions.map(({user: mention}) => <span key={mention.id}><AtSign size={11}/>{mention.name}</span>)}</div> : null}
                   <AttachmentLinks attachments={message.attachments}/>
                 </div>
               </article>
@@ -767,8 +863,16 @@ export function TicketDetail() {
                 </button>
               )}
             </div>
-            <textarea
-              className={internal ? "internal-note-input" : ""}
+            {internal ? <MentionTextarea
+              conversationId={t.id}
+              value={body}
+              onChange={setBody}
+              selected={selectedMentions}
+              onSelectedChange={setSelectedMentions}
+              disabled={reply.isPending || !canWrite}
+              placeholder={t.status === "CLOSED" ? "Bu talep kapatıldı." : "@ yazarak departmandan bir kişiyi etiketleyin…"}
+              onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && body.trim()) { sending.current = true; reply.mutate(); } }}
+            /> : <textarea
               aria-label={internal ? "Dahili not" : "Yanıtınız"}
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -781,15 +885,13 @@ export function TicketDetail() {
               placeholder={
                 t.status === "CLOSED"
                   ? "Bu talep kapatıldı."
-                  : internal
-                    ? "Yalnızca ekibinizin görebileceği bir not…"
-                    : "Yanıtınızı yazın…"
+                  : "Yanıtınızı yazın…"
               }
               disabled={reply.isPending || !canWrite}
               required
               maxLength={10000}
               rows={3}
-            />
+            />}
             {reply.isError && <QueryError error={reply.error} />}
             <div className="composer-footer">
               <ComposerFiles files={files} setFiles={setFiles} disabled={reply.isPending || !canWrite}/>
@@ -813,6 +915,9 @@ export function TicketDetail() {
         </section>
         <aside className="ticket-properties">
           <h2>Talep bilgileri</h2>
+          {(manager || t.websiteUrl) && <div className="property-editor">
+            {manager ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje<a href={t.websiteUrl!} target="_blank" rel="noreferrer">{t.websiteUrl}</a></label>}
+          </div>}
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
               <Badge status={t.status} />
@@ -836,7 +941,6 @@ export function TicketDetail() {
           </div>
           {agents.isError && <QueryError error={agents.error} />}
           {manager&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
-          {manager ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : t.websiteUrl ? <label>Proje<a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.websiteUrl}</a></label> : null}
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}

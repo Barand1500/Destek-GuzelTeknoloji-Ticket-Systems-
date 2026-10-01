@@ -37,7 +37,7 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
     restored.push(() => { target[key] = original; });
   }
   t.after(() => restored.reverse().forEach(restore => restore()));
-  const target = { id: 'ticket-650', customerId: adem.id, departmentId: 'technical', assignedAgentId: null };
+  const target = { id: 'ticket-36', customerId: adem.id, departmentId: 'technical', assignedAgentId: null };
   let duplicate = false;
   let foreignReference = false;
   let activeTickets: any[] = [];
@@ -54,7 +54,7 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
   stub(db.conversation, 'findFirst', async ({ where }: any) => {
     assert.deepEqual(where.customerId.in, [adem.id]);
     assert.equal(where.deletedAt, null);
-    return where.id === target.id || where.number === 650 ? target : null;
+    return where.id === target.id || where.number === 36 ? target : null;
   });
   const tx = {
     conversation: { create: async ({ data }: any) => { newTickets.push(data); return { ...data, id: 'new-ticket' }; }, update: async () => target },
@@ -65,11 +65,11 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
   };
   stub(db, '$transaction', async (callback: any) => callback(tx));
   const base = { mailbox: 'INBOX', uid: 193, from: { address: adem.email, name: 'Yunus Durgun' }, subject: 'Changed subject', body: 'Thank you' };
-  assert.equal(await persistInboundEmail({ ...base, inReplyTo: '<sent@example.test>' }), target.id);
+  assert.equal(await persistInboundEmail({ ...base, recipients: ['guzelteknoloji50@gmail.com'], inReplyTo: '<ticket-36@example.test>' }), target.id);
   assert.equal(messages.at(-1).authorId, adem.id);
   assert.equal(newTickets.length, 0);
-  assert.equal(await persistInboundEmail({ ...base, recipients: [ticketReplyAddress('support@gmail.com', 650, env.JWT_ACCESS_SECRET)!] }), target.id);
-  assert.equal(await persistInboundEmail({ ...base, subject: 'Re: (#650)', from: { address: 'alias@example.test' } }), target.id);
+  assert.equal(await persistInboundEmail({ ...base, recipients: [ticketReplyAddress('support@gmail.com', 36, env.JWT_ACCESS_SECRET)!] }), target.id);
+  assert.equal(await persistInboundEmail({ ...base, subject: 'Re: (#36)', from: { address: 'alias@example.test' } }), target.id);
   assert.equal(await persistInboundEmail(base), 'new-ticket');
   assert.equal(newTickets.at(-1).customerId, adem.id);
   activeTickets = [{ ...target, messages: [{ id: 'staff-reply' }] }];

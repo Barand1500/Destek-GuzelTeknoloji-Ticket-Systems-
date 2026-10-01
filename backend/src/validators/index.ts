@@ -57,6 +57,10 @@ export const messageSchema = z
     body: z.string().trim().min(1).max(10000),
     type: z.enum(['CUSTOMER_MESSAGE','AGENT_REPLY','INTERNAL_NOTE']).optional(),
     isInternalNote: z.preprocess(v=>v==='true'?true:v==='false'?false:v,z.boolean()).optional(),
+    mentionUserIds: z.preprocess((value) => {
+      if (typeof value !== "string") return value;
+      try { return JSON.parse(value); } catch { return value; }
+    }, z.array(idSchema).max(10).refine((ids) => new Set(ids).size === ids.length, "Aynı personel birden fazla etiketlenemez.")).optional(),
   })
   .strict();
 export const updateConversationSchema = z

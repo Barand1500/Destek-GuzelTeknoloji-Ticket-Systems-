@@ -53,6 +53,9 @@ model User {
   savedReplies SavedReply[]
   attachments ConversationAttachment[]
   customerFiles CustomerAttachment[]
+  projectGuideFiles ProjectGuideFile[]
+  conversationParticipants ConversationParticipant[]
+  messageMentions ConversationMessageMention[]
   @@index([email])
   @@index([phone])
 }
@@ -110,6 +113,7 @@ model Conversation {
   tags ConversationTag[]
   notifications Notification[]
   externalMessages ExternalMessage[]
+  participants ConversationParticipant[]
   @@index([customerId, deletedAt, updatedAt])
   @@index([assignedAgentId, deletedAt, updatedAt])
   @@index([departmentId, status])
@@ -151,7 +155,25 @@ model ConversationMessage {
   type MessageType @default(CUSTOMER_MESSAGE)
   createdAt DateTime @default(now())
   attachments ConversationAttachment[]
+  mentions ConversationMessageMention[]
   @@index([conversationId, createdAt])
+}
+model ConversationParticipant {
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([conversationId, userId])
+  @@index([userId, createdAt])
+}
+model ConversationMessageMention {
+  messageId String
+  message ConversationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([messageId, userId])
+  @@index([userId])
 }
 model IncomingEmail {
   id String @id @default(uuid())
@@ -181,8 +203,8 @@ model ConversationAttachment {
   id String @id @default(uuid())
   messageId String
   message ConversationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  uploaderId String
-  uploader User @relation(fields: [uploaderId], references: [id])
+  uploaderId String?
+  uploader User? @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
   originalName String
   mimeType String
   size Int
@@ -216,7 +238,22 @@ model Website {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   conversations Conversation[]
+  guideFiles ProjectGuideFile[]
   @@index([isActive])
+}
+model ProjectGuideFile {
+  id String @id @default(uuid())
+  websiteId String
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader User @relation(fields: [uploaderId], references: [id])
+  originalName String
+  mimeType String
+  size Int
+  storageKey String @unique
+  createdAt DateTime @default(now())
+  @@index([websiteId, createdAt])
+  @@index([uploaderId])
 }
 model ConversationTag {
   conversationId String

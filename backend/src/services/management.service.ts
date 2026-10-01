@@ -334,7 +334,8 @@ export async function deletePriorityOption(actor: Actor, id: string) {
 }
 export async function websites(q: z.infer<typeof schema.searchQuery>) {
   const where: Prisma.WebsiteWhereInput = q.search ? { OR: [{ name: { contains: q.search } }, { url: { contains: q.search } }] } : {};
-  const [data, total] = await db.$transaction([db.website.findMany({ where, orderBy: [{ name: "asc" }, { id: "asc" }], ...paging(q) }), db.website.count({ where })]);
+  const [rows, total] = await db.$transaction([db.website.findMany({ where, include: { _count: { select: { guideFiles: true } } }, orderBy: [{ name: "asc" }, { id: "asc" }], ...paging(q) }), db.website.count({ where })]);
+  const data = rows.map(({ _count, ...website }) => ({ ...website, guideFileCount: _count.guideFiles }));
   return { data, pagination: pagination({ page: q.page, limit: q.limit }, total) };
 }
 export async function writeWebsite(actor: Actor, input: z.infer<typeof schema.updateWebsiteSchema>, id?: string) {
@@ -348,7 +349,55 @@ export async function writeWebsite(actor: Actor, input: z.infer<typeof schema.up
 }
 export async function deleteWebsite(actor: Actor, id: string) {
   requireAdmin(actor);
-  return db.$transaction(async tx => { if (!(await tx.website.findUnique({ where: { id } }))) throw notFound(); await tx.website.delete({ where: { id } }); await audit(tx, actor, "website.deleted", "Website", id); });
+  const storageKeys = await db.$transaction(async tx => {
+    const website = await tx.website.findUnique({ where: { id }, include: { guideFiles: { select: { storageKey: true } } } });
+    if (!website) throw notFound();
+    await tx.website.delete({ where: { id } });
+    await audit(tx, actor, "website.deleted", "Website", id, { name: website.name, guideFileCount: website.guideFiles.length, guideStorageKeys: website.guideFiles.map(file => file.storageKey) });
+    return website.guideFiles.map(file => file.storageKey);
+  });
+  const cleanup = await Promise.allSettled(storageKeys.map(storageKey => unlink(path.join(uploadRoot, storageKey))));
+  cleanup.forEach((result, index) => { if (result.status === "rejected") console.error("Project guide file cleanup failed", { websiteId: id, storageKey: storageKeys[index], error: result.reason instanceof Error ? result.reason.message : String(result.reason) }); });
+}
+export async function projectGuideFiles(actor: Actor, websiteId: string) {
+  requireStaff(actor);
+  if (!(await db.website.findUnique({ where: { id: websiteId }, select: { id: true } }))) throw notFound();
+  return db.projectGuideFile.findMany({
+    where: { websiteId },
+    select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+}
+export async function addProjectGuideFiles(actor: Actor, websiteId: string, files: StoredUpload[]) {
+  requireAdmin(actor);
+  if (!files.length) throw new AppError(400, "FILE_REQUIRED", "En az bir PDF veya görsel seçin.");
+  if (files.some(file => file.mimeType !== "application/pdf" && !file.mimeType.startsWith("image/"))) {
+    throw new AppError(400, "INVALID_GUIDE_FILE", "Proje rehberine yalnızca PDF veya görsel yüklenebilir.");
+  }
+  return db.$transaction(async tx => {
+    const website = await tx.website.findUnique({ where: { id: websiteId }, select: { id: true, name: true } });
+    if (!website) throw notFound();
+    await tx.projectGuideFile.createMany({ data: files.map(file => ({ ...file, websiteId, uploaderId: actor.id })) });
+    await audit(tx, actor, "project_guide.files_uploaded", "Website", websiteId, { websiteName: website.name, files: files.map(file => file.originalName) });
+    return tx.projectGuideFile.findMany({ where: { websiteId }, select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+  });
+}
+export async function projectGuideFile(actor: Actor, websiteId: string, fileId: string) {
+  requireStaff(actor);
+  const file = await db.projectGuideFile.findFirst({ where: { id: fileId, websiteId } });
+  if (!file) throw notFound();
+  return file;
+}
+export async function deleteProjectGuideFile(actor: Actor, websiteId: string, fileId: string) {
+  requireAdmin(actor);
+  const file = await db.$transaction(async tx => {
+    const current = await tx.projectGuideFile.findFirst({ where: { id: fileId, websiteId }, include: { website: { select: { name: true } } } });
+    if (!current) throw notFound();
+    await tx.projectGuideFile.delete({ where: { id: current.id } });
+    await audit(tx, actor, "project_guide.file_deleted", "Website", websiteId, { fileId: current.id, originalName: current.originalName, storageKey: current.storageKey, websiteName: current.website.name });
+    return current;
+  });
+  await unlink(path.join(uploadRoot, file.storageKey)).catch(error => console.error("Project guide file cleanup failed", { websiteId, fileId, storageKey: file.storageKey, error: error instanceof Error ? error.message : String(error) }));
 }
 export async function savedReplies(actor: Actor, q: z.infer<typeof schema.searchQuery>) {
   requireStaff(actor);

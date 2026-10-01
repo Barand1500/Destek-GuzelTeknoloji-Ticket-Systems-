@@ -2,7 +2,6 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
 import { db } from '../config/db.js';
 import { publishChange } from './events.service.js';
-import { ticketReplyAddress } from './email-reply-address.js';
 
 async function transportForSettings() {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
@@ -35,9 +34,7 @@ export async function sendSupportEmail(to: string, subject: string, text: string
     console.warn('SMTP e-postası gönderilmedi: SMTP_HOST, SMTP_FROM veya SMTP kimlik bilgileri eksik.');
     throw Object.assign(new Error('SMTP ayarları eksik.'), { code: 'SMTP_NOT_CONFIGURED' });
   }
-  const conversation = audit ? await db.conversation.findUnique({ where: { id: audit.conversationId }, select: { number: true } }) : null;
-  const replyTo = conversation ? ticketReplyAddress(mail.from, conversation.number, env.JWT_ACCESS_SECRET) : undefined;
-  const result = await mail.transport.sendMail({ from: mail.from, to, subject, text, ...(replyTo ? { replyTo } : {}) });
+  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text });
   if (!result.accepted.length || result.rejected.length) throw Object.assign(new Error('E-posta alıcısı sunucu tarafından reddedildi.'), { code: 'RECIPIENT_REJECTED' });
   return { sent: true, accepted: result.accepted.length, rejected: result.rejected.length, response: result.response, messageId: result.messageId };
 }
