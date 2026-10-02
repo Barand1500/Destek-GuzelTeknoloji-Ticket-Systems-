@@ -6,6 +6,8 @@ import { idSchema, paginationSchema } from "../validators/index.js";
 import { upload, withStoredUploads, uploadRoot } from '../services/uploads.service.js';
 import path from 'node:path';
 import { currentPresence, staffPresence, updatePresenceSettings } from '../services/presence.service.js';
+import * as announcements from '../services/announcements.service.js';
+import { z } from 'zod';
 
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
@@ -86,6 +88,15 @@ managementRouter.get("/response-time-settings", admin, async (req, res) => res.j
 managementRouter.put("/response-time-settings", admin, async (req, res) => res.json({ success: true, data: await service.updateResponseTimeSettings(req.actor, schema.responseTimeSettingsSchema.parse(req.body)) }));
 managementRouter.get("/notification-settings", admin, async (req, res) => res.json({ success: true, data: await service.notificationSettings(req.actor) }));
 managementRouter.put("/notification-settings", admin, async (req, res) => res.json({ success: true, data: await service.updateNotificationSettings(req.actor, schema.notificationSettingsSchema.parse(req.body)) }));
+const announcementInput = z.object({ title: z.string().trim().min(3).max(191), body: z.string().trim().min(1).max(10000), audience: z.enum(['CUSTOMERS','STAFF','ALL','PERSON']), recipientId: z.string().optional(), priority: z.enum(['LOW','NORMAL','HIGH','URGENT']).default('NORMAL'), channels: z.union([z.array(z.enum(['APP','EMAIL','SMS'])), z.string().transform(value => { try { return JSON.parse(value); } catch { return []; } }).pipe(z.array(z.enum(['APP','EMAIL','SMS']))) ]).pipe(z.array(z.enum(['APP','EMAIL','SMS'])).min(1).max(3)), saveTemplate: z.union([z.boolean(), z.string().transform(value => value === 'true')]).optional(), eventAt: z.string().datetime().nullable().optional() }).strict();
+const templateInput = z.object({ title: z.string().trim().min(3).max(191), body: z.string().trim().min(1).max(10000), priority: z.enum(['LOW','NORMAL','HIGH','URGENT']).default('NORMAL') }).strict();
+managementRouter.get('/announcements', async (req, res) => res.json({ success: true, data: await announcements.list(req.actor) }));
+managementRouter.get('/announcements/recipients', admin, async (req, res) => res.json({ success: true, data: await announcements.recipients(req.actor) }));
+managementRouter.post('/announcements', admin, upload, async (req, res) => res.status(201).json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => announcements.create(req.actor, announcementInput.parse(req.body), files)) }));
+managementRouter.get('/announcements/attachments/:id', async (req, res, next) => { const file = await announcements.attachment(req.actor, idSchema.parse(req.params.id)); res.setHeader('Cache-Control','private, no-store'); res.type(file.mimeType); res.download(file.path, file.originalName, error => { if (error && !res.headersSent) next(error); }); });
+managementRouter.delete('/announcements/:id', admin, async (req, res) => res.json({ success: true, data: await announcements.remove(req.actor, idSchema.parse(req.params.id)) }));
+managementRouter.post('/announcement-templates', admin, async (req, res) => res.status(201).json({ success: true, data: await announcements.saveTemplate(req.actor, templateInput.parse(req.body)) }));
+managementRouter.delete('/announcement-templates/:id', admin, async (req, res) => res.json({ success: true, data: await announcements.deleteTemplate(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.get("/profile", async (req, res) => res.json({ success: true, data: await service.profile(req.actor) }));
 managementRouter.patch("/profile", async (req, res) => res.json({ success: true, data: await service.updateProfile(req.actor, schema.profileSchema.parse(req.body)) }));
 managementRouter.get("/reports", authorize("ADMIN", "SUPERVISOR"), async (req, res) => res.json({ success: true, data: await service.reports(req.actor, paginationSchema.parse(req.query)) }));

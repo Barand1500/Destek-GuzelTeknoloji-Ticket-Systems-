@@ -18,3 +18,5 @@ export {
   ReportsPage,
 } from "../features/management/Reporting";
 export { ProjectGuidePage } from "../features/management/ProjectGuide";
+export { AnnouncementsPage } from "../features/management/Announcements";
+export { AnnouncementInboxPage } from "../features/management/AnnouncementInbox";

@@ -423,7 +423,7 @@ export async function deleteSavedReply(actor: Actor, id: string) {
   });
 }
 export async function notifications(actor: Actor, q: z.infer<typeof schema.notificationQuery>) {
-  const visible: Prisma.NotificationWhereInput = { userId: actor.id, OR: [{ conversationId: null }, { conversation: { is: visibility(actor) } }] };
+  const visible: Prisma.NotificationWhereInput = { userId: actor.id, OR: [{ type: "ANNOUNCEMENT" }, { conversationId: null }, { conversation: { is: visibility(actor) } }] };
   const where: Prisma.NotificationWhereInput = { AND: [visible, ...(q.search ? [{ OR: [{ title: { contains: q.search } }, { message: { contains: q.search } }] }] : [])], isRead: q.isRead };
   const [data, total, unreadCount] = await db.$transaction([db.notification.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], ...paging(q) }), db.notification.count({ where }), db.notification.count({ where: { ...visible, isRead: false } })]);
   return { data, unreadCount, pagination: pagination({ page: q.page, limit: q.limit }, total) };

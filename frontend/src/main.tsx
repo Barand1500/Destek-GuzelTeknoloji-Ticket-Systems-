@@ -42,6 +42,8 @@ import {
   ProfilePage,
   PhoneSupportPage,
   ProjectGuidePage,
+  AnnouncementsPage,
+  AnnouncementInboxPage,
 } from "./pages/Management";
 import "./styles.css";
 const client = new QueryClient({
@@ -77,6 +79,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/register" element={<Navigate to="/auth" replace />} />
           <Route element={<Layout />}>
             <Route element={<RequireRole roles={["CUSTOMER"]} />}>
+              <Route path="/customer/announcements" element={<AnnouncementInboxPage />} />
               <Route path="/customer" element={<LegacyRedirect />} />
               <Route path="/customer/dashboard" element={<Dashboard />} />
               <Route path="/customer/tickets" element={<TicketList />} />
@@ -90,6 +93,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
             </Route>
             <Route element={<RequireRole roles={["AGENT", "SUPERVISOR"]} />}>
+              <Route path="/agent/announcements" element={<AnnouncementInboxPage />} />
               <Route path="/agent" element={<LegacyRedirect />} />
               <Route path="/agent/dashboard" element={<Dashboard />} />
               <Route path="/agent/inbox" element={<TicketList />} />
@@ -113,6 +117,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/agent/project-guide" element={<ProjectGuidePage />} />
             </Route>
             <Route element={<RequireRole roles={["ADMIN"]} />}>
+              <Route path="/admin/announcements" element={<AnnouncementsPage />} />
+              <Route path="/admin/announcements/inbox" element={<AnnouncementInboxPage />} />
               <Route path="/admin/guide" element={<GuidePage />} />
               <Route path="/admin" element={<LegacyRedirect />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />

@@ -170,3 +170,9 @@ export async function sendChannelReply(channel: ConversationChannel, recipient: 
     if (!response.ok || !data.messages?.[0]?.id) throw new Error(providerMessage("WhatsApp mesajı gönderilemedi", response, data));
   }
 }
+
+export async function sendAnnouncementSms(phone: string, text: string) {
+  const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
+  if (!settings?.smsEnabled) throw new Error("SMS entegrasyonu etkin değil.");
+  await sendNetgsm(settings, phone, text);
+}

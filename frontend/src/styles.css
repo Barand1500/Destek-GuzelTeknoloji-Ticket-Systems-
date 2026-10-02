@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./features/management/management.css";
 :root {
   font-family: Inter, "Segoe UI", sans-serif;
   color: #263a36;

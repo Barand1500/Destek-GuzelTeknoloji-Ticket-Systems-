@@ -24,6 +24,7 @@ import {
   Activity,
   BookOpen,
   FolderOpen,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -244,6 +245,7 @@ export function Layout() {
             {quickSlots.map((slot, index) => slot ? <NavLink key={index} to={slot.href} className="quick-action" title={`${slot.label} — kaldırmak için sağ tıklayın`} onContextMenu={(event) => { event.preventDefault(); setQuickSlots((slots) => slots.map((value, i) => i === index ? null : value)); }}>{index === 0 ? <Inbox size={16} /> : index === 1 ? <Users size={16} /> : index === 2 ? <Plus size={16} /> : <Settings size={16} />}</NavLink> : <button key={index} className="quick-action quick-slot" type="button" title="Sol menüden sürükleyip buraya bırak" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); try { const item = JSON.parse(event.dataTransfer.getData("text/plain")); if (item.href) setQuickSlots((slots) => slots.map((value, i) => i === index ? item : value)); } catch { /* ignore invalid drops */ } }}>+</button>)}
           </div>
           <div className="topbar-actions">
+            {user.role === "ADMIN" && <NavLink className="topbar-icon-link announcement-topbar-link" to={path("announcements")} aria-label="Duyurular" title="Duyurular"><Megaphone size={18}/></NavLink>}
             <button className="topbar-icon-link theme-toggle" type="button" onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Gündüz moduna geç" : "Gece moduna geç"} title={theme === "dark" ? "Gündüz modu" : "Gece modu"}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button>
             <div className="notification-trigger">
             <button
@@ -274,7 +276,7 @@ export function Layout() {
               </div>
               <div className="notification-popover-list">
                 {notifications.data?.data.length ? notifications.data.data.map((notification) => (
-                  <NavLink key={notification.id} to={notification.conversationId ? conversationPath(user.role, notification.conversationId) : path("notifications")} className="notification-popover-item unread" onClick={() => { markNotificationRead.mutate(notification.id); setNotificationsOpen(false); }}>
+              <NavLink key={notification.id} to={notification.type === "ANNOUNCEMENT" ? path("announcements") : notification.conversationId ? conversationPath(user.role, notification.conversationId) : path("notifications")} className="notification-popover-item unread" onClick={() => { markNotificationRead.mutate(notification.id); setNotificationsOpen(false); }}>
                     <span className="notification-popover-icon"><Bell size={15} /></span>
                     <span><strong>{notification.title}</strong><small>{notification.message}</small></span>
                     <time>{new Date(notification.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</time>

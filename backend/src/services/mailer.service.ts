@@ -39,6 +39,13 @@ export async function sendSupportEmail(to: string, subject: string, text: string
   return { sent: true, accepted: result.accepted.length, rejected: result.rejected.length, response: result.response, messageId: result.messageId };
 }
 
+export async function sendAnnouncementEmail(to: string, subject: string, text: string) {
+  const mail = await transportForSettings();
+  if (!mail) throw new Error('SMTP ayarları etkin değil veya eksik.');
+  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text });
+  if (!result.accepted.length || result.rejected.length) throw new Error('E-posta alıcısı sunucu tarafından reddedildi.');
+}
+
 export async function verifySupportEmail() {
   const mail = await transportForSettings();
   if (!mail) return { configured: false };
