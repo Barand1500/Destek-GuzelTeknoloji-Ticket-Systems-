@@ -74,7 +74,7 @@ export function Layout() {
         await api.get("/notifications", {
           params: { limit: 8, isRead: "false" },
         })
-      ).data as { data: Array<{ id: string; title: string; message: string; createdAt: string; isRead: boolean; conversationId?: string | null }>; unreadCount: number; pagination: { total: number } },
+      ).data as { data: Array<{ id: string; type: string; title: string; message: string; createdAt: string; isRead: boolean; conversationId?: string | null }>; unreadCount: number; pagination: { total: number } },
     enabled: !!user,
     refetchInterval: 15_000,
   });
