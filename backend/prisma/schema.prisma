@@ -44,6 +44,7 @@ model User {
   updatedAt DateTime @default(now()) @updatedAt
   createdAt DateTime @default(now())
   departments DepartmentAgent[]
+  skills UserSkill[]
   customerConversations Conversation[] @relation("CustomerConversations")
   assignedConversations Conversation[] @relation("AssignedConversations")
   messages ConversationMessage[]
@@ -58,6 +59,15 @@ model User {
   messageMentions ConversationMessageMention[]
   @@index([email])
   @@index([phone])
+}
+model UserSkill {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name String @db.VarChar(80)
+  category String @db.VarChar(60)
+  level String @db.VarChar(20)
+  @@unique([userId, name])
 }
 model Session {
   id String @id @default(uuid())

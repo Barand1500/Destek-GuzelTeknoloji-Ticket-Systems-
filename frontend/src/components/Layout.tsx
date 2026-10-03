@@ -470,7 +470,7 @@ export function Layout() {
             )}
           </div>
           <div className="topbar-actions">
-            {user.role !== "CUSTOMER" && (
+            {user.role === "ADMIN" && (
               <button
                 className="topbar-icon-link"
                 type="button"

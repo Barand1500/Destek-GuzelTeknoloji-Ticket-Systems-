@@ -94,6 +94,7 @@ export function AnnouncementsModal({
   const canPublish = user.role === "ADMIN" || user.role === "SUPERVISOR";
   const dialog = useRef<HTMLDialogElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const recipientPicker = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
   const [tab, setTab] = useState<"new" | "history">(
     canPublish ? initialTab : "history",
@@ -105,6 +106,7 @@ export function AnnouncementsModal({
   const [eventAt, setEventAt] = useState("");
   const [pinned, setPinned] = useState(false);
   const [mode, setMode] = useState<"ALL" | "SELECTED">("ALL");
+  const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [channels, setChannels] = useState<Channel[]>(["NOTIFICATION"]);
   const [files, setFiles] = useState<File[]>([]);
@@ -114,6 +116,18 @@ export function AnnouncementsModal({
   const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState("");
+  useEffect(() => {
+    const closePicker = (event: MouseEvent) => {
+      if (
+        recipientPicker.current &&
+        !recipientPicker.current.contains(event.target as Node)
+      ) {
+        setRecipientPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closePicker);
+    return () => document.removeEventListener("mousedown", closePicker);
+  }, []);
   const templatesQuery = useQuery({
     queryKey: ["/announcement-templates", "all"],
     queryFn: async () => {
@@ -156,6 +170,11 @@ export function AnnouncementsModal({
   const people = (directory.data?.people ?? []).filter(
     (p) => !departmentId || p.departmentIds.includes(departmentId),
   );
+  useEffect(() => {
+    if (mode === "ALL" && directory.data && selected.length === 0) {
+      setSelected(people.map((person) => person.id));
+    }
+  }, [directory.data, mode, people, selected.length]);
   const recipients =
     mode === "ALL" ? people : people.filter((p) => selected.includes(p.id));
   const matches = people.filter((p) =>
@@ -300,12 +319,8 @@ export function AnnouncementsModal({
       }}
     >
       <header className="announcements-header">
-        <span className="announcements-header-icon">
-          <Megaphone size={23} />
-        </span>
         <div>
           <h2 id="announcements-title">Duyurular</h2>
-          <p>Ekibinize doğru kanaldan ulaşın.</p>
         </div>
         <button
           type="button"
@@ -403,7 +418,10 @@ export function AnnouncementsModal({
                   Hazır şablonlar yüklenemedi.
                 </p>
               )}
-              <label className="announcement-field">
+              <label
+                className="announcement-field"
+                onMouseDown={() => setRecipientPickerOpen(false)}
+              >
                 <span className="announcement-field-label">
                   İçerik <span aria-hidden="true">*</span>
                 </span>
@@ -525,52 +543,56 @@ export function AnnouncementsModal({
                   {recipients.length} kişi
                 </span>
               </legend>
-              <label className="announcement-field">
-                <span className="announcement-field-label">
-                  <Building2 size={15} />
-                  Hedef departman
-                </span>
-                <DropdownSelect
-                  ariaLabel="Hedef departman"
-                  value={departmentId}
-                  onChange={(value) => {
-                    setDepartmentId(value);
-                    setSelected([]);
+              <div ref={recipientPicker} className="announcement-recipient-area">
+                <div className="announcement-recipient-controls">
+                <label className="announcement-field">
+                  <span className="announcement-field-label">
+                    <Building2 size={15} />
+                    Hedef departman
+                  </span>
+                  <DropdownSelect
+                    ariaLabel="Hedef departman"
+                    value={departmentId}
+                    onChange={(value) => {
+                      setDepartmentId(value);
+                      const departmentPeople = (directory.data?.people ?? []).filter(
+                        (person) =>
+                          !value || person.departmentIds.includes(value),
+                      );
+                      setSelected(departmentPeople.map((person) => person.id));
+                      setMode("SELECTED");
+                      setRecipientPickerOpen(false);
+                    }}
+                    options={[
+                      {
+                        value: "",
+                        label:
+                          user.role === "ADMIN"
+                            ? "Tüm departmanlar"
+                            : "Yetkili olduğum departmanlar",
+                      },
+                      ...(directory.data?.departments.map((d) => ({
+                        value: d.id,
+                        label: d.name,
+                      })) ?? []),
+                    ]}
+                  />
+                </label>
+                <div className="announcement-recipient-modes">
+                <button
+                  type="button"
+                  aria-pressed={recipientPickerOpen}
+                  onClick={() => {
+                    setMode("SELECTED");
+                    setRecipientPickerOpen((open) => !open);
                   }}
-                  options={[
-                    {
-                      value: "",
-                      label:
-                        user.role === "ADMIN"
-                          ? "Tüm departmanlar"
-                          : "Yetkili olduğum departmanlar",
-                    },
-                    ...(directory.data?.departments.map((d) => ({
-                      value: d.id,
-                      label: d.name,
-                    })) ?? []),
-                  ]}
-                />
-              </label>
-              <div className="announcement-recipient-modes">
-                <button
-                  type="button"
-                  aria-pressed={mode === "ALL"}
-                  onClick={() => setMode("ALL")}
-                >
-                  <Users size={16} />
-                  Departmandaki herkes ({people.length})
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={mode === "SELECTED"}
-                  onClick={() => setMode("SELECTED")}
                 >
                   <Check size={16} />
                   Seçili kişiler ({selected.length})
                 </button>
+                </div>
               </div>
-              {mode === "SELECTED" && (
+              {mode === "SELECTED" && recipientPickerOpen && (
                 <div className="announcement-people-picker">
                   <label className="announcement-person-search">
                     <Search size={16} />
@@ -642,6 +664,7 @@ export function AnnouncementsModal({
                   </div>
                 </div>
               )}
+              </div>
               {!people.length && !directory.isPending && !directory.error && (
                 <p className="announcement-muted">
                   Bu departmanda aktif personel yok.

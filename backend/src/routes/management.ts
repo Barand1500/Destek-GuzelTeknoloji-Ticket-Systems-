@@ -11,6 +11,7 @@ export const managementRouter = Router();
 const admin = authorize("ADMIN");
 const presenceViewer = authorize("ADMIN", "SUPERVISOR");
 const staff = authorize("ADMIN", "SUPERVISOR", "AGENT");
+managementRouter.post('/staff-suggestions', staff, async (req, res) => res.json({ success: true, data: await service.staffSuggestions(req.actor, schema.staffSuggestionsSchema.parse(req.body).text) }));
 managementRouter.get("/users", admin, async (req, res) => res.json({ success: true, ...await service.users(req.actor, schema.directoryQuery.parse(req.query)) }));
 managementRouter.get("/users/:id", admin, async (req, res) => res.json({ success: true, data: await service.user(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.post("/users", admin, async (req, res) => res.status(201).json({ success: true, data: await service.createUser(req.actor, schema.createUserSchema.parse(req.body)) }));

@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { idSchema, paginationSchema, registerSchema } from "./index.js";
+import { skillKey } from "../services/skill-matching.js";
+
+const skills = z.array(z.object({
+  name: z.string().trim().min(1).max(80),
+  category: z.string().trim().min(1).max(60),
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']),
+}).strict()).max(100).refine(items => new Set(items.map(item => skillKey(item.name))).size === items.length, 'Aynı yetenek veya dil tekrar eklenemez.');
+export const staffSuggestionsSchema = z.object({ text: z.string().trim().max(10000) }).strict();
 
 const role = z.enum(["ADMIN", "SUPERVISOR", "AGENT", "CUSTOMER"]);
 const search = z.string().trim().max(100).optional();
@@ -27,7 +35,7 @@ export const announcementTemplateSchema = z
   })
   .strict();
 export const createUserSchema = registerSchema
-  .extend({ role, departmentIds: departments.default([]) })
+  .extend({ role, departmentIds: departments.default([]), skills: skills.default([]) })
   .strict();
 export const createCustomerSchema = z
   .object({
@@ -72,6 +80,7 @@ export const updateUserSchema = registerSchema
     role: role.optional(),
     isActive: z.boolean().optional(),
     departmentIds: departments.optional(),
+    skills: skills.optional(),
   })
   .strict()
   .refine(nonempty);

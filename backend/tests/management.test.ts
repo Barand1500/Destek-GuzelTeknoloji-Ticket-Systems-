@@ -96,6 +96,51 @@ test("management: CRUD, staff scope and credential protection", async (t) => {
       },
     });
     conversationIds.push(outside.id);
+    await t.test('staff skills persist and suggestions respect multiple matches, levels and department access', async () => {
+      const marker = `Skill ${prefix}`;
+      const skills = [
+        { name: marker, category: 'Özel', level: 'EXPERT' },
+        { name: 'İngilizce', category: 'Diller', level: 'ADVANCED' },
+        { name: 'Almanca', category: 'Diller', level: 'INTERMEDIATE' },
+      ];
+      const created = await request('/users', admin.token, 'POST', {
+        name: `Skilled ${prefix}`, email: `skills-${prefix}@example.test`, password,
+        role: 'AGENT', departmentIds: [department.id], skills,
+      });
+      assert.equal(created.status, 201);
+      const skilledId = created.json.data.id;
+      userIds.push(skilledId);
+      assert.equal(created.json.data.skills.length, 3);
+      assert.equal(created.json.data.passwordHash, undefined);
+      const detail = await request(`/users/${skilledId}`, admin.token);
+      assert.equal(detail.json.data.skills.find((item: { name: string }) => item.name === 'İngilizce').level, 'ADVANCED');
+      const outsideStaff = await fixture('skills-outside', 'AGENT', otherDepartment.id);
+      await db.userSkill.create({ data: { ...skills[0], userId: outsideStaff.id } });
+      const hiddenStaff = await fixture('skills-hidden', 'AGENT', department.id);
+      await db.userSkill.create({ data: { ...skills[0], userId: hiddenStaff.id } });
+      const text = `${marker}; English ve Almanca destek gerekiyor.`;
+      const suggest = (token: string) => request('/staff-suggestions', token, 'POST', { text });
+      assert.equal((await suggest(customer.token)).status, 403);
+      const all = await suggest(admin.token);
+      assert.equal(all.status, 200);
+      assert.equal(all.json.data[0].id, skilledId);
+      assert.equal(all.json.data[0].matches.length, 3);
+      assert.ok(all.json.data.some((item: { id: string }) => item.id === outsideStaff.id));
+      const scoped = await suggest(agent.token);
+      assert.ok(scoped.json.data.some((item: { id: string }) => item.id === skilledId));
+      assert.ok(!scoped.json.data.some((item: { id: string }) => item.id === outsideStaff.id));
+      await db.user.update({ where: { id: hiddenStaff.id }, data: { isActive: false } });
+      assert.ok(!(await suggest(admin.token)).json.data.some((item: { id: string }) => item.id === hiddenStaff.id));
+      await db.user.update({ where: { id: hiddenStaff.id }, data: { isActive: true, deletedAt: new Date() } });
+      assert.ok(!(await suggest(admin.token)).json.data.some((item: { id: string }) => item.id === hiddenStaff.id));
+      await db.department.update({ where: { id: otherDepartment.id }, data: { isActive: false } });
+      assert.ok(!(await suggest(admin.token)).json.data.some((item: { id: string }) => item.id === outsideStaff.id));
+      await db.department.update({ where: { id: otherDepartment.id }, data: { isActive: true } });
+      assert.equal((await request(`/users/${skilledId}`, admin.token, 'PATCH', { skills: [{ ...skills[0], level: 'BEGINNER' }] })).status, 200);
+      assert.equal((await suggest(admin.token)).json.data.find((item: { id: string }) => item.id === skilledId).matches[0].level, 'BEGINNER');
+      assert.equal((await request(`/users/${skilledId}`, admin.token, 'PATCH', { skills: [] })).status, 200);
+      assert.ok(!(await suggest(admin.token)).json.data.some((item: { id: string }) => item.id === skilledId));
+    });
     await t.test(
       "administration is forbidden to customers and agents",
       async () => {

@@ -18,6 +18,7 @@ import { publishChange } from "./events.service.js";
 import { uploadRoot, type StoredUpload } from "./uploads.service.js";
 import { queueSupportEmail } from "./mailer.service.js";
 import type * as schema from "../validators/management.js";
+import { rankStaff } from './skill-matching.js';
 
 type Page = { page: number; limit: number };
 const pagination = (q: Page, total: number) => ({
@@ -36,6 +37,7 @@ const person = {
   extraPhones: true,
   extraEmails: true,
   role: true,
+  skills: { select: { name: true, category: true, level: true }, orderBy: { name: 'asc' } },
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -232,7 +234,7 @@ export async function createUser(
   input: z.infer<typeof schema.createUserSchema>,
 ) {
   requireAdmin(actor);
-  const { password, departmentIds, ...rest } = input;
+  const { password, departmentIds, skills, ...rest } = input;
   const passwordHash = await bcrypt.hash(password, 12);
   return serial(async (tx) => {
     await validateDepartments(tx, departmentIds, rest.role);
@@ -241,6 +243,7 @@ export async function createUser(
         ...rest,
         loginEmail: rest.email,
         passwordHash,
+        skills: { create: rest.role === 'CUSTOMER' ? [] : skills },
         departments: {
           create: departmentIds.map((departmentId) => ({ departmentId })),
         },
@@ -521,7 +524,7 @@ export async function updateUser(
       "SELF_PROTECTION",
       "Kendi yönetici yetkinizi kaldıramaz veya hesabınızı kapatamazsınız.",
     );
-  const { password, departmentIds, ...rest } = input;
+  const { password, departmentIds, skills, ...rest } = input;
   const passwordHash = password ? await bcrypt.hash(password, 12) : undefined;
   return serial(async (tx) => {
     const current = await tx.user.findFirst({
@@ -577,6 +580,7 @@ export async function updateUser(
       data: {
         ...rest,
         ...(input.email !== undefined ? { loginEmail: input.email } : {}),
+        ...(role === 'CUSTOMER' || skills !== undefined ? { skills: { deleteMany: {}, create: role === 'CUSTOMER' ? [] : skills } } : {}),
         passwordHash,
         ...(departmentIds
           ? {
@@ -728,6 +732,22 @@ export async function tags(q: z.infer<typeof schema.searchQuery>) {
     data,
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
+}
+export async function staffSuggestions(actor: Actor, text: string) {
+  requireStaff(actor);
+  if (!text.trim()) return [];
+  const accessible = { isActive: true, deletedAt: null, ...(actor.role === 'ADMIN' ? {} : { id: { in: actor.departmentIds } }) };
+  const staff = await db.user.findMany({
+    where: {
+      role: { in: ['AGENT', 'SUPERVISOR'] }, isActive: true, deletedAt: null,
+      skills: { some: {} }, departments: { some: { department: accessible } },
+    },
+    select: {
+      id: true, name: true, skills: { select: { name: true, category: true, level: true } },
+      departments: { where: { department: accessible }, select: { department: { select: { id: true, name: true } } }, orderBy: { department: { name: 'asc' } } },
+    },
+  });
+  return rankStaff(text, staff).slice(0, 6).map(({ id, name, matches, departments }) => ({ id, name, matches, departments: departments.map(item => item.department) }));
 }
 export async function departmentAgents(
   actor: Actor,

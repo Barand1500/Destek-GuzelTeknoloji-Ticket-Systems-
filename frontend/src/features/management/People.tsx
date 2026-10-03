@@ -35,7 +35,11 @@ import {
 } from "./shared";
 
 import { inboxPath } from "../../router/paths";
+import { StaffSkills } from './StaffSkills';
+import { SuggestedDescription } from './StaffSuggestions';
+import type { StaffSkill } from '../../types';
 type ManagedUser = User & {
+  skills?: StaffSkill[];
   isActive: boolean;
   createdAt: string;
   departments: { departmentId: string; department: Department }[];
@@ -113,6 +117,7 @@ function LocationFields({ city = "", district = "", idPrefix }: { city?: string 
 
 type Website = { id: string; name: string; url: string; isActive: boolean };
 function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, customer }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; customer?: ManagedUser | null }) {
+  const [suggestedAgent, setSuggestedAgent] = useState<{ id: string; name: string; departmentId: string; departmentName: string } | null>(null);
   const websites = useQuery({ queryKey: ["websites", "phone-request"], queryFn: async () => (await api.get<Page<Website>>("/websites", { params: { limit: 100 } })).data });
   const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE" }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
   return <>
@@ -120,9 +125,9 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
     <div className="phone-request-grid">
       <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje seçin" options={[{ value: "", label: "Proje seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} /></label>
-      <label className="phone-request-message"><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={4} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label>
-      <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
-      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence }))]} /></div>
+      <SuggestedDescription departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />
+      <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} current={suggestedAgent?.departmentId === departmentId ? { id: departmentId, name: suggestedAgent.departmentName } : undefined} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
+      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence }))]} /></div>
     </div>
   </>;
 }
@@ -174,6 +179,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         email: values.get("email"),
         phone: values.get("phone"),
         role,
+        skills: role === 'CUSTOMER' ? [] : JSON.parse(String(values.get('skills') ?? '[]')),
         departmentIds:
           role === "CUSTOMER" ? [] : values.getAll("departmentIds"),
         ...(!editing ? { password: values.get("password") } : {}),
@@ -354,6 +360,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 )}
               </fieldset>
             )}
+            {role !== 'CUSTOMER' && <StaffSkills initial={editing?.skills ?? []} />}
             <ErrorMessage error={save.error} />
             <FormActions
               pending={

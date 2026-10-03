@@ -41,9 +41,10 @@ html[data-theme="dark"] .announcements-modal {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 24px 26px;
-  background: linear-gradient(110deg, #07976e, #087d76);
-  color: #fff;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--ann-border);
+  background: var(--ann-surface);
+  color: var(--ann-text);
   flex-shrink: 0;
 }
 .announcements-header-icon {
@@ -59,7 +60,7 @@ html[data-theme="dark"] .announcements-modal {
   margin: 0;
   font-size: 21px;
   font-weight: 750;
-  color: #fff;
+  color: var(--ann-text);
 }
 .announcements-header p {
   margin: 4px 0 0;
@@ -75,11 +76,12 @@ html[data-theme="dark"] .announcements-modal {
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: #fff;
+  color: var(--ann-muted);
   cursor: pointer;
 }
 .announcements-close:hover {
-  background: #ffffff20;
+  background: var(--ann-field);
+  color: var(--ann-text);
 }
 .announcements-tabs {
   display: flex;
@@ -406,6 +408,18 @@ html[data-theme="dark"] .announcements-modal {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+.announcement-recipient-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.announcement-recipient-controls > .announcement-field {
+  margin-bottom: 0;
+}
+.announcement-recipient-controls .announcement-recipient-modes {
+  grid-template-columns: 1fr;
 }
 .announcement-recipient-modes button {
   display: flex;

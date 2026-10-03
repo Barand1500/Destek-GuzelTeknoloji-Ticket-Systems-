@@ -6327,6 +6327,10 @@ html[data-theme="dark"] .guide-settings-flow span svg {
 .phone-request-assignee .presence-option-status {
   margin-left: auto;
 }
+.phone-request-assignee .styled-dropdown-trigger > span {
+  flex: 1;
+  gap: 8px;
+}
 .presence-option-status {
   display: inline-flex;
   align-items: center;
