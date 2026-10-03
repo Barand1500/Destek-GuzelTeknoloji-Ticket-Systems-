@@ -16,6 +16,10 @@ export const loginSchema = z
   .strict();
 export const registerSchema = loginSchema.extend({
   name: z.string().trim().min(2).max(100),
+  phone: z
+    .union([z.literal(""), z.string().trim().min(7).max(30)])
+    .transform((value) => value || null)
+    .optional(),
   password,
 });
 export const statusSchema = z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/);

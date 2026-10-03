@@ -20,7 +20,7 @@ export function DropdownSelect({ label, value, options, onChange, ariaLabel }: {
   </div>;
 }
 
-export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel }: { label?: string; value: string[]; options: Array<{ value: string; label: string }>; onChange: (value: string[]) => void; ariaLabel: string }) {
+export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel, emptyLabel = "Etiket seçin", selectionSuffix = "etiket", className = "", selectionLabel = "Seçili kişiler", showVisibleToggle = false }: { label?: string; value: string[]; options: Array<{ value: string; label: string }>; onChange: (value: string[]) => void; ariaLabel: string; emptyLabel?: string; selectionSuffix?: string; className?: string; selectionLabel?: string; showVisibleToggle?: boolean }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -31,14 +31,24 @@ export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel
   }, []);
   const selected = options.filter((option) => value.includes(option.value));
   const current = selected.length === 0
-    ? "Etiket seçin"
-    : selected.length === 1
-      ? selected[0].label
-      : `${selected.length} etiket seçildi`;
-  return <div ref={ref} className={`styled-dropdown${open ? " open" : ""}`}>
+    ? emptyLabel
+    : selectionLabel;
+  const filteredOptions = options.filter((option) =>
+    option.label.toLocaleLowerCase('tr-TR').includes(search.toLocaleLowerCase('tr-TR')),
+  );
+  const allVisibleSelected = filteredOptions.length > 0 && filteredOptions.every((option) => value.includes(option.value));
+  const toggleVisible = () => {
+    const visibleIds = filteredOptions.map((option) => option.value);
+    onChange(
+      allVisibleSelected
+        ? value.filter((id) => !visibleIds.includes(id))
+        : Array.from(new Set([...value, ...visibleIds])),
+    );
+  };
+  return <div ref={ref} className={`styled-dropdown${open ? " open" : ""}${className ? ` ${className}` : ""}`}>
     {label && <span className="styled-dropdown-label">{label}</span>}
     <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((currentOpen) => !currentOpen)}><span>{current}</span><ChevronDown size={15} /></button>
-    {open && <div className="styled-dropdown-menu" role="listbox" aria-multiselectable="true"><input className="styled-dropdown-search" aria-label={`${ariaLabel} ara`} placeholder="Ara..." value={search} onChange={(event) => setSearch(event.target.value)} />{options.filter((option) => option.label.toLocaleLowerCase('tr-TR').includes(search.toLocaleLowerCase('tr-TR'))).map((option) => {
+    {open && <div className="styled-dropdown-menu" role="listbox" aria-multiselectable="true"><input className="styled-dropdown-search" aria-label={`${ariaLabel} ara`} placeholder="Ara..." value={search} onChange={(event) => setSearch(event.target.value)} />{showVisibleToggle && <button type="button" className="styled-dropdown-visible-toggle" onClick={toggleVisible}>{allVisibleSelected ? "Seçimi kaldır" : "Görünenleri seç"}</button>}{filteredOptions.map((option) => {
       const checked = value.includes(option.value);
       return <button type="button" role="option" aria-selected={checked} key={option.value} onClick={() => onChange(checked ? value.filter((id) => id !== option.value) : [...value, option.value])}><span className={`styled-dropdown-check${checked ? " checked" : ""}`}>{checked ? "✓" : ""}</span>{option.label}</button>;
     })}</div>}

@@ -18,6 +18,14 @@
   display: grid;
   gap: 18px;
 }
+.management-form label:has(> .field-label):focus-within,
+.management-form .styled-dropdown:has(.styled-dropdown-label):focus-within {
+  box-shadow: none;
+}
+.management-form .styled-dropdown.open .styled-dropdown-trigger,
+.management-form .styled-dropdown-trigger:hover {
+  box-shadow: none;
+}
 .management-form fieldset {
   border: 1px solid #dce3df;
   border-radius: 7px;

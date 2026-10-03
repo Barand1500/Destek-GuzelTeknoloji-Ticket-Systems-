@@ -28,13 +28,13 @@ async function transportForSettings() {
 }) };
 }
 
-export async function sendSupportEmail(to: string, subject: string, text: string, audit?: EmailAudit) {
+export async function sendSupportEmail(to: string, subject: string, text: string, audit?: EmailAudit, attachments?: Array<{ filename: string; path: string; contentType: string }>) {
   const mail = await transportForSettings();
   if (!mail) {
     console.warn('SMTP e-postası gönderilmedi: SMTP_HOST, SMTP_FROM veya SMTP kimlik bilgileri eksik.');
     throw Object.assign(new Error('SMTP ayarları eksik.'), { code: 'SMTP_NOT_CONFIGURED' });
   }
-  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text });
+  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text, attachments });
   if (!result.accepted.length || result.rejected.length) throw Object.assign(new Error('E-posta alıcısı sunucu tarafından reddedildi.'), { code: 'RECIPIENT_REJECTED' });
   return { sent: true, accepted: result.accepted.length, rejected: result.rejected.length, response: result.response, messageId: result.messageId };
 }

@@ -1,0 +1,26 @@
+.saved-content-tabs button {
+  cursor: pointer;
+}
+html[data-theme="dark"] .saved-content-tabs {
+  border-bottom-color: #466056;
+}
+html[data-theme="dark"] .saved-content-tabs button {
+  color: #b7c9c0;
+}
+html[data-theme="dark"] .saved-content-tabs button.active,
+html[data-theme="dark"] .saved-content-tabs button:hover {
+  color: #8dd1ba;
+}
+html[data-theme="dark"] .saved-content-tabs button.active {
+  border-bottom-color: #8dd1ba;
+}
+.announcement-template-actions {
+  flex-wrap: nowrap;
+}
+.management-form textarea.announcement-template-body {
+  height: 180px;
+  min-height: 180px;
+  max-height: 180px;
+  resize: none;
+  overflow-y: auto;
+}

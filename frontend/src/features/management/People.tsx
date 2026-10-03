@@ -172,6 +172,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
       data: {
         name: values.get("name"),
         email: values.get("email"),
+        phone: values.get("phone"),
         role,
         departmentIds:
           role === "CUSTOMER" ? [] : values.getAll("departmentIds"),
@@ -216,6 +217,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                       <td>
                         <strong>{person.name}</strong>
                         <small>{person.email}</small>
+                        {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
                       <td>
                         {roles[person.role]}
@@ -276,6 +278,23 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 maxLength={100}
                 defaultValue={editing?.name}
                 autoComplete="off"
+              />
+            </label>
+            <label>
+              <span className="field-label">Telefon</span>
+              <input
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                minLength={7}
+                maxLength={30}
+                defaultValue={formatPhone(editing?.phone ?? "")}
+                onInput={(event) => {
+                  event.currentTarget.value = formatPhone(
+                    event.currentTarget.value,
+                  );
+                }}
+                autoComplete="tel"
               />
             </label>
             <label>

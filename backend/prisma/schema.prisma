@@ -380,3 +380,86 @@ model ExternalMessage {
   @@unique([provider, externalId])
   @@index([conversationId])
 }
+
+model Announcement {
+  id String @id @default(uuid())
+  authorId String
+  authorName String
+  title String
+  body String @db.Text
+  priority String
+  departmentId String?
+  departmentName String?
+  eventAt DateTime?
+  pinned Boolean @default(false)
+  files Json
+  createdAt DateTime @default(now())
+  deliveries AnnouncementDelivery[]
+  @@index([createdAt])
+}
+model AnnouncementDelivery {
+  id String @id @default(uuid())
+  announcementId String
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId String
+  recipientName String
+  address String?
+  channel String
+  status String @default("PENDING")
+  error String? @db.Text
+  @@unique([announcementId, userId, channel])
+  @@index([status])
+  @@index([userId, announcementId])
+}
+
+model AnnouncementTemplate {
+  id String @id @default(uuid())
+  label String
+  title String
+  body String @db.Text
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([sortOrder, createdAt])
+}
+
+model Survey {
+  id String @id @default(uuid())
+  authorId String
+  authorName String
+  title String
+  description String @default("") @db.Text
+  anonymous Boolean @default(false)
+  endsAt DateTime
+  closedAt DateTime?
+  questions Json
+  channels Json
+  createdAt DateTime @default(now())
+  recipients SurveyRecipient[]
+  responses SurveyResponse[]
+  @@index([createdAt])
+  @@index([endsAt])
+}
+
+model SurveyRecipient {
+  id String @id @default(uuid())
+  surveyId String
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  userId String
+  recipientName String
+  deliveryStatus Json
+  @@unique([surveyId, userId])
+  @@index([userId])
+}
+
+model SurveyResponse {
+  id String @id @default(uuid())
+  surveyId String
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  userId String
+  respondentName String?
+  answers Json
+  createdAt DateTime @default(now())
+  @@unique([surveyId, userId])
+  @@index([surveyId, createdAt])
+}

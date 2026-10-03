@@ -6,6 +6,7 @@ import { useAuth } from "../auth/Auth";
 import { DeleteModal } from '../../components/DeleteModal';
 import { api } from "../../services/api";
 import { ProjectGuideFileModal } from "./ProjectGuideFileModal";
+import { AnnouncementTemplates } from "./AnnouncementTemplates";
 import type { Department, Website } from "../../types";
 import {
   ErrorMessage,
@@ -395,6 +396,25 @@ export function WebsitesPage() {
 }
 
 export function SavedRepliesPage() {
+  const [params, setParams] = useSearchParams();
+  const templates = params.get("tab") === "templates";
+  return <main className="page">
+    <Heading title={templates ? "Hazır şablonlar" : "Hazır yanıtlar"} description={templates ? "Duyuru şablonlarını yönetin; eklediğiniz şablonları duyuru ekranında kullanın." : "Sık kullanılan yanıtları ekibinizle paylaşın; görüşme içinde seçip düzenleyerek gönderin."} />
+    <nav className="catalog-tabs saved-content-tabs" role="tablist" aria-label="Hazır içerikler" onKeyDown={event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === "Home" ? false : event.key === "End" ? true : !templates;
+      setParams({ tab: next ? "templates" : "replies" });
+      event.currentTarget.querySelectorAll<HTMLButtonElement>("button")[next ? 1 : 0]?.focus();
+    }}>
+      <button type="button" role="tab" tabIndex={templates ? -1 : 0} aria-selected={!templates} aria-controls="saved-content-panel" className={!templates ? "active" : ""} onClick={() => setParams({ tab: "replies" })}>Hazır yanıtlar</button>
+      <button type="button" role="tab" tabIndex={templates ? 0 : -1} aria-selected={templates} aria-controls="saved-content-panel" className={templates ? "active" : ""} onClick={() => setParams({ tab: "templates" })}>Hazır şablonlar</button>
+    </nav>
+    <div id="saved-content-panel" role="tabpanel" aria-label={templates ? "Hazır şablonlar" : "Hazır yanıtlar"}>{templates ? <AnnouncementTemplates /> : <SavedRepliesContent />}</div>
+  </main>;
+}
+
+function SavedRepliesContent() {
   const { user } = useAuth();
   const list = useList<SavedReply>("/saved-replies");
   const [editing, setEditing] = useState<SavedReply | null>(null);
@@ -413,11 +433,7 @@ export function SavedRepliesPage() {
     });
   }
   return (
-    <main className="page">
-      <Heading
-        title="Hazır yanıtlar"
-        description="Sık kullanılan yanıtları ekibinizle paylaşın; görüşme içinde seçip düzenleyerek gönderin."
-      />
+    <>
       <div className="management-grid">
         <section className="management-panel">
           <Search value={list.search} onChange={list.setSearch} />
@@ -513,6 +529,6 @@ export function SavedRepliesPage() {
           </form>
         </section>
       </div>
-    </main>
+    </>
   );
 }

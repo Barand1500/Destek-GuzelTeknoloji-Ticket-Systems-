@@ -1,0 +1,1 @@
+ALTER TABLE `Survey` ADD COLUMN `closedAt` DATETIME(3) NULL;

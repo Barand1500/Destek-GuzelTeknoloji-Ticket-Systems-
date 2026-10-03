@@ -64,6 +64,10 @@ managementRouter.get("/websites/:id/guide-files/:fileId/view", staff, async (req
 });
 managementRouter.delete("/websites/:id/guide-files/:fileId", admin, async (req, res) => { await service.deleteProjectGuideFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId)); res.json({ success: true, data: null }); });
 managementRouter.get("/saved-replies", staff, async (req, res) => res.json({ success: true, ...await service.savedReplies(req.actor, schema.searchQuery.parse(req.query)) }));
+managementRouter.get("/announcement-templates", staff, async (req, res) => res.json({ success: true, ...await service.announcementTemplates(req.actor, schema.searchQuery.parse(req.query)) }));
+managementRouter.post("/announcement-templates", admin, async (req, res) => res.status(201).json({ success: true, data: await service.writeAnnouncementTemplate(req.actor, schema.announcementTemplateSchema.parse(req.body)) }));
+managementRouter.patch("/announcement-templates/:id", admin, async (req, res) => res.json({ success: true, data: await service.writeAnnouncementTemplate(req.actor, schema.announcementTemplateSchema.parse(req.body), idSchema.parse(req.params.id)) }));
+managementRouter.delete("/announcement-templates/:id", admin, async (req, res) => { await service.deleteAnnouncementTemplate(req.actor, idSchema.parse(req.params.id)); res.json({ success: true, data: null }); });
 managementRouter.post("/saved-replies", staff, async (req, res) => res.status(201).json({ success: true, data: await service.writeSavedReply(req.actor, schema.savedReplySchema.parse(req.body)) }));
 managementRouter.patch("/saved-replies/:id", staff, async (req, res) => res.json({ success: true, data: await service.writeSavedReply(req.actor, schema.updateSavedReplySchema.parse(req.body), idSchema.parse(req.params.id)) }));
 managementRouter.delete("/saved-replies/:id", staff, async (req, res) => { await service.deleteSavedReply(req.actor, idSchema.parse(req.params.id)); res.json({ success: true, data: null }); });

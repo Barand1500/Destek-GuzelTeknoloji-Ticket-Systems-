@@ -4,7 +4,9 @@ import { env } from "./config/env.js";
 import { attachSockets } from './sockets/index.js';
 import { startInboundEmailPolling, stopInboundEmailPolling } from "./services/inbound-email.service.js";
 import { verifySupportEmail, smtpFailureReason } from './services/mailer.service.js';
+import { startAnnouncementQueue } from './services/announcements.service.js';
 await db.$connect();
+const stopAnnouncementQueue = await startAnnouncementQueue();
 void verifySupportEmail().then(result => console.log('SMTP bağlantısı:', result.configured ? 'hazır' : 'yapılandırılmamış')).catch(error => console.error('SMTP bağlantısı kurulamadı:', smtpFailureReason(error)));
 startInboundEmailPolling();
 const server = app.listen(env.PORT, env.HOST, () =>
@@ -15,6 +17,7 @@ server.on('error',(error:NodeJS.ErrnoException)=>{console.error(error.code==='EA
 const shutdown = () =>
   io.close(() => {
     stopInboundEmailPolling();
+    stopAnnouncementQueue();
     void db.$disconnect().finally(() => process.exit(0));
   });
 process.on("SIGINT", shutdown);

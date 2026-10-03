@@ -21,6 +21,8 @@ import { AppError } from "../utils/errors.js";
 import path from 'node:path';
 import { upload, uploadRoot, withStoredUploads } from '../services/uploads.service.js';
 import { managementRouter } from './management.js';
+import { announcementsRouter } from './announcements.js';
+import { surveysRouter } from './surveys.js';
 import { publishChange } from '../services/events.service.js';
 import { receiveMetaWebhook, receiveNetgsmMessage, verifyMetaWebhook } from '../services/integrations.service.js';
 export const router = Router();
@@ -111,6 +113,8 @@ router.use((req, _res, next) => {
 });
 router.use((req,res,next)=>{if(req.method!=='GET')res.on('finish',()=>{if(res.statusCode<400&&!req.path.startsWith('/conversations'))publishChange();});next();});
 router.use(managementRouter);
+router.use('/announcements', announcementsRouter);
+router.use('/surveys', surveysRouter);
 router.get("/auth/me", (req, res) => {
   const { sessionId, ...user } = req.actor;
   res.json({ success: true, data: user });

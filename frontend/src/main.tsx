@@ -17,7 +17,9 @@ import {
   TicketList,
 } from "./features/tickets/Tickets";
 import { Dashboard } from "./pages/Dashboard";
-import { GuidePage } from "./pages/Guide";
+import { GuideHubPage } from "./pages/GuideHub";
+import { IntegrationsHubPage } from "./pages/IntegrationsHub";
+import { SurveysPage } from "./pages/Surveys";
 import { Realtime } from "./components/Realtime";
 import { RequireRole } from "./components/RequireRole";
 import {
@@ -35,13 +37,10 @@ import {
   SavedRepliesPage,
   NotificationsPage,
   ActivityLogsPage,
-  IntegrationsPage,
   ResponseTimeRulesPage,
-  NotificationSettingsPage,
   StaffPresencePage,
   ProfilePage,
   PhoneSupportPage,
-  ProjectGuidePage,
 } from "./pages/Management";
 import "./styles.css";
 const client = new QueryClient({
@@ -82,7 +81,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/customer/tickets" element={<TicketList />} />
               <Route path="/customer/tickets/new" element={<NewTicket />} />
               <Route path="/customer/tickets/:id" element={<TicketDetail />} />
-              <Route path="/customer/tickets/:id/log" element={<ConversationLog />} />
+              <Route
+                path="/customer/tickets/:id/log"
+                element={<ConversationLog />}
+              />
               <Route path="/customer/profile" element={<ProfilePage />} />
               <Route
                 path="/customer/notifications"
@@ -97,9 +99,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/agent/conversations/:id"
                 element={<TicketDetail />}
               />
-              <Route path="/agent/conversations/:id/log" element={<ConversationLog />} />
+              <Route
+                path="/agent/conversations/:id/log"
+                element={<ConversationLog />}
+              />
               <Route path="/agent/customers" element={<CustomersPage />} />
-              <Route path="/agent/phone-support" element={<PhoneSupportPage />} />
+              <Route
+                path="/agent/phone-support"
+                element={<PhoneSupportPage />}
+              />
               <Route
                 path="/agent/saved-replies"
                 element={<SavedRepliesPage />}
@@ -109,11 +117,26 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/agent/notifications"
                 element={<NotificationsPage />}
               />
-              <Route path="/agent/staff-presence" element={<StaffPresencePage />} />
-              <Route path="/agent/project-guide" element={<ProjectGuidePage />} />
+              <Route
+                path="/agent/staff-presence"
+                element={<StaffPresencePage />}
+              />
+              <Route
+                path="/agent/project-guide"
+                element={<Navigate to="/agent/guide/projects" replace />}
+              />
+              <Route
+                path="/agent/guide"
+                element={<Navigate to="/agent/guide/projects" replace />}
+              />
+              <Route path="/agent/guide/:section" element={<GuideHubPage />} />
+              <Route path="/agent/surveys" element={<SurveysPage />} />
             </Route>
             <Route element={<RequireRole roles={["ADMIN"]} />}>
-              <Route path="/admin/guide" element={<GuidePage />} />
+              <Route
+                path="/admin/guide"
+                element={<Navigate to="/admin/guide/system" replace />}
+              />
               <Route path="/admin" element={<LegacyRedirect />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />
               <Route path="/admin/conversations" element={<TicketList />} />
@@ -121,14 +144,25 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/admin/conversations/:id"
                 element={<TicketDetail />}
               />
-              <Route path="/admin/conversations/:id/log" element={<ConversationLog />} />
+              <Route
+                path="/admin/conversations/:id/log"
+                element={<ConversationLog />}
+              />
               <Route path="/admin/customers" element={<CustomersPage />} />
-              <Route path="/admin/phone-support" element={<PhoneSupportPage />} />
+              <Route
+                path="/admin/phone-support"
+                element={<PhoneSupportPage />}
+              />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/departments" element={<DepartmentsPage />} />
               <Route path="/admin/tags" element={<TagsPage />} />
               <Route path="/admin/websites" element={<WebsitesPage />} />
-              <Route path="/admin/project-guide" element={<ProjectGuidePage />} />
+              <Route
+                path="/admin/project-guide"
+                element={<Navigate to="/admin/guide/projects" replace />}
+              />
+              <Route path="/admin/guide/:section" element={<GuideHubPage />} />
+              <Route path="/admin/surveys" element={<SurveysPage />} />
               <Route
                 path="/admin/saved-replies"
                 element={<SavedRepliesPage />}
@@ -137,11 +171,32 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/admin/activity-logs"
                 element={<ActivityLogsPage />}
               />
-              <Route path="/admin/settings" element={<Navigate to="/admin/integrations" replace />} />
-              <Route path="/admin/integrations" element={<IntegrationsPage />} />
-              <Route path="/admin/response-time-rules" element={<ResponseTimeRulesPage />} />
-              <Route path="/admin/notification-settings" element={<NotificationSettingsPage />} />
-              <Route path="/admin/staff-presence" element={<StaffPresencePage />} />
+              <Route
+                path="/admin/settings"
+                element={<Navigate to="/admin/integrations/channels" replace />}
+              />
+              <Route
+                path="/admin/integrations"
+                element={<Navigate to="/admin/integrations/channels" replace />}
+              />
+              <Route
+                path="/admin/integrations/:section"
+                element={<IntegrationsHubPage />}
+              />
+              <Route
+                path="/admin/response-time-rules"
+                element={<ResponseTimeRulesPage />}
+              />
+              <Route
+                path="/admin/notification-settings"
+                element={
+                  <Navigate to="/admin/integrations/notifications" replace />
+                }
+              />
+              <Route
+                path="/admin/staff-presence"
+                element={<StaffPresencePage />}
+              />
               <Route path="/admin/profile" element={<ProfilePage />} />
               <Route
                 path="/admin/notifications"
