@@ -38,7 +38,7 @@ export const listSchema = paginationSchema.extend({
   customerId: idSchema.optional(),
   channel: z.enum(['TICKET','EMAIL','LIVE_CHAT']).optional(),
   category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),
-  view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent"]).default("all"),
+  view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent", "today"]).default("all"),
 });
 export const createConversationSchema = z
   .object({

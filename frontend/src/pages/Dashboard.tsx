@@ -5,7 +5,8 @@ import { api } from "../services/api";
 import { useAuth } from "../features/auth/Auth";
 import { QueryError } from "../features/tickets/Tickets";
 import { statuses, type Status } from "../types";
-import { inboxPath } from "../router/paths";
+import { inboxPath, workspacePath } from "../router/paths";
+import { hasPermission } from "../features/auth/permissions";
 
 const chartColors: Record<Status, string> = {
   OPEN: "#398571",
@@ -19,6 +20,7 @@ export function Dashboard() {
   const { user } = useAuth();
   const query = useQuery({
     queryKey: ["dashboard"],
+    refetchInterval: user?.role === 'CUSTOMER' ? false : 15_000,
     queryFn: async () =>
       (await api.get("/dashboard")).data.data as {
         total: number;
@@ -57,23 +59,26 @@ export function Dashboard() {
       {query.isError ? <QueryError error={query.error} /> : <>
         <div className="stat-grid">
           {[
-            { label: "Toplam talep", value: query.data?.total, icon: Inbox },
-            { label: "Açık talepler", value: query.data?.statuses.OPEN, icon: CircleDot },
-            { label: "Bekleyen talepler", value: query.data?.statuses.PENDING, icon: Clock3 },
-            { label: "Çözülen talepler", value: query.data?.statuses.RESOLVED, icon: CheckCheck },
-            { label: "Bugün açılanlar", value: query.data?.conversationsToday, icon: Inbox },
-            { label: "Kapalı talepler", value: query.data?.statuses.CLOSED, icon: CheckCheck },
+            { label: "Toplam talep", value: query.data?.total, icon: Inbox, to: inboxPath(user!.role), permission: 'conversations.view' },
+            { label: "Açık talepler", value: query.data?.statuses.OPEN, icon: CircleDot, to: `${inboxPath(user!.role)}?status=OPEN`, permission: 'conversations.view' },
+            { label: "Bekleyen talepler", value: query.data?.statuses.PENDING, icon: Clock3, to: `${inboxPath(user!.role)}?status=PENDING`, permission: 'conversations.view' },
+            { label: "Çözülen talepler", value: query.data?.statuses.RESOLVED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=RESOLVED`, permission: 'conversations.view' },
+            { label: "Bugün açılanlar", value: query.data?.conversationsToday, icon: Inbox, to: `${inboxPath(user!.role)}?view=today`, permission: 'conversations.view' },
+            { label: "Kapalı talepler", value: query.data?.statuses.CLOSED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=CLOSED`, permission: 'conversations.view' },
             ...(user?.role === "CUSTOMER" ? [] : [
-              { label: "Atanmamış talepler", value: query.data?.unassigned, icon: CircleDot },
-              { label: "Aktif personel", value: query.data?.activeAgents, icon: CircleDot },
+              { label: "Atanmamış talepler", value: query.data?.unassigned, icon: CircleDot, to: `${inboxPath(user!.role)}?view=unassigned`, permission: 'conversations.view' },
+              { label: "Aktif personel", value: query.data?.activeAgents, icon: CircleDot, to: workspacePath(user!.role, 'staff-presence'), permission: 'presence.view' },
             ]),
-          ].map((stat) => (
-            <div className="stat-card" key={stat.label}>
+          ].map((stat) => {
+            const content = <>
               <div>{stat.label}<stat.icon size={19} /></div>
               <strong>{query.isPending ? "—" : (stat.value ?? 0)}</strong>
-              <small>Erişebildiğiniz talepler</small>
-            </div>
-          ))}
+              <small>{stat.permission === 'presence.view' ? 'Şu anda çevrimiçi personel' : 'Erişebildiğiniz talepler'}</small>
+            </>;
+            return hasPermission(user, stat.permission)
+              ? <Link className="stat-card stat-card-link" key={stat.label} to={stat.to}>{content}</Link>
+              : <div className="stat-card" key={stat.label}>{content}</div>;
+          })}
         </div>
         <section className="dashboard-card status-chart-card">
           <div>

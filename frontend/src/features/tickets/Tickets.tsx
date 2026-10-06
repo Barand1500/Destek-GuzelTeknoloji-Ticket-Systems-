@@ -186,7 +186,7 @@ export function TicketList() {
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
   const defaultTabLabels: Record<string, string> = { all: "Tümü", mail: "Mail", mine: "Bana atanan", unassigned: "Atanmamış" };
-  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", mail: "E-posta ile gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış talepler" };
+  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", mail: "E-posta ile gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış talepler", today: "Bugün açılan talepler" };
   const [tabLabels, setTabLabels] = useState(defaultTabLabels);
   const [tabOrder, setTabOrder] = useState(Object.keys(defaultTabLabels));
   const [tabEnabled, setTabEnabled] = useState<Record<string, boolean>>(Object.fromEntries(Object.keys(defaultTabLabels).map((key) => [key, true])));

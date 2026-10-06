@@ -7,6 +7,7 @@ import type { StoredUpload } from './uploads.service.js';
 import { notifyConversation, publishChange } from './events.service.js';
 import { queueSupportEmail } from './mailer.service.js';
 import { sendChannelReply } from './integrations.service.js';
+import { onlineStaffCount } from './presence.service.js';
 import type { z } from "zod";
 import type {
   createConversationSchema,
@@ -74,6 +75,8 @@ export async function getConversation(actor: Actor, id: string) {
   return { ...conversation, createdBy: creation?.user ?? null, canAddInternalNote };
 }
 export async function listConversations(actor: Actor, q: z.infer<typeof listSchema>) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const normalizedSearch = q.search ? normalizeSearch(q.search) : "";
   const ticketNumber = q.search ? Number(q.search.replace(/\D/g, "")) : NaN;
   const filters: Prisma.ConversationWhereInput = {
@@ -100,6 +103,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
     AND: [
       visibility(actor),
       filters,
+      ...(q.view === 'today' ? [{ createdAt: { gte: today } }] : []),
       ...categoryFilter,
       ...(['open','pending','resolved','closed'].includes(q.view) ? [{ status: q.view.toUpperCase() as 'OPEN'|'PENDING'|'RESOLVED'|'CLOSED' }] : q.view === 'urgent' ? [{ priority: 'URGENT' as const }] : []),
       ...(q.view === "mine"
@@ -531,7 +535,7 @@ export async function summary(actor: Actor) {
   });
   const today=new Date();today.setHours(0,0,0,0);
   const conversationsToday=await db.conversation.count({where:{AND:[visibility(actor),{createdAt:{gte:today}}]}});
-  const activeAgents=actor.role==='CUSTOMER'?undefined:await db.user.count({where:{role:'AGENT',isActive:true,...(actor.role==='ADMIN'?{}:{departments:{some:{departmentId:{in:actor.departmentIds}}}})}});
+  const activeAgents=actor.role==='CUSTOMER'?undefined:await onlineStaffCount(actor);
   return {
     total: grouped.reduce((a, g) => a + g._count, 0),
     unassigned,

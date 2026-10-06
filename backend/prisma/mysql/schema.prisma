@@ -316,7 +316,7 @@ model IntegrationSettings {
   whatsappAppId String @default("")
   whatsappAppSecret String @default("")
   whatsappPhoneNumberId String @default("")
-  whatsappAccessToken String @default("")
+  whatsappAccessToken String @default("") @db.Text
   whatsappVerifyToken String @default("")
   whatsappDepartmentId String?
   lastTestChannel String?

@@ -3047,6 +3047,10 @@ td {
   font-size: 10px;
   color: var(--ui-text-secondary);
 }
+.stat-card-link { color: var(--ui-text-primary); transition: border-color 150ms ease; }
+.stat-card-link:hover { border-color: var(--ui-tab-indicator); }
+.stat-card-link:focus-visible { outline: 2px solid var(--ui-tab-indicator); outline-offset: 3px; }
+html[data-theme="dark"] .stat-card-link:hover { border-color: var(--ui-tab-indicator); }
 .dashboard-card {
   display: grid;
   grid-template-columns: 1fr 1.2fr;

@@ -33,6 +33,7 @@ export function Realtime(){
     for(const event of ['conversation:updated','conversation:message:new','notification:new','access:refresh'])socket.on(event,sync);
     socket.on('access:refresh',()=>{void api.get('/auth/me').then(result=>{if(active)updateUser(result.data.data);}).catch(()=>{});});
     socket.on('presence:changed',(change:{id:string;state:'ONLINE'|'IDLE'|'OFFLINE';page:string;path:string;lastActivityAt:string|null;lastSeenAt:string|null})=>{
+      void client.invalidateQueries({queryKey:['dashboard']});
       client.setQueryData<{idleMinutes:number;updatedAt:string;staff:Array<{id:string;state:string;page:string;path:string;lastActivityAt:string|null;lastSeenAt:string|null}>}>(['/staff-presence'],current=>{
         if(!current)return current;
         return {...current,updatedAt:new Date().toISOString(),staff:current.staff.map(person=>person.id===change.id?{...person,...change}:person)};

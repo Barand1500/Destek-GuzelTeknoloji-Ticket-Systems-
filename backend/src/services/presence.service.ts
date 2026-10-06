@@ -1,6 +1,8 @@
 import { db } from "../config/db.js";
 import { EventEmitter } from "node:events";
 import type { Actor } from "../types/express.js";
+import type { Prisma } from '../generated/prisma/client.js';
+import { can } from './permissions.js';
 
 type PresenceUpdate = {
   path: string;
@@ -129,6 +131,35 @@ export async function currentPresence(userId: string): Promise<PresenceChanged> 
   return presenceChanged(userId);
 }
 
+function staffScope(actor?: Actor) {
+  return actor?.accessRole?.scope ?? (!actor || actor.role === 'ADMIN' ? 'ALL' : 'DEPARTMENT');
+}
+
+function staffFilter(actor?: Actor): Prisma.UserWhereInput {
+  const scope = staffScope(actor);
+  return {
+    role: { in: ['ADMIN', 'SUPERVISOR', 'AGENT'] },
+    isActive: true,
+    deletedAt: null,
+    ...(scope === 'OWN' ? { id: actor!.id } : scope === 'DEPARTMENT' ? { departments: { some: { departmentId: { in: actor!.departmentIds } } } } : {}),
+  };
+}
+
+export function canReceiveStaffPresence(actor: Actor, person: { id: string; departmentIds: string[] }) {
+  if (actor.accessRole ? !can(actor, 'presence.view') : !['ADMIN', 'SUPERVISOR'].includes(actor.role)) return false;
+  const scope = staffScope(actor);
+  return scope === 'ALL' || (scope === 'OWN' ? person.id === actor.id : person.departmentIds.some(id => actor.departmentIds.includes(id)));
+}
+
+export async function onlineStaffCount(actor: Actor) {
+  await ensurePresenceSettings();
+  const staff = await db.user.findMany({
+    where: staffFilter(actor),
+    select: { id: true },
+  });
+  return staff.filter(person => presenceChanged(person.id).state === 'ONLINE').length;
+}
+
 export async function getPresenceSettings() {
   return db.systemSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
 }
@@ -141,16 +172,11 @@ export async function updatePresenceSettings(idleMinutes: number) {
   return settings;
 }
 
-export async function staffPresence(actor?: Pick<Actor, "role" | "departmentIds">) {
+export async function staffPresence(actor?: Actor) {
   const [settings, staff] = await Promise.all([
     ensurePresenceSettings(),
     db.user.findMany({
-      where: {
-        role: { in: ["ADMIN", "SUPERVISOR", "AGENT"] },
-        isActive: true,
-        deletedAt: null,
-        ...(actor?.role === "SUPERVISOR" ? { departments: { some: { departmentId: { in: actor.departmentIds } } } } : {}),
-      },
+      where: staffFilter(actor),
       select: { id: true, name: true, email: true, role: true, departments: { select: { department: { select: { name: true } } } } },
       orderBy: { name: "asc" },
     }),
