@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Heading } from "./shared";
 import { useAuth } from "../auth/Auth";
+import { hasPermission } from '../auth/permissions';
 import { FilePreviewModal } from "../tickets/TicketExtras";
 import { storeFileContents, readFileContents, deleteFileContents } from "./fileStorage";
 import "./files.css";
@@ -124,9 +125,12 @@ export function FilesPage() {
   const editor = useRef<HTMLFormElement>(null);
   const editingItem = items.find((item) => item.id === editingId);
   const canEditName = (item: Item) =>
-    user?.role === "ADMIN" ||
-    item.type === "folder" ||
-    item.uploaderId === user?.id;
+    user?.accessRole
+      ? hasPermission(user, 'files.updateAll') || (hasPermission(user, 'files.update') && item.uploaderId === user.id)
+      : user?.role === "ADMIN" || item.type === "folder" || Boolean(user && item.uploaderId === user.id);
+  const canDelete = (item: Item) => user?.accessRole
+    ? hasPermission(user, 'files.deleteAll') || (hasPermission(user, 'files.delete') && item.uploaderId === user.id)
+    : true;
   const EditorIcon = iconMap[folderIcon] || Folder;
   useEffect(() => {
     if (newFolder) {
@@ -142,6 +146,7 @@ export function FilesPage() {
     setFolderColor("purple");
   };
   const edit = (item: Item) => {
+    if (!canEditName(item)) return;
     setEditingId(item.id);
     setItemName(item.name);
     setFolderIcon(item.icon || item.type);
@@ -212,6 +217,7 @@ export function FilesPage() {
         ),
       );
     } else {
+      if (!hasPermission(user, 'files.create')) return;
       save([
         ...items,
         {
@@ -222,12 +228,16 @@ export function FilesPage() {
           createdAt: new Date().toISOString(),
           icon: folderIcon,
           color: folderColor,
+          uploaderId: user?.id,
+          uploadedBy: user?.name,
         },
       ]);
     }
     closeEditor();
   };
   const remove = (id: string) => {
+    const target = items.find(item => item.id === id);
+    if (!target || !canDelete(target)) return;
     const deleted = new Set([id]);
     let changed = true;
     while (changed) {
@@ -239,13 +249,14 @@ export function FilesPage() {
         }
       });
     }
+    if (items.some(item => deleted.has(item.id) && !canDelete(item))) { setFileError('Bu klasörde silme yetkiniz olmayan dosyalar bulunuyor.'); return; }
     save(items.filter((item) => !deleted.has(item.id)));
     void deleteFileContents([...deleted]).catch(() => setFileError("Silinen dosyanın depolanan içeriği temizlenemedi."));
     if (current && deleted.has(current)) setCurrent(null);
     if (editingId && deleted.has(editingId)) closeEditor();
   };
   const upload = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files || !hasPermission(user, 'files.create')) return;
     const selected = Array.from(files);
     const added = selected.map((file) => ({
         id: crypto.randomUUID(),
@@ -279,6 +290,7 @@ export function FilesPage() {
         <div className="files-actions">
           <button
             className="button secondary"
+            disabled={!hasPermission(user, 'files.create')}
             onClick={() => {
               closeEditor();
               setNewFolder(true);
@@ -289,7 +301,7 @@ export function FilesPage() {
           </button>
           <button
             className="button primary"
-            disabled={uploading}
+            disabled={uploading || !hasPermission(user, 'files.create')}
             onClick={() => input.current?.click()}
           >
             <Upload size={16} />
@@ -466,6 +478,7 @@ export function FilesPage() {
                   <button
                     type="button"
                     className="file-card-delete"
+                    disabled={!canDelete(item)}
                     onClick={() => remove(item.id)}
                     aria-label={`${item.name} sil`}
                     title="Sil"

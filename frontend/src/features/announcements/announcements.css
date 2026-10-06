@@ -2,9 +2,9 @@
   --ann-surface: #fff;
   --ann-field: #f7faf8;
   --ann-border: #dce6e0;
-  --ann-text: #263a36;
-  --ann-muted: #667a70;
-  --ann-accent: #087c64;
+  --ann-text: var(--ui-text-primary);
+  --ann-muted: var(--ui-text-secondary);
+  --ann-accent: var(--ui-text-navigation);
   --ann-selected: #eaf8f1;
   width: min(760px, calc(100vw - 32px));
   margin: auto;
@@ -30,9 +30,9 @@ html[data-theme="dark"] .announcements-modal {
   --ann-surface: #203129;
   --ann-field: #2a3e34;
   --ann-border: #496255;
-  --ann-text: #e7f0eb;
-  --ann-muted: #aec2b7;
-  --ann-accent: #8ddfbd;
+  --ann-text: var(--ui-text-primary);
+  --ann-muted: var(--ui-text-secondary);
+  --ann-accent: var(--ui-text-navigation);
   --ann-selected: #294c3d;
   box-shadow: 0 24px 90px #0009;
   color-scheme: dark;

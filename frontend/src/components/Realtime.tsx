@@ -1,7 +1,7 @@
 import { useEffect,useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
-import { getToken,refreshAccess,setToken } from '../services/api';
+import { api,getToken,refreshAccess,setToken } from '../services/api';
 import { useAuth } from '../features/auth/Auth';
 import { useLocation } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ function presencePage(pathname:string){
   return 'Uygulamada';
 }
 export function Realtime(){
-  const {user}=useAuth();const client=useQueryClient();
+  const {user,updateUser}=useAuth();const client=useQueryClient();
   const {pathname}=useLocation();
   const emitPresenceRef=useRef<(()=>void)|null>(null);
   useEffect(()=>{
@@ -31,6 +31,7 @@ export function Realtime(){
     const renew=async()=>{if(renewing||!active)return;renewing=true;try{await refreshAccess();if(active)socket.connect();}catch{if(active){setToken(null);window.dispatchEvent(new Event('session-expired'));}}finally{renewing=false;}};
     socket.on('connect',()=>{sync();emitPresence();});
     for(const event of ['conversation:updated','conversation:message:new','notification:new','access:refresh'])socket.on(event,sync);
+    socket.on('access:refresh',()=>{void api.get('/auth/me').then(result=>{if(active)updateUser(result.data.data);}).catch(()=>{});});
     socket.on('presence:changed',(change:{id:string;state:'ONLINE'|'IDLE'|'OFFLINE';page:string;path:string;lastActivityAt:string|null;lastSeenAt:string|null})=>{
       client.setQueryData<{idleMinutes:number;updatedAt:string;staff:Array<{id:string;state:string;page:string;path:string;lastActivityAt:string|null;lastSeenAt:string|null}>}>(['/staff-presence'],current=>{
         if(!current)return current;

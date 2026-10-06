@@ -37,6 +37,8 @@ const person = {
   extraPhones: true,
   extraEmails: true,
   role: true,
+  accessRoleId: true,
+  accessRole: { select: { id: true, name: true, permissions: true, scope: true } },
   skills: { select: { name: true, category: true, level: true }, orderBy: { name: 'asc' } },
   isActive: true,
   createdAt: true,
@@ -177,7 +179,7 @@ export async function users(
           ],
         }
       : {}),
-    ...(customersOnly && actor.role !== "ADMIN"
+    ...(customersOnly && (actor.role !== "ADMIN" || (actor.accessRole && actor.accessRole.scope !== 'ALL'))
       ? { customerConversations: { some: visibility(actor) } }
       : {}),
   };
@@ -238,6 +240,10 @@ export async function createUser(
   const passwordHash = await bcrypt.hash(password, 12);
   return serial(async (tx) => {
     await validateDepartments(tx, departmentIds, rest.role);
+    if (rest.accessRoleId && !await tx.accessRole.findUnique({ where: { id: rest.accessRoleId } })) throw notFound();
+    if (rest.accessRoleId && rest.role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
+    if (actor.accessRole && (!rest.accessRoleId || rest.accessRoleId !== actor.accessRole.id)) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzde personel oluşturabilirsiniz.');
+    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && departmentIds.some(id => !actor.departmentIds.includes(id))) throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
     const data = await tx.user.create({
       data: {
         ...rest,
@@ -304,7 +310,7 @@ export async function createCustomer(
       company: data.company,
     });
     const recipients = await tx.user.findMany({
-      where: { isActive: true, role: { in: ["ADMIN", "SUPERVISOR"] } },
+      where: { isActive: true, accessRoleId: null, role: { in: ["ADMIN", "SUPERVISOR"] } },
       select: { id: true },
     });
     if (recipients.length) {
@@ -337,7 +343,7 @@ export async function customer(actor: Actor, id: string) {
       id,
       role: "CUSTOMER",
       deletedAt: null,
-      ...(actor.role === "ADMIN"
+      ...(actor.role === "ADMIN" && (!actor.accessRole || actor.accessRole.scope === 'ALL')
         ? {}
         : { customerConversations: { some: visibility(actor) } }),
     },
@@ -355,7 +361,7 @@ export async function updateCustomer(
   requireStaff(actor);
   return serial(async (tx) => {
     const current = await tx.user.findFirst({
-      where: { id, role: "CUSTOMER", deletedAt: null },
+      where: { id, role: "CUSTOMER", deletedAt: null, ...(actor.accessRole && actor.accessRole.scope !== 'ALL' ? { customerConversations: { some: visibility(actor) } } : {}) },
       select: {
         id: true,
         name: true,
@@ -467,7 +473,7 @@ export async function deleteCustomer(actor: Actor, id: string) {
   requireStaff(actor);
   return serial(async (tx) => {
     const current = await tx.user.findFirst({
-      where: { id, role: "CUSTOMER" },
+      where: { id, role: "CUSTOMER", ...(actor.accessRole && actor.accessRole.scope !== 'ALL' ? { customerConversations: { some: visibility(actor) } } : {}) },
       select: { id: true, name: true, phone: true, email: true },
     });
     if (!current) throw notFound();
@@ -494,6 +500,7 @@ export async function deleteCustomer(actor: Actor, id: string) {
       where: {
         isActive: true,
         id: { not: actor.id },
+        accessRoleId: null,
         role: { in: ["ADMIN", "SUPERVISOR"] },
       },
       select: { id: true },
@@ -535,8 +542,14 @@ export async function updateUser(
     });
     if (!current) throw notFound();
     const role = input.role ?? current.role;
+    const accessRoleId = input.accessRoleId !== undefined ? input.accessRoleId : current.accessRoleId;
+    if (accessRoleId && !await tx.accessRole.findUnique({ where: { id: accessRoleId } })) throw notFound();
+    if (accessRoleId && role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
+    if (actor.accessRole && (current.accessRoleId !== actor.accessRole.id || (input.role !== undefined && input.role !== current.role) || (input.accessRoleId !== undefined && input.accessRoleId !== current.accessRoleId))) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzdeki personelleri yönetebilirsiniz; rol değiştiremezsiniz.');
+    if (actor.id === id && current.role === 'ADMIN' && !current.accessRoleId && accessRoleId) throw new AppError(409, 'SELF_PROTECTION', 'Kendi sistem yöneticisi yetkinizi kaldıramazsınız.');
     const active = input.isActive ?? current.isActive;
     const ids = departmentIds ?? current.departments.map((d) => d.departmentId);
+    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && departmentIds !== undefined && departmentIds.some(id => !actor.departmentIds.includes(id))) throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
     if (
       departmentIds !== undefined ||
       input.role !== undefined ||
@@ -544,10 +557,10 @@ export async function updateUser(
     )
       await validateDepartments(tx, ids, role);
     if (
-      current.role === "ADMIN" &&
+      current.role === "ADMIN" && !current.accessRoleId &&
       current.isActive &&
-      (role !== "ADMIN" || !active) &&
-      (await tx.user.count({ where: { role: "ADMIN", isActive: true } })) <= 1
+      (role !== "ADMIN" || accessRoleId || !active) &&
+      (await tx.user.count({ where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null } })) <= 1
     )
       throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici kaldırılamaz.");
     if (
@@ -555,7 +568,7 @@ export async function updateUser(
         where: {
           assignedAgentId: id,
           deletedAt: null,
-          ...(!active || !["AGENT", "SUPERVISOR"].includes(role)
+          ...(!active || (!accessRoleId && !["AGENT", "SUPERVISOR"].includes(role))
             ? {}
             : { departmentId: { notIn: ids } }),
         },
@@ -599,6 +612,7 @@ export async function updateUser(
       password ||
       input.email !== undefined ||
       input.role !== undefined ||
+      input.accessRoleId !== undefined ||
       input.isActive === false ||
       departmentIds !== undefined
     )
@@ -668,11 +682,12 @@ export async function deleteUser(actor: Actor, id: string) {
   return serial(async (tx) => {
     const current = await tx.user.findFirst({ where: { id, deletedAt: null } });
     if (!current) throw notFound();
+    if (actor.accessRole && current.accessRoleId !== actor.accessRole.id) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzdeki personelleri silebilirsiniz.');
     if (
-      current.role === "ADMIN" &&
+      current.role === "ADMIN" && !current.accessRoleId &&
       current.isActive &&
       (await tx.user.count({
-        where: { role: "ADMIN", isActive: true, deletedAt: null },
+        where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null },
       })) <= 1
     )
       throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici silinemez.");
@@ -738,10 +753,10 @@ export async function tags(q: z.infer<typeof schema.searchQuery>) {
 export async function staffSuggestions(actor: Actor, text: string) {
   requireStaff(actor);
   if (!text.trim()) return [];
-  const accessible = { isActive: true, deletedAt: null, ...(actor.role === 'ADMIN' ? {} : { id: { in: actor.departmentIds } }) };
+  const accessible = { isActive: true, deletedAt: null, ...(actor.role === 'ADMIN' && (!actor.accessRole || actor.accessRole.scope === 'ALL') ? {} : { id: { in: actor.departmentIds } }) };
   const staff = await db.user.findMany({
     where: {
-      role: { in: ['AGENT', 'SUPERVISOR'] }, isActive: true, deletedAt: null,
+      OR: [{ role: { in: ['AGENT', 'SUPERVISOR'] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null,
       skills: { some: {} }, departments: { some: { department: accessible } },
     },
     select: {
@@ -764,7 +779,7 @@ export async function departmentAgents(
       "Bu departmanın personelini görüntüleme yetkiniz yok.",
     );
   const where: Prisma.UserWhereInput = {
-    role: { in: ["AGENT", "SUPERVISOR"] },
+    OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
     isActive: true,
     deletedAt: null,
     departments: { some: { departmentId } },
@@ -1786,7 +1801,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
     Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - ((q.days ?? 30) - 1)),
   );
   const agentWhere: Prisma.UserWhereInput = {
-    role: { in: ["AGENT", "SUPERVISOR"] },
+    OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
     deletedAt: null,
     ...(actor.role === "SUPERVISOR"
       ? { departments: { some: { departmentId: { in: actor.departmentIds } } } }

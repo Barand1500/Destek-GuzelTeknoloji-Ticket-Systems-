@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { NavLink, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import { PermissionNavLink as NavLink, PermissionScreen } from './PermissionNavigation';
+import { hasPermission, screenPermission } from '../features/auth/permissions';
 import {
   Inbox,
   LayoutDashboard,
@@ -100,7 +102,7 @@ function WorkspaceLayout() {
           }>;
         }>("/customers", { params: { search: globalSearch, limit: 6 } })
       ).data.data,
-    enabled: user?.role !== "CUSTOMER" && globalSearch.trim().length >= 2,
+    enabled: user?.role !== "CUSTOMER" && hasPermission(user, 'customers.view') && globalSearch.trim().length >= 2,
   });
   const queryClient = useQueryClient();
   const notifications = useQuery({
@@ -223,7 +225,7 @@ function WorkspaceLayout() {
             : []),
         ]
       : []),
-  ].filter((item) =>
+  ].filter(item => !screenPermission(item.to) || hasPermission(user, screenPermission(item.to)!)).filter((item) =>
     item.label
       .toLocaleLowerCase("tr-TR")
       .includes(globalSearch.toLocaleLowerCase("tr-TR")),
@@ -326,6 +328,7 @@ function WorkspaceLayout() {
               </button>
               {settingsOpen && (
                 <div className="settings-nav-links" id="admin-settings-nav">
+                  {!user.accessRole && <NavLink to={path('roles')}><Users size={16}/>Roller</NavLink>}
                   <NavLink to={path("integrations/channels")}>
                     <Settings size={16} />
                     Entegrasyonlar
@@ -661,7 +664,7 @@ function WorkspaceLayout() {
             </button>
           </div>
         </header>
-        <WorkScreenOutlet />
+        <PermissionScreen><WorkScreenOutlet /></PermissionScreen>
         {announcementsOpen && (
           <AnnouncementsModal
             user={user}

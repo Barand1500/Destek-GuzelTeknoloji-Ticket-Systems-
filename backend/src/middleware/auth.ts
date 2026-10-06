@@ -26,7 +26,7 @@ export async function resolveActor(token: string | undefined) {
   }
   const session = await db.session.findUnique({
     where: { id: payload.sid },
-    include: { user: { include: { departments: true } } },
+    include: { user: { include: { departments: true, accessRole: true } } },
   });
   if (
     !session ||
@@ -41,6 +41,7 @@ export async function resolveActor(token: string | undefined) {
     name: user.name,
     email: user.email ?? "",
     role: user.role,
+    accessRole: user.accessRole,
     departmentIds: user.departments.map((d) => d.departmentId),
     sessionId: session.id,
   };

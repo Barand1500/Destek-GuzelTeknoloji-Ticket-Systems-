@@ -3,6 +3,7 @@ import { db } from "../config/db.js";
 import { env } from "../config/env.js";
 import type { Actor } from "../types/express.js";
 import { AppError } from "../utils/errors.js";
+import { can } from './permissions.js';
 import type { createSurveySchema, surveyAnswersSchema } from "../validators/surveys.js";
 import { announcementDirectory } from "./announcements.service.js";
 import { publishChange } from "./events.service.js";
@@ -13,7 +14,7 @@ const include = { recipients: true, responses: true } as const;
 
 function publicSurvey(row: any, actor: Actor) {
   const answered = row.responses.some((item: any) => item.userId === actor.id);
-  const admin = actor.role === "ADMIN";
+  const admin = actor.role === "ADMIN" && (!actor.accessRole || can(actor, 'surveys.statistics'));
   return {
     id: row.id,
     title: row.title,

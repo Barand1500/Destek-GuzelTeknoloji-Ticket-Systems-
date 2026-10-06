@@ -23,6 +23,8 @@ import { upload, uploadRoot, withStoredUploads } from '../services/uploads.servi
 import { managementRouter } from './management.js';
 import { announcementsRouter } from './announcements.js';
 import { surveysRouter } from './surveys.js';
+import { rolesRouter } from './roles.js';
+import { enforceRolePermissions } from '../middleware/permissions.js';
 import { publishChange } from '../services/events.service.js';
 import { receiveMetaWebhook, receiveNetgsmMessage, verifyMetaWebhook } from '../services/integrations.service.js';
 export const router = Router();
@@ -112,6 +114,8 @@ router.use((req, _res, next) => {
   next();
 });
 router.use((req,res,next)=>{if(req.method!=='GET')res.on('finish',()=>{if(res.statusCode<400&&!req.path.startsWith('/conversations'))publishChange();});next();});
+router.use(enforceRolePermissions);
+router.use(rolesRouter);
 router.use(managementRouter);
 router.use('/announcements', announcementsRouter);
 router.use('/surveys', surveysRouter);
@@ -163,7 +167,7 @@ router.get("/agents", authorize("ADMIN", "SUPERVISOR"), async (req, res) => {
     throw new AppError(403, "FORBIDDEN", "Departmana erişiminiz yok.");
   const {page,limit}=paginationSchema.parse(req.query);
   const search=z.string().max(100).optional().parse(req.query.search);
-  const where={role:'AGENT' as const,isActive:true,departments:{some:{departmentId}},...(search?{name:{contains:search}}:{})};
+  const where={OR:[{role:'AGENT' as const},{accessRoleId:{not:null}}],isActive:true,departments:{some:{departmentId}},...(search?{name:{contains:search}}:{})};
   const total=await db.user.count({where});
   res.json({
     success: true,

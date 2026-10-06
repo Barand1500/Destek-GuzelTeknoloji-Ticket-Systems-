@@ -40,7 +40,7 @@ export const announcementTemplateSchema = z
   })
   .strict();
 export const createUserSchema = registerSchema
-  .extend({ role, departmentIds: departments.default([]), skills: skills.default([]) })
+  .extend({ role, accessRoleId: idSchema.nullable().optional(), departmentIds: departments.default([]), skills: skills.default([]) })
   .strict();
 export const createCustomerSchema = z
   .object({
@@ -83,6 +83,7 @@ export const updateUserSchema = registerSchema
   .partial()
   .extend({
     role: role.optional(),
+    accessRoleId: idSchema.nullable().optional(),
     isActive: z.boolean().optional(),
     departmentIds: departments.optional(),
     skills: skills.optional(),

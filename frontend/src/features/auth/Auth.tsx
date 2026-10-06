@@ -12,6 +12,7 @@ import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { api, errorText, setToken } from "../../services/api";
 import type { User } from "../../types";
 import { roleHome } from "../../router/paths";
+import { permissionHome } from './permissions';
 import { EmailInput } from "../../components/EmailInput";
 type AuthState = {
   user: User | null;
@@ -79,7 +80,7 @@ export function AuthPage() {
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   if (loading) return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
-  if (user) return <Navigate to={roleHome(user.role)} replace />;
+  if (user) return <Navigate to={permissionHome(user) ?? roleHome(user.role)} replace />;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);

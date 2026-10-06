@@ -12,6 +12,8 @@ import {
   UserRound,
 } from "lucide-react";
 import { api } from "../../services/api";
+import { useAuth } from '../auth/Auth';
+import { hasPermission } from '../auth/permissions';
 import { statuses, priorities } from "../../types";
 import { Heading, ListState } from "./shared";
 import { DropdownSelect } from "../../components/DropdownSelect";
@@ -438,6 +440,7 @@ function downloadReport(
 }
 
 export function ReportsPage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("general");
   const [personId, setPersonId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
@@ -487,9 +490,9 @@ export function ReportsPage() {
         <button
           className="button secondary report-download"
           type="button"
-          disabled={!ready}
+          disabled={!ready || !hasPermission(user, 'reports.export')}
           onClick={() =>
-            ready &&
+            ready && hasPermission(user, 'reports.export') &&
             downloadReport(
               data!,
               tab,

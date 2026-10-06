@@ -2,8 +2,8 @@
   --files-surface: #fff;
   --files-soft: #f1f5f3;
   --files-border: #dce7df;
-  --files-text: #203832;
-  --files-muted: #718078;
+  --files-text: var(--ui-text-primary);
+  --files-muted: var(--ui-text-secondary);
 }
 .files-actions {
   display: flex;
@@ -164,8 +164,8 @@ html[data-theme="dark"] .files-page {
   --files-surface: #1d2c26;
   --files-soft: #22342c;
   --files-border: #31463d;
-  --files-text: #e5eee9;
-  --files-muted: #a9beb4;
+  --files-text: var(--ui-text-primary);
+  --files-muted: var(--ui-text-secondary);
 }
 .files-folder-form{flex-wrap:wrap}.files-folder-form input{min-width:180px}.files-picker{display:grid;gap:5px;width:100%}.files-picker>span{font-size:11px;color:var(--files-muted)}.files-picker>div{display:flex;gap:8px;flex-wrap:wrap}.files-picker button{display:grid;place-items:center;width:30px;height:30px;border:1px solid transparent;border-radius:7px;background:transparent;color:#788da5;cursor:pointer}.files-picker button.selected:not(.color-dot){border-color:#645bff;background:#3034a0;color:#fff}.files-picker .color-dot{width:28px;height:28px;border-radius:50%}.color-dot.orange{background:#ff9800}.color-dot.blue{background:#287be3}.color-dot.green{background:#0e9f76}.color-dot.red{background:#d92c45}.color-dot.purple{background:#8c45df}.color-dot.pink{background:#bd287b}.color-dot.cyan{background:#0f91a6}.color-dot.slate{background:#61738f}.files-picker .color-dot.selected{outline:2px solid #fff;outline-offset:2px}.file-card{position:relative}.files-grid.list .file-card{min-height:58px;display:flex;justify-content:flex-start;padding:12px 18px}
 .files-page .file-card {
@@ -385,7 +385,7 @@ html[data-theme="dark"] .files-page {
   border: 1px solid #d6e2dc;
   border-radius: 7px;
   background: var(--files-surface);
-  color: #718078;
+  color: var(--ui-text-secondary);
 }
 .files-tools .files-search > svg { flex: 0 0 16px; }
 .files-tools .files-search > input,
@@ -402,16 +402,16 @@ html[data-theme="dark"] .files-page {
   font: inherit;
   transform: none;
 }
-.files-tools .files-search > input::placeholder { color: #8a9b95; opacity: 1; }
+.files-tools .files-search > input::placeholder { color: var(--ui-text-secondary); opacity: 1; }
 html[data-theme="dark"] .files-tools .files-search {
   background: #22342c;
   border-color: #466056;
-  color: #a9beb4;
+  color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .files-tools .files-search:focus-within {
   border-color: #218675;
   box-shadow: none;
 }
 html[data-theme="dark"] .files-tools .files-search > input::placeholder {
-  color: #9bb1a6 !important;
+  color: var(--ui-text-secondary) !important;
 }

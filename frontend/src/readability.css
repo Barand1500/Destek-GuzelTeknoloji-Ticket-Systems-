@@ -1,0 +1,77 @@
+/* Shared foreground tokens for both workspace themes. */
+:root {
+  --ui-text-primary: #203832;
+  --ui-text-secondary: #496257;
+  --ui-text-navigation: #166b5c;
+  --ui-tab-indicator: #167766;
+  --ui-tab-hover-text: #0d493e;
+}
+html[data-theme="dark"] {
+  --ui-text-primary: #e5eee9;
+  --ui-text-secondary: #c6d8cf;
+  --ui-text-navigation: #9ddfc7;
+  --ui-tab-indicator: #8dd0b8;
+  --ui-tab-hover-text: #e5fff3;
+}
+
+/* The sign-in illustration always has a dark surface, even in light mode. */
+.auth-story {
+  --ui-text-primary: #e5eee9;
+  --ui-text-secondary: #c6d8cf;
+  --ui-text-navigation: #9ddfc7;
+}
+.calendar-page {
+  --calendar-text: var(--ui-text-primary);
+  --calendar-muted: var(--ui-text-secondary);
+}
+
+/* Loaded last: page-specific styles cannot mute navigation and record counts. */
+:root .app-shell :is(.tabs, .catalog-tabs, .report-tabs, .integration-subtabs, .response-settings-tabs) button,
+:root .app-shell :is(.integrations-hub-tabs, .guide-hub-tabs) a {
+  color: var(--ui-text-navigation);
+  font-size: 13px;
+  transition: color 150ms ease;
+}
+:root .app-shell :is(.tabs, .catalog-tabs, .report-tabs, .integration-subtabs, .response-settings-tabs) button:hover,
+:root .app-shell :is(.integrations-hub-tabs, .guide-hub-tabs) a:hover {
+  color: var(--ui-tab-hover-text);
+}
+:root .app-shell :is(.tabs, .catalog-tabs, .report-tabs, .integration-subtabs, .response-settings-tabs) button:focus-visible,
+:root .app-shell :is(.integrations-hub-tabs, .guide-hub-tabs) a:focus-visible {
+  outline: 2px solid var(--ui-tab-indicator);
+  outline-offset: -2px;
+}
+:root .app-shell :is(.tabs, .catalog-tabs, .report-tabs, .integration-subtabs, .response-settings-tabs) button:is(.active, [aria-selected="true"]),
+:root .app-shell :is(.integrations-hub-tabs, .guide-hub-tabs) a[aria-current="page"] {
+  color: var(--ui-tab-hover-text);
+  border-bottom: 2px solid var(--ui-tab-indicator);
+}
+:root .app-shell :is(.page-heading, .surveys-heading, .integrations-hub-heading, .guide-hub-heading) p,
+:root .app-shell .management-pagination > span,
+:root .app-shell :is(.muted, .presence-current small, .presence-current span, .presence-metrics dt) {
+  color: var(--ui-text-secondary);
+}
+:root .app-shell :is(.page-heading, .surveys-heading) .eyebrow,
+:root .app-shell .ticket-customer-summary .ticket-number,
+:root .app-shell .integration-toggle strong {
+  color: var(--ui-text-navigation);
+}
+:root .app-shell .integration-toggle small {
+  color: var(--ui-text-secondary);
+}
+:root .app-shell .presence-current :is(small, span) {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.app-shell .integration-toggle i {
+  background: #718078;
+}
+.app-shell .integration-toggle input:checked + i {
+  background: #167766;
+}
+html[data-theme="dark"] .app-shell .integration-toggle i {
+  background: #64786f;
+}
+html[data-theme="dark"] .app-shell .integration-toggle input:checked + i {
+  background: #218675;
+}

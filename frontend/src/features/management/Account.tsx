@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
+import { hasPermission } from '../auth/permissions';
 import { roles, type User } from "../../types";
 import {
   ErrorMessage,
@@ -209,9 +210,11 @@ function IntegrationDepartment({ value, options, onChange, label = "Varsayılan 
   return <div className={`integration-department ${className}`}><DropdownSelect label={label} ariaLabel={label} value={value} onChange={onChange} options={[{ value: "", label: "İlk aktif departman" }, ...options]} /></div>;
 }
 function IntegrationToggle({ name, label, defaultChecked, hint, className = "" }: { name: string; label: string; defaultChecked: boolean; hint?: string; className?: string }) {
-  return <label className={`integration-toggle ${className}`}><span><strong>{label}</strong>{hint && <small>{hint}</small>}</span><input name={name} type="checkbox" defaultChecked={defaultChecked} /><i aria-hidden="true" /></label>;
+  const { user } = useAuth();
+  return <label className={`integration-toggle ${className}`}><span><strong>{label}</strong>{hint && <small>{hint}</small>}</span><input name={name} type="checkbox" disabled={!hasPermission(user, 'integrations.update')} defaultChecked={defaultChecked} /><i aria-hidden="true" /></label>;
 }
 export function IntegrationsPage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<"email" | "sms" | "whatsapp">("email");
   const [emailTab, setEmailTab] = useState<"outgoing" | "incoming">("outgoing");
   const [imapDepartment, setImapDepartment] = useState<string | null>(null);
@@ -235,6 +238,7 @@ export function IntegrationsPage() {
   const departments = useQuery({ queryKey: ["/departments", "integration-options"], queryFn: async () => (await api.get<{ data: Array<{ id: string; name: string }> }>("/departments", { params: { limit: 100 } })).data.data });
   const save = useMutation({ mutationFn: (data: Omit<IntegrationSettings, "lastTestChannel" | "lastTestSuccess" | "lastTestMessage" | "lastTestedAt" | "updatedAt"> & { emailNotifications: EmailNotificationSettings }) => api.put("/integrations", data), onSuccess: async () => { await Promise.all([client.invalidateQueries({ queryKey: ["/integrations"] }), client.invalidateQueries({ queryKey: ["/notification-settings"] })]); setResult("Ayarlar ve e-posta metinleri kaydedildi."); } });
   function submit(event: FormEvent<HTMLFormElement>) {
+    if (!hasPermission(user, 'integrations.update')) { event.preventDefault(); return; }
     const values = formValues(event); const current = settings.data!;
     const { id: _id, lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...data } = current as IntegrationSettings & { id?: string };
     if (values.has("smtpHost")) Object.assign(data, {
@@ -276,7 +280,7 @@ export function IntegrationsPage() {
       <section hidden={tab !== "sms"} className="integration-card sms-card"><div className="integration-heading"><h2>Netgsm SMS</h2><IntegrationToggle name="smsEnabled" label="Netgsm entegrasyonunu etkinleştir" defaultChecked={settings.data.smsEnabled} /></div><div className="integration-fields"><label><span className="field-label">API kullanıcı adı</span><input name="smsApiUser" defaultValue={settings.data.smsApiUser} /></label><label><span className="field-label">API parolası</span>{secretInput("smsApiPassword", settings.data.smsApiPassword, "Netgsm API parolası")}</label><label><span className="field-label">Gönderici başlığı</span><input name="smsSender" minLength={3} maxLength={11} defaultValue={settings.data.smsSender} /></label><label><span className="field-label">Sanal numara</span><input name="smsVirtualNumber" placeholder="0850… veya 05…" defaultValue={settings.data.smsVirtualNumber} /></label><label><span className="field-label">Webhook gizli anahtarı</span>{secretInput("smsWebhookSecret", settings.data.smsWebhookSecret, "Netgsm webhook gizli anahtarı")}</label><IntegrationDepartment value={smsDepartment ?? settings.data.smsDepartmentId ?? ""} options={departmentOptions} onChange={setSmsDepartment} /></div><details className="integration-webhook-details"><summary>Gelen SMS kurulumu</summary><div className="integration-webhook-help"><strong>Netgsm yönlendirme adresi</strong><div className="integration-webhook-copy"><code>{webhookBase}/netgsm?token=••••••••</code><button className="button secondary" type="button" onClick={() => void copyNetgsmWebhook()}>{webhookCopied ? "Kopyalandı" : "Adresi kopyala"}</button></div><small>Yalnızca gelen SMS’lerin Gelen kutusuna aktarılması için gereklidir. Netgsm panelinde SMS Hizmeti → İnteraktif SMS → URL Adresine Yönlendir alanına kaydedin. Canlı adres HTTPS ve dışarıdan erişilebilir olmalıdır.</small></div></details></section>
       <section hidden={tab !== "whatsapp"} className="integration-card whatsapp-card"><div className="integration-heading"><h2>Meta WhatsApp Cloud API</h2><IntegrationToggle name="whatsappEnabled" label="WhatsApp entegrasyonunu etkinleştir" defaultChecked={settings.data.whatsappEnabled} /></div><div className="integration-fields"><label><span className="field-label">Meta uygulama kimliği</span><input name="whatsappAppId" defaultValue={settings.data.whatsappAppId} /></label><label><span className="field-label">Uygulama gizli anahtarı</span>{secretInput("whatsappAppSecret", settings.data.whatsappAppSecret, "Meta uygulama gizli anahtarı")}</label><label><span className="field-label">Telefon numarası kimliği</span><input name="whatsappPhoneNumberId" defaultValue={settings.data.whatsappPhoneNumberId} /></label><label><span className="field-label">Erişim belirteci</span>{secretInput("whatsappAccessToken", settings.data.whatsappAccessToken, "Meta erişim belirteci")}</label><label><span className="field-label">Webhook doğrulama belirteci</span>{secretInput("whatsappVerifyToken", settings.data.whatsappVerifyToken, "WhatsApp webhook doğrulama belirteci")}</label><IntegrationDepartment value={whatsappDepartment ?? settings.data.whatsappDepartmentId ?? ""} options={departmentOptions} onChange={setWhatsappDepartment} /></div><details className="integration-webhook-details"><summary>Gelen WhatsApp kurulumu</summary><div className="integration-webhook-help"><strong>Meta callback adresi</strong><div className="integration-webhook-copy"><code>{webhookBase}/whatsapp</code><button className="button secondary" type="button" onClick={() => void copyWhatsappWebhook()}>{whatsappWebhookCopied ? "Kopyalandı" : "Adresi kopyala"}</button></div><small>Yalnızca gelen WhatsApp mesajlarının Gelen kutusuna aktarılması için gereklidir. Meta panelinde callback URL olarak kaydedin, yukarıdaki doğrulama belirtecini kullanın ve <b>messages</b> alanına abone olun. Canlı adres HTTPS olmalıdır.</small></div></details></section>
       <ErrorMessage error={save.error} />
-      <div className="integration-footer">{result && <p className="management-success" role="status">{result}</p>}<button className="button primary" disabled={save.isPending}>{save.isPending ? "Kaydediliyor\u2026" : "Kaydet"}</button></div>
+      <div className="integration-footer">{result && <p className="management-success" role="status">{result}</p>}<button className="button primary" disabled={save.isPending || !hasPermission(user, 'integrations.update')}>{save.isPending ? "Kaydediliyor\u2026" : "Kaydet"}</button></div>
     </form>}</main>;
 }
 
@@ -419,7 +423,7 @@ export function ProfilePage() {
                 <h1>{profile.data.name}</h1>
                 <p>Hesap bilgilerinizi ve şifrenizi yönetin.</p>
               </div>
-              <span className="profile-role">{roles[profile.data.role]}</span>
+              <span className="profile-role">{profile.data.accessRole?.name ?? roles[profile.data.role]}</span>
             </div>
             <form key={formVersion} className="management-form profile-form" onSubmit={submit}>
             <section className="profile-info-card" aria-label="İletişim bilgileri">

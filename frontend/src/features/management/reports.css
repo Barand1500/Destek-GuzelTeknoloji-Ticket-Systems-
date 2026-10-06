@@ -4,9 +4,9 @@
   --report-soft: #f1f4f7;
   --report-track: #e2e8f0;
   --report-border: #dce4e9;
-  --report-text: #243b38;
-  --report-muted: #64748b;
-  --report-accent: #167766;
+  --report-text: var(--ui-text-primary);
+  --report-muted: var(--ui-text-secondary);
+  --report-accent: var(--ui-text-navigation);
   color: var(--report-text);
 }
 html[data-theme="dark"] main.reports-page {
@@ -15,8 +15,8 @@ html[data-theme="dark"] main.reports-page {
   --report-soft: #22342c;
   --report-track: #2b493c;
   --report-border: #31463d;
-  --report-text: #e5eee9;
-  --report-muted: #a9beb4;
+  --report-text: var(--ui-text-primary);
+  --report-muted: var(--ui-text-secondary);
   background: #15211d;
 }
 html[data-theme="dark"] .reports-page .report-filters select,
@@ -30,6 +30,12 @@ html[data-theme="dark"] .reports-page .report-download {
 }
 .reports-page .page-heading p {
   color: var(--report-muted);
+}
+.reports-page .page-heading .eyebrow {
+  color: #166b5c;
+}
+html[data-theme="dark"] .reports-page .page-heading .eyebrow {
+  color: #8dd1ba;
 }
 .report-download {
   display: inline-flex;
@@ -139,7 +145,7 @@ html[data-theme="dark"] .reports-page .styled-dropdown:has(.styled-dropdown-labe
 }
 html[data-theme="dark"] .reports-page .styled-dropdown-label {
   background: #1d2c26;
-  color: #a9beb4;
+  color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .reports-page .styled-dropdown:has(.styled-dropdown-label):focus-within {
   border-color: #218675;

@@ -34,6 +34,7 @@ import { SearchableDropdown } from '../../components/SearchableDropdown';
 import { AttachmentLinks,CompactFilePicker,ComposerFiles,FilePicker,SavedReplyPicker,TagEditor,TagPicker,FormDropdown } from './TicketExtras';
 import './extras.css';
 import { useAuth } from "../auth/Auth";
+import { hasPermission } from '../auth/permissions';
 import {
   channels,
   statuses,
@@ -358,7 +359,7 @@ export function TicketList() {
               options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))}
             />
           </div>
-          {user?.role === "ADMIN" && (
+          {user?.role === "ADMIN" && hasPermission(user, 'conversations.delete') && (
             <div className={`notification-delete inbox-delete${deleteMenuOpen ? " open" : ""}`}>
               <button type="button" className="notification-delete-trigger" aria-label="Talepleri sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
                 <Trash2 size={16} aria-hidden="true" />
@@ -742,8 +743,8 @@ export function TicketDetail() {
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
   const agentNeedsClaim = user?.role === 'AGENT' && !t.assignedAgentId;
-  const canPublicReply = t.status !== 'CLOSED' && (user?.role !== 'AGENT' || t.assignedAgentId === user.id);
-  const canInternalNote = t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
+  const canPublicReply = hasPermission(user, 'conversations.reply') && t.status !== 'CLOSED' && (user?.role !== 'AGENT' || t.assignedAgentId === user.id);
+  const canInternalNote = hasPermission(user, 'conversations.note') && t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
   const canWrite = internal ? canInternalNote : canPublicReply;
   const canSubmitReply = Boolean(body.trim() || files.length);
   return (
@@ -927,26 +928,26 @@ export function TicketDetail() {
             {user?.role === "CUSTOMER" ? (
               <Badge status={t.status} />
             ) : (
-              <SearchableDropdown label="Durum" name="status" value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (statusOptions.some((option) => option.value === value)) update.mutate({ status: value }); }} options={statusOptions} />
+              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (statusOptions.some((option) => option.value === value)) update.mutate({ status: value }); }} options={statusOptions} />
             )}
           </div>
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
               <span>{priorityOptions.find((option) => option.value === t.priority)?.label ?? t.priority}</span>
             ) : (
-              <SearchableDropdown label="Öncelik" name="priority" value={t.priority} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=priorities")} onChange={(value) => { if (priorityOptions.some((option) => option.value === value)) update.mutate({ priority: value }); }} options={priorityOptions} />
+              <SearchableDropdown label="Öncelik" name="priority" disabled={!hasPermission(user, 'conversations.update')} value={t.priority} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=priorities")} onChange={(value) => { if (priorityOptions.some((option) => option.value === value)) update.mutate({ priority: value }); }} options={priorityOptions} />
             )}
           </div>
           <div className="ticket-assignee-property">
             {manager ? (
-              <SearchableDropdown label="Atanan personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
+              <SearchableDropdown label="Atanan personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
             ) : (
               <label>Atanan personel<span>{t.assignedAgent?.name ?? "Atanmamış"}</span></label>
             )}
           </div>
           {agents.isError && <QueryError error={agents.error} />}
-          {manager&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
-          {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending}/>}
+          {manager&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending || !hasPermission(user, 'conversations.transfer')}/>}
+          {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending || !hasPermission(user, 'conversations.update')}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}
           {agentNeedsClaim && <div><p className="muted">Bu görüşme departman kuyruğunda. Yanıtlamadan önce üzerinize alın.</p><button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize alınıyor…' : 'Üzerime ata'}</button>{claim.isError && <QueryError error={claim.error}/>}</div>}
@@ -958,13 +959,13 @@ export function TicketDetail() {
                 className="button secondary resolved-action"
                 aria-label="Çözüldü olarak işaretle"
                 title="Çözüldü olarak işaretle"
-                disabled={update.isPending}
+                disabled={update.isPending || !hasPermission(user, 'conversations.update')}
                 onClick={() => update.mutate({ status: "RESOLVED" })}
               >
                 <CheckCheck size={16} /> Çözüldü olarak işaretle
               </button>
             )}
-          {user?.role==='ADMIN'&&<button className="icon-button danger-icon" aria-label="Görüşmeyi sil" title="Görüşmeyi sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
+          {user?.role==='ADMIN'&&hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi sil" title="Görüşmeyi sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
           </div>
         </aside>
       </div>

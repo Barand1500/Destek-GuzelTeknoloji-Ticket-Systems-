@@ -40,6 +40,8 @@ model User {
   deletedAt DateTime?
   passwordHash String
   role Role @default(CUSTOMER)
+  accessRoleId String?
+  accessRole AccessRole? @relation(fields: [accessRoleId], references: [id], onDelete: Restrict)
   isActive Boolean @default(true)
   updatedAt DateTime @default(now()) @updatedAt
   createdAt DateTime @default(now())
@@ -59,6 +61,16 @@ model User {
   messageMentions ConversationMessageMention[]
   @@index([email])
   @@index([phone])
+}
+model AccessRole {
+  id String @id @default(uuid())
+  name String @unique
+  description String @default("") @db.VarChar(500)
+  permissions Json
+  scope String @default("DEPARTMENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users User[]
 }
 model UserSkill {
   id String @id @default(uuid())

@@ -4,6 +4,7 @@ export type Actor = {
   name: string;
   email: string;
   role: Role;
+  accessRole?: { id: string; name: string; permissions: unknown; scope: string } | null;
   departmentIds: string[];
   sessionId: string;
   ipAddress?: string | null;

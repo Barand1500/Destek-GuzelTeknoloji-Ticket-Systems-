@@ -4,6 +4,9 @@ import { api, errorText } from "../../services/api";
 import type { Page } from "../../types";
 import { DropdownSelect } from "../../components/DropdownSelect";
 import "./management.css";
+import { useAuth } from '../auth/Auth';
+import { hasPermission, screenPermission } from '../auth/permissions';
+import { useLocation } from 'react-router-dom';
 
 export const formatDate = (value: string) =>
   new Date(value).toLocaleString("tr-TR");
@@ -234,9 +237,13 @@ export function FormActions({
   onCancel?: () => void;
   submitLabel?: string;
 }) {
+  const { user } = useAuth();
+  const { pathname } = useLocation();
+  const resource = screenPermission(pathname)?.split('.')[0];
+  const allowed = !resource || hasPermission(user, `${resource}.${onCancel ? 'update' : 'create'}`);
   return (
     <div className="management-actions">
-      <button className="button primary" disabled={pending}>
+      <button className="button primary" disabled={pending || !allowed}>
         {pending ? "Kaydediliyor…" : submitLabel}
       </button>
       {onCancel && (

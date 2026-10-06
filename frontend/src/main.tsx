@@ -22,6 +22,7 @@ import { IntegrationsHubPage } from "./pages/IntegrationsHub";
 import { SurveysPage } from "./pages/Surveys";
 import { Realtime } from "./components/Realtime";
 import { RequireRole } from "./components/RequireRole";
+import { RolesPage } from './features/management/Roles';
 import {
   conversationPath,
   inboxPath,
@@ -46,6 +47,7 @@ import {
 } from "./pages/Management";
 import "./styles.css";
 import { CalendarPage } from "./features/announcements/CalendarModal";
+import "./readability.css";
 const client = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15000 } },
 });
@@ -160,6 +162,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<PhoneSupportPage />}
               />
               <Route path="/admin/users" element={<UsersPage />} />
+              <Route path="/admin/roles" element={<RolesPage />} />
               <Route path="/admin/departments" element={<DepartmentsPage />} />
               <Route path="/admin/tags" element={<TagsPage />} />
               <Route path="/admin/websites" element={<WebsitesPage />} />

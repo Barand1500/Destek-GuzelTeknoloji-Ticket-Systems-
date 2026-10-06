@@ -7,7 +7,7 @@ import { AppError } from "../utils/errors.js";
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 const newRefresh = () => randomBytes(48).toString("base64url");
-const publicUser = { id: true, name: true, email: true, role: true } as const;
+const publicUser = { id: true, name: true, email: true, role: true, accessRole: { select: { id: true, name: true, permissions: true, scope: true } } } as const;
 function access(userId: string, sessionId: string) {
   return jwt.sign({ sid: sessionId }, env.JWT_ACCESS_SECRET, {
     subject: userId,

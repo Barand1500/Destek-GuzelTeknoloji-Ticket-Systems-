@@ -5,6 +5,7 @@ import { resolveActor } from '../middleware/auth.js';
 import { events } from '../services/events.service.js';
 import { db } from '../config/db.js';
 import { visibility } from '../services/conversations.service.js';
+import { can } from '../services/permissions.js';
 import { connectPresence, disconnectPresence, presenceEvents, updatePresence, type PresenceChanged } from '../services/presence.service.js';
 export function attachSockets(server:HttpServer){
   const io=new Server(server,{cors:{origin:(origin,done)=>done(null,!origin||allowedOrigins.has(origin)),credentials:true},maxHttpBufferSize:10000});
@@ -12,7 +13,7 @@ export function attachSockets(server:HttpServer){
   io.on('connection',async socket=>{
     try{
       const actor=await resolveActor(socket.handshake.auth.token);
-      if(actor.role==='ADMIN')socket.join('presence-admins');
+      if(actor.role==='ADMIN' && (!actor.accessRole || (can(actor, 'presence.view') && actor.accessRole.scope === 'ALL')))socket.join('presence-admins');
       await connectPresence(actor.id,socket.id);
       socket.on('presence:update',(input:unknown)=>{
         if(!input||typeof input!=='object')return;
@@ -28,6 +29,8 @@ export function attachSockets(server:HttpServer){
     for(const socket of io.sockets.sockets.values()){
       try{
         const actor=await resolveActor(socket.handshake.auth.token);
+        if(actor.accessRole && (!can(actor, 'presence.view') || actor.accessRole.scope !== 'ALL'))socket.leave('presence-admins');
+        if(!change.conversationId)socket.emit('access:refresh');
         if(change.internal&&actor.role==='CUSTOMER')continue;
         if(change.conversationId){
           const visible=await db.conversation.count({where:{AND:[visibility(actor),{id:change.conversationId}]}});

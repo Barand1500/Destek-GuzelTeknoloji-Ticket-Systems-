@@ -1,6 +1,7 @@
 export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
+export type AccessRole = { id: string; name: string; permissions: string[]; scope: string };
 export type StaffSkill = { name: string; category: string; level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' };
-export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; departmentIds?: string[] };
+export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; accessRoleId?: string | null; accessRole?: AccessRole | null; departmentIds?: string[] };
 export type Department = { id: string; name: string };
 export type Tag={id:string;name:string;code:string;color:string};
 export type Website={id:string;name:string;url:string;isActive:boolean;guideFileCount?:number};

@@ -5,7 +5,7 @@ html[data-theme="dark"] .saved-content-tabs {
   border-bottom-color: #466056;
 }
 html[data-theme="dark"] .saved-content-tabs button {
-  color: #b7c9c0;
+  color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .saved-content-tabs button.active,
 html[data-theme="dark"] .saved-content-tabs button:hover {

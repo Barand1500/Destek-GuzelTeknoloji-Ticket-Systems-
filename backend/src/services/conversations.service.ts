@@ -2,6 +2,7 @@ import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Actor } from "../types/express.js";
 import { AppError } from "../utils/errors.js";
+import { can } from './permissions.js';
 import type { StoredUpload } from './uploads.service.js';
 import { notifyConversation, publishChange } from './events.service.js';
 import { queueSupportEmail } from './mailer.service.js';
@@ -34,6 +35,11 @@ async function supportContact() {
   ].filter(Boolean).join("\n");
 }
 export function visibility(actor: Actor): Prisma.ConversationWhereInput {
+  if (actor.accessRole) {
+    if (actor.accessRole.scope === 'OWN') return { deletedAt: null, assignedAgentId: actor.id };
+    if (actor.accessRole.scope === 'DEPARTMENT') return { deletedAt: null, departmentId: { in: actor.departmentIds } };
+    return { deletedAt: null };
+  }
   switch (actor.role) {
     case "ADMIN":
       return { deletedAt: null };
@@ -194,6 +200,8 @@ export async function createConversation(
     throw new AppError(400, "INVALID_DEPARTMENT", "Departman bulunamadı.");
   const customerId=input.customerId??actor.id;
   if(actor.role!=='CUSTOMER'){
+    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && !actor.departmentIds.includes(input.departmentId)) throw new AppError(403, 'FORBIDDEN', 'Bu departmana talep açma yetkiniz yok.');
+    if (actor.accessRole && input.assignedAgentId && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
     if(actor.role!=='ADMIN'&&!actor.departmentIds.includes(input.departmentId))throw new AppError(403,'FORBIDDEN','Bu departmana talep açma yetkiniz yok.');
     const customer=await db.user.findFirst({where:{id:customerId,role:'CUSTOMER',isActive:true}});
     if(!customer)throw new AppError(400,'INVALID_CUSTOMER','Aktif bir müşteri seçin.');
@@ -201,7 +209,7 @@ export async function createConversation(
   const result=await db.$transaction(async (tx) => {
     if (!(await tx.priorityOption.findFirst({ where: { code: input.priority, isActive: true } }))) throw new AppError(400, "INVALID_PRIORITY", "Öncelik seçeneği geçersiz.");
     if(input.tagIds && (new Set(input.tagIds).size!==input.tagIds.length || await tx.tag.count({where:{id:{in:input.tagIds}}})!==input.tagIds.length)) throw new AppError(400,'INVALID_TAG','Etiketler geçersiz.');
-    if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, role: { in: ["AGENT", "SUPERVISOR"] }, isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
+    if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
     const website = input.websiteId ? await tx.website.findFirst({ where: { id: input.websiteId, isActive: true } }) : null;
     if (input.websiteId && !website) throw new AppError(400, "INVALID_WEBSITE", "Geçerli bir web sitesi seçin.");
     const conversation = await tx.conversation.create({
@@ -271,7 +279,7 @@ export async function mentionCandidates(actor: Actor, id: string, search: string
   return db.user.findMany({
     where: {
       id: { not: actor.id },
-      role: { in: ["AGENT", "SUPERVISOR"] },
+      OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
       isActive: true,
       deletedAt: null,
       departments: { some: { departmentId: conversation.departmentId } },
@@ -310,6 +318,8 @@ export async function addMessage(
   if (input.type && input.isInternalNote !== undefined && (input.type === 'INTERNAL_NOTE') !== input.isInternalNote)
     throw new AppError(400,'INVALID_MESSAGE_TYPE','Mesaj türü ve dahili not seçimi uyuşmuyor.');
   const internal = type === 'INTERNAL_NOTE';
+  if (actor.accessRole && !can(actor, internal ? 'conversations.note' : 'conversations.reply'))
+    throw new AppError(403, 'FORBIDDEN', 'Bu mesaj türü için yetkiniz yok.');
   const mentionUserIds = input.mentionUserIds ?? [];
   if (mentionUserIds.length && !internal)
     throw new AppError(400, "INVALID_MENTIONS", "Personel yalnızca dahili notlarda etiketlenebilir.");
@@ -332,7 +342,7 @@ export async function addMessage(
       );
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
     const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
-      where: { id: { in: mentionUserIds, not: actor.id }, role: { in: ["AGENT", "SUPERVISOR"] }, isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
+      where: { id: { in: mentionUserIds, not: actor.id }, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
       select: { id: true, name: true },
     }) : [];
     if (mentionedUsers.length !== mentionUserIds.length)
@@ -414,7 +424,7 @@ export async function updateConversation(
       const agent = await tx.user.findFirst({
         where: {
           id: input.assignedAgentId,
-          role: { in: ["AGENT", "SUPERVISOR"] },
+          OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
           isActive:true,
           deletedAt: null,
           departments: { some: { departmentId: targetDepartment } },
@@ -468,7 +478,7 @@ export async function updateConversation(
   return result;
 }
 export async function assignToMe(actor:Actor,id:string){
-  if(actor.role!=='AGENT')throw new AppError(403,'FORBIDDEN','Bu işlem destek temsilcilerine açıktır.');
+  if(actor.role!=='AGENT' && !(actor.accessRole && can(actor, 'conversations.assign')))throw new AppError(403,'FORBIDDEN','Bu işlem destek temsilcilerine açıktır.');
   await getConversation(actor,id);
   const result=await db.$transaction(async tx=>{
     const claimed=await tx.conversation.updateMany({where:{id,deletedAt:null,assignedAgentId:null,departmentId:{in:actor.departmentIds},status:{not:'CLOSED'}},data:{assignedAgentId:actor.id}});
@@ -485,7 +495,7 @@ export async function assignToMe(actor:Actor,id:string){
 export async function deleteConversation(actor:Actor,id:string){
   if(actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Silme işlemi yalnızca yöneticiye açıktır.');
   await db.$transaction(async tx=>{
-    const result=await tx.conversation.updateMany({where:{id,deletedAt:null},data:{deletedAt:new Date()}});
+    const result=await tx.conversation.updateMany({where:{AND:[visibility(actor),{id}]},data:{deletedAt:new Date()}});
     if(!result.count)throw new AppError(404,'TICKET_NOT_FOUND','Talep bulunamadı.');
     await tx.activityLog.create({data:{userId:actor.id,action:'conversation.deleted',entityId:id,ipAddress:actor.ipAddress}});
   });
@@ -496,7 +506,7 @@ export async function deleteConversations(actor:Actor,period:'day'|'week'|'month
   const days=period==='day'?1:period==='week'?7:period==='month'?30:null;
   const since=days?new Date(Date.now()-days*24*60*60*1000):undefined;
   const result=await db.$transaction(async tx=>{
-    const where={deletedAt:null,...(since?{createdAt:{gte:since}}:{})};
+    const where={AND:[visibility(actor),...(since?[{createdAt:{gte:since}}]:[])]};
     const targets=await tx.conversation.findMany({where,select:{id:true}});
     const deleted=await tx.conversation.updateMany({where,data:{deletedAt:new Date()}});
     if(targets.length)await tx.activityLog.createMany({data:targets.map(({id})=>({userId:actor.id,action:'conversation.deleted',entityId:id,ipAddress:actor.ipAddress}))});

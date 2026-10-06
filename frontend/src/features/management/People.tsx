@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, Pencil, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
+import { hasPermission } from '../auth/permissions';
 import {
   roles,
   type User,
@@ -140,7 +141,9 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
   const remove = useDelete('/users', ['/customers']);
   const [formVersion, setFormVersion] = useState(0);
-  const [role, setRole] = useState<Role>(defaultRole ?? "AGENT");
+  const [role, setRole] = useState<Role>(user?.accessRole ? 'ADMIN' : defaultRole ?? "AGENT");
+  const [accessRoleId, setAccessRoleId] = useState<string | null>(user?.accessRole?.id ?? null);
+  const roleOptions = useQuery({ queryKey: ['/role-options'], queryFn: async () => (await api.get<{ data: Array<{ id: string; name: string }> }>('/role-options')).data.data });
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const list = useList<ManagedUser>("/users", defaultRole ? { role: defaultRole } : {});
   const departments = useQuery({
@@ -161,7 +164,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   });
   function reset() {
     setEditing(null);
-    setRole(defaultRole ?? "AGENT");
+    setRole(user?.accessRole ? 'ADMIN' : defaultRole ?? "AGENT");
+    setAccessRoleId(user?.accessRole?.id ?? null);
     setSelectedDepartmentIds([]);
     setFormVersion((v) => v + 1);
   }
@@ -171,6 +175,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
     save.reset();
     setEditing(value);
     setRole(value.role);
+    setAccessRoleId(value.accessRoleId ?? null);
     setSelectedDepartmentIds(value.departments.map((department) => department.departmentId));
     setFormVersion((v) => v + 1);
   }
@@ -183,6 +188,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         email: values.get("email"),
         phone: values.get("phone"),
         role,
+        accessRoleId,
         skills: role === 'CUSTOMER' ? [] : JSON.parse(String(values.get('skills') ?? '[]')),
         departmentIds:
           role === "CUSTOMER" ? [] : selectedDepartmentIds,
@@ -232,7 +238,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                         {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
                       <td>
-                        {roles[person.role]}
+                        {person.accessRole?.name ?? roles[person.role]}
                         <small>
                           {person.departments
                             .map((d) => d.department.name)
@@ -240,7 +246,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                         </small>
                       </td>
                       <td>
-                        {person.role !== "ADMIN" && <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>}
+                        {(person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>}
                       </td>
                       <td>
                         <div className="management-actions">
@@ -250,16 +256,17 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             aria-label={`${person.name} düzenle`}
                             title="Düzenle"
                             onClick={() => edit(person)}
+                            disabled={!hasPermission(user, 'users.update') || Boolean(user?.accessRole && person.accessRoleId !== user.accessRole.id)}
                           ><Pencil size={15} aria-hidden="true" />
                             
                           </button>
-                          {person.role !== "ADMIN" && <button
+                          {(person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <button
                             type="button"
                             className="icon-button danger-icon"
                             aria-label={`${person.name} sil`}
                             title="Sil"
                             disabled={
-                              remove.isPending || person.id === user?.id
+                              remove.isPending || person.id === user?.id || !hasPermission(user, 'users.delete')
                             }
                             onClick={() => { remove.reset(); setDeleteTarget(person); }}
                           ><Trash2 size={15} aria-hidden="true" />
@@ -339,9 +346,9 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             <DropdownSelect
               label="Rol"
               ariaLabel="Kullanıcı rolü"
-              value={role}
-              onChange={(value) => setRole(value as Role)}
-              options={Object.entries(roles).map(([value, label]) => ({ value, label }))}
+              value={accessRoleId ?? role}
+              onChange={(value) => { const custom = roleOptions.data?.find(item => item.id === value); setAccessRoleId(custom?.id ?? null); setRole(custom ? 'ADMIN' : value as Role); }}
+              options={user?.accessRole ? [{ value: user.accessRole.id, label: user.accessRole.name }] : [...Object.entries(roles).map(([value, label]) => ({ value, label })), ...(roleOptions.data ?? []).map(item => ({ value: item.id, label: item.name }))]}
             />
             {role !== "CUSTOMER" && (
               <div className="users-department-control">
@@ -462,9 +469,9 @@ export function CustomersPage() {
                         Görüşmeleri aç
                       </Link>
                       <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>
-                      <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>
+                      <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" disabled={!hasPermission(user, 'customers.update')} onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>
                       <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları gör' : 'Dosya yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
-                      <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>
+                      <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" disabled={!hasPermission(user, 'customers.delete')} onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>

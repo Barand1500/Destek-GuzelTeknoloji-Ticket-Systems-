@@ -1,0 +1,13 @@
+CREATE TABLE `AccessRole` (
+  `id` VARCHAR(191) NOT NULL,
+  `name` VARCHAR(191) NOT NULL,
+  `description` VARCHAR(500) NOT NULL DEFAULT '',
+  `permissions` JSON NOT NULL,
+  `scope` VARCHAR(191) NOT NULL DEFAULT 'DEPARTMENT',
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  UNIQUE INDEX `AccessRole_name_key` (`name`),
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `User` ADD COLUMN `accessRoleId` VARCHAR(191) NULL;
+ALTER TABLE `User` ADD CONSTRAINT `User_accessRoleId_fkey` FOREIGN KEY (`accessRoleId`) REFERENCES `AccessRole` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
+import { hasPermission } from '../features/auth/permissions';
 import { api, errorText } from "../services/api";
 import { DropdownSelect, MultiDropdownSelect } from "../components/DropdownSelect";
 import { conditionOptions, visibleSurveyQuestions, cleanSurveyAnswers, type SurveyQuestion } from "../features/surveys/conditions";
@@ -119,7 +120,7 @@ export function SurveysPage() {
             {active.length} aktif anket · {completed.length} tamamlanmış
           </p>
         </div>
-        {admin && (
+        {admin && hasPermission(user, 'surveys.create') && (
           <button
             className="button primary survey-create-trigger"
             onClick={() => setScreen("create")}
@@ -225,6 +226,7 @@ function Card({
   close: () => void;
   stats: () => void;
 }) {
+  const { user } = useAuth();
   const days = Math.max(
     0,
     Math.ceil((new Date(survey.endsAt).getTime() - Date.now()) / 86400000),
@@ -251,6 +253,7 @@ function Card({
                 title="İstatistikler"
                 aria-label="İstatistikler"
                 onClick={stats}
+                disabled={!hasPermission(user, 'surveys.statistics')}
               >
                 <BarChart3 size={17} />
               </button>
@@ -260,6 +263,7 @@ function Card({
                   title="Anketi kapat"
                   aria-label="Anketi kapat"
                   onClick={close}
+                  disabled={!hasPermission(user, 'surveys.update')}
                 >
                   <Lock size={17} />
                 </button>
@@ -269,6 +273,7 @@ function Card({
                 title="Anketi sil"
                 aria-label="Anketi sil"
                 onClick={remove}
+                disabled={!hasPermission(user, 'surveys.delete')}
               >
                 <Trash2 size={17} />
               </button>
