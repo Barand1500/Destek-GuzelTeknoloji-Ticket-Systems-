@@ -47,7 +47,7 @@ html[data-theme="dark"] .roles-page { --roles-surface: #1b2b24; --roles-soft: #1
 .roles-panel-heading p { margin-top: 3px; }
 .roles-basics { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 16px; align-items: start; margin-top: 24px; }
 .roles-basics > label { min-width: 0; }
-.roles-basics input { width: 100%; font-size: 12px; }
+.roles-basics input { width: 100%; min-height: 29px; font-size: 12px; }
 .roles-permissions { display: grid; grid-template-columns: 240px minmax(0,1fr); overflow: hidden; }
 .roles-areas { min-width: 0; padding: 18px 0; background: var(--roles-soft); border-right: 1px solid var(--roles-border); }
 .roles-areas-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 18px 14px; }

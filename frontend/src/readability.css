@@ -75,3 +75,55 @@ html[data-theme="dark"] .app-shell .integration-toggle i {
 html[data-theme="dark"] .app-shell .integration-toggle input:checked + i {
   background: #218675;
 }
+
+html[data-theme="dark"] .app-shell .presence-summary-overflow {
+  color: var(--ui-text-navigation);
+}
+html[data-theme="dark"] .app-shell .roles-row-actions .icon-button {
+  background: #20332b;
+  border-color: #466056;
+  color: var(--ui-text-navigation);
+}
+html[data-theme="dark"] .app-shell .roles-row-actions .icon-button:hover {
+  background: #2a4236;
+  border-color: #729886;
+  color: var(--ui-tab-hover-text);
+}
+html[data-theme="dark"] .app-shell .roles-row-actions .icon-button.danger-icon {
+  background: #3a2427;
+  border-color: #75494d;
+  color: #ffb2ae;
+}
+html[data-theme="dark"] .app-shell .roles-row-actions .icon-button.danger-icon:hover {
+  background: #4b2d30;
+  border-color: #b87579;
+  color: #ffd5d2;
+}
+html[data-theme="dark"] .app-shell .survey-vote:disabled {
+  background: #243b30;
+  border: 1px solid #466056;
+  color: var(--ui-text-navigation);
+  opacity: 1;
+}
+
+.app-shell .survey-answer-modal > header .icon-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  box-shadow: none;
+  color: var(--ui-text-secondary);
+}
+.app-shell .survey-answer-modal > header .icon-button:hover {
+  background: #f7faf8;
+  color: var(--ui-text-primary);
+}
+html[data-theme="dark"] .app-shell .survey-answer-modal > header .icon-button:hover {
+  background: #2a3e34;
+}
+.app-shell .survey-answer-modal > header .icon-button:focus-visible {
+  outline: 2px solid var(--ui-tab-indicator);
+  outline-offset: 2px;
+}
