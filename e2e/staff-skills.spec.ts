@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const department = { id: "dept-skills", name: "Yazılım" };
+const secondDepartment = { id: "dept-support", name: "Genel Destek" };
 const person = {
   id: "person-skills",
   name: "React Uzmanı",
@@ -51,7 +52,7 @@ test("personnel form saves multiple languages, custom skills and independent lev
       return route.fulfill({ json: { ...empty, data: [person] } });
     if (path === "/departments")
       return route.fulfill({
-        json: { ...empty, data: [{ ...department, isActive: true }] },
+        json: { ...empty, data: [{ ...department, isActive: true }, { ...secondDepartment, isActive: true }] },
       });
     return route.fulfill({ json: empty });
   });
@@ -60,6 +61,12 @@ test("personnel form saves multiple languages, custom skills and independent lev
     .getByRole("button", { name: /düzenle/i })
     .first()
     .click();
+  const memberships = page.getByRole("button", { name: "Departman üyelikleri", exact: true });
+  await memberships.click();
+  await expect(page.getByRole("option", { name: /Yazılım$/ })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("option", { name: /Yazılım$/ }).click();
+  await page.getByRole("option", { name: secondDepartment.name, exact: true }).click();
+  await memberships.click();
   await page
     .getByRole("button", { name: "Yetenek seviyesi", exact: true })
     .click();
@@ -98,6 +105,7 @@ test("personnel form saves multiple languages, custom skills and independent lev
       { name: "Almanca", category: "Diller", level: "BEGINNER" },
       { name: "Özel ERP", category: "Diller", level: "EXPERT" },
     ]);
+  expect(saved?.departmentIds).toEqual([secondDepartment.id]);
 });
 
 test("description suggestions select department and staff and submit their IDs", async ({
@@ -138,7 +146,7 @@ test("description suggestions select department and staff and submit their IDs",
     if (path === `/departments/${department.id}/agents`) {
       await agentGate;
       return route.fulfill({
-        json: { ...empty, data: [{ ...person, presence: "OFFLINE" }] },
+        json: { ...empty, data: [{ ...person, presence: "OFFLINE", openConversationCount: 7 }] },
       });
     }
     if (path === "/customers" && route.request().method() === "POST")
@@ -182,9 +190,11 @@ test("description suggestions select department and staff and submit their IDs",
     expect(searches).toBe(0);
     await page.clock.runFor(1);
     const suggestion = form.locator(".staff-suggestion-list button");
-    await expect(suggestion).toContainText(
-      "React · Uzman / İngilizce · İleri / Almanca · Orta",
-    );
+    await expect(suggestion.locator(".staff-suggestion-skill")).toContainText([
+      /React\s*· Uzman/,
+      /İngilizce\s*· İleri/,
+      /Almanca\s*· Orta/,
+    ]);
     expect(searches).toBe(1);
     await expect(form.getByText("Uygun personeller aranıyor…")).toHaveCount(0);
     await expect(description).toHaveCSS("resize", "none");
@@ -235,6 +245,13 @@ test("description suggestions select department and staff and submit their IDs",
       name: "Atanan personeli seçin",
     });
     await expect(assignee).toContainText("Çevrim dışı");
+    await expect(assignee).toContainText("7 açık talep");
+    await assignee.click();
+    await expect(page.getByRole("option", { name: /React Uzmanı/ })).toContainText("7 açık talep");
+    await page.screenshot({ path: ".local/assignee-workload-mobile.png", fullPage: true });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: ".local/assignee-workload-desktop.png", fullPage: true });
+    await assignee.click();
     const status = assignee.locator(".presence-option-status");
     const labelBounds = await assignee.locator(":scope > span").boundingBox();
     const statusBounds = await status.boundingBox();

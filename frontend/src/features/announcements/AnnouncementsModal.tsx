@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   Bell,
   Building2,
@@ -13,6 +14,7 @@ import {
   Megaphone,
   MessageSquare,
   Paperclip,
+  Pencil,
   Pin,
   Search,
   Send,
@@ -86,12 +88,14 @@ export function AnnouncementsModal({
   user,
   onClose,
   initialTab = "new",
+  readOnly = false,
 }: {
   user: User;
   onClose: () => void;
   initialTab?: "new" | "history";
+  readOnly?: boolean;
 }) {
-  const canPublish = user.role === "ADMIN" || user.role === "SUPERVISOR";
+  const canPublish = !readOnly && (user.role === "ADMIN" || user.role === "SUPERVISOR");
   const dialog = useRef<HTMLDialogElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recipientPicker = useRef<HTMLDivElement>(null);
@@ -115,6 +119,7 @@ export function AnnouncementsModal({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
+  const [historySearch, setHistorySearch] = useState("");
   const [expandedId, setExpandedId] = useState("");
   useEffect(() => {
     const closePicker = (event: MouseEvent) => {
@@ -157,11 +162,11 @@ export function AnnouncementsModal({
     enabled: canPublish,
   });
   const history = useQuery({
-    queryKey: ["/announcements", page],
+    queryKey: ["/announcements", page, historySearch],
     queryFn: async () =>
       (
         await api.get<Page<Announcement>>("/announcements", {
-          params: { page, limit: 8 },
+          params: { page, limit: 8, search: historySearch },
         })
       ).data,
     enabled: tab === "history",
@@ -305,18 +310,6 @@ export function AnnouncementsModal({
         event.preventDefault();
         if (!publish.isPending) onClose();
       }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !publish.isPending) {
-          const bounds = event.currentTarget.getBoundingClientRect();
-          if (
-            event.clientX < bounds.left ||
-            event.clientX > bounds.right ||
-            event.clientY < bounds.top ||
-            event.clientY > bounds.bottom
-          )
-            onClose();
-        }
-      }}
     >
       <header className="announcements-header">
         <div>
@@ -358,6 +351,12 @@ export function AnnouncementsModal({
           <History size={17} />
           {canPublish ? "Duyuru geçmişi" : "Duyurularım"}
         </button>
+        {tab === "history" && (
+          <label className="announcement-history-search">
+            <Search size={16} aria-hidden="true" />
+            <input type="search" aria-label="Geçmiş duyurularda ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
+          </label>
+        )}
       </nav>
       {tab === "new" ? (
         <form onSubmit={submit} className="announcement-form">
@@ -394,7 +393,16 @@ export function AnnouncementsModal({
                 />
               </label>
               <div className="announcement-template-heading">
-                <span>Hazır şablonlar</span>
+                <span className="announcement-template-label">
+                  Hazır şablonlar
+                  <Link
+                    to={`/${user.role === "ADMIN" ? "admin" : "agent"}/saved-replies?tab=templates`}
+                    onClick={onClose}
+                    className="announcement-template-edit"
+                    aria-label="Hazır şablonları düzenle"
+                    title="Hazır şablonları düzenle"
+                  ><Pencil size={15} aria-hidden="true" /></Link>
+                </span>
                 <small>Hızlı bir başlangıç yapın</small>
               </div>
               <div className="announcement-templates">

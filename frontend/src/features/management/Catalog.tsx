@@ -7,6 +7,7 @@ import { DeleteModal } from '../../components/DeleteModal';
 import { api } from "../../services/api";
 import { ProjectGuideFileModal } from "./ProjectGuideFileModal";
 import { AnnouncementTemplates } from "./AnnouncementTemplates";
+import { ComposerFiles } from "../tickets/TicketExtras";
 import type { Department, Website } from "../../types";
 import {
   ErrorMessage,
@@ -57,7 +58,7 @@ export function DepartmentsPage() {
       <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" onClick={() => navigate("/admin/users")}>Kullanıcılar</button><button type="button" className="active">Departmanlar</button></nav>
       <div className="management-grid">
         <section className="management-panel">
-          <Search value={list.search} onChange={list.setSearch} />
+          <Search value={list.search} onChange={list.setSearch} limit={list.limit} onLimitChange={list.setLimit} />
           <ErrorMessage error={remove.error} />
           <ErrorMessage error={changeStatus.error} />
           <ListState
@@ -120,6 +121,7 @@ export function DepartmentsPage() {
           <Pagination
             pagination={list.data?.pagination}
             onChange={list.setPage}
+            alwaysVisible
           />
         </section>
         <section className="management-panel">
@@ -157,7 +159,6 @@ export function TagsPage() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const section = params.get("section") === "statuses" || params.get("section") === "priorities" ? params.get("section") : "tags";
-  const list = useList<Tag>("/tags");
   const [editing, setEditing] = useState<Tag | null>(null);
   const [editingView, setEditingView] = useState<{ id: string; name: string; code: string } | null>(null);
   const [viewLabels, setViewLabels] = useState<Record<string, string>>({});
@@ -177,6 +178,7 @@ export function TagsPage() {
     { id: "view-mine", name: "Bana atanan", code: "MINE", color: "#7c9b91", href: "/admin/conversations?view=mine&category=MINE" },
     { id: "view-unassigned", name: "Atanmamış", code: "UNASSIGNED", color: "#7c9b91", href: "/admin/conversations?view=unassigned&category=UNASSIGNED" },
   ].filter((view) => !hiddenViews.includes(view.id)).map((view) => ({ ...view, name: viewLabels[view.code] ?? view.name }));
+  const list = useList<Tag>("/tags", {}, inboxViews.length);
   function selectSection(value: "tags" | "statuses" | "priorities") {
     if (value === "tags") setParams({});
     else setParams({ section: value });
@@ -212,14 +214,14 @@ export function TagsPage() {
       </nav>
       {section === "tags" ? <div className="management-grid">
         <section className="management-panel">
-          <Search value={list.search} onChange={list.setSearch} />
+          <Search value={list.search} onChange={list.setSearch} limit={list.limit} onLimitChange={list.setLimit} />
           <ErrorMessage error={remove.error} />
           <ListState
             loading={list.isPending}
             error={list.error}
-            empty={!list.data?.data.length}
+            empty={!list.data?.data.length && !inboxViews.length}
           />
-          {!!list.data?.data.length && (
+          {!!(list.data?.data.length || inboxViews.length) && (
             <div className="management-table-wrap">
               <table className="management-table">
                 <thead>
@@ -230,14 +232,14 @@ export function TagsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {inboxViews.map((view) => (
+                  {(list.page === 1 ? inboxViews : []).map((view) => (
                     <tr key={view.id}>
                       <td>{view.name}</td>
                       <td><code>{view.code}</code></td>
                       <td><div className="management-actions"><button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button><button className="button management-danger" type="button" onClick={() => { const key = view.code === "EMAIL" ? "mail" : view.code === "UNASSIGNED" ? "unassigned" : view.code === "MINE" ? "mine" : "all"; try { const storageKey = `helpdesk-inbox-tabs-${user?.id}`; const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}"); window.localStorage.setItem(storageKey, JSON.stringify({ ...saved, enabled: { ...saved.enabled, [key]: false } })); } catch { /* local storage unavailable */ } setHiddenViews((current) => [...current, view.id]); if (editingView?.id === view.id) reset(); }}>Sil</button></div></td>
                     </tr>
                   ))}
-                  {list.data.data.map((tag) => (
+                  {list.data?.data.map((tag) => (
                     <tr key={tag.id}>
                       <td>{tag.name}</td>
                       <td><code>{tag.code}</code></td>
@@ -273,6 +275,7 @@ export function TagsPage() {
           <Pagination
             pagination={list.data?.pagination}
             onChange={list.setPage}
+            alwaysVisible
           />
         </section>
         <section className="management-panel">
@@ -328,11 +331,11 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
   }
   return <div className="management-grid">
     <section className="management-panel">
-      <Search value={list.search} onChange={list.setSearch} label={`${title} içinde ara`} />
+      <Search value={list.search} onChange={list.setSearch} label={`${title} içinde ara`} limit={list.limit} onLimitChange={list.setLimit} />
       <ErrorMessage error={remove.error} />
       <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
       {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td><td><div className="management-actions"><button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button><button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button></div></td></tr>)}</tbody></table></div>}
-      <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
+      <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
     <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>
     {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label={`${title.slice(0, -1)} silme onayı`} onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>{title.slice(0, -1)} sil</h2><p><strong>{deleteTarget.name}</strong> kaydını silmek istediğinize emin misiniz?</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></form></div>}
@@ -346,8 +349,10 @@ export function WebsitesPage() {
   const [editing, setEditing] = useState<Website | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Website | null>(null);
   const [previewProject, setPreviewProject] = useState<Website | null>(null);
+  const [guideFiles, setGuideFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
   const [version, setVersion] = useState(0);
-  function reset() { setEditing(null); setVersion((value) => value + 1); }
+  function reset() { setEditing(null); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); }
   const save = useMutation({
     mutationFn: async ({ id, name, url, files }: { id?: string; name: string; url: string; files: File[] }) => {
       const response = id ? await api.patch(`/websites/${id}`, { name, url }) : await api.post("/websites", { name, url, isActive: true });
@@ -367,24 +372,38 @@ export function WebsitesPage() {
   const remove = useDelete("/websites", ["websites"]);
   function submit(event: FormEvent<HTMLFormElement>) {
     const form = formValues(event);
-    save.mutate({ id: editing?.id, name: String(form.get("name") ?? ""), url: String(form.get("url") ?? ""), files: form.getAll("guideFiles").filter((file): file is File => file instanceof File && file.size > 0) });
+    save.mutate({ id: editing?.id, name: String(form.get("name") ?? ""), url: String(form.get("url") ?? ""), files: guideFiles });
   }
   return <main className="page">
     <Heading title="Projeler" description="Talep açarken seçilebilecek projeleri ve URL adreslerini yönetin." />
     <div className="management-grid">
       <section className="management-panel">
-        <Search value={list.search} onChange={list.setSearch} label="Proje ara" />
+        <Search value={list.search} onChange={list.setSearch} label="Proje ara" limit={list.limit} onLimitChange={list.setLimit} />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button><button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button><button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button></div></td></tr>)}</tbody></table></div>}
-        <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button><button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button><button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button></div></td></tr>)}</tbody></table></div>}
+        <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
       </section>
       <section className="management-panel">
         <h2>{editing ? "Projeyi düzenle" : "Proje ekle"}</h2>
         <form key={version} className="management-form" onSubmit={submit}>
           <label><span className="field-label">Proje adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
           <label><span className="field-label">URL</span><input name="url" type="url" required maxLength={500} placeholder="https://ornek.com" defaultValue={editing?.url} /></label>
-          <label><span className="field-label">Rehber dosyaları</span><input name="guideFiles" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" /><small>PDF, JPG, PNG veya WebP · Dosya başına en fazla 25 MB</small></label>
+          <div className="customer-form-upload">
+          <label className="project-guide-upload-trigger">
+            <span className="field-label">Dosya ekle</span>
+            <input name="guideFiles" type="file" aria-label="Dosya seçin" aria-describedby="project-guide-size-hint" multiple disabled={save.isPending} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => {
+              const selected = Array.from(event.target.files ?? []);
+              if (selected.some(file => file.size > 25 * 1024 * 1024)) {
+                setFileError("Dosya başına en fazla 25 MB yüklenebilir.");
+              } else { setGuideFiles(selected); setFileError(""); }
+              event.target.value = "";
+            }} />
+          </label>
+          </div>
+          <p className="field-warning" id="project-guide-size-hint"><span className="field-warning-icon" aria-hidden="true">!</span><span>Dosya başına en fazla 25 MB yüklenebilir.</span></p>
+          <ComposerFiles files={guideFiles} setFiles={setGuideFiles} disabled={save.isPending} />
+          {fileError && <p className="error" role="alert">{fileError}</p>}
           <ErrorMessage error={save.error} />
           <FormActions pending={save.isPending} onCancel={editing ? reset : undefined} />
         </form>

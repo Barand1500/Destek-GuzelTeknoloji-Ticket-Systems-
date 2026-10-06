@@ -9,6 +9,12 @@ type Suggestion = {
   matches: StaffSkill[];
   departments: Department[];
 };
+const skillStars: Record<StaffSkill["level"], string> = {
+  BEGINNER: "★",
+  INTERMEDIATE: "★★",
+  ADVANCED: "★★★",
+  EXPERT: "★★★★",
+};
 export function SuggestedDescription({
   departmentId,
   assignedAgentId,
@@ -119,13 +125,16 @@ export function SuggestedDescription({
                         {selected ? " ✓" : ""}
                       </strong>
                       <small>{department.name}</small>
-                      <span>
-                        {person.matches
-                          .map(
-                            (skill) =>
-                              `${skill.name} · ${skillLevels[skill.level]}`,
-                          )
-                          .join(" / ")}
+                      <span className="staff-suggestion-skills">
+                        {person.matches.map((skill, index) => (
+                          <span className="staff-suggestion-skill" key={`${skill.name}-${index}`}>
+                            <span className="staff-suggestion-skill-name">{skill.name}</span>
+                            <span>· {skillLevels[skill.level]}</span>
+                            <span className="staff-suggestion-stars" aria-hidden="true">
+                              ({skillStars[skill.level]})
+                            </span>
+                          </span>
+                        ))}
                       </span>
                     </button>
                   );

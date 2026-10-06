@@ -27,7 +27,7 @@ announcementsRouter.get("/", async (req, res) => {
   const { page, limit } = paginationSchema.parse(req.query);
   res.json({
     success: true,
-    ...(await service.listAnnouncements(req.actor, page, limit)),
+    ...(await service.listAnnouncements(req.actor, page, limit, z.string().max(200).default("").parse(req.query.search))),
   });
 });
 announcementsRouter.post(

@@ -74,10 +74,26 @@ export async function respond(actor: Actor, id: string, input: z.infer<typeof su
   const survey = await db.survey.findFirst({ where: { id, ...(actor.role === "ADMIN" ? {} : { recipients: { some: { userId: actor.id } } }) } });
   if (!survey) throw new AppError(404, "NOT_FOUND", "Anket bulunamadı.");
   if (survey.closedAt || survey.endsAt <= new Date()) throw new AppError(409, "SURVEY_ENDED", "Bu anket sona erdi.");
-  const questions = survey.questions as Array<{ id: string; type: string; options?: string[] }>;
-  if (questions.some((question) => input.answers[question.id] === undefined)) throw new AppError(400, "MISSING_ANSWER", "Tüm soruları yanıtlayın.");
+  const questions = survey.questions as Array<{ id: string; type: string; options?: string[]; condition?: { questionId: string; option: string } | null }>;
+  const answers: Record<string, string | string[] | number> = {};
+  for (const question of questions) {
+    if (question.condition) {
+      const source = answers[question.condition.questionId];
+      if (Array.isArray(source) ? !source.includes(question.condition.option) : source !== question.condition.option) continue;
+    }
+    let value = input.answers[question.id];
+    if (value === undefined || value === "" || (Array.isArray(value) && !value.length)) throw new AppError(400, "MISSING_ANSWER", "Gösterilen tüm soruları yanıtlayın.");
+    if (question.type === "YES_NO" && typeof value === "boolean") value = value ? "Evet" : "Hayır";
+    const options = question.type === "YES_NO" ? ["Evet", "Hayır"] : question.options ?? [];
+    const valid = question.type === "TEXT" ? typeof value === "string" && Boolean(value.trim())
+      : question.type === "RATING" ? typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 5
+      : question.type === "MULTIPLE" ? Array.isArray(value) && value.every(option => options.includes(option)) && new Set(value).size === value.length
+      : typeof value === "string" && options.includes(value);
+    if (!valid) throw new AppError(400, "INVALID_ANSWER", "Yanıt, sorunun türüne ve seçeneklerine uygun olmalıdır.");
+    answers[question.id] = typeof value === "string" ? value.trim() : value as string[] | number;
+  }
   try {
-    await db.surveyResponse.create({ data: { surveyId: id, userId: actor.id, respondentName: survey.anonymous ? null : actor.name, answers: input.answers } });
+    await db.surveyResponse.create({ data: { surveyId: id, userId: actor.id, respondentName: survey.anonymous ? null : actor.name, answers } });
   } catch (error: any) {
     if (error?.code === "P2002") throw new AppError(409, "ALREADY_ANSWERED", "Bu anketi daha önce yanıtladınız.");
     throw error;

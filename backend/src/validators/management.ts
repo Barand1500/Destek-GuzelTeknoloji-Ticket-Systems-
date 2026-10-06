@@ -27,6 +27,11 @@ export const directoryQuery = paginationSchema.extend({
   isActive: queryBoolean,
 });
 export const searchQuery = paginationSchema.extend({ search });
+export const reportQuery = paginationSchema.extend({
+  agentId: idSchema.optional(),
+  departmentId: idSchema.optional(),
+  days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
+});
 export const announcementTemplateSchema = z
   .object({
     label: z.string().trim().min(2).max(80),
@@ -170,6 +175,14 @@ export const activityDeleteQuery = z.object({
   period: z.enum(["day", "week", "month", "all"]),
 });
 const integrationText = z.string().trim().max(500);
+export const notificationSettingsSchema = z
+  .object({
+    ticketCreatedSubject: z.string().trim().min(1).max(191),
+    ticketCreatedBody: z.string().trim().min(1).max(10000),
+    ticketReplySubject: z.string().trim().min(1).max(191),
+    ticketReplyBody: z.string().trim().min(1).max(10000),
+  })
+  .strict();
 const integrationDepartment = z
   .union([idSchema, z.literal(""), z.null()])
   .transform((value) => value || null);
@@ -224,6 +237,7 @@ export const integrationSettingsSchema = z
     whatsappAccessToken: integrationText,
     whatsappVerifyToken: integrationText,
     whatsappDepartmentId: integrationDepartment,
+    emailNotifications: notificationSettingsSchema.optional(),
   })
   .strict()
   .refine(
@@ -334,14 +348,6 @@ export const responseTimeSettingsSchema = z
       path: ["responseNormalFromMinutes"],
     },
   );
-export const notificationSettingsSchema = z
-  .object({
-    ticketCreatedSubject: z.string().trim().min(1).max(191),
-    ticketCreatedBody: z.string().trim().min(1).max(10000),
-    ticketReplySubject: z.string().trim().min(1).max(191),
-    ticketReplyBody: z.string().trim().min(1).max(10000),
-  })
-  .strict();
 export const profileSchema = registerSchema
   .partial()
   .extend({ currentPassword: z.string().min(1).max(200).optional() })

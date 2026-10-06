@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Paperclip,Download } from 'lucide-react';
+import { Paperclip,Download,X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { api,errorText } from '../../services/api';
 import { DropdownSelect, MultiDropdownSelect } from '../../components/DropdownSelect';
@@ -15,7 +15,7 @@ export function CompactFilePicker({setFiles,disabled=false}:{setFiles:(files:Fil
   return <div className="composer-file-picker"><label className={`composer-attachment-trigger ${disabled?'disabled':''}`} title="Dosya ekle"><Paperclip size={18}/><span className="sr-only">Dosya ekle</span><input type="file" aria-label="Dosya ekle" multiple disabled={disabled} accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={onChange}/></label>{error&&<p className="error" role="alert">{error}</p>}</div>;
 }
 type PreviewFile = { name: string; mimeType: string; data: Blob };
-function FilePreviewModal({ file, onClose }: { file: PreviewFile; onClose: () => void }) {
+export function FilePreviewModal({ file, onClose }: { file: PreviewFile; onClose: () => void }) {
   const [url, setUrl] = useState('');
   const isImage = file.mimeType.startsWith('image/');
   const canEmbed = isImage || file.mimeType === 'application/pdf' || file.mimeType.startsWith('text/');
@@ -34,7 +34,7 @@ function FilePreviewModal({ file, onClose }: { file: PreviewFile; onClose: () =>
 }
 export function ComposerFiles({files,setFiles,disabled=false}:{files:File[];setFiles:(files:File[])=>void;disabled?:boolean}){
   const [preview, setPreview] = useState<File | null>(null);
-  return <><ul className="composer-file-list" aria-label="Gönderilecek dosyalar">{files.map((file,i)=><li key={`${file.name}-${i}`}><Paperclip size={12} aria-hidden="true"/><button type="button" className="composer-file-preview" title={file.name} onClick={()=>setPreview(file)}>{file.name}</button><button type="button" aria-label={`${file.name} kaldır`} disabled={disabled} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}>×</button></li>)}</ul>{preview && <FilePreviewModal file={{ name: preview.name, mimeType: preview.type, data: preview }} onClose={() => setPreview(null)} />}</>;
+  return <><ul className="composer-file-list" aria-label="Gönderilecek dosyalar">{files.map((file,i)=><li key={`${file.name}-${i}`}><Paperclip size={12} aria-hidden="true"/><button type="button" className="composer-file-preview" title={file.name} onClick={()=>setPreview(file)}>{file.name}</button><button type="button" aria-label={`${file.name} kaldır`} disabled={disabled} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}><X size={10} aria-hidden="true"/></button></li>)}</ul>{preview && <FilePreviewModal file={{ name: preview.name, mimeType: preview.type, data: preview }} onClose={() => setPreview(null)} />}</>;
 }
 export function AttachmentLinks({attachments}:{attachments:Attachment[]}){
   const [error,setError]=useState(''),[pending,setPending]=useState(''),[preview,setPreview]=useState<PreviewFile | null>(null);

@@ -87,11 +87,15 @@ test('Conversation channels, atomic claims, inbox views and message roles', asyn
       assert.ok(visible.json.data.every((message: { type: string }) => message.type !== 'INTERNAL_NOTE'));
       assert.ok(visible.json.data.some((message: { type: string }) => message.type === 'AGENT_REPLY'));
       assert.ok((await db.conversation.findUniqueOrThrow({ where: { id } })).firstResponseAt);
+      await db.activityLog.createMany({ data: ['conversation.email_sent', 'conversation.email_failed'].map(action => ({ userId: winner.id, entityType: 'Conversation', entityId: id, action })) });
       const history = await request(`/conversations/${id}/history`, winner.token);
       assert.equal(history.status, 200);
       assert.ok(history.json.data.some((entry: { type: string; body: string; author: { id: string }; createdAt: string }) => entry.type === 'INTERNAL_NOTE' && entry.body === 'Private' && entry.author.id === winner.id && Boolean(entry.createdAt)));
       assert.ok(history.json.data.some((entry: { type: string }) => entry.type === 'AGENT_REPLY'));
       assert.ok(history.json.data.some((entry: { action: string }) => entry.action === 'conversation.created'));
+      assert.ok(!history.json.data.some((entry: { action: string }) => entry.action === 'conversation.email_sent'));
+      assert.ok(history.json.data.some((entry: { action: string }) => entry.action === 'conversation.email_failed'));
+      assert.equal((await request(`/conversations/${id}/history?page=1&limit=1`, winner.token)).json.pagination.total, history.json.data.length);
       assert.equal((await request(`/conversations/${id}/history`, customer.token)).status, 403);
       assert.equal((await request(`/conversations/${id}/history`, foreign.token)).status, 404);
       const secondPage = await request(`/conversations/${id}/history?page=2&limit=1`, winner.token);

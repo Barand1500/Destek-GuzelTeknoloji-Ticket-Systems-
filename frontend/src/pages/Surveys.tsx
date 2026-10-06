@@ -12,6 +12,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  GitBranch,
   Lock,
   LockOpen,
   Mail,
@@ -25,15 +26,11 @@ import {
 import { useAuth } from "../features/auth/Auth";
 import { api, errorText } from "../services/api";
 import { DropdownSelect, MultiDropdownSelect } from "../components/DropdownSelect";
+import { conditionOptions, visibleSurveyQuestions, cleanSurveyAnswers, type SurveyQuestion } from "../features/surveys/conditions";
 import "./surveys.css";
 
 type QuestionType = "SINGLE" | "MULTIPLE" | "TEXT" | "RATING" | "YES_NO";
-type Question = {
-  id: string;
-  type: QuestionType;
-  text: string;
-  options?: string[];
-};
+type Question = SurveyQuestion;
 type Response = {
   answers: Record<string, unknown>;
   respondentName: string | null;
@@ -319,7 +316,7 @@ function CreateSurveyPage({
   const [channels, setChannels] = useState(["NOTIFICATION"]);
   const [anonymous, setAnonymous] = useState(false);
   const [departmentId, setDepartmentId] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedOverride, setSelectedOverride] = useState<string[] | null>(null);
   const directory = useQuery({
     queryKey: ["/surveys/directory"],
     queryFn: async () =>
@@ -337,20 +334,26 @@ function CreateSurveyPage({
       ),
     [directory.data, departmentId],
   );
-  useEffect(() => {
-    setSelected(people.map((person) => person.id));
-  }, [departmentId, directory.data]);
-  const recipients = selected.length
-    ? people.filter((person) => selected.includes(person.id))
-    : people;
+  const selected = selectedOverride === null
+    ? people.map((person) => person.id)
+    : selectedOverride.filter((id) => people.some((person) => person.id === id));
+  const recipients = people.filter((person) => selected.includes(person.id));
   const missingPhones = recipients.filter((person) => !person.phone).length;
   const missingEmails = recipients.filter((person) => !person.email).length;
   const patchQuestion = (index: number, patch: Partial<Question>) =>
-    setQuestions((all) =>
-      all.map((question, itemIndex) =>
-        itemIndex === index ? { ...question, ...patch } : question,
-      ),
-    );
+    setQuestions(all => {
+      const previous = all[index];
+      const updated = { ...previous, ...patch };
+      return all.map((question, itemIndex) => {
+        if (itemIndex === index) return updated;
+        if (question.condition?.questionId !== previous.id) return question;
+        const options = conditionOptions(updated);
+        if (!options.length) return { ...question, condition: null };
+        if (options.includes(question.condition.option)) return question;
+        const optionIndex = conditionOptions(previous).indexOf(question.condition.option);
+        return { ...question, condition: { ...question.condition, option: options[optionIndex] ?? options[0] } };
+      });
+    });
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -361,7 +364,7 @@ function CreateSurveyPage({
       anonymous: form.get("anonymous") === "on",
       questions,
       departmentId: departmentId || null,
-      recipientMode: selected.length ? "SELECTED" : "ALL",
+      recipientMode: "SELECTED",
       recipientIds: selected,
       channels,
     });
@@ -437,7 +440,7 @@ function CreateSurveyPage({
                   value={departmentId}
                   onChange={(value) => {
                     setDepartmentId(value);
-                    setSelected([]);
+                    setSelectedOverride(null);
                   }}
                   options={[
                     { value: "", label: "Tüm departmanlar" },
@@ -456,7 +459,7 @@ function CreateSurveyPage({
                 selectionLabel="Seçilen kişiler"
                 showVisibleToggle
                 value={selected}
-                onChange={setSelected}
+                onChange={setSelectedOverride}
                 options={options}
               />
             </div>
@@ -468,11 +471,12 @@ function CreateSurveyPage({
                 <QuestionEditor
                   key={question.id}
                   question={question}
+                  previousQuestions={questions.slice(0, index)}
                   index={index}
                   update={(patch) => patchQuestion(index, patch)}
                   remove={() =>
                     setQuestions((all) =>
-                      all.filter((_, itemIndex) => itemIndex !== index),
+                      all.filter((_, itemIndex) => itemIndex !== index).map(item => item.condition?.questionId === question.id ? { ...item, condition: null } : item),
                     )
                   }
                 />
@@ -607,16 +611,20 @@ function ChannelSelector({
 
 function QuestionEditor({
   question,
+  previousQuestions,
   index,
   update,
   remove,
 }: {
   question: Question;
+  previousQuestions: Question[];
   index: number;
   update: (x: Partial<Question>) => void;
   remove: () => void;
 }) {
   const choice = question.type === "SINGLE" || question.type === "MULTIPLE";
+  const conditionSources = previousQuestions.filter(item => conditionOptions(item).length > 0);
+  const source = conditionSources.find(item => item.id === question.condition?.questionId);
   return (
     <article className="survey-question-editor">
       <div className="survey-question-head">
@@ -643,6 +651,24 @@ function QuestionEditor({
           <X size={16} />
         </button>
       </div>
+      {index > 0 && <div className={`survey-question-condition${question.condition ? " active" : ""}`}>
+        <GitBranch size={16} aria-hidden="true" />
+        <DropdownSelect
+          label="Koşul"
+          ariaLabel={`Soru ${index + 1} gösterim koşulu`}
+          value={question.condition?.questionId ?? ""}
+          onChange={value => {
+            const source = previousQuestions.find(item => item.id === value);
+            update({ condition: source ? { questionId: source.id, option: conditionOptions(source)[0] ?? "" } : null });
+          }}
+          options={[{ value: "", label: "Koşulsuz (her zaman göster)" }, ...conditionSources.map(item => ({ value: item.id, label: `Soru ${previousQuestions.indexOf(item) + 1}: ${item.text || "Soru metni"} cevabına bağlı` }))]}
+        />
+        {source && <>
+          <span className="survey-condition-arrow">→</span>
+          <DropdownSelect label="Seçenek" ariaLabel={`Soru ${index + 1} koşul seçeneği`} value={question.condition?.option ?? ""} onChange={option => update({ condition: { questionId: source.id, option } })} options={conditionOptions(source).filter(option => option.trim()).map(option => ({ value: option, label: option }))} />
+          <span>seçilirse göster</span>
+        </>}
+      </div>}
       <label className="survey-floating-field survey-question-text-field">
         <span>Soru metni *</span>
         <input
@@ -704,7 +730,7 @@ function StatisticsModal({
   const responses = survey.responses ?? [];
   return (
     <div className="survey-overlay">
-      <div className="survey-statistics-modal">
+      <div className="survey-statistics-modal" role="dialog" aria-modal="true" aria-label={`İstatistikler: ${survey.title}`}>
         <header>
           <div>
             <h2>İstatistikler: {survey.title}</h2>
@@ -714,7 +740,7 @@ function StatisticsModal({
               tarafından
             </p>
           </div>
-          <button className="icon-button" onClick={close}>
+          <button className="icon-button" onClick={close} aria-label="İstatistikleri kapat">
             <X size={20} />
           </button>
         </header>
@@ -737,6 +763,7 @@ function StatisticsModal({
               question={q}
               index={i}
               responses={responses}
+              anonymous={survey.anonymous}
             />
           ))}
         </div>
@@ -756,14 +783,16 @@ function QuestionStats({
   question,
   index,
   responses,
+  anonymous,
 }: {
   question: Question;
   index: number;
   responses: Response[];
+  anonymous: boolean;
 }) {
   const answers = responses
     .map((r) => r.answers[question.id])
-    .filter((x) => x !== undefined);
+    .filter((x) => x !== undefined && x !== null && (typeof x !== "string" || x.trim()));
   if (question.type === "RATING") {
     const scores = answers.filter((x): x is number => typeof x === "number");
     const avg = scores.length
@@ -788,11 +817,12 @@ function QuestionStats({
           S{index + 1} · Yazılı cevap · {answers.length} yanıt
         </span>
         <h3>{question.text}</h3>
-        <p>
-          {answers.length
-            ? "Yazılı yanıtlar kayıt altında."
-            : "Henüz yanıt yok."}
-        </p>
+        {answers.length ? <ul className="survey-written-answers">
+          {responses.filter(response => typeof response.answers[question.id] === "string" && String(response.answers[question.id]).trim()).map((response, index) => <li key={index}>
+            <strong>{anonymous ? "Anonim katılımcı" : response.respondentName || "Katılımcı"}</strong>
+            <p>{String(response.answers[question.id])}</p>
+          </li>)}
+        </ul> : <p>Henüz yanıt yok.</p>}
       </article>
     );
   const choices = answers as Array<string | string[]>;
@@ -849,32 +879,33 @@ function AnswerModal({
 }) {
   const [step, setStep] = useState(0),
     [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const question = survey.questions[step];
+  const visibleQuestions = visibleSurveyQuestions(survey.questions, answers);
+  const question = visibleQuestions[step];
   const submit = useMutation({
-    mutationFn: () => api.post(`/surveys/${survey.id}/responses`, { answers }),
+    mutationFn: () => api.post(`/surveys/${survey.id}/responses`, { answers: cleanSurveyAnswers(survey.questions, answers) }),
     onSuccess: done,
   });
   const valid =
     answers[question.id] !== undefined &&
-    answers[question.id] !== "" &&
+    (typeof answers[question.id] !== "string" || Boolean((answers[question.id] as string).trim())) &&
     (!Array.isArray(answers[question.id]) ||
       (answers[question.id] as unknown[]).length > 0);
   return (
     <div className="survey-overlay">
-      <div className="survey-answer-modal">
+      <div className="survey-answer-modal" role="dialog" aria-modal="true" aria-label={survey.title}>
         <header>
           <h2>{survey.title}</h2>
-          <button className="icon-button" onClick={close}>
+          <button className="icon-button" onClick={close} aria-label="Anketi kapat">
             <X size={20} />
           </button>
         </header>
         <div className="survey-progress">
-          {survey.questions.map((_, i) => (
+          {visibleQuestions.map((_, i) => (
             <i key={i} className={i <= step ? "active" : ""} />
           ))}
         </div>
         <small>
-          Soru {step + 1} / {survey.questions.length}
+          Soru {step + 1} / {visibleQuestions.length}
         </small>
         <h3>{question.text}</h3>
         <p>
@@ -888,7 +919,7 @@ function AnswerModal({
           question={question}
           value={answers[question.id]}
           change={(value) =>
-            setAnswers((all) => ({ ...all, [question.id]: value }))
+            setAnswers(all => cleanSurveyAnswers(survey.questions, { ...all, [question.id]: value }))
           }
         />
         {submit.error && <p className="error">{errorText(submit.error)}</p>}
@@ -904,7 +935,7 @@ function AnswerModal({
           ) : (
             <span />
           )}
-          {step < survey.questions.length - 1 ? (
+          {step < visibleQuestions.length - 1 ? (
             <button
               className="button primary"
               disabled={!valid}
@@ -940,6 +971,8 @@ function AnswerInput({
     return (
       <textarea
         className="survey-text-answer"
+        aria-label={question.text}
+        maxLength={5000}
         value={(value as string) ?? ""}
         onChange={(e) => change(e.target.value)}
         placeholder="Cevabınızı yazın…"

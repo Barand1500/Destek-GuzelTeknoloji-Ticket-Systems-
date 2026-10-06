@@ -96,6 +96,57 @@ test("management: CRUD, staff scope and credential protection", async (t) => {
       },
     });
     conversationIds.push(outside.id);
+    await t.test('email connection settings and both notification templates save together', async () => {
+      const previousIntegrations = await db.integrationSettings.findUnique({ where: { id: 'default' } });
+      const previousNotifications = await db.notificationSettings.findUnique({ where: { id: 'default' } });
+      try {
+        const { id, lastTestChannel, lastTestSuccess, lastTestMessage, lastTestedAt, updatedAt, ...current } = (await request('/integrations', admin.token)).json.data;
+        const emailNotifications = {
+          ticketCreatedSubject: 'Created #{number}', ticketCreatedBody: 'Hello {name}: {subject}',
+          ticketReplySubject: 'Reply #{number}', ticketReplyBody: 'Hello {name}: {reply}',
+        };
+        const input = { ...current, smtpEnabled: false, imapEnabled: false, smsEnabled: false, whatsappEnabled: false, smtpHost: 'smtp.example.test', imapHost: 'imap.example.test', imapDepartmentId: null, smsDepartmentId: null, whatsappDepartmentId: null, emailNotifications };
+        assert.equal((await request('/integrations', customer.token, 'PUT', input)).status, 403);
+        assert.equal((await request('/integrations', admin.token, 'PUT', input)).status, 200);
+        assert.equal((await request('/integrations', admin.token)).json.data.smtpHost, input.smtpHost);
+        assert.equal((await request('/integrations', admin.token)).json.data.imapHost, input.imapHost);
+        const { id: notificationId, updatedAt: notificationUpdatedAt, ...saved } = (await request('/notification-settings', admin.token)).json.data;
+        assert.deepEqual(saved, emailNotifications);
+        assert.equal((await request('/integrations', admin.token, 'PUT', { ...input, smtpHost: 'invalid-save.example.test', emailNotifications: { ...emailNotifications, ticketReplyBody: '' } })).status, 400);
+        assert.equal((await request('/integrations', admin.token)).json.data.smtpHost, input.smtpHost);
+        assert.equal((await request('/notification-settings', admin.token)).json.data.ticketReplyBody, emailNotifications.ticketReplyBody);
+      } finally {
+        if (previousIntegrations) await db.integrationSettings.update({ where: { id: 'default' }, data: previousIntegrations });
+        else await db.integrationSettings.deleteMany({ where: { id: 'default' } });
+        if (previousNotifications) await db.notificationSettings.upsert({ where: { id: 'default' }, create: previousNotifications, update: previousNotifications });
+        else await db.notificationSettings.deleteMany({ where: { id: 'default' } });
+      }
+    });
+    await t.test('department staff workload excludes resolved, closed and deleted conversations', async () => {
+      const workloadIds: string[] = [];
+      try {
+        for (const fixture of [
+          { status: 'PENDING', departmentId: department.id, assignedAgentId: agent.id },
+          { status: 'IN_PROGRESS', departmentId: otherDepartment.id, assignedAgentId: agent.id },
+          { status: 'RESOLVED', departmentId: department.id, assignedAgentId: agent.id },
+          { status: 'CLOSED', departmentId: department.id, assignedAgentId: agent.id },
+          { status: 'OPEN', departmentId: department.id, assignedAgentId: agent.id, deletedAt: now },
+          { status: 'OPEN', departmentId: department.id, assignedAgentId: null },
+        ]) {
+          const record = await db.conversation.create({ data: { ...fixture, customerId: customer.id, subject: `Workload ${prefix}`, searchSubject: `workload ${prefix}` } });
+          workloadIds.push(record.id);
+          conversationIds.push(record.id);
+        }
+        const directory = await request(`/departments/${department.id}/agents`, agent.token);
+        assert.equal(directory.status, 200);
+        assert.equal(directory.json.data.find((person: { id: string }) => person.id === agent.id).openConversationCount, 3);
+        assert.equal(directory.json.data.find((person: { id: string }) => person.id === supervisor.id).openConversationCount, 0);
+        assert.equal((await request(`/departments/${otherDepartment.id}/agents`, agent.token)).status, 403);
+        assert.equal((await request(`/departments/${department.id}/agents`, customer.token)).status, 403);
+      } finally {
+        await db.conversation.deleteMany({ where: { id: { in: workloadIds } } });
+      }
+    });
     await t.test('staff skills persist and suggestions respect multiple matches, levels and department access', async () => {
       const marker = `Skill ${prefix}`;
       const skills = [
@@ -150,8 +201,8 @@ test("management: CRUD, staff scope and credential protection", async (t) => {
         assert.equal((await request("/customers", customer.token)).status, 403);
         assert.equal(
           (
-            await request("/settings", customer.token, "PATCH", {
-              companyName: "Denied",
+            await request("/integrations", customer.token, "PUT", {
+              smtpEnabled: true,
             })
           ).status,
           403,
@@ -274,6 +325,23 @@ test("management: CRUD, staff scope and credential protection", async (t) => {
         assert.equal(reports.json.data.firstResponseMinutes, 5);
         assert.equal(reports.json.data.daily.length, 30);
         assert.ok(reports.json.data.agents.length <= 1);
+        assert.equal(reports.json.data.staff.find((row: { id: string }) => row.id === agent.id).assigned, 1);
+        const ownDepartment = reports.json.data.departments.find((row: { id: string }) => row.id === department.id);
+        assert.equal(ownDepartment.count, 1);
+        assert.equal(ownDepartment.employees.find((row: { id: string }) => row.id === agent.id).assigned, 1);
+        assert.ok(!reports.json.data.departments.some((row: { id: string }) => row.id === otherDepartment.id));
+        const personal = await request(`/reports?agentId=${agent.id}&days=7`, supervisor.token);
+        assert.equal(personal.status, 200);
+        assert.equal(personal.json.data.total, 1);
+        assert.equal(personal.json.data.daily.length, 7);
+        assert.equal(personal.json.data.firstResponseMinutes, 5);
+        const outside = await request(`/reports?departmentId=${otherDepartment.id}&days=90`, supervisor.token);
+        assert.equal(outside.status, 200);
+        assert.equal(outside.json.data.total, 0);
+        assert.equal(outside.json.data.daily.length, 90);
+        assert.ok(outside.json.data.staff.every((row: { assigned: number }) => row.assigned === 0));
+        assert.equal((await request("/reports?agentId=invalid", supervisor.token)).status, 400);
+        assert.equal((await request("/reports?days=365", supervisor.token)).status, 400);
       },
     );
     await t.test(

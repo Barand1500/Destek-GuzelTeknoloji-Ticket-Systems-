@@ -90,6 +90,37 @@ html[data-theme="dark"] .announcements-modal {
   border-bottom: 1px solid var(--ann-border);
   flex-shrink: 0;
 }
+.announcement-history-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: center;
+  height: 36px;
+  gap: 8px;
+  margin: 8px 0 8px auto;
+  padding: 7px 10px;
+  width: min(280px, 45%);
+  border: 1px solid var(--ann-border);
+  border-radius: 8px;
+  color: var(--ann-muted);
+}
+.announcement-history-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  min-height: 0;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+.announcement-history-search > svg { flex: 0 0 16px; }
+.announcement-history-search:focus-within { border-color: var(--ann-accent); }
 .announcements-tabs button {
   display: flex;
   align-items: center;
@@ -119,6 +150,12 @@ html[data-theme="dark"] .announcements-modal {
   padding: 24px 26px;
   scrollbar-width: thin;
   scrollbar-color: var(--ann-border) transparent;
+}
+.announcements-scroll::-webkit-scrollbar { width: 5px; }
+.announcements-scroll::-webkit-scrollbar-track { background: transparent; }
+.announcements-scroll::-webkit-scrollbar-thumb {
+  background: var(--ann-border);
+  border-radius: 8px;
 }
 .announcement-section {
   padding: 0;
@@ -264,10 +301,30 @@ html[data-theme="dark"] .announcements-modal {
 }
 .announcement-template-heading {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 9px;
   font-size: 11px;
   color: var(--ann-muted);
+}
+.announcement-template-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.announcement-template-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  color: var(--ann-muted);
+}
+.announcement-template-edit:hover,
+.announcement-template-edit:focus-visible {
+  color: var(--ann-accent);
+  background: var(--ann-selected);
 }
 .announcement-template-heading small {
   font-size: 10px;

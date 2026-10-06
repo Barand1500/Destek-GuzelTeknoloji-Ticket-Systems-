@@ -288,8 +288,8 @@ export async function history(actor: Actor, id: string, page: number, limit: num
   await getConversation(actor, id);
   const entries = await db.$transaction(async tx => {
     const messages = await tx.conversationMessage.findMany({ where: { conversationId: id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], include: { author: { select: person }, attachments: { select: { id: true, originalName: true, mimeType: true, size: true } } } });
-    const logs = await tx.activityLog.findMany({ where: { entityId: id, entityType: 'Conversation', action: { notIn: ['conversation.replied', 'conversation.note_added', 'conversation.email_received'] } }, include: { user: { select: person } } });
-    const labels: Record<string, string> = { 'conversation.created': 'Talep oluşturuldu', 'conversation.updated': 'Talep bilgileri güncellendi', 'conversation.claimed': 'Temsilci talebi üzerine aldı', 'conversation.email_sent': 'E-posta sunucusu bildirimi kabul etti', 'conversation.email_failed': 'E-posta bildirimi gönderilemedi' };
+    const logs = await tx.activityLog.findMany({ where: { entityId: id, entityType: 'Conversation', action: { notIn: ['conversation.replied', 'conversation.note_added', 'conversation.email_received', 'conversation.email_sent'] } }, include: { user: { select: person } } });
+    const labels: Record<string, string> = { 'conversation.created': 'Talep oluşturuldu', 'conversation.updated': 'Talep bilgileri güncellendi', 'conversation.claimed': 'Temsilci talebi üzerine aldı', 'conversation.email_failed': 'E-posta bildirimi gönderilemedi' };
     const creation = logs.find(log => log.action === 'conversation.created');
     return [
       ...messages.map((message, index) => ({ ...message, author: index === 0 && creation ? creation.user : message.author, action: index === 0 && creation ? 'INITIAL_MESSAGE' : message.type, metadata: null })),
@@ -304,6 +304,8 @@ export async function addMessage(
   input: z.infer<typeof messageSchema>,
   files:StoredUpload[] = [],
 ) {
+  if (!input.body.trim() && !files.length)
+    throw new AppError(400, "MESSAGE_REQUIRED", "Mesaj veya dosya ekleyin.");
   const type = input.type ?? (input.isInternalNote ? 'INTERNAL_NOTE' : actor.role === 'CUSTOMER' ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY');
   if (input.type && input.isInternalNote !== undefined && (input.type === 'INTERNAL_NOTE') !== input.isInternalNote)
     throw new AppError(400,'INVALID_MESSAGE_TYPE','Mesaj türü ve dahili not seçimi uyuşmuyor.');

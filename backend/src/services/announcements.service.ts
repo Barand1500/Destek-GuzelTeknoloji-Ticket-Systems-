@@ -120,8 +120,11 @@ export async function listAnnouncements(
   actor: Actor,
   page: number,
   limit: number,
+  search = "",
 ) {
-  const where = visible(actor);
+  const where: Prisma.AnnouncementWhereInput = {
+    AND: [visible(actor), ...(search.trim() ? [{ OR: ["title", "body", "authorName", "departmentName"].map(field => ({ [field]: { contains: search.trim() } })) }] : [])],
+  };
   const [data, total] = await Promise.all([
     db.announcement.findMany({
       where,

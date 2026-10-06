@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-export type DropdownOption = { value: string; label: string; presence?: "ONLINE" | "IDLE" | "OFFLINE" };
+export type DropdownOption = { value: string; label: string; presence?: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount?: number };
 const presenceLabels = { ONLINE: "Çevrim içi", IDLE: "Boşta", OFFLINE: "Çevrim dışı" } as const;
 export function DropdownSelect({ label, value, options, onChange, ariaLabel }: { label?: string; value: string; options: DropdownOption[]; onChange: (value: string) => void; ariaLabel: string }) {
   const [open, setOpen] = useState(false);
@@ -12,7 +12,7 @@ export function DropdownSelect({ label, value, options, onChange, ariaLabel }: {
     return () => document.removeEventListener("mousedown", close);
   }, []);
   const currentOption = options.find(option => option.value === value) ?? options[0];
-  const optionContent = (option: DropdownOption) => <>{option.label}{option.presence && <span className={`presence-option-status presence-${option.presence}`}><i />{presenceLabels[option.presence]}</span>}</>;
+  const optionContent = (option: DropdownOption) => <><span className="dropdown-option-label">{option.label}</span>{(option.presence || option.openConversationCount !== undefined) && <span className="dropdown-option-details">{option.openConversationCount !== undefined && <span className="assignee-open-count">{option.openConversationCount} açık talep</span>}{option.presence && <span className={`presence-option-status presence-${option.presence}`}><i />{presenceLabels[option.presence]}</span>}</span>}</>;
   return <div ref={ref} className={`styled-dropdown${open ? " open" : ""}`}>
     {label && <span className="styled-dropdown-label">{label}</span>}
     <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(value => !value)}><span>{currentOption ? optionContent(currentOption) : "Seçin"}</span><ChevronDown size={15} /></button>

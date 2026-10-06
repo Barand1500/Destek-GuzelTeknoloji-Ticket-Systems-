@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useWorkSession } from "../../components/WorkSession";
 import {
   Link,
   useNavigate,
@@ -632,6 +633,7 @@ export function NewTicket() {
   );
 }
 export function TicketDetail() {
+  const { startNewRequest, forgetConversation } = useWorkSession();
   const navigate=useNavigate();
   const [files,setFiles]=useState<File[]>([]),[fileKey,setFileKey]=useState(0),[deleteConfirm,setDeleteConfirm]=useState(false);
   const { id } = useParams();
@@ -714,7 +716,7 @@ export function TicketDetail() {
     onSuccess: invalidate,
   });
   const claim = useMutation({ mutationFn: () => api.post(`/conversations/${id}/assign-to-me`), onSuccess: invalidate });
-  const remove=useMutation({mutationFn:()=>api.delete(`/conversations/${id}`),onSuccess:()=>{invalidate();navigate(inboxPath(user!.role));}});
+  const remove=useMutation({mutationFn:()=>api.delete(`/conversations/${id}`),onSuccess:()=>{invalidate();forgetConversation(conversationPath(user!.role, id!));navigate(inboxPath(user!.role));}});
   useEffect(() => {
     const list = messageListRef.current;
     if (!list || !stickToBottom.current) return;
@@ -743,12 +745,16 @@ export function TicketDetail() {
   const canPublicReply = t.status !== 'CLOSED' && (user?.role !== 'AGENT' || t.assignedAgentId === user.id);
   const canInternalNote = t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
   const canWrite = internal ? canInternalNote : canPublicReply;
+  const canSubmitReply = Boolean(body.trim() || files.length);
   return (
     <main className="page conversation-page">
+      <div className="conversation-navigation">
       <Link className="back-link" to={inboxPath(user!.role)}>
         <ArrowLeft size={16} />
         Gelen kutusuna dön
       </Link>
+      {user?.role !== "CUSTOMER" && <Link className="back-link" to={workspacePath(user!.role, "phone-support")} onClick={startNewRequest}><Plus size={16} />Yeni talep</Link>}
+      </div>
       <div className="page-heading">
         <div>
           <span className="eyebrow">
@@ -839,7 +845,7 @@ export function TicketDetail() {
             className={`composer ${internal ? "internal-note" : ""}`}
             onSubmit={(e) => {
               e.preventDefault();
-              if (sending.current || reply.isPending || !canWrite || !body.trim()) return;
+              if (sending.current || reply.isPending || !canWrite || !canSubmitReply) return;
               sending.current = true;
               reply.mutate();
             }}
@@ -871,7 +877,7 @@ export function TicketDetail() {
               onSelectedChange={setSelectedMentions}
               disabled={reply.isPending || !canWrite}
               placeholder={t.status === "CLOSED" ? "Bu talep kapatıldı." : "@ yazarak departmandan bir kişiyi etiketleyin…"}
-              onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && body.trim()) { sending.current = true; reply.mutate(); } }}
+              onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && canSubmitReply) { sending.current = true; reply.mutate(); } }}
             /> : <textarea
               aria-label={internal ? "Dahili not" : "Yanıtınız"}
               value={body}
@@ -888,7 +894,6 @@ export function TicketDetail() {
                   : "Yanıtınızı yazın…"
               }
               disabled={reply.isPending || !canWrite}
-              required
               maxLength={10000}
               rows={3}
             />}
@@ -903,7 +908,7 @@ export function TicketDetail() {
                 aria-label="Gönder"
                 title="Gönder"
                 disabled={
-                  reply.isPending || !canWrite || !body.trim()
+                  reply.isPending || !canWrite || !canSubmitReply
                 }
               >
                 <Send size={17} strokeWidth={2.2} />
@@ -1002,20 +1007,25 @@ export function ConversationLog() {
         </div>
       </div>
       <section className="conversation-log-panel">
-        {logs.isPending && <p>Loglar yükleniyor...</p>}
+        {logs.isPending && <p className="conversation-log-state">Loglar yükleniyor...</p>}
         {logs.isError && <QueryError error={logs.error} />}
-        {!logs.isPending && !logs.isError && entries.length === 0 && <p className="muted">Bu konuşma için henüz log kaydı yok.</p>}
-        {entries.map((entry) => <article className={`conversation-log-entry ${entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''}`} key={entry.id}>
-          {entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={17} /> : entry.type === 'SYSTEM' ? <History size={17} /> : <MessageSquare size={17} />}
-          <div><strong>{labels[entry.action] ?? entry.body}</strong>
-            <small>{entry.author?.name ?? 'Sistem'}{entry.author?.email ? ` · ${entry.author.email}` : ''}</small>
-            <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })} (Türkiye saati)</time>
-            {entry.action === 'AGENT_REPLY' && <small className="conversation-log-response">Yanıt süresi: {responseDurations.get(entry.id) ?? 'hesaplanamadı'}</small>}
-            {labels[entry.action] && <p>{entry.body}</p>}
-            {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key]).map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : Array.isArray(value) ? value.join(', ') || 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? String(value)}</small>)}
-            {entry.attachments.length > 0 && <AttachmentLinks attachments={entry.attachments} />}
-          </div>
-        </article>)}
+        {!logs.isPending && !logs.isError && entries.length === 0 && <p className="muted conversation-log-state">Bu konuşma için henüz log kaydı yok.</p>}
+        {entries.length > 0 && <div className="conversation-log-table-wrap">
+          <table className="conversation-log-table" aria-label="Konuşma işlem geçmişi">
+            <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi yapan</th><th scope="col">Tarih / saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve dosyalar</th></tr></thead>
+            <tbody>{entries.map((entry) => <tr className={entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''} key={entry.id}>
+              <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? entry.body}</strong></div></td>
+              <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{entry.author.email}</small>}</td>
+              <td><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></td>
+              <td>
+                {labels[entry.action] && <p>{entry.body}</p>}
+                {entry.action === 'AGENT_REPLY' && <small className="conversation-log-response">Yanıt süresi: {responseDurations.get(entry.id) ?? 'hesaplanamadı'}</small>}
+                {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key]).map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : Array.isArray(value) ? value.join(', ') || 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? String(value)}</small>)}
+                {entry.attachments.length > 0 && <AttachmentLinks attachments={entry.attachments} />}
+              </td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
         {logs.data && logs.data.pagination.totalPages > 1 && <nav className="pagination" aria-label="İşlem geçmişi sayfaları"><button className="button" disabled={page <= 1} onClick={() => setPage(value => value - 1)}>Önceki</button><span>{page} / {logs.data.pagination.totalPages} · {logs.data.pagination.total} kayıt</span><button className="button" disabled={page >= logs.data.pagination.totalPages} onClick={() => setPage(value => value + 1)}>Sonraki</button></nav>}
       </section>
     </main>

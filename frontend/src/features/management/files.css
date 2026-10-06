@@ -1,0 +1,417 @@
+.files-page {
+  --files-surface: #fff;
+  --files-soft: #f1f5f3;
+  --files-border: #dce7df;
+  --files-text: #203832;
+  --files-muted: #718078;
+}
+.files-actions {
+  display: flex;
+  gap: 10px;
+}
+.files-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.files-folder-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--files-soft);
+  border: 1px solid var(--files-border);
+  border-radius: 12px;
+  margin-bottom: 22px;
+}
+.files-folder-form input,
+.files-tools input {
+  border: 0;
+  background: transparent;
+  color: var(--files-text);
+  outline: 0;
+}
+.files-folder-form input {
+  flex: 1;
+}
+.files-icon-button {
+  background: transparent;
+  border: 0;
+  color: var(--files-muted);
+  cursor: pointer;
+}
+.files-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin: 8px 0 20px;
+}
+.files-breadcrumb,
+.files-breadcrumb span,
+.files-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.files-breadcrumb button {
+  border: 0;
+  background: transparent;
+  color: var(--files-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.files-breadcrumb span:last-child button {
+  color: var(--files-text);
+}
+.files-tools label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--files-soft);
+  border: 1px solid var(--files-border);
+}
+.files-tools button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--files-border);
+  background: var(--files-surface);
+  color: var(--files-muted);
+  cursor: pointer;
+}
+.files-tools button.active {
+  background: #167766;
+  color: #fff;
+}
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.file-card {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px solid var(--files-border);
+  border-radius: 13px;
+  background: #eef3f8;
+  color: #167766;
+  cursor: pointer;
+}
+.file-card strong {
+  color: var(--files-text);
+}
+.file-card small {
+  color: var(--files-muted);
+}
+.file-card.orange {
+  color: #ff9800;
+}
+.file-card.blue {
+  color: #287be3;
+}
+.file-card.green {
+  color: #0e9f76;
+}
+.file-card.red {
+  color: #d92c45;
+}
+.file-card.purple {
+  color: #8c45df;
+}
+.file-card.pink {
+  color: #bd287b;
+}
+.file-card.cyan {
+  color: #0f91a6;
+}
+.file-card.slate {
+  color: #61738f;
+}
+.files-empty {
+  display: grid;
+  place-items: center;
+  gap: 9px;
+  min-height: 220px;
+  border: 1px solid var(--files-border);
+  border-radius: 14px;
+  background: var(--files-soft);
+  color: var(--files-muted);
+}
+.files-empty strong {
+  color: var(--files-text);
+}
+.files-grid.list {
+  display: flex;
+  flex-direction: column;
+}
+.files-grid.list .file-card {
+  min-height: 58px;
+  display: flex;
+  justify-content: flex-start;
+  padding: 12px 18px;
+}
+.files-grid.list .file-card svg {
+  width: 22px;
+}
+html[data-theme="dark"] .files-page {
+  --files-surface: #1d2c26;
+  --files-soft: #22342c;
+  --files-border: #31463d;
+  --files-text: #e5eee9;
+  --files-muted: #a9beb4;
+}
+.files-folder-form{flex-wrap:wrap}.files-folder-form input{min-width:180px}.files-picker{display:grid;gap:5px;width:100%}.files-picker>span{font-size:11px;color:var(--files-muted)}.files-picker>div{display:flex;gap:8px;flex-wrap:wrap}.files-picker button{display:grid;place-items:center;width:30px;height:30px;border:1px solid transparent;border-radius:7px;background:transparent;color:#788da5;cursor:pointer}.files-picker button.selected:not(.color-dot){border-color:#645bff;background:#3034a0;color:#fff}.files-picker .color-dot{width:28px;height:28px;border-radius:50%}.color-dot.orange{background:#ff9800}.color-dot.blue{background:#287be3}.color-dot.green{background:#0e9f76}.color-dot.red{background:#d92c45}.color-dot.purple{background:#8c45df}.color-dot.pink{background:#bd287b}.color-dot.cyan{background:#0f91a6}.color-dot.slate{background:#61738f}.files-picker .color-dot.selected{outline:2px solid #fff;outline-offset:2px}.file-card{position:relative}.files-grid.list .file-card{min-height:58px;display:flex;justify-content:flex-start;padding:12px 18px}
+.files-page .file-card {
+  background: var(--files-soft);
+  padding: 32px 14px 16px;
+  min-width: 0;
+}
+.file-card-actions {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.file-card:hover .file-card-actions,
+.file-card:focus-within .file-card-actions {
+  opacity: 1;
+}
+.file-card-actions button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+.file-card-actions button:hover {
+  background: var(--files-surface);
+}
+.file-card-download,
+.file-card-edit {
+  color: var(--files-muted);
+}
+.file-card-delete {
+  color: #e04a55;
+}
+.file-card-details,
+.file-card-upload-info {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.files-grid.list .file-card {
+  padding: 12px 108px 12px 18px;
+}
+.files-grid.list .file-card-details,
+.files-grid.list .file-card-upload-info {
+  text-align: left;
+}
+.files-grid.list .file-card-actions svg {
+  width: 15px;
+}
+@media (hover: none) {
+  .file-card-actions {
+    opacity: 1;
+  }
+}
+@media (max-width: 700px) {
+  .files-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .files-tools label {
+    flex: 1;
+  }
+  .files-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .files-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Folder form keeps actions aligned with the name field; pickers flow below. */
+.files-folder-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+}
+.files-folder-form > .files-picker {
+  grid-column: 1 / -1;
+}
+.files-folder-form > .files-picker > div {
+  min-height: 30px;
+}
+.files-tools label {
+  min-width: 190px;
+  height: 38px;
+  box-sizing: border-box;
+}
+.files-tools input {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .files-folder-form { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .files-folder-form > .button { grid-column: 2; justify-self: start; }
+  .files-folder-form > .files-icon-button { grid-column: 3; grid-row: 1; }
+}
+.files-folder-form > .button { grid-column: 3; grid-row: 1; }
+.files-folder-form > .files-icon-button { grid-column: 4; grid-row: 1; }
+/* Match the shared personnel input treatment. */
+.files-folder-form > input {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #c7d9d1;
+  border-radius: 9px;
+  background: transparent;
+  box-sizing: border-box;
+}
+.files-folder-form > input:hover {
+  border-color: #c7d9d1;
+}
+.files-folder-form > input:focus {
+  border-color: #16806f;
+  box-shadow: 0 0 0 2px rgba(22, 128, 111, .14);
+}
+.files-tools label {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #c7d9d1;
+  background: transparent;
+}
+.files-tools label:focus-within {
+  border-color: #16806f;
+  box-shadow: 0 0 0 2px rgba(22, 128, 111, .12);
+}
+.files-tools input {
+  display: block;
+  height: 100%;
+  padding: 0;
+  color: var(--files-text);
+}
+.files-tools input::placeholder { color: var(--files-muted); opacity: 1; }
+/* Search field stays visually flat when focused; only the shared container border remains. */
+.files-tools label:focus-within {
+  border-color: #c7d9d1;
+  box-shadow: none;
+}
+.files-tools label input,
+.files-tools label input:focus,
+.files-tools label input:hover {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  height: 100%;
+  line-height: 1;
+}
+.files-tools label input::placeholder { opacity: 1; color: var(--files-muted); }
+.files-tools label {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+.files-tools label > input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  line-height: 20px !important;
+  transform: none;
+}
+.files-tools label > input::placeholder {
+  line-height: 20px;
+  vertical-align: middle;
+}
+.files-tools label:focus-within {
+  border-color: #16806f;
+  box-shadow: 0 0 0 2px rgba(22, 128, 111, .12);
+}
+.files-tools label > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  display: block;
+}
+.files-tools label > input {
+  display: block;
+  transform: translateY(-1px);
+}
+.files-tools label > input,
+.files-tools label > input:focus {
+  color: var(--files-text) !important;
+  caret-color: var(--files-text);
+  font-size: 13px;
+  font-family: inherit;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.files-tools label > input::placeholder {
+  color: var(--files-muted) !important;
+  opacity: 1 !important;
+}
+.files-tools .files-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  width: 310px;
+  height: 40px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid #d6e2dc;
+  border-radius: 7px;
+  background: var(--files-surface);
+  color: #718078;
+}
+.files-tools .files-search > svg { flex: 0 0 16px; }
+.files-tools .files-search > input,
+.files-tools .files-search > input:focus {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--files-text) !important;
+  font: inherit;
+  transform: none;
+}
+.files-tools .files-search > input::placeholder { color: #8a9b95; opacity: 1; }
+html[data-theme="dark"] .files-tools .files-search {
+  background: #22342c;
+  border-color: #466056;
+  color: #a9beb4;
+}
+html[data-theme="dark"] .files-tools .files-search:focus-within {
+  border-color: #218675;
+  box-shadow: none;
+}
+html[data-theme="dark"] .files-tools .files-search > input::placeholder {
+  color: #9bb1a6 !important;
+}

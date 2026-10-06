@@ -37,12 +37,15 @@ import {
   SavedRepliesPage,
   NotificationsPage,
   ActivityLogsPage,
+  ReportsPage,
   ResponseTimeRulesPage,
   StaffPresencePage,
   ProfilePage,
   PhoneSupportPage,
+  FilesPage,
 } from "./pages/Management";
 import "./styles.css";
+import { CalendarPage } from "./features/announcements/CalendarModal";
 const client = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15000 } },
 });
@@ -86,6 +89,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<ConversationLog />}
               />
               <Route path="/customer/profile" element={<ProfilePage />} />
+              <Route path="/customer/files" element={<Navigate to="/customer/dashboard" replace />} />
               <Route
                 path="/customer/notifications"
                 element={<NotificationsPage />}
@@ -113,6 +117,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<SavedRepliesPage />}
               />
               <Route path="/agent/profile" element={<ProfilePage />} />
+              <Route path="/agent/files" element={<FilesPage />} />
+              <Route path="/agent/calendar" element={<CalendarPage />} />
               <Route
                 path="/agent/notifications"
                 element={<NotificationsPage />}
@@ -163,6 +169,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
               <Route path="/admin/guide/:section" element={<GuideHubPage />} />
               <Route path="/admin/surveys" element={<SurveysPage />} />
+              <Route path="/admin/reports" element={<ReportsPage />} />
               <Route
                 path="/admin/saved-replies"
                 element={<SavedRepliesPage />}
@@ -171,6 +178,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 path="/admin/activity-logs"
                 element={<ActivityLogsPage />}
               />
+              <Route path="/admin/calendar" element={<CalendarPage />} />
+              <Route path="/admin/files" element={<FilesPage />} />
               <Route
                 path="/admin/settings"
                 element={<Navigate to="/admin/integrations/channels" replace />}
@@ -190,7 +199,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route
                 path="/admin/notification-settings"
                 element={
-                  <Navigate to="/admin/integrations/notifications" replace />
+                  <Navigate to="/admin/integrations/channels" replace />
                 }
               />
               <Route
@@ -222,6 +231,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             "tags",
             "websites",
             "activity-logs",
+            "calendar",
+            "files",
+            "reports",
             "settings",
             "staff-presence",
             "project-guide",

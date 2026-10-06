@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, Navigate } from "react-router-dom";
+import { NavLink, Navigate } from "react-router-dom";
 import {
   Inbox,
   LayoutDashboard,
@@ -25,6 +25,8 @@ import {
   FolderOpen,
   Megaphone,
   ClipboardList,
+  CalendarDays,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -33,8 +35,16 @@ import { roles } from "../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { AnnouncementsModal } from "../features/announcements/AnnouncementsModal";
+import { WorkScreenOutlet, WorkSessionProvider, useWorkSession } from "./WorkSession";
 export function Layout() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  return <WorkSessionProvider key={user.id} user={user}><WorkspaceLayout /></WorkSessionProvider>;
+}
+function WorkspaceLayout() {
   const { user, loading, logout } = useAuth();
+  const { resumePath } = useWorkSession();
   const [error, setError] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -166,7 +176,7 @@ export function Layout() {
           {
             label: "Talep aç",
             group: "Sayfalar",
-            to: path("phone-support"),
+            to: resumePath,
           },
           { label: "Anketler", group: "Sayfalar", to: path("surveys") },
           ...(user.role !== "ADMIN"
@@ -199,6 +209,9 @@ export function Layout() {
           },
           { label: "Kategoriler", group: "Yönetim", to: path("tags") },
           { label: "Projeler", group: "Yönetim", to: path("websites") },
+          ...(user.role === "ADMIN"
+            ? [{ label: "Raporlar", group: "Yönetim", to: path("reports") }]
+            : []),
           ...(user.role === "ADMIN"
             ? [
                 {
@@ -274,7 +287,7 @@ export function Layout() {
                   Personeller
                 </NavLink>
               )}
-              <NavLink to={path("phone-support")}>
+              <NavLink to={resumePath}>
                 <Plus size={19} />
                 Talep aç
               </NavLink>
@@ -291,6 +304,12 @@ export function Layout() {
                 </NavLink>
               )}
             </>
+          )}
+          {user.role !== "CUSTOMER" && (
+            <NavLink to={path("files")}>
+              <FolderOpen size={19} />
+              Dosyalar
+            </NavLink>
           )}
           {user.role === "ADMIN" && (
             <>
@@ -331,14 +350,18 @@ export function Layout() {
                     <ClipboardList size={16} />
                     Anketler
                   </NavLink>
+                  <NavLink to={path("reports")}>
+                    <BarChart3 size={16} />
+                    Raporlar
+                  </NavLink>
                 </div>
               )}
             </>
           )}
         </nav>
         <div className="sidebar-bottom">
-          {user.role === "ADMIN" && (
-            <div className="sidebar-tools" aria-label="Yönetim araçları">
+          {user.role !== "CUSTOMER" && (
+            <div className="sidebar-tools" aria-label="Personel araçları">
               <NavLink
                 to={path("saved-replies")}
                 className="sidebar-tool"
@@ -347,13 +370,21 @@ export function Layout() {
               >
                 <FileText size={17} />
               </NavLink>
-              <NavLink
+              {user.role === "ADMIN" && <NavLink
                 to={path("activity-logs")}
                 className="sidebar-tool"
                 aria-label="İşlem geçmişi"
                 title="İşlem geçmişi"
               >
                 <History size={17} />
+              </NavLink>}
+              <NavLink
+                to={path("calendar")}
+                className="sidebar-tool"
+                aria-label="Takvim"
+                title="Takvim"
+              >
+                <CalendarDays size={17} />
               </NavLink>
             </div>
           )}
@@ -630,11 +661,12 @@ export function Layout() {
             </button>
           </div>
         </header>
-        <Outlet />
+        <WorkScreenOutlet />
         {announcementsOpen && (
           <AnnouncementsModal
             user={user}
             initialTab={announcementsTab}
+            readOnly={announcementsTab === "history"}
             onClose={() => setAnnouncementsOpen(false)}
           />
         )}

@@ -14,12 +14,13 @@ import {
   priorities,
 } from "../../types";
 import { DirectorySelect } from "../../components/DirectorySelect";
-import { DropdownSelect } from "../../components/DropdownSelect";
+import { DropdownSelect, MultiDropdownSelect } from "../../components/DropdownSelect";
 import { SearchableDropdown } from "../../components/SearchableDropdown";
 import { EmailInput } from "../../components/EmailInput";
+import { useWorkSession } from "../../components/WorkSession";
 import { DeleteModal } from '../../components/DeleteModal';
 import { conversationPath } from "../../router/paths";
-import { TagSelect, FormDropdown } from "../tickets/TicketExtras";
+import { TagSelect, FormDropdown, ComposerFiles } from "../tickets/TicketExtras";
 import {
   ErrorMessage,
   FormActions,
@@ -119,7 +120,7 @@ type Website = { id: string; name: string; url: string; isActive: boolean };
 function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, customer }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; customer?: ManagedUser | null }) {
   const [suggestedAgent, setSuggestedAgent] = useState<{ id: string; name: string; departmentId: string; departmentName: string } | null>(null);
   const websites = useQuery({ queryKey: ["websites", "phone-request"], queryFn: async () => (await api.get<Page<Website>>("/websites", { params: { limit: 100 } })).data });
-  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE" }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
+  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
   return <>
     {customer && <label className="phone-request-selected"><span className="field-label">Seçilen kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
@@ -127,7 +128,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} /></label>
       <SuggestedDescription departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />
       <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} current={suggestedAgent?.departmentId === departmentId ? { id: departmentId, name: suggestedAgent.departmentName } : undefined} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
-      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence }))]} /></div>
+      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div>
     </div>
   </>;
 }
@@ -140,6 +141,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const remove = useDelete('/users', ['/customers']);
   const [formVersion, setFormVersion] = useState(0);
   const [role, setRole] = useState<Role>(defaultRole ?? "AGENT");
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const list = useList<ManagedUser>("/users", defaultRole ? { role: defaultRole } : {});
   const departments = useQuery({
     queryKey: ["/departments", "all-options"],
@@ -160,6 +162,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   function reset() {
     setEditing(null);
     setRole(defaultRole ?? "AGENT");
+    setSelectedDepartmentIds([]);
     setFormVersion((v) => v + 1);
   }
   const save = useSave("/users", reset);
@@ -168,6 +171,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
     save.reset();
     setEditing(value);
     setRole(value.role);
+    setSelectedDepartmentIds(value.departments.map((department) => department.departmentId));
     setFormVersion((v) => v + 1);
   }
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -181,7 +185,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         role,
         skills: role === 'CUSTOMER' ? [] : JSON.parse(String(values.get('skills') ?? '[]')),
         departmentIds:
-          role === "CUSTOMER" ? [] : values.getAll("departmentIds"),
+          role === "CUSTOMER" ? [] : selectedDepartmentIds,
         ...(!editing ? { password: values.get("password") } : {}),
       },
     });
@@ -193,12 +197,14 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."
       />
       {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button><button type="button" onClick={() => navigate("/admin/departments")}>Departmanlar</button></nav>}
-      <div className="management-grid">
+      <div className="management-grid users-management-grid">
         <section className="management-panel">
           <Search
             value={list.search}
             onChange={list.setSearch}
             label="Genel personel araması"
+            limit={list.limit}
+            onLimitChange={list.setLimit}
           />
           <ErrorMessage error={changeStatus.error} />
           <ListState
@@ -270,9 +276,10 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
           <Pagination
             pagination={list.data?.pagination}
             onChange={list.setPage}
+            alwaysVisible
           />
         </section>
-        <section className="management-panel">
+        <section className="management-panel users-editor-panel">
           <h2>{editing ? "Kullanıcıyı düzenle" : "Kullanıcı oluştur"}</h2>
           <form key={formVersion} className="management-form" onSubmit={submit}>
             <label>
@@ -286,6 +293,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 autoComplete="off"
               />
             </label>
+            <div className="users-form-row">
             <label>
               <span className="field-label">Telefon</span>
               <input
@@ -313,6 +321,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 autoComplete="off"
               />
             </label>
+            </div>
             {!editing && (
               <label>
                 <span className="field-label">İlk şifre</span>
@@ -326,6 +335,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 />
               </label>
             )}
+            <div className={`users-form-row${role === "CUSTOMER" ? " single" : ""}`}>
             <DropdownSelect
               label="Rol"
               ariaLabel="Kullanıcı rolü"
@@ -334,32 +344,23 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
               options={Object.entries(roles).map(([value, label]) => ({ value, label }))}
             />
             {role !== "CUSTOMER" && (
-              <fieldset>
-                <legend>Departman üyelikleri</legend>
+              <div className="users-department-control">
+                <MultiDropdownSelect
+                  label="Departman üyelikleri"
+                  ariaLabel="Departman üyelikleri"
+                  value={selectedDepartmentIds}
+                  onChange={setSelectedDepartmentIds}
+                  options={(departments.data ?? []).map((department) => ({ value: department.id, label: `${department.name}${department.isActive ? "" : " (Pasif)"}` }))}
+                  emptyLabel={departments.isPending ? "Yükleniyor…" : "Departman seçin"}
+                  selectionLabel={`${selectedDepartmentIds.length} departman seçili`}
+                />
                 <ErrorMessage error={departments.error} />
-                {departments.isPending ? (
-                  <p className="muted">Departmanlar yükleniyor…</p>
-                ) : (
-                  departments.data?.map((department) => (
-                    <label className="management-check" key={department.id}>
-                      <input
-                        type="checkbox"
-                        name="departmentIds"
-                        value={department.id}
-                        defaultChecked={editing?.departments.some(
-                          (d) => d.departmentId === department.id,
-                        )}
-                      />
-                      {department.name}
-                      {!department.isActive && " (Pasif)"}
-                    </label>
-                  ))
-                )}
                 {departments.data?.length === 0 && (
                   <p className="muted">Önce bir departman oluşturun.</p>
                 )}
-              </fieldset>
+              </div>
             )}
+            </div>
             {role !== 'CUSTOMER' && <StaffSkills initial={editing?.skills ?? []} />}
             <ErrorMessage error={save.error} />
             <FormActions
@@ -382,6 +383,7 @@ export function CustomersPage() {
   const list = useList<ManagedUser>("/customers");
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [customerFiles, setCustomerFiles] = useState<File[]>([]);
   const [formVersion, setFormVersion] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
   const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
@@ -389,6 +391,9 @@ export function CustomersPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    setCustomerFiles([]);
+  }, [customerModalOpen, formVersion]);
   const save = useSave('/customers', () => {
     setEditing(null);
     setCustomerModalOpen(false);
@@ -422,7 +427,7 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" /><button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button><button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button></div>
+        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} /><button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button><button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button></div>
         <ListState
           loading={list.isPending}
           error={list.error}
@@ -471,6 +476,7 @@ export function CustomersPage() {
         <Pagination
           pagination={list.data?.pagination}
           onChange={list.setPage}
+          alwaysVisible
         />
       </section>
       {deleteTarget && (
@@ -491,19 +497,20 @@ export function CustomersPage() {
           <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setBulkDeleteConfirm(false)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri sil"}</button></div>
         </form>
       </div>}
-      {customerModalOpen && <div className="confirm-backdrop" role="presentation">
-      <section ref={customerFormRef} className="confirm-modal customer-form-panel" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+      {customerModalOpen && <div className="confirm-backdrop customer-form-backdrop" role="presentation">
+      <section ref={customerFormRef} className="confirm-modal customer-form-panel" role="dialog" aria-modal="true" aria-labelledby="customer-form-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="customer-form-heading">
-          <h2>{editing ? "Müşteri bilgilerini düzenle" : "Yeni arayan müşteri"}</h2>
-          <button className="customer-form-close" type="button" onClick={() => setCustomerModalOpen(false)} aria-label="Kapat" title="Kapat">×</button>
+          <h2 id="customer-form-title">{editing ? "Müşteri bilgilerini düzenle" : "Yeni arayan müşteri"}</h2>
+          <button className="customer-form-close" type="button" onClick={() => setCustomerModalOpen(false)} aria-label="Kapat" title="Kapat"><X size={18} /></button>
         </div>
         <form key={formVersion} className="management-form" onSubmit={event => {
           const values = formValues(event);
           const data = new FormData();
           for (const name of ['name', 'phone', 'email', 'company', 'staffNote', 'extraPhones', 'extraEmails']) { const value = values.get(name); if (typeof value === 'string' && value) data.append(name, value); }
-          for (const file of values.getAll('customerFiles')) if (file instanceof File && file.size) data.append('files', file);
+          for (const file of customerFiles) if (file.size) data.append('files', file);
           save.mutate({ id: editing?.id, data });
         }}>
+          <div className="customer-form-body">
           <label><span className="field-label">Ad soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
           <label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
           <label><span className="field-label">Ek telefonlar</span><input name="extraPhones" placeholder="Virgülle ayırabilirsiniz" defaultValue={editing?.extraPhones ?? ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.split(",").map((phone) => formatPhone(phone.trim())).filter(Boolean).join(", "); }} /></label>
@@ -511,8 +518,16 @@ export function CustomersPage() {
           <label><span className="field-label">Ek e-posta adresleri</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>
           <label><span className="field-label">Şirket</span> <input name="company" maxLength={120} defaultValue={editing?.company ?? ""}/></label>
           <label><span className="field-label">Müşteri notu</span> <textarea name="staffNote" maxLength={2000} rows={4} defaultValue={editing?.staffNote ?? ""} placeholder="Örn. Arama nedeni, tercih ettiği dönüş saati veya personel için önemli bilgi"/></label>
-          <label><span className="field-label">Dosya ekle</span><input type="file" name="customerFiles" multiple /></label>
-          <ErrorMessage error={save.error}/><FormActions pending={save.isPending}/>
+          <div className="customer-form-upload">
+            <label><span className="field-label">Dosya ekle</span><input type="file" name="customerFiles" multiple disabled={save.isPending} onChange={(event) => { setCustomerFiles(Array.from(event.currentTarget.files ?? [])); event.currentTarget.value = ""; }} /></label>
+            <ComposerFiles files={customerFiles} setFiles={setCustomerFiles} disabled={save.isPending} />
+          </div>
+          <ErrorMessage error={save.error}/>
+          </div>
+          <footer className="customer-form-footer">
+            <button className="button secondary" type="button" onClick={() => setCustomerModalOpen(false)} disabled={save.isPending}>İptal</button>
+            <button className="button primary" type="submit" disabled={save.isPending}>{save.isPending ? "Kaydediliyor…" : "Kaydet"}</button>
+          </footer>
         </form>
       </section>
       </div>}
@@ -524,6 +539,12 @@ export function CustomersPage() {
 export function PhoneSupportPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { completePhoneRequest } = useWorkSession();
+  function openCreatedConversation(id: string) {
+    const path = conversationPath(user!.role, id);
+    completePhoneRequest(path);
+    navigate(path);
+  }
   const [params] = useSearchParams();
   const initialCustomerId = params.get("customerId") ?? "";
   const [search, setSearch] = useState("");
@@ -606,7 +627,7 @@ export function PhoneSupportPage() {
         const customer = (result as { data: { data: ManagedUser } }).data.data;
         createConversation.mutate(
           { data: { customerId: customer.id, departmentId, subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
-          { onSuccess: (conversationResult) => navigate(conversationPath(user!.role, (conversationResult as { data: { data: Conversation } }).data.data.id)) },
+          { onSuccess: (conversationResult) => openCreatedConversation((conversationResult as { data: { data: Conversation } }).data.data.id) },
         );
       } },
     );
@@ -615,7 +636,7 @@ export function PhoneSupportPage() {
     const values = formValues(event);
     createConversation.mutate(
       { data: { customerId, departmentId, subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
-      { onSuccess: (result) => navigate(conversationPath(user!.role, (result as { data: { data: Conversation } }).data.data.id)) },
+      { onSuccess: (result) => openCreatedConversation((result as { data: { data: Conversation } }).data.data.id) },
     );
   }
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../services/api";
 import type { Page } from "../../types";
+import { DropdownSelect } from "../../components/DropdownSelect";
 import "./management.css";
 
 export const formatDate = (value: string) =>
@@ -35,29 +36,55 @@ export function ErrorMessage({ error }: { error: unknown }) {
 }
 export function useList<T>(
   path: string,
-  extra: Record<string, string | boolean> = {},
+  extra: Record<string, string | boolean | number> = {},
+  leadingRecords = 0,
 ) {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(15);
   const [search, setSearch] = useState("");
   const deferredSearch = useDebouncedValue(search);
   const query = useQuery({
-    queryKey: [path, page, deferredSearch, extra],
+    queryKey: [path, page, limit, deferredSearch, extra, leadingRecords],
     queryFn: async () => {
+      const offset = Math.max(0, (page - 1) * limit - leadingRecords);
+      const serverPage = leadingRecords ? Math.floor(offset / limit) + 1 : page;
       const result = (
         await api.get<Page<T>>(path, {
-          params: { page, limit: 15, search: deferredSearch, ...extra },
+          params: { page: serverPage, limit, search: deferredSearch, ...extra },
         })
       ).data;
+      if (leadingRecords) {
+        const skip = offset % limit;
+        const count = page === 1 ? Math.max(0, limit - leadingRecords) : limit;
+        let records = result.data;
+        if (skip + count > limit && serverPage < result.pagination.totalPages) {
+          const next = (await api.get<Page<T>>(path, { params: { page: serverPage + 1, limit, search: deferredSearch, ...extra } })).data;
+          records = [...records, ...next.data];
+        }
+        const total = result.pagination.total + leadingRecords;
+        return { ...result, data: records.slice(skip, skip + count), pagination: { ...result.pagination, page, limit, total, totalPages: Math.ceil(total / limit) } };
+      }
       return result;
     },
     placeholderData: keepPreviousData,
     staleTime: 15_000,
     refetchOnWindowFocus: false,
   });
+  useEffect(() => {
+    if (!query.data || query.isPlaceholderData || query.isFetching) return;
+    const lastPage = Math.max(1, query.data.pagination.totalPages);
+    if (page > lastPage) setPage(lastPage);
+  }, [query.data, query.isPlaceholderData, query.isFetching, page]);
   return {
     ...query,
     page,
     setPage,
+    limit,
+    setLimit: (value: number) => {
+      if (![10, 15, 20, 50].includes(value)) return;
+      setLimit(value);
+      setPage(1);
+    },
     search,
     setSearch: (value: string) => {
       setSearch(value);
@@ -78,13 +105,17 @@ export function Search({
   onChange,
   label = "Kayıtlarda ara",
   placeholder = "Ad veya metin yazın…",
+  limit,
+  onLimitChange,
 }: {
   value: string;
   onChange: (value: string) => void;
   label?: string;
   placeholder?: string;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }) {
-  return (
+  const field = (
     <label className="management-search">
       <span className="field-label">{label}</span>
       <input
@@ -95,23 +126,34 @@ export function Search({
       />
     </label>
   );
+  return onLimitChange ? <div className="management-list-toolbar">
+    {field}
+    <div className="management-page-size">
+      <span>Kayıt sayısı</span>
+      <DropdownSelect ariaLabel="Kayıt sayısı" value={String(limit ?? 15)} onChange={value => onLimitChange(Number(value))} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} />
+    </div>
+  </div> : field;
 }
 export function Pagination({
   pagination,
   onChange,
+  alwaysVisible = false,
 }: {
   pagination?: Page<unknown>["pagination"];
   onChange: (page: number) => void;
+  alwaysVisible?: boolean;
 }) {
-  if (!pagination || pagination.total <= pagination.limit) return null;
+  if (!pagination || (!alwaysVisible && pagination.total <= pagination.limit)) return null;
   return (
     <nav className="management-pagination" aria-label="Sayfalama">
       <span>
         {pagination.total} kayıt · Sayfa {pagination.page} /{" "}
         {Math.max(1, pagination.totalPages)}
       </span>
+      <div className="management-pagination-controls">
       <div className="management-actions">
         <button
+          type="button"
           className="button secondary"
           disabled={pagination.page <= 1}
           onClick={() => onChange(pagination.page - 1)}
@@ -119,12 +161,14 @@ export function Pagination({
           Önceki
         </button>
         <button
+          type="button"
           className="button secondary"
           disabled={pagination.page >= pagination.totalPages}
           onClick={() => onChange(pagination.page + 1)}
         >
           Sonraki
         </button>
+      </div>
       </div>
     </nav>
   );

@@ -370,7 +370,9 @@ export async function updateCustomer(
     if (!current) throw notFound();
     const data = await tx.user.update({
       where: { id },
-      data: input,
+      // Customer email is contact data only. It must never occupy the
+      // unique login identity column used by staff accounts.
+      data: { ...input, loginEmail: null },
       select: person,
     });
     if (files.length)
@@ -771,14 +773,24 @@ export async function departmentAgents(
   const [data, total] = await db.$transaction([
     db.user.findMany({
       where,
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            assignedConversations: {
+              where: { deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+            },
+          },
+        },
+      },
       orderBy: [{ name: "asc" }, { id: "asc" }],
       ...paging(q),
     }),
     db.user.count({ where }),
   ]);
   return {
-    data,
+    data: data.map(({ _count, ...agent }) => ({ ...agent, openConversationCount: _count.assignedConversations })),
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }
@@ -1553,6 +1565,7 @@ export async function updateIntegrationSettings(
   input: z.infer<typeof schema.integrationSettingsSchema>,
 ) {
   requireAdmin(actor);
+  const { emailNotifications, ...integrationInput } = input;
   return db.$transaction(async (tx) => {
     for (const departmentId of [
       input.imapDepartmentId,
@@ -1573,9 +1586,16 @@ export async function updateIntegrationSettings(
     }
     const data = await tx.integrationSettings.upsert({
       where: { id: "default" },
-      create: { id: "default", ...input },
-      update: input,
+      create: { id: "default", ...integrationInput },
+      update: integrationInput,
     });
+    if (emailNotifications) {
+      await tx.notificationSettings.upsert({
+        where: { id: "default" },
+        create: { id: "default", ...emailNotifications },
+        update: emailNotifications,
+      });
+    }
     await audit(
       tx,
       actor,
@@ -1754,16 +1774,20 @@ export async function updateProfile(
     return data;
   });
 }
-export async function reports(actor: Actor, q: Page) {
+export async function reports(actor: Actor, q: Page & { agentId?: string; departmentId?: string; days?: number }) {
   if (!["ADMIN", "SUPERVISOR"].includes(actor.role))
     throw new AppError(403, "FORBIDDEN", "Raporlara erişim yetkiniz yok.");
-  const scope = visibility(actor);
+  const scope: Prisma.ConversationWhereInput = { AND: [visibility(actor),
+    ...(q.agentId ? [{ assignedAgentId: q.agentId }] : []),
+    ...(q.departmentId ? [{ departmentId: q.departmentId }] : []),
+  ] };
   const to = new Date();
   const from = new Date(
-    Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - 29),
+    Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - ((q.days ?? 30) - 1)),
   );
   const agentWhere: Prisma.UserWhereInput = {
-    role: "AGENT",
+    role: { in: ["AGENT", "SUPERVISOR"] },
+    deletedAt: null,
     ...(actor.role === "SUPERVISOR"
       ? { departments: { some: { departmentId: { in: actor.departmentIds } } } }
       : {}),
@@ -1787,24 +1811,24 @@ export async function reports(actor: Actor, q: Page) {
       });
       const agents = await tx.user.findMany({
         where: agentWhere,
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, departments: { where: actor.role === "SUPERVISOR" ? { departmentId: { in: actor.departmentIds } } : {}, select: { departmentId: true } } },
         orderBy: [{ name: "asc" }, { id: "asc" }],
-        ...paging(q),
       });
       const agentTotal = await tx.user.count({ where: agentWhere });
       return { statuses, priorities, departmentCounts, agents, agentTotal };
     });
   const departments = await db.department.findMany({
-    where: { id: { in: departmentCounts.map((d) => d.departmentId) } },
+    where: { OR: [{ deletedAt: null }, { id: { in: departmentCounts.map((d) => d.departmentId) } }], ...(actor.role === "SUPERVISOR" ? { id: { in: actor.departmentIds } } : {}) },
     select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
   const agentIds = agents.map((a) => a.id);
   const counts = await db.conversation.groupBy({
-    by: ["assignedAgentId", "status"],
-    where: { AND: [scope, { assignedAgentId: { in: agentIds } }] },
+    by: ["departmentId", "assignedAgentId", "status"],
+    where: scope,
     _count: true,
   });
-  const daily = Array.from({ length: 30 }, (_, i) => ({
+  const daily = Array.from({ length: q.days ?? 30 }, (_, i) => ({
     date: new Date(from.getTime() + i * 86400000).toISOString().slice(0, 10),
     created: 0,
     resolved: 0,
@@ -1889,6 +1913,16 @@ export async function reports(actor: Actor, q: Page) {
     if (batch.length < 500) break;
     cursor = batch[batch.length - 1]!.id;
   }
+  const staff = agents.map((agent) => {
+    const rows = counts.filter((c) => c.assignedAgentId === agent.id);
+    const response = agentResponses.get(agent.id);
+    return { ...agent, departmentIds: agent.departments.map((d) => d.departmentId),
+      assigned: rows.reduce((sum, r) => sum + r._count, 0),
+      resolved: rows.filter((r) => r.status === "RESOLVED" || r.status === "CLOSED").reduce((sum, r) => sum + r._count, 0),
+      statuses: Object.fromEntries([...new Set(rows.map((r) => r.status))].map((status) => [status, rows.filter((r) => r.status === status).reduce((sum, r) => sum + r._count, 0)])),
+      firstResponseMinutes: response ? response.sum / response.count : null,
+    };
+  });
   return {
     period: { from, to },
     total: statuses.reduce((sum, item) => sum + item._count._all, 0),
@@ -1902,22 +1936,17 @@ export async function reports(actor: Actor, q: Page) {
       ...d,
       count:
         departmentCounts.find((c) => c.departmentId === d.id)?._count._all ?? 0,
+      statuses: Object.fromEntries([...new Set(counts.filter((r) => r.departmentId === d.id).map((r) => r.status))].map((status) => [status, counts.filter((r) => r.departmentId === d.id && r.status === status).reduce((sum, r) => sum + r._count, 0)])),
+      employees: staff.filter((a) => a.departmentIds.includes(d.id) || counts.some((r) => r.departmentId === d.id && r.assignedAgentId === a.id)).map((a) => {
+        const rows = counts.filter((r) => r.departmentId === d.id && r.assignedAgentId === a.id);
+        return { id: a.id, name: a.name, assigned: rows.reduce((sum, r) => sum + r._count, 0), resolved: rows.filter((r) => r.status === "RESOLVED" || r.status === "CLOSED").reduce((sum, r) => sum + r._count, 0) };
+      }),
     })),
     daily,
     firstResponseMinutes: responseCount ? responseSum / responseCount : null,
     resolutionMinutes: resolutionCount ? resolutionSum / resolutionCount : null,
-    agents: agents.map((agent) => {
-      const rows = counts.filter((c) => c.assignedAgentId === agent.id);
-      const response = agentResponses.get(agent.id);
-      return {
-        ...agent,
-        assigned: rows.reduce((sum, r) => sum + r._count, 0),
-        resolved: rows
-          .filter((r) => r.status === "RESOLVED" || r.status === "CLOSED")
-          .reduce((sum, r) => sum + r._count, 0),
-        firstResponseMinutes: response ? response.sum / response.count : null,
-      };
-    }),
+    staff,
+    agents: staff.slice((q.page - 1) * q.limit, q.page * q.limit),
     agentsPagination: pagination(q, agentTotal),
   };
 }

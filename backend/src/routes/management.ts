@@ -93,4 +93,4 @@ managementRouter.get("/notification-settings", admin, async (req, res) => res.js
 managementRouter.put("/notification-settings", admin, async (req, res) => res.json({ success: true, data: await service.updateNotificationSettings(req.actor, schema.notificationSettingsSchema.parse(req.body)) }));
 managementRouter.get("/profile", async (req, res) => res.json({ success: true, data: await service.profile(req.actor) }));
 managementRouter.patch("/profile", async (req, res) => res.json({ success: true, data: await service.updateProfile(req.actor, schema.profileSchema.parse(req.body)) }));
-managementRouter.get("/reports", authorize("ADMIN", "SUPERVISOR"), async (req, res) => res.json({ success: true, data: await service.reports(req.actor, paginationSchema.parse(req.query)) }));
+managementRouter.get("/reports", authorize("ADMIN", "SUPERVISOR"), async (req, res) => res.json({ success: true, data: await service.reports(req.actor, schema.reportQuery.parse(req.query)) }));

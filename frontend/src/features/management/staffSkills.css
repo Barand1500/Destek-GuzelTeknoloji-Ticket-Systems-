@@ -157,6 +157,35 @@
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+.staff-suggestion-list .staff-suggestion-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+.staff-suggestion-skill {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #e5efe9;
+}
+.staff-suggestion-skill-name {
+  font-weight: 600;
+}
+.staff-suggestion-stars {
+  color: #8a5b08;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+html[data-theme="dark"] .staff-suggestion-skill {
+  background: #304b3e;
+}
+html[data-theme="dark"] .staff-suggestion-stars {
+  color: #f2ca72;
+}
 @media (max-width: 500px) {
   .staff-skills-controls {
     grid-template-columns: 1fr;

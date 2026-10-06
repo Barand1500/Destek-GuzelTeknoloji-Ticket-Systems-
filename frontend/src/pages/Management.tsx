@@ -1,4 +1,8 @@
-export { UsersPage, CustomersPage, PhoneSupportPage } from "../features/management/People";
+export {
+  UsersPage,
+  CustomersPage,
+  PhoneSupportPage,
+} from "../features/management/People";
 export {
   DepartmentsPage,
   TagsPage,
@@ -9,7 +13,6 @@ export {
   NotificationsPage,
   IntegrationsPage,
   ResponseTimeRulesPage,
-  NotificationSettingsPage,
   StaffPresencePage,
   ProfilePage,
 } from "../features/management/Account";
@@ -18,3 +21,4 @@ export {
   ReportsPage,
 } from "../features/management/Reporting";
 export { ProjectGuidePage } from "../features/management/ProjectGuide";
+export { FilesPage } from "../features/management/Files";

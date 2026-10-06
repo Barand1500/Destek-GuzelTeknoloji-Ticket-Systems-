@@ -40,6 +40,11 @@ test('Enter sends once, Shift+Enter adds a line, and attachments occupy the left
   ]);
   const fileList = page.getByRole('list', { name: 'Gönderilecek dosyalar' });
   await expect(fileList.getByRole('listitem')).toHaveCount(2);
+  const removeButton = fileList.getByRole('button', { name: 'dosya-iki.txt kaldır' });
+  const removeBox = (await removeButton.boundingBox())!;
+  const crossBox = (await removeButton.locator('svg').boundingBox())!;
+  expect(Math.abs(removeBox.x + removeBox.width / 2 - crossBox.x - crossBox.width / 2)).toBeLessThan(1);
+  expect(Math.abs(removeBox.y + removeBox.height / 2 - crossBox.y - crossBox.height / 2)).toBeLessThan(1);
   const fileBox = await fileList.boundingBox(), toolsBox = await page.locator('.composer-tools').boundingBox();
   expect(fileBox!.x + fileBox!.width).toBeLessThanOrEqual(toolsBox!.x);
   await page.getByRole('button', { name: 'dosya-iki.txt kaldır' }).click();
