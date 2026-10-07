@@ -382,7 +382,7 @@ model IntegrationSettings {
   whatsappAppId String @default("")
   whatsappAppSecret String @default("")
   whatsappPhoneNumberId String @default("")
-  whatsappAccessToken String @default("") @db.Text
+  whatsappAccessToken String @default("") @db.VarChar(8192)
   whatsappVerifyToken String @default("")
   whatsappDepartmentId String?
   lastTestChannel String?
@@ -450,7 +450,7 @@ model Survey {
   authorId String
   authorName String
   title String
-  description String @default("") @db.Text
+  description String @default(dbgenerated("('')")) @db.Text
   anonymous Boolean @default(false)
   endsAt DateTime
   closedAt DateTime?
