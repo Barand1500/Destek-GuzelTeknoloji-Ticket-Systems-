@@ -604,7 +604,9 @@ html[data-theme="dark"] .profile-role {
 }
 .phone-caller-fields {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto auto auto auto minmax(120px, 1fr);
   column-gap: 16px;
+  align-content: stretch;
 }
 .phone-caller-fields > h2,
 .phone-caller-name,
@@ -614,9 +616,9 @@ html[data-theme="dark"] .profile-role {
 }
 .phone-caller-note > textarea {
   display: block;
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
+  height: 100%;
+  min-height: 120px;
+  max-height: none;
   resize: none;
   box-sizing: border-box;
 }
@@ -636,15 +638,23 @@ html[data-theme="dark"] .profile-role {
 }
 .phone-request-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
 }
+.phone-request-channel,
 .phone-request-web,
 .phone-request-subject,
 .phone-request-department,
 .phone-request-assignee {
-  grid-column: span 3;
+  grid-column: span 6;
   min-width: 0;
+}
+.phone-request-channel,
+.phone-request-web {
+  grid-column: span 6;
+}
+.phone-request-subject {
+  grid-column: 1 / -1;
 }
 .phone-request-city > .styled-dropdown,
 .phone-request-district > .styled-dropdown {
@@ -869,8 +879,9 @@ html[data-theme="dark"] .profile-role {
   .phone-request-grid {
     grid-template-columns: 1fr;
   }
-  .phone-request-web,
-  .phone-request-subject,
+.phone-request-web,
+.phone-request-channel,
+.phone-request-subject,
   .phone-request-department,
   .phone-request-city,
   .phone-request-district,
@@ -1502,6 +1513,15 @@ html[data-theme="dark"] .integration-toggle i {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px;
   gap: 10px;
+}
+.smtp-host-port input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.smtp-host-port input[type="number"]::-webkit-inner-spin-button,
+.smtp-host-port input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .smtp-host-port > label {
   min-width: 0;

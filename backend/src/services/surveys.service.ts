@@ -9,6 +9,7 @@ import { announcementDirectory } from "./announcements.service.js";
 import { publishChange } from "./events.service.js";
 import { sendChannelReply } from "./integrations.service.js";
 import { queueSupportEmail } from "./mailer.service.js";
+import { surveyCompletionRate } from "./survey-completion.js";
 
 const include = { recipients: true, responses: true } as const;
 
@@ -30,6 +31,7 @@ function publicSurvey(row: any, actor: Actor) {
     answered,
     participantCount: admin ? row.responses.length : undefined,
     recipientCount: admin ? row.recipients.length : undefined,
+    completionRate: admin ? surveyCompletionRate(row.recipients, row.responses) : undefined,
     responses: admin ? row.responses.map((response: any) => ({ ...response, respondentName: row.anonymous ? null : response.respondentName })) : undefined,
   };
 }
@@ -66,7 +68,7 @@ export async function createSurvey(actor: Actor, input: z.infer<typeof createSur
     if (input.channels.includes("EMAIL") && person.email) queueSupportEmail(person.email, `Yeni anket: ${input.title}`, `${input.description}\n\nAnketi yanıtla: ${surveyUrl}`, "Anket bildirimi");
     if (input.channels.includes("SMS") && person.phone) void sendChannelReply("SMS", { phone: person.phone }, `${input.title}: ${input.description} ${surveyUrl}`).catch(() => undefined);
   }
-  await db.activityLog.create({ data: { userId: actor.id, action: "survey.created", entityType: "Survey", entityId: row.id, metadata: { recipientCount: recipients.length, channels: input.channels }, ipAddress: actor.ipAddress } });
+  await db.activityLog.create({ data: { userId: actor.id, action: "survey.created", entityType: "Survey", entityId: row.id, metadata: { title: row.title, recipientCount: recipients.length, channels: input.channels }, ipAddress: actor.ipAddress } });
   publishChange();
   return publicSurvey(row, actor);
 }
@@ -116,7 +118,7 @@ export async function closeSurvey(actor: Actor, id: string) {
   if (!survey.closedAt) {
     await db.$transaction([
       db.survey.update({ where: { id }, data: { closedAt: new Date() } }),
-      db.activityLog.create({ data: { userId: actor.id, action: "survey.closed", entityType: "Survey", entityId: id, ipAddress: actor.ipAddress } }),
+      db.activityLog.create({ data: { userId: actor.id, action: "survey.closed", entityType: "Survey", entityId: id, metadata: { title: survey.title }, ipAddress: actor.ipAddress } }),
     ]);
     publishChange();
   }

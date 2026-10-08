@@ -249,6 +249,7 @@ export async function createAnnouncement(
         entityId: row.id,
         action: "announcement.created",
         metadata: {
+          title: row.title,
           recipientCount: recipients.length,
           channels: input.channels,
         },

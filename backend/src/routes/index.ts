@@ -105,8 +105,28 @@ router.get('/webhooks/whatsapp', async (req, res) => {
   if (challenge === null) throw new AppError(403, 'INVALID_WEBHOOK', 'WhatsApp webhook doğrulaması başarısız.');
   res.status(200).send(challenge);
 });
-router.post('/webhooks/whatsapp', async (req, res) => { await receiveMetaWebhook(req.body, typeof req.headers['x-hub-signature-256'] === 'string' ? req.headers['x-hub-signature-256'] : undefined, (req as any).rawBody); res.status(200).json({ success: true }); });
+router.post('/webhooks/whatsapp', async (req, res) => {
+  // Do not log request bodies, phone numbers, signatures or credentials.
+  console.log('[WhatsApp webhook] İstek alındı');
+  try {
+    const ids = await receiveMetaWebhook(req.body, typeof req.headers['x-hub-signature-256'] === 'string' ? req.headers['x-hub-signature-256'] : undefined, (req as any).rawBody);
+    console.log('[WhatsApp webhook] İşlem tamamlandı', { processedMessages: ids.length, conversationIds: [...new Set(ids)] });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[WhatsApp webhook] İşlem başarısız', {
+      code: error && typeof error === 'object' && 'code' in error ? String(error.code) : 'UNKNOWN',
+      // Prisma messages can contain query arguments. Only application errors
+      // have safe, fixed descriptions here.
+      reason: error instanceof AppError ? error.message : 'Mesaj işlenirken sunucu/veritabanı hatası oluştu.',
+    });
+    throw error;
+  }
+});
 router.use(authenticate);
+router.get('/communication-channels', async (_req, res) => {
+  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { smsEnabled: true, whatsappEnabled: true, smtpEnabled: true } });
+  res.json({ success: true, data: { EMAIL: true, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
+});
 // Keep saved links and API clients working while Conversation is the canonical resource.
 router.use((req, _res, next) => {
   if (req.url === '/tickets' || req.url.startsWith('/tickets?') || req.url.startsWith('/tickets/'))

@@ -12,6 +12,7 @@
     "build": "npm run build --workspaces",
     "test": "npm run test -w backend",
     "test:e2e": "playwright test",
+    "guide:capture": "node scripts/capture-guide.mjs",
     "format": "prettier --write backend/src backend/tests frontend/src e2e *.json *.ts",
     "db:generate": "npm run db:generate -w backend",
     "db:migrate": "npm run db:migrate -w backend",

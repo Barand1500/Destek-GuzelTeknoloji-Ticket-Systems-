@@ -69,8 +69,8 @@ const workScreens: GuideScreen[] = [
         pins: [
           { detail: 1, labelX: 18, labelY: 18, targetX: 25, targetY: 25 },
           { detail: 2, labelX: 36, labelY: 23, targetX: 25, targetY: 32 },
-          { detail: 3, labelX: 60, labelY: 43, targetX: 53, targetY: 51 },
-          { detail: 4, labelX: 79, labelY: 45, targetX: 86, targetY: 53 },
+          { detail: 3, labelX: 60, labelY: 39, targetX: 53, targetY: 46 },
+          { detail: 4, labelX: 79, labelY: 38, targetX: 83, targetY: 46 },
           { detail: 5, labelX: 16, labelY: 52, targetX: 23, targetY: 44 },
         ],
       },
@@ -97,7 +97,7 @@ const workScreens: GuideScreen[] = [
           { detail: 1, labelX: 20, labelY: 19, targetX: 26, targetY: 27 },
           { detail: 2, labelX: 89, labelY: 19, targetX: 95, targetY: 27 },
           { detail: 3, labelX: 42, labelY: 61, targetX: 49, targetY: 52 },
-          { detail: 4, labelX: 58, labelY: 31, targetX: 63, targetY: 40 },
+          { detail: 4, labelX: 56, labelY: 31, targetX: 61, targetY: 41 },
           { detail: 5, labelX: 74, labelY: 31, targetX: 68, targetY: 40 },
         ],
       },
@@ -148,7 +148,7 @@ const workScreens: GuideScreen[] = [
         pins: [
           { detail: 4, labelX: 27, labelY: 49, targetX: 36, targetY: 58 },
           { detail: 5, labelX: 84, labelY: 49, targetX: 76, targetY: 58 },
-          { detail: 6, labelX: 64, labelY: 86, targetX: 54, targetY: 78 },
+          { detail: 6, labelX: 64, labelY: 89, targetX: 54, targetY: 84 },
         ],
       },
     ],
@@ -172,7 +172,7 @@ const workScreens: GuideScreen[] = [
       alt: "Mesaj geçmişi, yanıt alanı ve talep bilgileri bulunan konuşma ekranı",
       pins: [
         { detail: 1, labelX: 75, labelY: 12, targetX: 88, targetY: 18 },
-        { detail: 2, labelX: 38, labelY: 17, targetX: 47, targetY: 24 },
+        { detail: 2, labelX: 38, labelY: 17, targetX: 30, targetY: 24 },
         { detail: 3, labelX: 40, labelY: 38, targetX: 50, targetY: 48 },
         { detail: 4, labelX: 60, labelY: 73, targetX: 50, targetY: 84 },
         { detail: 5, labelX: 80, labelY: 43, targetX: 91, targetY: 54 },
@@ -284,7 +284,7 @@ const settingsScreens: SettingsScreen[] = [
 function AnnotatedShot({ shot, markerId, eager = false }: { shot: GuideShot; markerId: string; eager?: boolean }) {
   return (
     <div className="guide-annotated-shot">
-      <img src={shot.src} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
+      <img src={`${shot.src}?v=20261007`} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
       {!!shot.pins?.length && (
         <svg className="guide-arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>

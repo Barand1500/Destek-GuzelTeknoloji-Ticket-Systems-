@@ -49,6 +49,7 @@ type Survey = {
   answered: boolean;
   participantCount?: number;
   recipientCount?: number;
+  completionRate?: number;
   responses?: Response[];
 };
 type Directory = {
@@ -755,9 +756,7 @@ function StatisticsModal({
           <Stat
             label="Tamamlanma"
             value={
-              survey.recipientCount
-                ? `${Math.round((responses.length / survey.recipientCount) * 100)}%`
-                : "0%"
+              `${survey.completionRate ?? 0}%`
             }
           />
         </div>

@@ -42,7 +42,7 @@ export const listSchema = paginationSchema.extend({
 });
 export const createConversationSchema = z
   .object({
-    channel: z.literal('TICKET').default('TICKET'),
+    channel: z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP']).default('TICKET'),
     subject: z.string().trim().min(5).max(200),
     message: z.string().trim().min(1).max(10000),
     websiteUrl: z.string().trim().url().max(500).optional(),

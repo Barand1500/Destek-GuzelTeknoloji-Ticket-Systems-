@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useWorkSession } from "../../components/WorkSession";
+import { activityActionLabel, activityValueLabel } from "../management/activity-log-format";
 import {
   Link,
   useNavigate,
@@ -1015,13 +1016,13 @@ export function ConversationLog() {
           <table className="conversation-log-table" aria-label="Konuşma işlem geçmişi">
             <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi yapan</th><th scope="col">Tarih / saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve dosyalar</th></tr></thead>
             <tbody>{entries.map((entry) => <tr className={entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''} key={entry.id}>
-              <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? entry.body}</strong></div></td>
+              <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? activityActionLabel(entry.action)}</strong></div></td>
               <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{entry.author.email}</small>}</td>
               <td><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></td>
               <td>
                 {labels[entry.action] && <p>{entry.body}</p>}
                 {entry.action === 'AGENT_REPLY' && <small className="conversation-log-response">Yanıt süresi: {responseDurations.get(entry.id) ?? 'hesaplanamadı'}</small>}
-                {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key]).map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : Array.isArray(value) ? value.join(', ') || 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? String(value)}</small>)}
+                {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key]).map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? activityValueLabel(value)}</small>)}
                 {entry.attachments.length > 0 && <AttachmentLinks attachments={entry.attachments} />}
               </td>
             </tr>)}</tbody>

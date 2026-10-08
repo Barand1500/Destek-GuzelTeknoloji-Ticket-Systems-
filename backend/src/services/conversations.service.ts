@@ -203,6 +203,19 @@ export async function createConversation(
   if (!(await db.department.findFirst({ where: { id: input.departmentId,isActive:true } })))
     throw new AppError(400, "INVALID_DEPARTMENT", "Departman bulunamadı.");
   const customerId=input.customerId??actor.id;
+  if (actor.role === "CUSTOMER" && input.channel !== "TICKET")
+    throw new AppError(403, "FORBIDDEN", "Müşteri talepleri yalnızca destek talebi kanalıyla açılabilir.");
+  if (actor.role !== "CUSTOMER" && input.channel === "EMAIL") {
+    const recipient = await db.user.findFirst({ where: { id: customerId, role: "CUSTOMER", isActive: true, deletedAt: null }, select: { email: true } });
+    if (!recipient?.email) throw new AppError(400, "CHANNEL_RECIPIENT_MISSING", "E-posta kanalından göndermek için müşterinin e-posta adresi kayıtlı olmalı.");
+  }
+  if (actor.role !== "CUSTOMER" && (input.channel === "SMS" || input.channel === "WHATSAPP")) {
+    const integration = await db.integrationSettings.findUnique({ where: { id: "default" }, select: { smsEnabled: true, whatsappEnabled: true } });
+    const selectedChannelEnabled = input.channel === "SMS" ? integration?.smsEnabled : integration?.whatsappEnabled;
+    if (!selectedChannelEnabled) throw new AppError(400, "CHANNEL_DISABLED", `${input.channel === "SMS" ? "SMS" : "WhatsApp"} entegrasyonu etkin değil.`);
+    const recipient = await db.user.findFirst({ where: { id: customerId, role: "CUSTOMER", isActive: true, deletedAt: null }, select: { phone: true } });
+    if (!recipient?.phone) throw new AppError(400, "CHANNEL_RECIPIENT_MISSING", "Seçilen kanaldan göndermek için müşterinin telefon numarası kayıtlı olmalı.");
+  }
   if(actor.role!=='CUSTOMER'){
     if (actor.accessRole && actor.accessRole.scope !== 'ALL' && !actor.departmentIds.includes(input.departmentId)) throw new AppError(403, 'FORBIDDEN', 'Bu departmana talep açma yetkiniz yok.');
     if (actor.accessRole && input.assignedAgentId && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
@@ -228,7 +241,7 @@ export async function createConversation(
         priority: input.priority,
         customerId,
         ...(input.tagIds ? { tags: { create: input.tagIds.map(tagId => ({ tagId })) } } : {}),
-        messages: { create: { authorId: customerId, body: input.message,type:'CUSTOMER_MESSAGE',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
+        messages: { create: { authorId: actor.role === "CUSTOMER" || input.channel === "TICKET" ? customerId : actor.id, body: input.message,type: actor.role === "CUSTOMER" || input.channel === "TICKET" ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
       },
       include: conversationInclude,
     });
@@ -242,7 +255,13 @@ export async function createConversation(
   if (result.customer.email) {
     const contact = await supportContact(); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
     const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
-    queueSupportEmail(result.customer.email, replace(template.ticketCreatedSubject), `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Talep oluşturma", { conversationId: result.id, userId: actor.id });
+    const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL";
+    queueSupportEmail(result.customer.email, selectedEmailMessage ? result.subject : replace(template.ticketCreatedSubject), selectedEmailMessage ? input.message : `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, selectedEmailMessage ? "Talep kanal mesajı" : "Talep oluşturma", { conversationId: result.id, userId: actor.id });
+  }
+  if (actor.role !== "CUSTOMER" && (input.channel === "SMS" || input.channel === "WHATSAPP")) {
+    void sendChannelReply(input.channel, result.customer, input.message).catch(async error => {
+      await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: result.id, metadata: { channel: input.channel, reason: error instanceof Error ? error.message : String(error) } } });
+    });
   }
   return result;
 }

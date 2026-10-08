@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { canonicalPhone, matchesPhone } from "./inbound-phone-matching.js";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { db } from "../config/db.js";
 import { AppError } from "../utils/errors.js";
@@ -22,11 +23,7 @@ export function netgsmRecipient(value?: string) {
 }
 
 export function whatsappRecipient(value?: string) {
-  const digits = normalizedPhone(value);
-  if (digits.startsWith("00")) return digits.slice(2);
-  if (digits.startsWith("0") && digits.length === 11) return `90${digits.slice(1)}`;
-  if (digits.length === 10 && digits.startsWith("5")) return `90${digits}`;
-  return digits;
+  return canonicalPhone(value);
 }
 
 function providerMessage(prefix: string, response: Response, data: NetgsmResponse | MetaResponse) {
@@ -81,39 +78,72 @@ export async function testWhatsappConnection(settings: { whatsappPhoneNumberId: 
   return data;
 }
 
-async function defaultDepartment(id?: string | null) {
-  const selected = id ? await db.department.findFirst({ where: { id, isActive: true, deletedAt: null } }) : null;
-  return selected ?? db.department.findFirst({ where: { isActive: true, deletedAt: null }, orderBy: { name: "asc" } });
-}
-
 export async function persistInboundMessage(input: InboundMessage) {
-  const known = await db.externalMessage.findUnique({ where: { provider_externalId: { provider: input.provider, externalId: input.externalId } } });
-  if (known) return known.conversationId;
   const email = input.sender.email?.trim().toLowerCase();
-  const phone = normalizedPhone(input.sender.phone);
-  let customer = await db.user.findFirst({ where: { role: "CUSTOMER", deletedAt: null, OR: [
-    ...(email ? [{ email }, { extraEmails: { contains: email } }] : []),
-    ...(phone ? [{ phone: { contains: phone } }, { extraPhones: { contains: phone } }] : []),
-  ] }, orderBy: { createdAt: "asc" } });
-  const number = ticketNumber(`${input.subject ?? ""}\n${input.body}`);
-  let conversation = number ? await db.conversation.findFirst({ where: { number: Number(number), deletedAt: null, status: { not: "CLOSED" }, ...(email ? { customer: { email } } : phone ? { customer: { phone: { contains: phone } } } : {}) } }) : null;
-  if (conversation) customer = await db.user.findUniqueOrThrow({ where: { id: conversation.customerId } });
-  if (!customer) customer = await db.user.create({ data: { name: input.sender.name?.trim().slice(0, 100) || email || input.sender.phone || "Bilinmeyen müşteri", email: email ?? null, phone: input.sender.phone?.trim() || null, passwordHash: await bcrypt.hash(randomBytes(32).toString("hex"), 12), role: "CUSTOMER" } });
-  const department = conversation ? null : await defaultDepartment(input.departmentId);
-  if (!conversation && !department) throw new AppError(400, "NO_DEPARTMENT", "Gelen mesaj için aktif varsayılan departman bulunamadı.");
-  const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
-  const conversationId = await db.$transaction(async tx => {
-    let target = conversation;
-    if (!target) target = await tx.conversation.create({ data: { subject: (input.subject || `${input.channel} desteği`).slice(0, 200), searchSubject: (input.subject || `${input.channel} desteği`).normalize("NFKC").toLocaleLowerCase("tr-TR").slice(0, 200), channel: input.channel as ConversationChannel, customerId: customer!.id, departmentId: department!.id } });
-    await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer!.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE" } });
-    await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id } });
-    await tx.conversation.update({ where: { id: target.id }, data: { status: "OPEN" } });
-    await tx.activityLog.create({ data: { userId: customer!.id, action: `conversation.${input.channel.toLowerCase()}_received`, entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId } } });
-    await notifyConversation(tx, actor, target, "MESSAGE_RECEIVED", `Yeni ${input.channel.toLocaleLowerCase("tr-TR")} mesajı`);
-    return target.id;
-  });
-  publishChange(conversationId);
-  return conversationId;
+  const phone = canonicalPhone(input.sender.phone);
+  if (!email && !phone) throw new AppError(400, "INVALID_MESSAGE", "Gelen mesajın gönderen bilgisi eksik.");
+  const channelNames: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "E-posta" };
+  const subject = (input.subject || (channelNames[input.channel] + " desteği")).slice(0, 200);
+  // Keep matching and creation atomic, including simultaneous first messages.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const conversationId = await db.$transaction(async tx => {
+        const known = await tx.externalMessage.findUnique({ where: { provider_externalId: { provider: input.provider, externalId: input.externalId } } });
+        if (known) return known.conversationId;
+        const candidates = await tx.user.findMany({
+          where: { role: "CUSTOMER", deletedAt: null, OR: [
+            ...(email ? [{ email }, { extraEmails: { contains: email } }] : []),
+            ...(phone ? [{ phone: { not: null } }, { extraPhones: { not: null } }] : []),
+          ] },
+          select: { id: true, name: true, email: true, phone: true, extraPhones: true, extraEmails: true },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        });
+        const matching = candidates.filter(customer =>
+          Boolean(email && [customer.email, ...(customer.extraEmails ?? "").split(/[,;\n]+/)].some(value => value?.trim().toLowerCase() === email))
+          || Boolean(phone && matchesPhone(customer, phone)));
+        // Prefer original customers over later auto-created duplicates.
+        let customer = matching[0];
+        const number = input.channel === "WHATSAPP" ? undefined : ticketNumber((input.subject ?? "") + "\n" + input.body);
+        let target = number && matching.length ? await tx.conversation.findFirst({ where: {
+          number: Number(number), deletedAt: null, status: { not: "CLOSED" }, customerId: { in: matching.map(item => item.id) },
+        } }) : null;
+        if (target) customer = matching.find(item => item.id === target!.customerId)!;
+        if (!customer) customer = await tx.user.create({ data: {
+          name: input.sender.name?.trim().slice(0, 100) || email || phone || "Bilinmeyen müşteri",
+          email: email ?? null, phone: phone || null,
+          passwordHash: await bcrypt.hash(randomBytes(32).toString("hex"), 12), role: "CUSTOMER",
+        } });
+        if (input.channel === "WHATSAPP") {
+          // A new manual request takes over; updating older tickets does not.
+          target = await tx.conversation.findFirst({
+            where: { customerId: customer.id, deletedAt: null, channel: { in: ["WHATSAPP", "TICKET"] } },
+            orderBy: [{ createdAt: "desc" }, { number: "desc" }],
+          });
+        }
+        if (!target) {
+          const selected = input.departmentId ? await tx.department.findFirst({ where: { id: input.departmentId, isActive: true, deletedAt: null } }) : null;
+          const department = selected ?? await tx.department.findFirst({ where: { isActive: true, deletedAt: null }, orderBy: { name: "asc" } });
+          if (!department) throw new AppError(400, "NO_DEPARTMENT", "Gelen mesaj için aktif varsayılan departman bulunamadı.");
+          target = await tx.conversation.create({ data: { subject, searchSubject: subject.normalize("NFKC").toLocaleLowerCase("tr-TR"), channel: input.channel as ConversationChannel, customerId: customer.id, departmentId: department.id } });
+        }
+        await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE" } });
+        await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id } });
+        await tx.conversation.update({ where: { id: target.id }, data: {
+          status: "OPEN", closedAt: null, resolvedAt: null,
+          ...(input.channel === "WHATSAPP" ? { channel: "WHATSAPP" } : {}),
+        } });
+        await tx.activityLog.create({ data: { userId: customer.id, action: "conversation." + input.channel.toLowerCase() + "_received", entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId } } });
+        const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
+        await notifyConversation(tx, actor, { ...target, customer }, "MESSAGE_RECEIVED", "Yeni " + channelNames[input.channel] + " mesajı");
+        return target.id;
+      }, { isolationLevel: "Serializable", timeout: 15_000 });
+      publishChange(conversationId);
+      return conversationId;
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (attempt >= 3 || (code !== "P2034" && code !== "P2002")) throw error;
+    }
+  }
 }
 
 const equalsSecret = (provided: string | undefined, expected: string) => {
