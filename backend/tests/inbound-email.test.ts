@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { matchesSender, selectEmailCustomer } from '../src/services/inbound-email-matching.js';
-import { inboundReplyText } from '../src/services/inbound-email.service.js';
+import { inboundReplyText, parseTahsilatSupportRequest } from '../src/services/inbound-email.service.js';
 
 const adem = { id: 'adem', name: 'ADEM DURGUN', email: 'yunusdurgun22@gmail.com', extraEmails: 'alias@example.test, other@example.test' };
 const yunus = { id: 'yunus', name: 'YUNUS DURGUN', email: 'durgunyunus4@gmail.com', extraEmails: null };
@@ -21,6 +21,24 @@ test('inbound email saves only the new reply, not Gmail quoted history', () => {
   assert.equal(inboundReplyText('Yeni cevabım\n\nOn Tue, Sep 24, 2026 at 09:29 Ercan wrote:\n> Previous reply'), 'Yeni cevabım');
   assert.equal(inboundReplyText('<p>Yeni cevabım</p><br><div>24 Eyl 2026 tarihinde Ercan şunu yazdı:</div><blockquote>Önceki yanıt</blockquote>'), 'Yeni cevabım');
   assert.equal(inboundReplyText('hayır\n\nErcan Güzel, 24 Eyl 2026 Per, 09:41 tarihinde\nönceki e-posta'), 'hayır');
+});
+test('Tahsilat Destek form emails are converted to the requester, subject and description', () => {
+  const expected = {
+    name: 'Baran',
+    email: '21baran51@gmail.com',
+    subject: 'aaa',
+    body: 'hata hata hata',
+  };
+  assert.deepEqual(parseTahsilatSupportRequest('[Tahsilat Destek] aaa', [
+    'Panel destek talebi',
+    'Kim: Baran(Silmeyiniz) (21baran51@gmail.com)',
+    'Konu: aaa',
+    '',
+    'hata hata hata',
+  ].join('\n')), expected);
+  assert.deepEqual(parseTahsilatSupportRequest('[Tahsilat Destek] aaa', '<p>Panel destek talebi</p><p>Kim: Baran(Silmeyiniz) (21baran51@gmail.com)</p><p>Konu: aaa</p><hr><p>hata hata hata</p>'), expected);
+  assert.deepEqual(parseTahsilatSupportRequest('[Tahsilat Destek] aaa', 'Panel destek talebi\nKim: Baran (21baran51@gmail.com)\nKonu: aaa — hata hata hata'), expected);
+  assert.equal(parseTahsilatSupportRequest('Normal e-posta', 'Kim: Baran (baran@example.com)\nKonu: Yardım\n\nAçıklama'), null);
 });
 test('shared addresses cannot be assigned arbitrarily', () => {
   assert.throws(() => selectEmailCustomer([adem, { ...adem, id: 'another', name: 'Someone else' }], adem.email), /belirsiz/);

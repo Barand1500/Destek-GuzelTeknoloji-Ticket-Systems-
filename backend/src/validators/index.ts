@@ -55,6 +55,7 @@ export const createConversationSchema = z
   .strict();
 export const createStaffConversationSchema = createConversationSchema.extend({
   customerId: idSchema,
+  source: z.enum(["PHONE_SUPPORT"]).optional(),
 }).strict();
 export const messageSchema = z
   .object({

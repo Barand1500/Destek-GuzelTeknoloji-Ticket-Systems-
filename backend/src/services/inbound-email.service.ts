@@ -15,6 +15,7 @@ let lastStoredPollAt = 0;
 
 export function inboundReplyText(value: string) {
   const text = value
+    .replace(/<hr\b[^>]*>/gi, "\n")
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/p\s*>/gi, "\n")
     .replace(/<\/(?:div|blockquote|li|tr|h[1-6])\s*>/gi, "\n")
@@ -40,6 +41,34 @@ export function inboundReplyText(value: string) {
     .replace(/\n{3,}/g, "\n\n")
     .trim()
     .slice(0, 10_000);
+}
+
+type WebsiteSupportRequest = { name: string; email: string; subject: string; body: string };
+
+/** Parse the notification format sent by our Tahsilat Destek website form. */
+export function parseTahsilatSupportRequest(subject: string, value: string): WebsiteSupportRequest | null {
+  const subjectMatch = /^\s*\[Tahsilat Destek\]\s*(.+?)\s*$/i.exec(subject);
+  if (!subjectMatch) return null;
+  const text = inboundReplyText(value);
+  const customerMatch = /(?:^|\n)\s*Kim\s*:\s*([^\n]+)/i.exec(text);
+  const topicMatch = /(?:^|\n)\s*Konu\s*:\s*/i.exec(text);
+  if (!customerMatch || !topicMatch) return null;
+  const customerValue = customerMatch[1].trim();
+  const email = customerValue.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase();
+  if (!email) return null;
+  const name = customerValue
+    .replace(/[<(]?\s*[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\s*[>)]?/i, '')
+    .replace(/\(\s*Sil[mM]eyiniz\s*\)/gi, '')
+    .replace(/[()]/g, '')
+    .trim();
+  const requestSubject = subjectMatch[1].trim();
+  let body = text.slice(topicMatch.index + topicMatch[0].length).trim();
+  if (body.toLocaleLowerCase('tr-TR').startsWith(requestSubject.toLocaleLowerCase('tr-TR'))) {
+    body = body.slice(requestSubject.length);
+  }
+  body = body.replace(/^[\s:|\-_=—–]+/, '').trim();
+  if (!requestSubject || !body) return null;
+  return { name: name || email, email, subject: requestSubject, body };
 }
 
 export async function persistInboundEmail(input: {
@@ -117,7 +146,7 @@ export async function persistInboundEmail(input: {
     await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body, type: "CUSTOMER_MESSAGE" } });
     await tx.incomingEmail.create({ data: { mailbox: input.mailbox, uid: input.uid, messageId: input.messageId, conversationId: target.id } });
     await tx.conversation.update({ where: { id: target.id }, data: { status: "OPEN" } });
-    await tx.activityLog.create({ data: { userId: customer.id, action: "conversation.email_received", entityId: target.id, metadata: { mailbox: input.mailbox, uid: input.uid, senderEmail: email, messageId: input.messageId ?? null, inReplyTo: input.inReplyTo ?? null } } });
+    await tx.activityLog.create({ data: { userId: customer.id, action: "conversation.email_received", entityType: "Conversation", entityId: target.id, metadata: { mailbox: input.mailbox, uid: input.uid, senderEmail: email, subject: target.subject, number: target.number, messageId: input.messageId ?? null, inReplyTo: input.inReplyTo ?? null } } });
     await notifyConversation(tx, customerActor, target, "EMAIL_RECEIVED", "Yeni e-posta mesajı");
     return target.id;
   });
@@ -163,21 +192,32 @@ export async function syncInboundEmail() {
         const sender = parsed.from?.value.find((value) => value.address)?.address;
         const body = inboundReplyText(parsed.text || parsed.html || "");
         if (!sender || !body) continue;
-        if (sender.trim().toLowerCase() === config.user!.trim().toLowerCase()) continue;
-        await persistInboundEmail({
+        const emailSubject = parsed.subject || '';
+        const websiteRequest = parseTahsilatSupportRequest(emailSubject, body);
+        const isOwnSender = sender.trim().toLowerCase() === config.user!.trim().toLowerCase();
+        if (!websiteRequest && isOwnSender) {
+          if (/^\s*\[Tahsilat Destek\]/i.test(emailSubject)) {
+            console.warn('[IMAP] Tahsilat Destek bildirimi tanınmadı; konu/gövde biçimi beklenen kalıpla eşleşmedi.');
+          }
+          continue;
+        }
+        const conversationId = await persistInboundEmail({
           mailbox: config.mailbox,
           uid: message.uid,
           messageId: parsed.messageId || undefined,
           inReplyTo: parsed.inReplyTo || undefined,
           references: typeof parsed.references === 'string' ? [parsed.references] : parsed.references,
           recipients: (Array.isArray(parsed.to) ? parsed.to : parsed.to ? [parsed.to] : []).flatMap(group => group.value.map(recipient => recipient.address ?? '')),
-          from: { address: sender, name: parsed.from?.value.find((value) => value.address)?.name },
-          subject: parsed.subject || "E-posta desteği",
-          body,
+          from: websiteRequest
+            ? { address: websiteRequest.email, name: websiteRequest.name }
+            : { address: sender, name: parsed.from?.value.find((value) => value.address)?.name },
+          subject: websiteRequest?.subject || parsed.subject || "E-posta desteği",
+          body: websiteRequest?.body || body,
           departmentId: config.departmentId,
           createTickets: config.createTickets,
           createReplies: config.createReplies,
         });
+        if (websiteRequest && conversationId) console.log('[IMAP] Tahsilat Destek bildirimi içeri alındı.', { conversationId });
         await client.messageFlagsAdd(message.uid, ["\\Seen"], { uid: true });
         processed++;
       }

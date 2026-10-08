@@ -1,0 +1,1 @@
+ALTER TABLE `SystemSettings` ADD COLUMN `roleTemplates` JSON NULL;

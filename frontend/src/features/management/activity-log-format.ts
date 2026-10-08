@@ -8,7 +8,7 @@ export type ActivityLog = {
   user?: { id: string; name: string; email: string } | null;
   actor?: { name: string; email: string } | null;
   conversationId?: string | null;
-  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number; recipientCount?: number; channels?: string[]; channel?: string; senderEmail?: string } | null;
+  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; details?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number; recipientCount?: number; channels?: string[]; channel?: string; senderEmail?: string } | null;
 };
 export const actionLabels: Record<string, string> = {
   "profile.updated": "Profil bilgileri güncellendi",
@@ -114,7 +114,7 @@ export function activityValueLabel(value: unknown): string {
     OPEN: "Açık", PENDING: "Beklemede", IN_PROGRESS: "İşlemde", RESOLVED: "Çözüldü", CLOSED: "Kapalı",
     LOW: "Düşük", NORMAL: "Normal", HIGH: "Yüksek", URGENT: "Acil",
     ALL: "Tüm kayıtlar", DEPARTMENT: "Kendi departmanı", ASSIGNED: "Atanan kayıtlar",
-    TICKET: "Destek talebi", LIVE_CHAT: "Canlı sohbet", ...channelLabels,
+    TICKET: "Telefon talebi", LIVE_CHAT: "Canlı sohbet", ...channelLabels,
   };
   return labels[String(value)] ?? String(value);
 }
@@ -131,6 +131,7 @@ export function richDescriptionFor(log: ActivityLog) {
     return [`${channel} gönderimi başarısız oldu.`, reason && `${provider} yanıtı: ${reason}`, context].filter(Boolean).join(" ");
   }
   const details = [
+    metadata?.details?.join(" · "),
     metadata?.name && `Ad: ${metadata.name}`,
     metadata?.title && `Başlık: ${metadata.title}`,
     metadata?.subject && `Konu: ${metadata.subject}`,

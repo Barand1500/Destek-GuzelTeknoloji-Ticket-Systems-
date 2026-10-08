@@ -29,6 +29,7 @@ import {
   ClipboardList,
   CalendarDays,
   BarChart3,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../features/auth/Auth";
 import { conversationPath, inboxPath, workspacePath } from "../router/paths";
@@ -38,6 +39,66 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { AnnouncementsModal } from "../features/announcements/AnnouncementsModal";
 import { WorkScreenOutlet, WorkSessionProvider, useWorkSession } from "./WorkSession";
+const quickIconByLabel: Record<string, string> = {
+  "Genel bakış": "dashboard",
+  "Personel aktivitesi": "activity",
+  "Gelen kutusu": "inbox",
+  Taleplerim: "inbox",
+  Müşteriler: "users",
+  Personeller: "users",
+  Roller: "users",
+  "Yeni talep": "plus",
+  "Talep aç": "plus",
+  Dosyalar: "folder",
+  Entegrasyonlar: "settings",
+  "Yanıt süreleri": "timer",
+  Kategoriler: "tags",
+  Projeler: "tags",
+  Rehber: "book",
+  Anketler: "clipboard",
+  Raporlar: "chart",
+  "Hazır yanıtlar": "file",
+  "İşlem geçmişi": "history",
+  Takvim: "calendar",
+};
+const quickIcons: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  activity: Activity,
+  inbox: Inbox,
+  users: Users,
+  plus: Plus,
+  folder: FolderOpen,
+  settings: Settings,
+  timer: Timer,
+  tags: Tags,
+  book: BookOpen,
+  clipboard: ClipboardList,
+  chart: BarChart3,
+  file: FileText,
+  history: History,
+  calendar: CalendarDays,
+};
+function shortcutIcon(slot: { label: string; href: string; icon?: string }) {
+  if (slot.icon && quickIcons[slot.icon]) return quickIcons[slot.icon];
+  const label = slot.label.trim();
+  if (quickIconByLabel[label]) return quickIcons[quickIconByLabel[label]];
+  const route = slot.href.split(/[?#]/, 1)[0];
+  if (route.endsWith("/dashboard")) return LayoutDashboard;
+  if (route.endsWith("/conversations") || route.endsWith("/inbox") || route.endsWith("/tickets")) return Inbox;
+  if (route.endsWith("/customers") || route.endsWith("/users") || route.endsWith("/roles")) return Users;
+  if (route.endsWith("/tickets/new")) return Plus;
+  if (route.endsWith("/files")) return FolderOpen;
+  if (route.endsWith("/integrations/channels")) return Settings;
+  if (route.endsWith("/response-time-rules")) return Timer;
+  if (route.endsWith("/tags") || route.endsWith("/websites")) return Tags;
+  if (route.includes("/guide/")) return BookOpen;
+  if (route.endsWith("/surveys")) return ClipboardList;
+  if (route.endsWith("/reports")) return BarChart3;
+  if (route.endsWith("/saved-replies")) return FileText;
+  if (route.endsWith("/activity-logs")) return History;
+  if (route.endsWith("/calendar")) return CalendarDays;
+  return LayoutDashboard;
+}
 export function Layout() {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
@@ -59,7 +120,7 @@ function WorkspaceLayout() {
   );
   const [globalSearch, setGlobalSearch] = useState("");
   const [quickSlots, setQuickSlots] = useState<
-    Array<{ label: string; href: string } | null>
+    Array<{ label: string; href: string; icon?: string } | null>
   >([null, null, null, null]);
   const [quickSlotsReady, setQuickSlotsReady] = useState(false);
   useEffect(() => {
@@ -253,6 +314,7 @@ function WorkspaceLayout() {
                 JSON.stringify({
                   label: link.textContent?.trim(),
                   href: link.getAttribute("href"),
+                  icon: quickIconByLabel[link.textContent?.trim() ?? ""] ?? undefined,
                 }),
               );
           }}
@@ -466,15 +528,7 @@ function WorkspaceLayout() {
                     );
                   }}
                 >
-                  {index === 0 ? (
-                    <Inbox size={16} />
-                  ) : index === 1 ? (
-                    <Users size={16} />
-                  ) : index === 2 ? (
-                    <Plus size={16} />
-                  ) : (
-                    <Settings size={16} />
-                  )}
+                  {(() => { const Icon = shortcutIcon(slot); return <Icon size={16} />; })()}
                 </NavLink>
               ) : (
                 <button

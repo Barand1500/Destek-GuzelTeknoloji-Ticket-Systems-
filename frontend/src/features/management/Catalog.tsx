@@ -162,7 +162,6 @@ export function TagsPage() {
   const [editing, setEditing] = useState<Tag | null>(null);
   const [editingView, setEditingView] = useState<{ id: string; name: string; code: string } | null>(null);
   const [viewLabels, setViewLabels] = useState<Record<string, string>>({});
-  const [hiddenViews, setHiddenViews] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null);
   const [version, setVersion] = useState(0);
   function reset() {
@@ -174,10 +173,13 @@ export function TagsPage() {
   const remove = useDelete("/tags", ["tags", "tickets", "conversations"]);
   const inboxViews = [
     { id: "view-all", name: "Tümü", code: "ALL", color: "#7c9b91", href: "/admin/conversations?view=all&category=ALL" },
+    { id: "view-ticket", name: "Telefon talebi", code: "TICKET", color: "#7c9b91", href: "/admin/conversations?view=all&category=TICKET" },
     { id: "view-mail", name: "Mail", code: "EMAIL", color: "#7c9b91", href: "/admin/conversations?view=all&category=EMAIL" },
+    { id: "view-sms", name: "SMS", code: "SMS", color: "#7c9b91", href: "/admin/conversations?view=all&category=SMS" },
+    { id: "view-whatsapp", name: "WhatsApp", code: "WHATSAPP", color: "#7c9b91", href: "/admin/conversations?view=all&category=WHATSAPP" },
     { id: "view-mine", name: "Bana atanan", code: "MINE", color: "#7c9b91", href: "/admin/conversations?view=mine&category=MINE" },
     { id: "view-unassigned", name: "Atanmamış", code: "UNASSIGNED", color: "#7c9b91", href: "/admin/conversations?view=unassigned&category=UNASSIGNED" },
-  ].filter((view) => !hiddenViews.includes(view.id)).map((view) => ({ ...view, name: viewLabels[view.code] ?? view.name }));
+  ].map((view) => ({ ...view, name: viewLabels[view.code] ?? view.name }));
   const list = useList<Tag>("/tags", {}, inboxViews.length);
   function selectSection(value: "tags" | "statuses" | "priorities") {
     if (value === "tags") setParams({});
@@ -186,7 +188,7 @@ export function TagsPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     const form = formValues(event);
     if (editingView) {
-      const key = editingView.code === "EMAIL" ? "mail" : editingView.code === "UNASSIGNED" ? "unassigned" : editingView.code === "MINE" ? "mine" : "all";
+      const key = ({ ALL: "all", TICKET: "ticket", EMAIL: "mail", SMS: "sms", WHATSAPP: "whatsapp", MINE: "mine", UNASSIGNED: "unassigned" } as Record<string, string>)[editingView.code] ?? "all";
       const storageKey = `helpdesk-inbox-tabs-${user?.id}`;
       try {
         const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}");
@@ -236,7 +238,7 @@ export function TagsPage() {
                     <tr key={view.id}>
                       <td>{view.name}</td>
                       <td><code>{view.code}</code></td>
-                      <td><div className="management-actions"><button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button><button className="button management-danger" type="button" onClick={() => { const key = view.code === "EMAIL" ? "mail" : view.code === "UNASSIGNED" ? "unassigned" : view.code === "MINE" ? "mine" : "all"; try { const storageKey = `helpdesk-inbox-tabs-${user?.id}`; const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}"); window.localStorage.setItem(storageKey, JSON.stringify({ ...saved, enabled: { ...saved.enabled, [key]: false } })); } catch { /* local storage unavailable */ } setHiddenViews((current) => [...current, view.id]); if (editingView?.id === view.id) reset(); }}>Sil</button></div></td>
+                      <td><div className="management-actions"><button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button></div></td>
                     </tr>
                   ))}
                   {list.data?.data.map((tag) => (

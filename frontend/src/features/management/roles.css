@@ -13,8 +13,10 @@ html[data-theme="dark"] .roles-page { --roles-surface: #1b2b24; --roles-soft: #1
 .roles-template h3 { margin-bottom: 6px; }
 .roles-template > p { min-height: 42px; }
 .roles-badge { display: inline-flex; align-items: center; gap: 5px; width: fit-content; padding: 4px 8px; border: 1px solid var(--roles-border); border-radius: 6px; background: var(--roles-soft); color: var(--ui-text-secondary); font-size: 11px; font-weight: 400; line-height: 1.5; white-space: nowrap; }
-.roles-template-action { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding: 14px 0 0; width: 100%; border: 0; border-top: 1px solid var(--roles-border); background: transparent; color: var(--ui-text-navigation); font-size: 12px; text-align: left; cursor: pointer; }
+.roles-template-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--roles-border); }
+.roles-template-action { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 2px 0; border: 0; background: transparent; color: var(--ui-text-navigation); font-size: 12px; text-align: left; cursor: pointer; }
 .roles-template-action > svg:last-child { margin-left: auto; }
+.roles-template-actions > .icon-button { flex: 0 0 auto; }
 .roles-template-action:hover,.roles-text-action:hover,.roles-back:hover { color: var(--ui-tab-hover-text); }
 .roles-list,.roles-details,.roles-permissions { border: 1px solid var(--roles-border); background: var(--roles-surface); border-radius: 12px; }
 .roles-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; }

@@ -90,7 +90,11 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   };
   const categoryFilter: Prisma.ConversationWhereInput[] = q.category
     ? q.category === "EMAIL"
-      ? [{ channel: "EMAIL" }]
+      ? [{ channel: "EMAIL", source: { not: "PHONE_SUPPORT" } }]
+      : q.category === "TICKET"
+        ? [{ OR: [{ channel: "TICKET" }, { source: "PHONE_SUPPORT" }] }]
+      : q.category === "SMS" || q.category === "WHATSAPP"
+        ? [{ channel: q.category === "SMS" ? "SMS" : "WHATSAPP", source: { not: "PHONE_SUPPORT" } }]
       : q.category === "MINE"
         ? [{ assignedAgentId: actor.id }]
         : q.category === "UNASSIGNED"
@@ -191,7 +195,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
 }
 export async function createConversation(
   actor: Actor,
-  input: z.infer<typeof createConversationSchema> & { customerId?: string },
+  input: z.infer<typeof createConversationSchema> & { customerId?: string; source?: "PHONE_SUPPORT" },
   files:StoredUpload[] = [],
 ) {
   if (actor.role === "CUSTOMER" && input.customerId)
@@ -236,6 +240,7 @@ export async function createConversation(
         websiteId: website?.id,
         assignedAgentId: input.assignedAgentId,
         channel: input.channel,
+        source: actor.role !== "CUSTOMER" && input.source === "PHONE_SUPPORT" ? "PHONE_SUPPORT" : "TICKET",
         searchSubject: normalizeSearch(input.subject),
         departmentId: input.departmentId,
         priority: input.priority,

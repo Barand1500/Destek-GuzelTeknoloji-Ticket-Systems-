@@ -128,7 +128,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
     {customer && <label className="phone-request-selected"><span className="field-label">Seçilen kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
       <div className="phone-request-channel"><DropdownSelect label="Mesaj kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Mesaj kanalını seçin" options={[
-        { value: "EMAIL", label: "E-posta (varsayılan)" },
+        { value: "EMAIL", label: "Telefon talebi" },
         { value: "SMS", label: channels.isPending ? "SMS (durum kontrol ediliyor)" : channels.isError ? "SMS (durum alınamadı)" : channels.data?.SMS ? "SMS" : "SMS (ayarlarda etkin değil)" },
         { value: "WHATSAPP", label: channels.isPending ? "WhatsApp (durum kontrol ediliyor)" : channels.isError ? "WhatsApp (durum alınamadı)" : channels.data?.WHATSAPP ? "WhatsApp" : "WhatsApp (ayarlarda etkin değil)" },
       ]} /></div>
@@ -647,7 +647,7 @@ export function PhoneSupportPage() {
       { onSuccess: (result) => {
         const customer = (result as { data: { data: ManagedUser } }).data.data;
         createConversation.mutate(
-          { data: { customerId: customer.id, departmentId, channel, subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
+          { data: { customerId: customer.id, departmentId, channel, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
           { onSuccess: (conversationResult) => openCreatedConversation((conversationResult as { data: { data: Conversation } }).data.data.id) },
         );
       } },
@@ -656,7 +656,7 @@ export function PhoneSupportPage() {
   function submitConversation(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
     createConversation.mutate(
-      { data: { customerId, departmentId, channel, subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
+      { data: { customerId, departmentId, channel, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
       { onSuccess: (result) => openCreatedConversation((result as { data: { data: Conversation } }).data.data.id) },
     );
   }

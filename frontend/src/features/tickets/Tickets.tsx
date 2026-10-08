@@ -186,8 +186,8 @@ export function TicketList() {
   const limit = [10, 15, 20, 50].includes(requestedLimit) ? requestedLimit : 15;
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
-  const defaultTabLabels: Record<string, string> = { all: "Tümü", mail: "Mail", mine: "Bana atanan", unassigned: "Atanmamış" };
-  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", mail: "E-posta ile gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış talepler", today: "Bugün açılan talepler" };
+  const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon talebi", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", mine: "Bana atanan", unassigned: "Atanmamış" };
+  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "E-posta ile gelen talepler", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış talepler", today: "Bugün açılan talepler" };
   const [tabLabels, setTabLabels] = useState(defaultTabLabels);
   const [tabOrder, setTabOrder] = useState(Object.keys(defaultTabLabels));
   const [tabEnabled, setTabEnabled] = useState<Record<string, boolean>>(Object.fromEntries(Object.keys(defaultTabLabels).map((key) => [key, true])));
@@ -267,8 +267,8 @@ export function TicketList() {
   function selectView(key: string) {
     const custom = customTabs.find((tab) => tab.id === key);
     if (!custom) {
-      const code = key === "mail" ? "EMAIL" : key === "all" ? "ALL" : key === "mine" ? "MINE" : "UNASSIGNED";
-      setParams((p) => { p.set("view", key === "mail" ? "all" : key); p.set("category", code); p.delete("channel"); p.delete("tagId"); p.delete("page"); return p; });
+      const code = key === "mail" ? "EMAIL" : key === "sms" ? "SMS" : key === "whatsapp" ? "WHATSAPP" : key === "ticket" ? "TICKET" : key === "all" ? "ALL" : key === "mine" ? "MINE" : "UNASSIGNED";
+      setParams((p) => { p.set("view", ["mail", "sms", "whatsapp", "ticket"].includes(key) ? "all" : key); p.set("category", code); p.delete("channel"); p.delete("tagId"); p.delete("page"); return p; });
       return;
     }
     const tag = tagsQuery.data?.data.find((item) => item.id === custom.tagId);
@@ -312,12 +312,12 @@ export function TicketList() {
             ? [["all", "Tüm talepler"]]
             : tabOrder.filter((key) => {
               const custom = customTabs.find((tab) => tab.id === key);
-              return tabEnabled[key] !== false && (Boolean(defaultTabLabels[key]) || Boolean(custom));
+              return Boolean(defaultTabLabels[key]) || (tabEnabled[key] !== false && Boolean(custom));
             }).map((key) => defaultTabLabels[key] ? [key, tabLabels[key]] as [string, string] : [key, customTabs.find((tab) => tab.id === key)?.label ?? key] as [string, string])
           ).map(([value, label]) => (
             <button
               key={value}
-              className={(customTabs.some((tab) => tab.id === value) ? params.get("category") === tagsQuery.data?.data.find((tag) => tag.id === customTabs.find((tab) => tab.id === value)?.tagId)?.code : value === "mail" ? params.get("category") === "EMAIL" : view === value && !params.get("tagId") && (value === "all" ? !params.get("category") || params.get("category") === "ALL" : params.get("category") === value.toUpperCase())) ? "active" : ""}
+              className={(customTabs.some((tab) => tab.id === value) ? params.get("category") === tagsQuery.data?.data.find((tag) => tag.id === customTabs.find((tab) => tab.id === value)?.tagId)?.code : ["mail", "sms", "whatsapp", "ticket"].includes(value) ? params.get("category") === ({ mail: "EMAIL", sms: "SMS", whatsapp: "WHATSAPP", ticket: "TICKET" } as Record<string, string>)[value] : view === value && !params.get("tagId") && (value === "all" ? !params.get("category") || params.get("category") === "ALL" : params.get("category") === value.toUpperCase())) ? "active" : ""}
               onClick={() => selectView(value)}
             >
               {label}
@@ -412,8 +412,8 @@ export function TicketList() {
               </thead>
               <tbody>
                 {query.data.data.map((ticket) => (
-                  <tr key={ticket.id}>
-                    <td>
+                  <tr key={ticket.id} className="inbox-ticket-row">
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`#TK-${String(ticket.number).padStart(5, "0")} ${ticket.subject}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <Link
                         className="ticket-title"
                         to={conversationPath(user!.role, ticket.id)}
@@ -427,26 +427,26 @@ export function TicketList() {
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
-                    <td>
-                      <span className="management-pill">{channels[ticket.channel]}</span>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${ticket.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                      <span className="management-pill">{ticket.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[ticket.channel]}</span>
                     </td>
-                    <td><Badge status={ticket.status} />
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
                     </td>
-                    <td>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Öncelik: ${priorities[ticket.priority]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <span className={`priority priority-${ticket.priority}`}>
                         ●
                       </span>{" "}
                       {priorities[ticket.priority]}
                     </td>
-                    <td>{ticket.department.name}</td>
-                    <td>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Departman: ${ticket.department.name}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{ticket.department.name}</td>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Atanan: ${ticket.assignedAgent?.name ?? "Atanmamış"}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       {ticket.assignedAgent ? <>{ticket.assignedAgent.name} <small>({ticket.assignedAgentMessageCount ?? 0})</small></> : (
                         <span className="muted">Atanmamış</span>
                       )}
                     </td>
-                    <td className="muted">{date(ticket.createdAt)}</td>
-                    <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
-                    <td className="muted">{date(ticket.updatedAt)}</td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}</td>
+                    <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -766,7 +766,7 @@ export function TicketDetail() {
         </div>
         <div className="ticket-status-cluster">
           <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
-          <span className="management-pill">{channels[t.channel]}</span>
+          <span className="management-pill">{t.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[t.channel]}</span>
           <Badge status={t.status} />
         </div>
       </div>

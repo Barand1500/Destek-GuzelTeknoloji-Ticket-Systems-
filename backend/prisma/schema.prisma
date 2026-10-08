@@ -115,6 +115,7 @@ model Conversation {
   websiteId String?
   website Website? @relation(fields: [websiteId], references: [id], onDelete: SetNull)
   channel ConversationChannel @default(TICKET)
+  source String @default("TICKET")
   searchSubject String
   customerId String
   customer User @relation("CustomerConversations", fields: [customerId], references: [id])
@@ -315,6 +316,7 @@ model SystemSettings {
   supportPhone String @default("")
   allowRegistration Boolean @default(true)
   presenceIdleMinutes Int @default(5)
+  roleTemplates Json?
 }
 model ResponseTimeSettings {
   id String @id @default("default")

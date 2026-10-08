@@ -2913,6 +2913,22 @@ td {
   font-size: 12px;
   font-weight: 600;
 }
+.inbox-clickable-cell {
+  cursor: pointer;
+}
+.inbox-clickable-cell:focus-visible {
+  outline: 2px solid var(--ui-accent, #14816b);
+  outline-offset: -3px;
+}
+.inbox-ticket-row > td {
+  transition: background-color 140ms ease;
+}
+.inbox-ticket-row:hover > td {
+  background-color: #edf5ef;
+}
+html[data-theme="dark"] .inbox-ticket-row:hover > td {
+  background-color: #263a31;
+}
 .ticket-title:hover {
   color: #1f8057;
 }
@@ -3290,6 +3306,22 @@ html[data-theme="dark"] .stat-card-link:hover { border-color: var(--ui-tab-indic
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+}
+html[data-theme="dark"] .conversation-navigation .back-link {
+  color: #b8d0c5;
+}
+html[data-theme="dark"] .conversation-navigation .back-link:hover {
+  color: #8dd0b8;
+}
+html[data-theme="dark"] .ticket-properties .ticket-actions > .danger-icon {
+  color: #ffb5ad;
+  border-color: #744b45;
+  background: #382725;
+}
+html[data-theme="dark"] .ticket-properties .ticket-actions > .danger-icon:hover {
+  color: #ffd8d3;
+  border-color: #bd7067;
+  background: #51302b;
 }
 .conversation-log-panel {
   width: 100%;
@@ -5053,6 +5085,12 @@ html[data-theme="dark"] .attachment-preview-modal header {
 html[data-theme="dark"] .attachment-preview-modal header strong {
   color: #e5eee9;
 }
+html[data-theme="dark"] .attachment-preview-modal header .attachment-preview-name {
+  color: #e5eee9;
+}
+html[data-theme="dark"] .attachment-preview-modal header .attachment-preview-name:hover {
+  color: #9cddc7;
+}
 html[data-theme="dark"] .attachment-preview-modal header button:hover {
   background: #284238;
   color: #9cddc7;
@@ -5222,7 +5260,6 @@ html[data-theme="dark"] .notification-popover-empty {
   font-weight: 650;
   font-size: 11px;
   white-space: nowrap;
-  background: transparent !important;
 }
 .ticket-response.response-fast {
   color: #16715d;

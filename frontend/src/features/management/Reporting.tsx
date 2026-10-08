@@ -30,7 +30,7 @@ export function ActivityLogsPage() {
         description="Sistemdeki değişiklikleri ve işlemi yapan kullanıcıları inceleyin."
       />
       <section className="management-panel">
-        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem geçmişinde ara" />
+        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem geçmişinde ara" placeholder="Kullanıcı, işlem veya açıklamada ara..." />
         <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
           <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem geçmişini sil</span><ChevronDown size={15} /></button>
           {deleteMenuOpen && <div className="notification-delete-menu" role="menu">{Object.entries(deleteLabels).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setDeletePeriod(period as "day" | "week" | "month" | "all"); setDeleteMenuOpen(false); }}>{label}</button>)}</div>}

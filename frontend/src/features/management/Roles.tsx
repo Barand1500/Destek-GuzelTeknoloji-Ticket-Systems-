@@ -9,7 +9,7 @@ import './roles.css';
 
 type Group = { id: string; name: string; actions: Record<string, string> };
 type RoleDefinition = { id: string; name: string; description: string; permissions: string[]; scope: string; users?: { id: string; name: string }[]; _count?: { users: number } };
-type Catalog = { data: RoleDefinition[]; groups: Group[]; templates: { id: string; permissions: string[]; scope: string }[] };
+type Catalog = { data: RoleDefinition[]; groups: Group[]; templates: { id: string; name: string; description: string; permissions: string[]; scope: string }[] };
 const labels: Record<string,string> = { ADMIN: 'Sistem yöneticisi', SUPERVISOR: 'Departman sorumlusu', AGENT: 'Destek uzmanı' };
 const empty = (): RoleDefinition => ({ id: '', name: '', description: '', permissions: [], scope: 'DEPARTMENT' });
 const scopeLabels: Record<string, string> = { OWN: 'Kendisine atanan', DEPARTMENT: 'Bağlı departmanlar', ALL: 'Tüm departmanlar' };
@@ -20,15 +20,17 @@ export function RolesPage() {
   const client = useQueryClient();
   const catalog = useQuery({ queryKey: ['/roles'], queryFn: async () => (await api.get<Catalog>('/roles')).data });
   const [draft, setDraft] = useState<RoleDefinition | null>(null);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [groupId, setGroupId] = useState('conversations');
   const [deleteTarget, setDeleteTarget] = useState<RoleDefinition | null>(null);
   const invalidate = () => { void client.invalidateQueries({ queryKey: ['/roles'] }); void client.invalidateQueries({ queryKey: ['/role-options'] }); };
   const save = useMutation({
     mutationFn: async (role: RoleDefinition) => {
       const data = { name: role.name, description: role.description, permissions: role.permissions, scope: role.scope };
+      if (editingTemplateId) return api.put(`/roles/templates/${editingTemplateId}`, { name: role.name, description: role.description, permissions: role.permissions, scope: role.scope });
       return role.id ? api.patch(`/roles/${role.id}`, data) : api.post('/roles', data);
     },
-    onSuccess: () => { invalidate(); setDraft(null); },
+    onSuccess: () => { invalidate(); setDraft(null); setEditingTemplateId(null); },
   });
   const remove = useMutation({ mutationFn: (id: string) => api.delete(`/roles/${id}`), onSuccess: () => { invalidate(); setDeleteTarget(null); } });
   const groups = catalog.data?.groups ?? [];
@@ -37,7 +39,7 @@ export function RolesPage() {
   const selectedActions = draft?.permissions.filter(key => !key.endsWith('.view')).length ?? 0;
   const groupKeys = group ? Object.keys(group.actions).map(action => `${group.id}.${action}`) : [];
   const allSelected = groupKeys.length > 0 && groupKeys.every(key => draft?.permissions.includes(key));
-  const openEditor = (role: RoleDefinition) => { save.reset(); setGroupId('conversations'); setDraft({ ...role, permissions: [...role.permissions] }); window.scrollTo({ top: 0, behavior: 'instant' }); };
+  const openEditor = (role: RoleDefinition) => { save.reset(); setEditingTemplateId(null); setGroupId('conversations'); setDraft({ ...role, permissions: [...role.permissions] }); window.scrollTo({ top: 0, behavior: 'instant' }); };
   const toggle = (key: string, enabled: boolean) => {
     if (!draft) return;
     const resource = key.split('.')[0];
@@ -51,9 +53,14 @@ export function RolesPage() {
     const template = catalog.data?.templates.find(item => item.id === templateId);
     openEditor({ ...empty(), permissions: template?.permissions ?? [], scope: template?.scope ?? 'DEPARTMENT' });
   };
+  const editTemplate = (template: Catalog['templates'][number]) => {
+    save.reset(); setEditingTemplateId(template.id); setGroupId('conversations');
+    setDraft({ ...empty(), name: template.name, description: template.description, permissions: [...template.permissions], scope: template.scope });
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
   return <main className="page roles-page">
-    {draft && <button className="roles-back" type="button" disabled={save.isPending} onClick={() => setDraft(null)}><ArrowLeft size={15}/>Rollere dön</button>}
-    <Heading title={draft ? (draft.id ? 'Rolü düzenle' : 'Yeni rol oluştur') : 'Roller'} description={draft ? 'Rolün hangi ekranlara erişeceğini ve hangi işlemleri yapabileceğini belirleyin.' : 'Ekibinizin erişimlerini tek yerden yönetin. Her role ihtiyacı olan yetkileri verin.'}>
+    {draft && <button className="roles-back" type="button" disabled={save.isPending} onClick={() => { setDraft(null); setEditingTemplateId(null); }}><ArrowLeft size={15}/>Rollere dön</button>}
+    <Heading title={draft ? (editingTemplateId ? `${labels[editingTemplateId]} şablonunu düzenle` : draft.id ? 'Rolü düzenle' : 'Yeni rol oluştur') : 'Roller'} description={draft ? editingTemplateId ? 'Şablon izinlerini kaydedin. Bu değişiklik bundan sonra şablondan oluşturulan rollerde kullanılır.' : 'Rolün hangi ekranlara erişeceğini ve hangi işlemleri yapabileceğini belirleyin.' : 'Ekibinizin erişimlerini tek yerden yönetin. Her role ihtiyacı olan yetkileri verin.'}>
       {!draft && <button className="button primary" disabled={!catalog.data} onClick={() => start()}><Plus size={16}/>Rol oluştur</button>}
     </Heading>
     <ErrorMessage error={catalog.error}/>
@@ -63,9 +70,9 @@ export function RolesPage() {
       {catalog.data?.templates.map(template => {
         const Icon = template.id === 'ADMIN' ? ShieldCheck : template.id === 'SUPERVISOR' ? Building2 : Headphones;
         return <article className="roles-template" key={template.id}>
-        <div className="roles-template-top"><span className="roles-icon-tile"><Icon size={21}/></span><span className="roles-badge">{template.id === 'ADMIN' ? <><LockKeyhole size={11}/>Korunan rol</> : 'Başlangıç şablonu'}</span></div><h3>{labels[template.id]}</h3>
-        <p>{template.id === 'ADMIN' ? 'Tüm ekran ve işlemlere erişim sağlayan korunan sistem rolü.' : template.id === 'SUPERVISOR' ? 'Departman taleplerini ve ekibin iş akışını yöneten başlangıç rolü.' : 'Talepleri takip eden ve müşterilere yanıt veren başlangıç rolü.'}</p>
-        <button className="roles-template-action" onClick={() => start(template.id)}><Copy size={14}/>Şablondan oluştur<ArrowUpRight size={15}/></button>
+        <div className="roles-template-top"><span className="roles-icon-tile"><Icon size={21}/></span><span className="roles-badge">{template.id === 'ADMIN' ? <><LockKeyhole size={11}/>Korunan rol</> : 'Başlangıç şablonu'}</span></div><h3>{template.name}</h3>
+        <p>{template.description}</p>
+        <div className="roles-template-actions"><button className="roles-template-action" onClick={() => start(template.id)}><Copy size={14}/>Şablondan oluştur<ArrowUpRight size={15}/></button><button className="icon-button" type="button" title={`${labels[template.id]} şablonunu düzenle`} aria-label={`${labels[template.id]} şablonunu düzenle`} onClick={() => editTemplate(template)}><Pencil size={15}/></button></div>
       </article>; })}
     </section>
     <section className="roles-list" aria-label="Özel roller">
@@ -86,7 +93,7 @@ export function RolesPage() {
       <fieldset className="roles-editor-fields" disabled={save.isPending}>
       <section className="roles-details"><div className="roles-panel-heading"><span className="roles-row-icon"><Shield size={18}/></span><div><h2>Rol bilgileri</h2><p>Personel seçiminde görünecek ad ve talep kapsamı.</p></div></div>
       <div className="roles-basics">
-        <label><span className="field-label">Rol adı</span><input autoFocus value={draft.name} placeholder="Örn. Kıdemli destek" onChange={e => setDraft({ ...draft, name: e.target.value })} required minLength={2} maxLength={80}/></label>
+        <label><span className="field-label">{editingTemplateId ? 'Şablon adı' : 'Rol adı'}</span><input autoFocus value={draft.name} placeholder="Örn. Kıdemli destek" onChange={e => setDraft({ ...draft, name: e.target.value })} required minLength={2} maxLength={80}/></label>
         <label><span className="field-label">Açıklama</span><input value={draft.description} placeholder="Bu rolün sorumluluğu" onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={500}/></label>
         <DropdownSelect label="Talep kapsamı" ariaLabel="Talep kapsamı" value={draft.scope} onChange={scope => setDraft({ ...draft, scope })} options={[{ value: 'OWN', label: 'Kendisine atanan talepler' }, { value: 'DEPARTMENT', label: 'Bağlı olduğu departmanlar' }, { value: 'ALL', label: 'Tüm departmanlar' }]}/>
       </div></section>
@@ -103,7 +110,7 @@ export function RolesPage() {
         })}</div><div className="roles-permission-note"><Info size={15}/><p>İşlem izni seçildiğinde ekran erişimi de açılır. Ekran erişimini kapatınca bu ekranın işlem izinleri kaldırılır.</p></div></div>
       </section></fieldset>
       <ErrorMessage error={save.error}/>
-      <div className="roles-editor-footer"><div className="roles-selection-summary"><ShieldCheck size={18}/><span><strong>{selectedScreens} ekran</strong> · {selectedActions} işlem izni<small>Değişiklikler kaydedildiğinde bağlı personellere uygulanır.</small></span></div><div className="roles-footer-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={() => setDraft(null)}>Vazgeç</button><button className="button primary" disabled={save.isPending}><Save size={15}/>{save.isPending ? 'Kaydediliyor…' : 'Rolü kaydet'}</button></div></div>
+      <div className="roles-editor-footer"><div className="roles-selection-summary"><ShieldCheck size={18}/><span><strong>{selectedScreens} ekran</strong> · {selectedActions} işlem izni<small>{editingTemplateId ? 'Bu şablondan sonra oluşturulacak rollerde kullanılır.' : 'Değişiklikler kaydedildiğinde bağlı personellere uygulanır.'}</small></span></div><div className="roles-footer-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={() => { setDraft(null); setEditingTemplateId(null); }}>Vazgeç</button><button className="button primary" disabled={save.isPending}><Save size={15}/>{save.isPending ? 'Kaydediliyor…' : editingTemplateId ? 'Şablonu kaydet' : 'Rolü kaydet'}</button></div></div>
     </form>}
     {deleteTarget && <DeleteModal title="Rolü sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id)} error={<ErrorMessage error={remove.error}/>}><p>{deleteTarget.name} rolü silinecek. Kullanılan rolleri silmeden önce bağlı personellere başka rol atayın.</p></DeleteModal>}
   </main>;

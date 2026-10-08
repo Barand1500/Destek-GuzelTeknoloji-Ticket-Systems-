@@ -1399,6 +1399,69 @@ export async function activityLogs(
   q: z.infer<typeof schema.activityQuery>,
 ) {
   requireAdmin(actor);
+  const ticketPrefix = q.search?.match(/^(?:#\s*)?TK-?(\d{0,10})$/i);
+  const ticketNumberPrefix = ticketPrefix?.[1] ?? "";
+  const searchNumber = ticketPrefix
+    ? ticketNumberPrefix.length === 0
+      ? { gte: 1 }
+      : ticketNumberPrefix.length < 5 && ticketNumberPrefix.startsWith("0")
+        ? {
+            gte: Number(ticketNumberPrefix.padEnd(5, "0")),
+            lte: Number(ticketNumberPrefix.padEnd(5, "9")),
+          }
+        : Number(ticketNumberPrefix)
+    : undefined;
+  const resolvedSearchNumber = searchNumber ?? (q.search && /^\d{1,10}$/.test(q.search)
+      ? Number(q.search)
+      : undefined);
+  const matchingConversationIds = q.search
+    ? (await db.conversation.findMany({
+        where: {
+          OR: [
+            { subject: { contains: q.search } },
+            ...(resolvedSearchNumber !== undefined ? [{ number: resolvedSearchNumber }] : []),
+          ],
+        },
+        select: { id: true },
+      })).map((conversation) => conversation.id)
+    : [];
+  const searchableActionLabels: Record<string, string> = {
+    "website.created": "Proje oluşturuldu",
+    "website.updated": "Proje güncellendi",
+    "website.deleted": "Proje silindi",
+    "project_guide.files_uploaded": "Proje rehberine dosya eklendi",
+    "project_guide.file_deleted": "Proje rehberi dosyası silindi",
+    "integrations.updated": "Entegrasyon ayarları güncellendi",
+    "conversation.created": "Talep oluşturuldu",
+    "conversation.updated": "Talep bilgileri güncellendi",
+    "conversation.email_received": "E-posta alındı",
+    "conversation.email_sent": "E-posta gönderildi",
+    "conversation.email_failed": "E-posta gönderilemedi",
+    "conversation.replied": "Talebe yanıt verildi",
+    "conversation.deleted": "Talep silindi",
+    "customer.created": "Müşteri oluşturuldu",
+    "customer.updated": "Müşteri güncellendi",
+    "customer.deleted": "Müşteri silindi",
+    "user.created": "Kullanıcı oluşturuldu",
+    "user.updated": "Kullanıcı güncellendi",
+    "user.deleted": "Kullanıcı silindi",
+    "department.created": "Departman oluşturuldu",
+    "department.updated": "Departman güncellendi",
+    "department.deleted": "Departman silindi",
+    "tag.created": "Etiket oluşturuldu",
+    "tag.updated": "Etiket güncellendi",
+    "tag.deleted": "Etiket silindi",
+  };
+  const normalizedSearch = q.search?.toLocaleLowerCase("tr-TR");
+  const matchingActions = normalizedSearch
+    ? Object.entries(searchableActionLabels)
+        .filter(([, label]) => label.toLocaleLowerCase("tr-TR").includes(normalizedSearch))
+        .map(([action]) => action)
+    : [];
+  const searchableMetadataFields = [
+    "name", "title", "subject", "code", "phone", "email", "company",
+    "originalName", "recipient", "reason", "senderEmail", "channel",
+  ];
   const where: Prisma.ActivityLogWhereInput = {
     userId: q.userId,
     ...(q.action ? { action: { contains: q.action } } : {}),
@@ -1406,8 +1469,11 @@ export async function activityLogs(
       ? {
           OR: [
             { action: { contains: q.search } },
+            ...(matchingActions.length ? [{ action: { in: matchingActions } }] : []),
             { user: { name: { contains: q.search } } },
             { user: { email: { contains: q.search } } },
+            ...searchableMetadataFields.map((field) => ({ metadata: { path: `$.${field}`, string_contains: q.search! } })),
+            ...(matchingConversationIds.length ? [{ entityId: { in: matchingConversationIds } }] : []),
           ],
         }
       : {}),
@@ -1431,7 +1497,7 @@ export async function activityLogs(
   const conversationIds = [
     ...new Set(
       rawData
-        .filter((log) => log.entityType === "Conversation" && log.entityId)
+        .filter((log) => (log.entityType === "Conversation" || log.action.startsWith("conversation.")) && log.entityId)
         .map((log) => log.entityId!),
     ),
   ];
@@ -1582,6 +1648,10 @@ export async function updateIntegrationSettings(
   requireAdmin(actor);
   const { emailNotifications, ...integrationInput } = input;
   return db.$transaction(async (tx) => {
+    const previousSettings = await tx.integrationSettings.findUnique({ where: { id: "default" } });
+    const previousNotifications = emailNotifications
+      ? await tx.notificationSettings.findUnique({ where: { id: "default" } })
+      : null;
     for (const departmentId of [
       input.imapDepartmentId,
       input.smsDepartmentId,
@@ -1611,6 +1681,44 @@ export async function updateIntegrationSettings(
         update: emailNotifications,
       });
     }
+    const settingLabels: Record<string, string> = {
+      responseFastMinutes: "Hızlı yanıt süresi", responseNormalMinutes: "Normal yanıt süresi",
+      responseFastColor: "Hızlı yanıt rengi", responseNormalColor: "Normal yanıt rengi", responseLateColor: "Gecikmiş yanıt rengi",
+      responseFastFromMinutes: "Hızlı yanıt aralığı başlangıcı", responseFastToMinutes: "Hızlı yanıt aralığı bitişi",
+      responseNormalFromMinutes: "Normal yanıt aralığı başlangıcı", responseNormalToMinutes: "Normal yanıt aralığı bitişi",
+      responseLateFromMinutes: "Gecikmiş yanıt aralığı başlangıcı", responseLateToMinutes: "Gecikmiş yanıt aralığı bitişi",
+      smtpEnabled: "SMTP etkinliği", smtpHost: "SMTP sunucusu", smtpPort: "SMTP portu", smtpSecure: "SMTP güvenli bağlantısı",
+      smtpUser: "SMTP kullanıcı adı", smtpPassword: "SMTP parolası", smtpFromAddress: "Gönderen e-posta adresi", smtpFromName: "Gönderen adı",
+      imapEnabled: "IMAP etkinliği", imapConnectionName: "IMAP bağlantı adı", imapHost: "IMAP sunucusu", imapPort: "IMAP portu",
+      imapSecure: "IMAP güvenli bağlantısı", imapAuthType: "IMAP kimlik doğrulama türü", imapUser: "IMAP kullanıcı adı",
+      imapPassword: "IMAP parolası", imapMailbox: "IMAP posta kutusu", imapPollIntervalSeconds: "E-posta kontrol aralığı",
+      imapCreateTickets: "E-postadan talep oluşturma", imapCreateReplies: "E-postayı yanıta ekleme", imapDepartmentId: "E-posta departmanı",
+      smsEnabled: "SMS etkinliği", smsApiUser: "SMS API kullanıcı adı", smsApiPassword: "SMS API parolası", smsSender: "SMS gönderici başlığı",
+      smsVirtualNumber: "SMS sanal numarası", smsWebhookSecret: "SMS webhook anahtarı", smsDepartmentId: "SMS departmanı",
+      whatsappEnabled: "WhatsApp etkinliği", whatsappAppId: "WhatsApp uygulama kimliği", whatsappAppSecret: "WhatsApp uygulama anahtarı",
+      whatsappPhoneNumberId: "WhatsApp telefon numarası kimliği", whatsappAccessToken: "WhatsApp erişim anahtarı",
+      whatsappVerifyToken: "WhatsApp doğrulama anahtarı", whatsappDepartmentId: "WhatsApp departmanı",
+    };
+    const changedDetails: string[] = [];
+    for (const [key, value] of Object.entries(integrationInput)) {
+      const oldValue = previousSettings?.[key as keyof typeof previousSettings];
+      if (oldValue === value) continue;
+      const label = settingLabels[key] ?? key;
+      if (/password|secret|token/i.test(key)) changedDetails.push(`${label} güncellendi`);
+      else if (key.endsWith("DepartmentId")) changedDetails.push(`${label} değiştirildi`);
+      else if (typeof value === "boolean") changedDetails.push(`${label}: ${value ? "Etkin" : "Devre dışı"}`);
+      else changedDetails.push(`${label}: ${value === "" || value === null ? "Boş" : String(value)}`);
+    }
+    if (emailNotifications) {
+      const notificationLabels: Record<string, string> = {
+        ticketCreatedSubject: "Yeni talep e-posta konusu", ticketCreatedBody: "Yeni talep e-posta içeriği",
+        ticketReplySubject: "Yanıt e-posta konusu", ticketReplyBody: "Yanıt e-posta içeriği",
+      };
+      for (const [key, value] of Object.entries(emailNotifications)) {
+        if (previousNotifications?.[key as keyof typeof previousNotifications] !== value)
+          changedDetails.push(`${notificationLabels[key]} güncellendi`);
+      }
+    }
     await audit(
       tx,
       actor,
@@ -1618,10 +1726,7 @@ export async function updateIntegrationSettings(
       "IntegrationSettings",
       "default",
       {
-        smtpEnabled: input.smtpEnabled,
-        imapEnabled: input.imapEnabled,
-        smsEnabled: input.smsEnabled,
-        whatsappEnabled: input.whatsappEnabled,
+        details: changedDetails.length ? changedDetails : ["Ayarlar kaydedildi; değerlerde değişiklik yok."],
       },
     );
     return data;
