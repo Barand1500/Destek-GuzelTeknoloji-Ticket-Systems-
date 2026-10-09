@@ -4,10 +4,18 @@ import { randomBytes, createHash } from "node:crypto";
 import { db } from "../config/db.js";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/errors.js";
+import { builtInStaffTemplate } from './role-templates.js';
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 const newRefresh = () => randomBytes(48).toString("base64url");
 const publicUser = { id: true, name: true, email: true, role: true, accessRole: { select: { id: true, name: true, permissions: true, scope: true } } } as const;
+async function withRuntimePermissions<T extends { role: string; accessRole?: unknown }>(user: T) {
+  if (!user.accessRole && (user.role === 'SUPERVISOR' || user.role === 'AGENT')) {
+    const template = await builtInStaffTemplate(user.role);
+    return { ...user, rolePermissions: template.permissions, roleScope: template.scope };
+  }
+  return user;
+}
 function access(userId: string, sessionId: string) {
   return jwt.sign({ sid: sessionId }, env.JWT_ACCESS_SECRET, {
     subject: userId,
@@ -30,7 +38,7 @@ async function issue(userId: string) {
     where: { id: userId },
     select: publicUser,
   });
-  return { refreshToken, accessToken: access(userId, session.id), user };
+  return { refreshToken, accessToken: access(userId, session.id), user: await withRuntimePermissions(user) };
 }
 export async function register(input: {
   name: string;
@@ -94,7 +102,7 @@ export async function refresh(token: string) {
     select: {...publicUser,isActive:true},
   });
   if(!user.isActive) throw new AppError(401,'UNAUTHENTICATED','Hesap pasif.');
-  return { refreshToken, accessToken: access(user.id, session.id), user };
+  return { refreshToken, accessToken: access(user.id, session.id), user: await withRuntimePermissions(user) };
 }
 export async function logout(token: string | undefined) {
   if (token)

@@ -19,6 +19,7 @@ import { uploadRoot, type StoredUpload } from "./uploads.service.js";
 import { queueSupportEmail } from "./mailer.service.js";
 import type * as schema from "../validators/management.js";
 import { rankStaff } from './skill-matching.js';
+import { can, permissionScope } from './permissions.js';
 
 type Page = { page: number; limit: number };
 const pagination = (q: Page, total: number) => ({
@@ -67,6 +68,28 @@ const requireAdmin = (actor: Actor) => {
       "Bu işlem için yönetici yetkisi gerekiyor.",
     );
 };
+const requireUserPermission = (actor: Actor, action: 'view' | 'create' | 'update' | 'delete') => {
+  if (!can(actor, `users.${action}`)) throw new AppError(403, 'FORBIDDEN', 'Personel ekranı için gerekli rol izniniz yok.');
+};
+function staffDirectoryScope(actor: Actor): Prisma.UserWhereInput {
+  const scope = permissionScope(actor);
+  if (scope === 'ALL') return {};
+  if (scope === 'OWN') return { id: actor.id };
+  return { departments: { some: { departmentId: { in: actor.departmentIds } } } };
+}
+function assertStaffInScope(actor: Actor, target: { id: string; departments?: Array<{ departmentId: string }> }) {
+  const scope = permissionScope(actor);
+  if (scope === 'ALL') return;
+  if (scope === 'OWN' && target.id === actor.id) return;
+  if (scope === 'DEPARTMENT' && target.departments?.some((department) => actor.departmentIds.includes(department.departmentId))) return;
+  throw new AppError(403, 'FORBIDDEN', 'Bu personel departman kapsamınızda değil.');
+}
+function assertDepartmentsInScope(actor: Actor, departmentIds: string[]) {
+  const scope = permissionScope(actor);
+  if (scope === 'ALL') return;
+  if (scope === 'DEPARTMENT' && departmentIds.every((id) => actor.departmentIds.includes(id))) return;
+  throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
+}
 const notFound = () => new AppError(404, "NOT_FOUND", "Kayıt bulunamadı.");
 const normalizeCustomerName = (value: string) =>
   value.trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
@@ -113,7 +136,7 @@ export async function users(
   customersOnly = false,
 ) {
   if (customersOnly) requireStaff(actor);
-  else requireAdmin(actor);
+  else requireUserPermission(actor, 'view');
   let phoneDigits = q.search?.replace(/\D/g, "") ?? "";
   if (phoneDigits && phoneDigits[0] !== "0" && !phoneDigits.startsWith("90"))
     phoneDigits = `0${phoneDigits}`;
@@ -160,6 +183,7 @@ export async function users(
       : (q.role ?? { in: ["ADMIN", "SUPERVISOR", "AGENT"] }),
     isActive: customersOnly ? undefined : q.isActive,
     deletedAt: null,
+    ...(!customersOnly ? staffDirectoryScope(actor) : {}),
     ...(q.search
       ? {
           OR: [
@@ -201,9 +225,12 @@ export async function users(
         orderBy: [{ name: "asc" }, { id: "asc" }],
         ...paging(q),
       });
+  const data = !customersOnly && permissionScope(actor) !== 'ALL'
+    ? result.map((member) => ({ ...member, departments: member.departments.filter((department) => actor.departmentIds.includes(department.departmentId)) }))
+    : result;
   const total = await db.user.count({ where });
   return {
-    data: result,
+    data,
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }
@@ -235,15 +262,16 @@ export async function createUser(
   actor: Actor,
   input: z.infer<typeof schema.createUserSchema>,
 ) {
-  requireAdmin(actor);
+  requireUserPermission(actor, 'create');
   const { password, departmentIds, skills, ...rest } = input;
   const passwordHash = await bcrypt.hash(password, 12);
   return serial(async (tx) => {
     await validateDepartments(tx, departmentIds, rest.role);
+    assertDepartmentsInScope(actor, departmentIds);
+    if (actor.role !== 'ADMIN' && rest.role === 'ADMIN' && !rest.accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi hesabi olusturamazsiniz.');
     if (rest.accessRoleId && !await tx.accessRole.findUnique({ where: { id: rest.accessRoleId } })) throw notFound();
     if (rest.accessRoleId && rest.role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (!rest.accessRoleId || rest.accessRoleId !== actor.accessRole.id)) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzde personel oluşturabilirsiniz.');
-    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && departmentIds.some(id => !actor.departmentIds.includes(id))) throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
     const data = await tx.user.create({
       data: {
         ...rest,
@@ -518,12 +546,40 @@ export async function deleteCustomer(actor: Actor, id: string) {
     return data;
   });
 }
+export async function userAssignmentImpact(
+  actor: Actor,
+  id: string,
+  target: z.infer<typeof schema.userAssignmentImpactQuery>,
+) {
+  if (!can(actor, 'users.update') && !can(actor, 'users.delete')) throw new AppError(403, 'FORBIDDEN', 'Personel atama bilgilerini görme yetkiniz yok.');
+  const current = await db.user.findFirst({ where: { id, deletedAt: null }, select: { id: true, departments: { select: { departmentId: true } } } });
+  if (!current) throw notFound();
+  assertStaffInScope(actor, current);
+  const effectiveDepartmentIds = permissionScope(actor) === 'DEPARTMENT'
+    ? [...new Set([...target.departmentIds, ...current.departments.map((department) => department.departmentId).filter((departmentId) => !actor.departmentIds.includes(departmentId))])]
+    : target.departmentIds;
+  const isEligibleStaff = !target.forDeletion && target.isActive && (Boolean(target.accessRoleId) || ["AGENT", "SUPERVISOR"].includes(target.role));
+  const assigned = await db.conversation.findMany({
+    where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+    select: {
+      id: true, number: true, subject: true, status: true, priority: true, createdAt: true,
+      departmentId: true,
+      department: { select: { name: true } },
+      customer: { select: { name: true } },
+    },
+    orderBy: [{ createdAt: "asc" }, { number: "asc" }],
+  });
+  if (permissionScope(actor) !== 'ALL' && assigned.some((conversation) => !actor.departmentIds.includes(conversation.departmentId)))
+    throw new AppError(403, 'FORBIDDEN', 'Bu personelin kapsamınız dışındaki departmanlarda da açık atamaları var. Sistem yöneticisinden destek alın.');
+  return assigned.filter((conversation) => !isEligibleStaff || !effectiveDepartmentIds.includes(conversation.departmentId));
+}
+
 export async function updateUser(
   actor: Actor,
   id: string,
   input: z.infer<typeof schema.updateUserSchema>,
 ) {
-  requireAdmin(actor);
+  requireUserPermission(actor, 'update');
   if (
     id === actor.id &&
     (input.isActive === false || (input.role && input.role !== "ADMIN"))
@@ -533,23 +589,29 @@ export async function updateUser(
       "SELF_PROTECTION",
       "Kendi yönetici yetkinizi kaldıramaz veya hesabınızı kapatamazsınız.",
     );
-  const { password, departmentIds, skills, ...rest } = input;
+  const { password, departmentIds, skills, assignmentTransfers, ...rest } = input;
   const passwordHash = password ? await bcrypt.hash(password, 12) : undefined;
-  return serial(async (tx) => {
+  const result = await serial(async (tx) => {
     const current = await tx.user.findFirst({
       where: { id, deletedAt: null },
       include: { departments: true },
     });
     if (!current) throw notFound();
+    assertStaffInScope(actor, current);
     const role = input.role ?? current.role;
     const accessRoleId = input.accessRoleId !== undefined ? input.accessRoleId : current.accessRoleId;
     if (accessRoleId && !await tx.accessRole.findUnique({ where: { id: accessRoleId } })) throw notFound();
+    if (actor.role !== 'ADMIN' && role === 'ADMIN' && !accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi rolu atayamazsiniz.');
     if (accessRoleId && role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (current.accessRoleId !== actor.accessRole.id || (input.role !== undefined && input.role !== current.role) || (input.accessRoleId !== undefined && input.accessRoleId !== current.accessRoleId))) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzdeki personelleri yönetebilirsiniz; rol değiştiremezsiniz.');
     if (actor.id === id && current.role === 'ADMIN' && !current.accessRoleId && accessRoleId) throw new AppError(409, 'SELF_PROTECTION', 'Kendi sistem yöneticisi yetkinizi kaldıramazsınız.');
     const active = input.isActive ?? current.isActive;
-    const ids = departmentIds ?? current.departments.map((d) => d.departmentId);
-    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && departmentIds !== undefined && departmentIds.some(id => !actor.departmentIds.includes(id))) throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
+    const currentDepartmentIds = current.departments.map((d) => d.departmentId);
+    const preservedOutOfScopeDepartmentIds = permissionScope(actor) === 'DEPARTMENT' ? currentDepartmentIds.filter((departmentId) => !actor.departmentIds.includes(departmentId)) : [];
+    if (departmentIds !== undefined && role === 'CUSTOMER' && preservedOutOfScopeDepartmentIds.length) throw new AppError(403, 'FORBIDDEN', 'Başka departmanlarda üyeliği olan personelin rolünü müşteri yapamazsınız.');
+    if (departmentIds !== undefined && permissionScope(actor) !== 'OWN') assertDepartmentsInScope(actor, departmentIds);
+    if (permissionScope(actor) === 'OWN' && departmentIds !== undefined && (departmentIds.some((departmentId) => !currentDepartmentIds.includes(departmentId)) || currentDepartmentIds.some((departmentId) => !departmentIds.includes(departmentId)))) throw new AppError(403, 'FORBIDDEN', 'Kendi departman üyeliklerinizi değiştiremezsiniz.');
+    const ids = departmentIds === undefined ? currentDepartmentIds : [...new Set([...departmentIds, ...preservedOutOfScopeDepartmentIds])];
     if (
       departmentIds !== undefined ||
       input.role !== undefined ||
@@ -563,22 +625,70 @@ export async function updateUser(
       (await tx.user.count({ where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null } })) <= 1
     )
       throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici kaldırılamaz.");
+    const canRemainAssigned = active && (Boolean(accessRoleId) || ["AGENT", "SUPERVISOR"].includes(role));
+    const assignedConversations = await tx.conversation.findMany({
+      where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+      select: { id: true, number: true, departmentId: true, assignedAgentId: true },
+    });
+    const affectedConversations = assignedConversations.filter((conversation) =>
+      !canRemainAssigned || !ids.includes(conversation.departmentId),
+    );
+    const transfers = assignmentTransfers ?? [];
+    const transferredIds = transfers.flatMap((transfer) => transfer.conversationIds);
+    const affectedIds = new Set(affectedConversations.map((conversation) => conversation.id));
     if (
-      await tx.conversation.count({
-        where: {
-          assignedAgentId: id,
-          deletedAt: null,
-          ...(!active || (!accessRoleId && !["AGENT", "SUPERVISOR"].includes(role))
-            ? {}
-            : { departmentId: { notIn: ids } }),
-        },
-      })
+      transferredIds.length !== new Set(transferredIds).size ||
+      transferredIds.length !== affectedIds.size ||
+      transferredIds.some((conversationId) => !affectedIds.has(conversationId))
     )
-      throw new AppError(
-        409,
-        "ASSIGNMENTS_EXIST",
-        "Önce mevcut talep atamalarını uygun bir personele aktarın.",
-      );
+      throw new AppError(409, "ASSIGNMENTS_EXIST", "Kullanıcı değişikliğinden önce etkilenen tüm açık talepleri aktarım gruplarına ekleyin.");
+    const movedConversationIds: string[] = [];
+    for (const transfer of transfers) {
+      if (permissionScope(actor) !== "ALL" && !actor.departmentIds.includes(transfer.departmentId))
+        throw new AppError(403, "FORBIDDEN", "Kapsamınız dışındaki departmanlara talep aktaramazsınız.");
+      const destination = await tx.department.findFirst({ where: { id: transfer.departmentId, isActive: true, deletedAt: null }, select: { id: true } });
+      if (!destination) throw new AppError(400, "INVALID_DEPARTMENT", "Aktarım için aktif bir departman seçin.");
+      const conversations = transfer.conversationIds.map((conversationId) => affectedConversations.find((conversation) => conversation.id === conversationId)!);
+      if (permissionScope(actor) !== "ALL" && conversations.some((conversation) => !actor.departmentIds.includes(conversation.departmentId)))
+        throw new AppError(403, "FORBIDDEN", "Kapsamınız dışındaki departmanlardaki talepleri aktaramazsınız.");
+      const changesDepartment = conversations.some((conversation) => conversation.departmentId !== transfer.departmentId);
+      const changesAssignee = conversations.some((conversation) => conversation.assignedAgentId !== transfer.assignedAgentId);
+      if (changesDepartment && !can(actor, "conversations.transfer"))
+        throw new AppError(403, "FORBIDDEN", "Departmanlar arası aktarım için talep aktarma izni gerekir.");
+      if (changesAssignee && !can(actor, "conversations.assign"))
+        throw new AppError(403, "FORBIDDEN", "Talep atamasını değiştirmek için personel atama izni gerekir.");
+      if (transfer.assignedAgentId === id) {
+        if (!canRemainAssigned || !ids.includes(transfer.departmentId))
+          throw new AppError(400, "INVALID_ASSIGNEE", "Düzenlenen kullanıcı hedef departmanda görev alamaz.");
+      } else if (transfer.assignedAgentId) {
+        const recipient = await tx.user.findFirst({
+          where: {
+            id: transfer.assignedAgentId,
+            isActive: true,
+            deletedAt: null,
+            OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+            departments: { some: { departmentId: transfer.departmentId } },
+          },
+          select: { id: true },
+        });
+        if (!recipient) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel hedef departmanda aktif değil.");
+      }
+      for (const conversation of conversations) {
+        await tx.conversation.update({
+          where: { id: conversation.id },
+          data: { departmentId: transfer.departmentId, assignedAgentId: transfer.assignedAgentId },
+        });
+        await audit(tx, actor, "conversation.updated", "Conversation", conversation.id, {
+          fields: ["departmentId", "assignedAgentId"],
+          previousDepartmentId: conversation.departmentId,
+          departmentId: transfer.departmentId,
+          previousAssigneeId: conversation.assignedAgentId,
+          assignedAgentId: transfer.assignedAgentId,
+          transferredDuringUserUpdate: id,
+        });
+        movedConversationIds.push(conversation.id);
+      }
+    }
     // A customer with conversation history must retain their customer role.
     if (
       current.role === "CUSTOMER" &&
@@ -629,8 +739,10 @@ export async function updateUser(
     await audit(tx, actor, "user.updated", "User", id, {
       fields: Object.keys(input).filter((k) => k !== "password"),
     });
-    return data;
+    return { data, movedConversationIds };
   });
+  for (const conversationId of result.movedConversationIds) publishChange(conversationId);
+  return result.data;
 }
 export async function updateDepartment(
   actor: Actor,
@@ -671,67 +783,60 @@ export async function deleteDepartment(actor: Actor, id: string) {
     return data;
   });
 }
-export async function deleteUser(actor: Actor, id: string) {
-  requireAdmin(actor);
-  if (id === actor.id)
-    throw new AppError(
-      409,
-      "SELF_PROTECTION",
-      "Kendi hesabınızı silemezsiniz.",
-    );
-  return serial(async (tx) => {
-    const current = await tx.user.findFirst({ where: { id, deletedAt: null } });
+export async function deleteUser(actor: Actor, id: string, input: z.infer<typeof schema.deleteUserSchema> = {}) {
+  requireUserPermission(actor, 'delete');
+  if (id === actor.id) throw new AppError(409, "SELF_PROTECTION", "Kendi hesab\u0131n\u0131z\u0131 silemezsiniz.");
+  const result = await serial(async (tx) => {
+    const current = await tx.user.findFirst({ where: { id, deletedAt: null }, include: { departments: true } });
     if (!current) throw notFound();
-    if (actor.accessRole && current.accessRoleId !== actor.accessRole.id) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzdeki personelleri silebilirsiniz.');
-    if (
-      current.role === "ADMIN" && !current.accessRoleId &&
-      current.isActive &&
-      (await tx.user.count({
-        where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null },
-      })) <= 1
-    )
-      throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici silinemez.");
+    assertStaffInScope(actor, current);
+    if (actor.accessRole && current.accessRoleId !== actor.accessRole.id) throw new AppError(403, 'FORBIDDEN', 'Yaln\u0131zca kendi rol\u00fcn\u00fczdeki personelleri silebilirsiniz.');
+    if (current.role === "ADMIN" && !current.accessRoleId && current.isActive && (await tx.user.count({ where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null } })) <= 1)
+      throw new AppError(409, "LAST_ADMIN", "Son aktif y\u00f6netici silinemez.");
     const assigned = await tx.conversation.findMany({
-      where: {
-        assignedAgentId: id,
-        deletedAt: null,
-        status: { notIn: ["RESOLVED", "CLOSED"] },
-      },
-      select: { id: true },
+      where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+      select: { id: true, number: true, departmentId: true },
     });
-    for (const conversation of assigned) {
-      await tx.conversation.update({
-        where: { id: conversation.id },
-        data: { assignedAgentId: null },
-      });
-      await tx.conversationMessage.create({
-        data: {
-          conversationId: conversation.id,
-          authorId: actor.id,
-          type: "SYSTEM",
-          body: `${current.name} silindi; talep departman kuyruğuna alındı.`,
-        },
-      });
-      await audit(
-        tx,
-        actor,
-        "conversation.updated",
-        "Conversation",
-        conversation.id,
-        { assignedAgentId: null },
-      );
+    if (permissionScope(actor) !== 'ALL' && assigned.some((conversation) => !actor.departmentIds.includes(conversation.departmentId)))
+      throw new AppError(403, 'FORBIDDEN', 'Bu personelin kapsamınız dışındaki departmanlarda da açık atamaları var. Sistem yöneticisinden destek alın.');
+    const transfers = input.assignmentTransfers ?? [];
+    const transferredIds = transfers.flatMap((group) => group.conversationIds);
+    const assignedIds = new Set(assigned.map((conversation) => conversation.id));
+    if (transferredIds.length !== new Set(transferredIds).size || transferredIds.length !== assignedIds.size || transferredIds.some((conversationId) => !assignedIds.has(conversationId)))
+      throw new AppError(409, "ASSIGNMENTS_EXIST", "Personel silinmeden \u00f6nce t\u00fcm a\u00e7\u0131k talepler aktar\u0131m gruplar\u0131na eklenmelidir.");
+    const movedConversationIds: string[] = [];
+    for (const group of transfers) {
+      if (permissionScope(actor) !== "ALL" && !actor.departmentIds.includes(group.departmentId))
+        throw new AppError(403, "FORBIDDEN", "Kapsam\u0131n\u0131z d\u0131\u015f\u0131ndaki departmanlara talep aktaramazs\u0131n\u0131z.");
+      const destination = await tx.department.findFirst({ where: { id: group.departmentId, isActive: true, deletedAt: null }, select: { id: true } });
+      if (!destination) throw new AppError(400, "INVALID_DEPARTMENT", "Aktar\u0131m i\u00e7in aktif bir departman se\u00e7in.");
+      const conversations = group.conversationIds.map((conversationId) => assigned.find((conversation) => conversation.id === conversationId)!);
+      if (permissionScope(actor) !== "ALL" && conversations.some((conversation) => !actor.departmentIds.includes(conversation.departmentId)))
+        throw new AppError(403, "FORBIDDEN", "Kapsam\u0131n\u0131z d\u0131\u015f\u0131ndaki departmanlardaki talepleri aktaramazs\u0131n\u0131z.");
+      const changesDepartment = conversations.some((conversation) => conversation.departmentId !== group.departmentId);
+      if (changesDepartment && !can(actor, "conversations.transfer")) throw new AppError(403, "FORBIDDEN", "Departmanlar aras\u0131 aktar\u0131m i\u00e7in talep aktarma izni gerekir.");
+      if (!can(actor, "conversations.assign")) throw new AppError(403, "FORBIDDEN", "Personel silmeden \u00f6nce talepleri yeniden atamak i\u00e7in personel atama izni gerekir.");
+      if (group.assignedAgentId) {
+        const recipient = await tx.user.findFirst({
+          where: { id: group.assignedAgentId, isActive: true, deletedAt: null, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], departments: { some: { departmentId: group.departmentId } } },
+          select: { id: true },
+        });
+        if (!recipient) throw new AppError(400, "INVALID_ASSIGNEE", "Se\u00e7ilen personel hedef departmanda aktif de\u011fil.");
+      }
+      for (const conversation of conversations) {
+        await tx.conversation.update({ where: { id: conversation.id }, data: { departmentId: group.departmentId, assignedAgentId: group.assignedAgentId } });
+        await tx.conversationMessage.create({ data: { conversationId: conversation.id, authorId: actor.id, type: "SYSTEM", body: current.name + " personeli silindi; talep " + (group.assignedAgentId ? "se\u00e7ilen personele aktar\u0131ld\u0131" : "departman kuyru\u011funa al\u0131nd\u0131") + "." } });
+        await audit(tx, actor, "conversation.updated", "Conversation", conversation.id, { fields: ["departmentId", "assignedAgentId"], previousDepartmentId: conversation.departmentId, departmentId: group.departmentId, previousAssigneeId: id, assignedAgentId: group.assignedAgentId, transferredDuringUserDeletion: id });
+        movedConversationIds.push(conversation.id);
+      }
     }
-    await tx.session.updateMany({
-      where: { userId: id, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-    await tx.user.update({
-      where: { id },
-      data: { deletedAt: new Date(), isActive: false, loginEmail: null },
-    });
+    await tx.session.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
+    await tx.user.update({ where: { id }, data: { deletedAt: new Date(), isActive: false, loginEmail: null } });
     await audit(tx, actor, "user.deleted", "User", id, { name: current.name });
-    return { id };
+    return { data: { id }, movedConversationIds };
   });
+  for (const conversationId of result.movedConversationIds) publishChange(conversationId);
+  return result.data;
 }
 export async function tags(q: z.infer<typeof schema.searchQuery>) {
   const where: Prisma.TagWhereInput = q.search
@@ -772,7 +877,7 @@ export async function departmentAgents(
   q: z.infer<typeof schema.searchQuery>,
 ) {
   requireStaff(actor);
-  if (actor.role !== "ADMIN" && !actor.departmentIds.includes(departmentId))
+  if (permissionScope(actor) !== "ALL" && !actor.departmentIds.includes(departmentId))
     throw new AppError(
       403,
       "FORBIDDEN",
@@ -1827,13 +1932,14 @@ export async function profile(actor: Actor) {
   return db.user.findUniqueOrThrow({ where: { id: actor.id }, select: person });
 }
 export async function user(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requireUserPermission(actor, 'view');
   const data = await db.user.findFirst({
-    where: { id, deletedAt: null },
+    where: { AND: [{ id, deletedAt: null }, staffDirectoryScope(actor)] },
     select: person,
   });
   if (!data) throw notFound();
-  return data;
+  if (permissionScope(actor) === 'ALL') return data;
+  return { ...data, departments: data.departments.filter((department) => actor.departmentIds.includes(department.departmentId)) };
 }
 export async function updateProfile(
   actor: Actor,

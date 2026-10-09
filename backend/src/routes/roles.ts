@@ -5,6 +5,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { AppError } from '../utils/errors.js';
 import { permissionGroups, permissionKeys, templatePermissions } from '../services/permissions.js';
 import { publishChange } from '../services/events.service.js';
+import { invalidateBuiltInStaffTemplates } from '../services/role-templates.js';
 const schema = z.object({
   name: z.string().trim().min(2).max(80),
   description: z.string().trim().max(500).default(''),
@@ -55,6 +56,7 @@ rolesRouter.put('/roles/templates/:templateId', async (req, res) => {
   const current = settings?.roleTemplates && typeof settings.roleTemplates === 'object' && !Array.isArray(settings.roleTemplates) ? settings.roleTemplates as Record<string, unknown> : {};
   const roleTemplates = { ...current, [templateId]: input } as Prisma.InputJsonObject;
   await db.systemSettings.upsert({ where: { id: 'default' }, create: { id: 'default', roleTemplates }, update: { roleTemplates } });
+  invalidateBuiltInStaffTemplates();
   await db.activityLog.create({ data: { userId: req.actor.id, action: 'role.template_updated', entityType: 'RoleTemplate', entityId: templateId, metadata: { templateId, name: input.name, description: input.description, scope: input.scope, permissions: input.permissions } } });
   publishChange();
   res.json({ success: true, data: { id: templateId, ...input } });

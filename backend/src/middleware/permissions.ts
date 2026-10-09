@@ -2,13 +2,17 @@ import type { RequestHandler } from 'express';
 import { can } from '../services/permissions.js';
 import { AppError } from '../utils/errors.js';
 
-// Custom roles are deny-by-default. Legacy roles retain their existing checks.
+// Built-in staff roles use their saved template permissions; customers and legacy admins keep their existing checks.
 export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
-  if (!req.actor.accessRole) { next(); return; }
+  if (!req.actor.accessRole && !['SUPERVISOR', 'AGENT'].includes(req.actor.role)) { next(); return; }
   const path = req.path, read = req.method === 'GET';
   const allow = (key: string) => { if (!can(req.actor, key)) throw new AppError(403, 'FORBIDDEN', 'Rolünüz bu işlem için yetkili değil.'); };
   if (/^\/(auth\/me|profile|notifications|presence)(\/|$)/.test(path)) { next(); return; }
   if (path === '/role-options') { allow('users.view'); next(); return; }
+  if (/^\/users\/[^/]+\/assignment-impact$/.test(path)) {
+    if (!can(req.actor, 'users.update') && !can(req.actor, 'users.delete')) throw new AppError(403, 'FORBIDDEN', 'Personel atama bilgilerini görme yetkiniz yok.');
+    next(); return;
+  }
   if (path.startsWith('/roles')) throw new AppError(403, 'FORBIDDEN', 'Rolleri yalnızca sistem yöneticisi yönetebilir.');
   if (path.startsWith('/dashboard')) { allow('dashboard.view'); next(); return; }
   if (path.startsWith('/reports')) { allow('reports.view'); next(); return; }

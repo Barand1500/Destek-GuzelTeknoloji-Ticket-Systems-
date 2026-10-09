@@ -227,15 +227,7 @@ function WorkspaceLayout() {
     ...(user.role !== "CUSTOMER"
       ? [
           { label: "Müşteriler", group: "Sayfalar", to: path("customers") },
-          ...(user.role === "ADMIN"
-            ? [
-                {
-                  label: "Personeller",
-                  group: "Sayfalar",
-                  to: path("users"),
-                },
-              ]
-            : []),
+          { label: "Personeller", group: "Sayfalar", to: path("users") },
           {
             label: "Talep aç",
             group: "Sayfalar",
@@ -345,12 +337,10 @@ function WorkspaceLayout() {
                 <Users size={19} />
                 Müşteriler
               </NavLink>
-              {user.role === "ADMIN" && (
-                <NavLink to={path("users")}>
-                  <Users size={19} />
-                  Personeller
-                </NavLink>
-              )}
+              <NavLink to={path("users")}>
+                <Users size={19} />
+                Personeller
+              </NavLink>
               <NavLink to={resumePath}>
                 <Plus size={19} />
                 Talep aç

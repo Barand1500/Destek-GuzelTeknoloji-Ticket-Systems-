@@ -5,6 +5,8 @@ export type Actor = {
   email: string;
   role: Role;
   accessRole?: { id: string; name: string; permissions: unknown; scope: string } | null;
+  rolePermissions?: string[];
+  roleScope?: string;
   departmentIds: string[];
   sessionId: string;
   ipAddress?: string | null;

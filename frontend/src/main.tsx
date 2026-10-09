@@ -110,6 +110,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<ConversationLog />}
               />
               <Route path="/agent/customers" element={<CustomersPage />} />
+              <Route path="/agent/users" element={<UsersPage />} />
               <Route
                 path="/agent/phone-support"
                 element={<PhoneSupportPage />}

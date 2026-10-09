@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, Pencil, Trash2, X } from "lucide-react";
+import { Check, Eye, Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
@@ -48,6 +48,8 @@ type ManagedUser = User & {
   extraPhones?: string | null; extraEmails?: string | null;
   customerFileCount?: number;
 };
+type AssignmentImpact = { id: string; number: number; subject: string; status: string; priority: string; createdAt: string; departmentId: string; department: { name: string }; customer: { name: string } };
+type AssignmentTransferGroup = { conversationIds: string[]; departmentId: string; assignedAgentId: string | null; departmentName: string; assignedAgentName: string | null };
 type CustomerFile = { id: string; originalName: string; mimeType: string; size: number; createdAt: string };
 const formatFileSize = (size: number) => size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
 function CustomerFileRow({ customerId, file, onDelete }: { customerId: string; file: CustomerFile; onDelete: () => void }) {
@@ -143,15 +145,27 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
 
 export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
-  const remove = useDelete('/users', ['/customers']);
+  const remove = useMutation({
+    mutationFn: async (input: { id: string; assignmentTransfers?: Array<{ conversationIds: string[]; departmentId: string; assignedAgentId: string | null }> }) => api.delete(`/users/${input.id}`, { data: { assignmentTransfers: input.assignmentTransfers ?? [] } }),
+    onSuccess: async () => Promise.all(["/users", "/customers"].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))),
+  });
   const [formVersion, setFormVersion] = useState(0);
   const [role, setRole] = useState<Role>(user?.accessRole ? 'ADMIN' : defaultRole ?? "AGENT");
   const [accessRoleId, setAccessRoleId] = useState<string | null>(user?.accessRole?.id ?? null);
   const roleOptions = useQuery({ queryKey: ['/role-options'], queryFn: async () => (await api.get<{ data: Array<{ id: string; name: string }> }>('/role-options')).data.data });
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
+  const [assignmentImpact, setAssignmentImpact] = useState<AssignmentImpact[]>([]);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [assignmentAction, setAssignmentAction] = useState<"update" | "delete">("update");
+  const [pendingUserUpdate, setPendingUserUpdate] = useState<Record<string, unknown> | null>(null);
+  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<string[]>([]);
+  const [transferDepartmentId, setTransferDepartmentId] = useState("");
+  const [transferAgentId, setTransferAgentId] = useState("");
+  const [transferGroups, setTransferGroups] = useState<AssignmentTransferGroup[]>([]);
   const list = useList<ManagedUser>("/users", defaultRole ? { role: defaultRole } : {});
   const departments = useQuery({
     queryKey: ["/departments", "all-options"],
@@ -160,7 +174,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
       for (let page = 1; ; page++) {
         const result = (
           await api.get<Page<ManagedDepartment>>("/departments", {
-            params: { page, limit: 100, includeInactive: true },
+            params: { page, limit: 100, ...(user?.role === 'ADMIN' && !user.accessRole ? { includeInactive: true } : { accessible: true }) },
           })
         ).data;
         values.push(...result.data);
@@ -174,9 +188,91 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
     setRole(user?.accessRole ? 'ADMIN' : defaultRole ?? "AGENT");
     setAccessRoleId(user?.accessRole?.id ?? null);
     setSelectedDepartmentIds([]);
+    setAssignmentImpact([]);
+    setAssignmentModalOpen(false);
+    setAssignmentAction("update");
+    setPendingUserUpdate(null);
+    setSelectedAssignmentIds([]);
+    setTransferDepartmentId("");
+    setTransferAgentId("");
+    setTransferGroups([]);
     setFormVersion((v) => v + 1);
   }
   const save = useSave("/users", reset);
+  const checkAssignmentImpact = useMutation({
+    mutationFn: async (input: { id: string; target: { role: Role; accessRoleId: string | null; isActive: boolean; departmentIds: string[] }; data: Record<string, unknown> }) => ({
+      ...input,
+      impact: (await api.get<{ data: AssignmentImpact[] }>(`/users/${input.id}/assignment-impact`, { params: { ...input.target, departmentIds: input.target.departmentIds.join(",") } })).data.data,
+    }),
+    onSuccess: ({ id, data, impact }) => {
+      if (!impact.length) {
+        save.mutate({ id, data });
+        return;
+      }
+      setPendingUserUpdate(data);
+      setAssignmentImpact(impact);
+      setAssignmentAction("update");
+      setSelectedAssignmentIds([]);
+      setTransferGroups([]);
+      setTransferDepartmentId("");
+      setTransferAgentId("");
+      setAssignmentModalOpen(true);
+    },
+  });
+  const prepareDelete = useMutation({
+    mutationFn: async (person: ManagedUser) => ({ person, impact: (await api.get<{ data: AssignmentImpact[] }>(`/users/${person.id}/assignment-impact`, { params: { role: person.role, accessRoleId: person.accessRoleId ?? null, isActive: person.isActive, departmentIds: person.departments.map((department) => department.departmentId).join(","), forDeletion: true } })).data.data }),
+    onSuccess: ({ person, impact }) => {
+      remove.reset();
+      setDeleteTarget(person);
+      if (!impact.length) return;
+      setAssignmentAction("delete");
+      setAssignmentImpact(impact);
+      setPendingUserUpdate(null);
+      setSelectedAssignmentIds([]);
+      setTransferGroups([]);
+      setTransferDepartmentId("");
+      setTransferAgentId("");
+      setAssignmentModalOpen(true);
+    },
+  });
+  const transferAgents = useQuery({
+    queryKey: ["/departments", transferDepartmentId, "assignment-transfer-agents"],
+    enabled: assignmentModalOpen && Boolean(transferDepartmentId),
+    queryFn: async () => (await api.get<Page<{ id: string; name: string }>>(`/departments/${transferDepartmentId}/agents`, { params: { page: 1, limit: 100 } })).data.data,
+  });
+  function addTransferGroup() {
+    const department = departments.data?.find((item) => item.id === transferDepartmentId);
+    const agent = transferAgents.data?.find((item) => item.id === transferAgentId) ?? (editing?.id === transferAgentId && editedUserCanReceive ? { id: editing.id, name: editing.name } : undefined);
+    if (!department || !selectedAssignmentIds.length || (transferAgentId && !agent)) return;
+    setTransferGroups((current) => [...current, {
+      conversationIds: [...selectedAssignmentIds],
+      departmentId: department.id,
+      assignedAgentId: transferAgentId || null,
+      departmentName: department.name,
+      assignedAgentName: agent?.name ?? null,
+    }]);
+    setSelectedAssignmentIds([]);
+    setTransferDepartmentId("");
+    setTransferAgentId("");
+  }
+  const assignedInGroups = new Set(transferGroups.flatMap((group) => group.conversationIds));
+  const remainingAssignments = assignmentImpact.filter((conversation) => !assignedInGroups.has(conversation.id));
+  const canTransferDepartments = hasPermission(user, 'conversations.transfer');
+  const canAssignStaff = hasPermission(user, 'conversations.assign');
+  const editedUserCanReceive = Boolean(assignmentAction === "update" && editing?.isActive && transferDepartmentId && selectedDepartmentIds.includes(transferDepartmentId) && (accessRoleId || role === 'AGENT' || role === 'SUPERVISOR'));
+  const selectedChangesDepartment = selectedAssignmentIds.some((id) => assignmentImpact.find((conversation) => conversation.id === id)?.departmentId !== transferDepartmentId);
+  const transferGroupsNeedDepartmentPermission = transferGroups.some((group) => group.conversationIds.some((id) => assignmentImpact.find((conversation) => conversation.id === id)?.departmentId !== group.departmentId));
+  function applyTransferGroups() {
+    if (transferGroups.reduce((sum, group) => sum + group.conversationIds.length, 0) !== assignmentImpact.length) return;
+    const assignmentTransfers = transferGroups.map(({ conversationIds, departmentId, assignedAgentId }) => ({ conversationIds, departmentId, assignedAgentId }));
+    if (assignmentAction === "delete") {
+      if (!deleteTarget) return;
+      remove.mutate({ id: deleteTarget.id, assignmentTransfers }, { onSuccess: () => { setAssignmentModalOpen(false); setDeleteTarget(null); setAssignmentImpact([]); setTransferGroups([]); if (editing?.id === deleteTarget.id) reset(); } });
+      return;
+    }
+    if (!editing || !pendingUserUpdate) return;
+    save.mutate({ id: editing.id, data: { ...pendingUserUpdate, assignmentTransfers } });
+  }
   const changeStatus = useSave("/users");
   function edit(value: ManagedUser) {
     save.reset();
@@ -188,9 +284,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   }
   function submit(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
-    save.mutate({
-      id: editing?.id,
-      data: {
+    const data = {
         name: values.get("name"),
         email: values.get("email"),
         phone: values.get("phone"),
@@ -200,8 +294,21 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         departmentIds:
           role === "CUSTOMER" ? [] : selectedDepartmentIds,
         ...(!editing ? { password: values.get("password") } : {}),
-      },
-    });
+      };
+    if (editing) {
+      checkAssignmentImpact.mutate({
+        id: editing.id,
+        data,
+        target: {
+          role,
+          accessRoleId,
+          isActive: editing.isActive,
+          departmentIds: role === "CUSTOMER" ? [] : selectedDepartmentIds,
+        },
+      });
+    } else {
+      save.mutate({ data });
+    }
   }
   return (
     <main className="page">
@@ -209,7 +316,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         title={defaultRole === "AGENT" ? "Destek uzmanları" : defaultRole === "SUPERVISOR" ? "Departman sorumluları" : "Personeller"}
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."
       />
-      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button><button type="button" onClick={() => navigate("/admin/departments")}>Departmanlar</button></nav>}
+      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button>{user?.role === 'ADMIN' && <button type="button" onClick={() => navigate("/admin/departments")}>Departmanlar</button>}</nav>}
       <div className="management-grid users-management-grid">
         <section className="management-panel">
           <Search
@@ -220,6 +327,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             onLimitChange={list.setLimit}
           />
           <ErrorMessage error={changeStatus.error} />
+          <ErrorMessage error={prepareDelete.error} />
           <ListState
             loading={list.isPending}
             error={list.error}
@@ -273,9 +381,9 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             aria-label={`${person.name} sil`}
                             title="Sil"
                             disabled={
-                              remove.isPending || person.id === user?.id || !hasPermission(user, 'users.delete')
+                              remove.isPending || prepareDelete.isPending || person.id === user?.id || !hasPermission(user, 'users.delete')
                             }
-                            onClick={() => { remove.reset(); setDeleteTarget(person); }}
+                            onClick={() => { remove.reset(); prepareDelete.mutate(person); }}
                           ><Trash2 size={15} aria-hidden="true" />
                             
                           </button>}
@@ -386,7 +494,22 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
           </form>
         </section>
       </div>
-      {deleteTarget && <DeleteModal title="Kullanıcıyı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Geçmiş görüşmeler korunur; açık atamalar departman kuyruğuna alınır.</p></DeleteModal>}
+      {deleteTarget && !assignmentModalOpen && <DeleteModal title="Kullanıcıyı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate({ id: deleteTarget.id }, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error ?? prepareDelete.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Geçmiş görüşmeler korunur.</p></DeleteModal>}
+      {assignmentModalOpen && (editing || deleteTarget) && <div className="confirm-backdrop assignment-transfer-backdrop" role="presentation">
+        <section className="confirm-modal assignment-transfer-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-transfer-title">
+          <button type="button" className="confirm-close" aria-label="Pencereyi kapat" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }}><X size={20} /></button>
+          <header className="assignment-transfer-header"><h2 id="assignment-transfer-title">{assignmentAction === "delete" ? "Personeli silmeden önce talepleri aktar" : "Açık talepleri aktar"}</h2><p><strong>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}</strong> {assignmentAction === "delete" ? "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. Aktarım bitince personel silinir." : "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. İşlem bitince değişiklik kaydedilir."}</p></header>
+          <div className="assignment-transfer-content">
+            <section className="assignment-transfer-list-section">
+              <div className="assignment-transfer-section-heading"><div><h3>Aktarılacak talepler</h3><span>{remainingAssignments.length} henüz gruplandırılmadı / {assignmentImpact.length} toplam</span></div><button type="button" className="button secondary" onClick={() => setSelectedAssignmentIds(remainingAssignments.map((conversation) => conversation.id))} disabled={!remainingAssignments.length}>Kalanların tümünü seç</button></div>
+              {remainingAssignments.length ? <div className="assignment-transfer-table-wrap"><table className="management-table assignment-transfer-table"><thead><tr><th aria-label="Seçim" /><th>Talep</th><th>Mevcut departman</th><th>Atanan personel</th></tr></thead><tbody>{remainingAssignments.map((conversation) => <tr key={conversation.id}><td><input type="checkbox" aria-label={`${conversation.number} numaralı talebi seç`} checked={selectedAssignmentIds.includes(conversation.id)} onChange={(event) => setSelectedAssignmentIds((current) => event.target.checked ? [...current, conversation.id] : current.filter((id) => id !== conversation.id))} /></td><td><strong>#{conversation.number} · {conversation.subject}</strong><small>{conversation.customer.name} · {conversation.status}</small></td><td>{conversation.department.name}</td><td>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}<small>Bu kullanıcı</small></td></tr>)}</tbody></table></div> : <p className="assignment-transfer-empty">Tüm açık talepler aktarım gruplarına eklendi.</p>}
+              {!!transferGroups.length && <div className="assignment-transfer-groups"><h3>Aktarım grupları</h3>{transferGroups.map((group, index) => <article className="assignment-transfer-group" key={`${group.departmentId}-${index}`}><div><strong>Grup {index + 1} · {group.conversationIds.length} talep</strong><span>{group.departmentName} → {group.assignedAgentName ?? "Atanmamış (departman kuyruğu)"}</span><small>{group.conversationIds.map((id) => `#${assignmentImpact.find((conversation) => conversation.id === id)?.number ?? id}`).join(", ")}</small></div><button type="button" className="icon-button danger-icon" aria-label={`Grup ${index + 1} kaldır`} title="Grubu kaldır" onClick={() => { setTransferGroups((current) => current.filter((_, groupIndex) => groupIndex !== index)); setSelectedAssignmentIds((current) => [...current, ...group.conversationIds]); }}><Trash2 size={15} /></button></article>)}</div>}
+            </section>
+            <aside className="assignment-transfer-builder"><h3>Seçilenleri aktarım grubuna ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan personel" ariaLabel="Aktarım hedefi personeli" value={transferAgentId} onChange={setTransferAgentId} options={[{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım grubuna ekle</button></aside>
+          </div>
+          <footer className="assignment-transfer-footer"><ErrorMessage error={checkAssignmentImpact.error ?? save.error ?? remove.error} /><div className="confirm-actions"><button type="button" className="button secondary" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }} disabled={save.isPending || remove.isPending}>Vazgeç</button><button type="button" className="button primary" onClick={applyTransferGroups} disabled={save.isPending || remove.isPending || remainingAssignments.length > 0 || !transferGroups.length || (transferGroupsNeedDepartmentPermission && !canTransferDepartments) || (!canAssignStaff && transferGroups.some((group) => group.assignedAgentId !== editing?.id))}>{save.isPending || remove.isPending ? "İşleniyor…" : <><Check size={16} /> {assignmentAction === "delete" ? "Aktarımları uygula ve kullanıcıyı sil" : "Aktarımları uygula ve kullanıcıyı kaydet"}</>}</button></div></footer>
+        </section>
+      </div>}
     </main>
   );
 }
@@ -545,7 +668,7 @@ export function CustomersPage() {
         </form>
       </section>
       </div>}
-      {filesCustomer && <div className="confirm-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="customer-form-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
+      {filesCustomer && <div className="confirm-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="standard-modal-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
     </main>
   );
 }

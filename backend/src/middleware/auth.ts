@@ -4,6 +4,7 @@ import { db } from "../config/db.js";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/errors.js";
 import type { Role } from "../generated/prisma/client.js";
+import { builtInStaffTemplate } from '../services/role-templates.js';
 export async function resolveActor(token: string | undefined) {
   if (!token)
     throw new AppError(401, "UNAUTHENTICATED", "Oturum açmanız gerekiyor.");
@@ -36,12 +37,16 @@ export async function resolveActor(token: string | undefined) {
   )
     throw new AppError(401, "UNAUTHENTICATED", "Oturum süresi doldu.");
   const { user } = session;
+  const staffTemplate = !user.accessRole && (user.role === 'SUPERVISOR' || user.role === 'AGENT')
+    ? await builtInStaffTemplate(user.role)
+    : undefined;
   return {
     id: user.id,
     name: user.name,
     email: user.email ?? "",
     role: user.role,
     accessRole: user.accessRole,
+    ...(staffTemplate ? { rolePermissions: staffTemplate.permissions, roleScope: staffTemplate.scope } : {}),
     departmentIds: user.departments.map((d) => d.departmentId),
     sessionId: session.id,
   };

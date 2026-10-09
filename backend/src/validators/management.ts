@@ -87,9 +87,28 @@ export const updateUserSchema = registerSchema
     isActive: z.boolean().optional(),
     departmentIds: departments.optional(),
     skills: skills.optional(),
+    assignmentTransfers: z.array(z.object({
+      conversationIds: z.array(idSchema).min(1).max(1000),
+      departmentId: idSchema,
+      assignedAgentId: idSchema.nullable(),
+    }).strict()).max(1000).optional(),
   })
   .strict()
   .refine(nonempty);
+export const deleteUserSchema = z.object({
+  assignmentTransfers: z.array(z.object({
+    conversationIds: z.array(idSchema).min(1).max(1000),
+    departmentId: idSchema,
+    assignedAgentId: idSchema.nullable(),
+  }).strict()).max(1000).optional(),
+}).strict();
+export const userAssignmentImpactQuery = z.object({
+  role,
+  accessRoleId: z.preprocess((value) => value == null || value === "" || value === "null" ? null : value, idSchema.nullable()),
+  isActive: z.enum(["true", "false"]).transform((value) => value === "true"),
+  forDeletion: z.preprocess((value) => value === "true" || value === true, z.boolean()).optional().default(false),
+  departmentIds: z.preprocess((value) => typeof value === "string" && value ? value.split(",") : [], departments),
+}).strict();
 export const departmentSchema = z
   .object({
     name: z.string().trim().min(2).max(100).optional(),

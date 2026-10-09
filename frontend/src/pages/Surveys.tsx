@@ -323,6 +323,7 @@ function CreateSurveyPage({
   const [anonymous, setAnonymous] = useState(false);
   const [departmentId, setDepartmentId] = useState("");
   const [selectedOverride, setSelectedOverride] = useState<string[] | null>(null);
+  const [validationMessage, setValidationMessage] = useState("");
   const directory = useQuery({
     queryKey: ["/surveys/directory"],
     queryFn: async () =>
@@ -363,10 +364,61 @@ function CreateSurveyPage({
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const title = String(form.get("title") ?? "").trim();
+    const description = String(form.get("description") ?? "").trim();
+    const durationDays = Number(form.get("durationDays"));
+    let invalidMessage = "";
+    if (title.length < 2 || title.length > 180) {
+      invalidMessage = `Anket başlığı 2–180 karakter olmalı. Şu an ${title.length} karakter.`;
+    } else if (description.length > 2000) {
+      invalidMessage = `Anket açıklaması en fazla 2.000 karakter olabilir. Şu an ${description.length} karakter.`;
+    } else if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 365) {
+      invalidMessage = "Anket süresi 1–365 gün arasında tam sayı olmalı.";
+    } else if (questions.length < 1 || questions.length > 30) {
+      invalidMessage = `Ankette 1–30 soru olabilir. Şu an ${questions.length} soru var.`;
+    } else if (!channels.length) {
+      invalidMessage = "En az bir gönderim kanalı seçin.";
+    } else {
+      for (const [index, question] of questions.entries()) {
+        const questionNumber = index + 1;
+        const questionTextLength = question.text.trim().length;
+        if (questionTextLength < 2 || questionTextLength > 500) {
+          invalidMessage = `Soru ${questionNumber} metni 2–500 karakter olmalı. Şu an ${questionTextLength} karakter.`;
+          break;
+        }
+        if (question.type === "SINGLE" || question.type === "MULTIPLE") {
+          const options = question.options ?? [];
+          if (options.length < 2 || options.length > 20) {
+            invalidMessage = `Soru ${questionNumber} için 2–20 seçenek olmalı. Şu an ${options.length} seçenek var.`;
+            break;
+          }
+          const optionLengths = options.map((option) => option.trim().length);
+          const tooLongOptionIndex = optionLengths.findIndex((length) => length > 200);
+          if (tooLongOptionIndex >= 0) {
+            invalidMessage = `Soru ${questionNumber}, Seçenek ${String.fromCharCode(65 + tooLongOptionIndex)} en fazla 200 karakter olabilir. Şu an ${optionLengths[tooLongOptionIndex]} karakter.`;
+            break;
+          }
+          const emptyOptionIndex = optionLengths.findIndex((length) => length < 1);
+          if (emptyOptionIndex >= 0) {
+            invalidMessage = `Soru ${questionNumber}, Seçenek ${String.fromCharCode(65 + emptyOptionIndex)} boş bırakılamaz.`;
+            break;
+          }
+          if (new Set(options.map((option) => option.trim())).size !== options.length) {
+            invalidMessage = `Soru ${questionNumber} içindeki seçenekler birbirinden farklı olmalı.`;
+            break;
+          }
+        }
+      }
+    }
+    if (invalidMessage) {
+      setValidationMessage(invalidMessage);
+      return;
+    }
+    setValidationMessage("");
     create.mutate({
-      title: form.get("title"),
-      description: form.get("description"),
-      durationDays: Number(form.get("durationDays")),
+      title,
+      description,
+      durationDays,
       anonymous: form.get("anonymous") === "on",
       questions,
       departmentId: departmentId || null,
@@ -388,7 +440,7 @@ function CreateSurveyPage({
           <p>Yeni anket hazırlayın ve personellerle paylaşın.</p>
         </div>
       </header>
-      <form className="survey-create-panel" onSubmit={submit}>
+      <form className="survey-create-panel" onSubmit={submit} onInput={() => setValidationMessage("")}>
         <h2>Yeni Anket Oluştur</h2>
         <div className="survey-create-body">
           <div className="survey-basics">
@@ -506,7 +558,8 @@ function CreateSurveyPage({
             missingPhones={missingPhones}
             missingEmails={missingEmails}
           />
-          {create.error && <p className="error">{errorText(create.error)}</p>}
+          {validationMessage && <p className="error" role="alert">{validationMessage}</p>}
+          {create.error && <p className="error" role="alert">{errorText(create.error)}</p>}
         </div>
         <footer>
           <button type="button" className="button secondary" onClick={cancel}>
@@ -746,10 +799,11 @@ function StatisticsModal({
               tarafından
             </p>
           </div>
-          <button className="icon-button" onClick={close} aria-label="İstatistikleri kapat">
+          <button className="standard-modal-close" onClick={close} aria-label="İstatistikleri kapat">
             <X size={20} />
           </button>
         </header>
+        <div className="survey-statistics-content">
         <div className="survey-stat-summary">
           <Stat label="Toplam Katılım" value={responses.length} />
           <Stat label="Soru Sayısı" value={survey.questions.length} />
@@ -771,6 +825,8 @@ function StatisticsModal({
             />
           ))}
         </div>
+        </div>
+        <div className="survey-statistics-bottom-divider" aria-hidden="true" />
       </div>
     </div>
   );

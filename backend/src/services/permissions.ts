@@ -18,9 +18,12 @@ export const permissionGroups = [
   { id: 'logs', name: 'İşlem geçmişi', actions: { view: 'Görüntüleme', delete: 'Silme' } },
 ] as const;
 export const permissionKeys = permissionGroups.flatMap(g => Object.keys(g.actions).map(a => `${g.id}.${a}`));
-export type PermissionActor = { role: string; accessRole?: { permissions: unknown; scope: string } | null };
+export type PermissionActor = { role: string; rolePermissions?: string[]; roleScope?: string; accessRole?: { permissions: unknown; scope: string } | null };
+export function permissionScope(actor: PermissionActor) {
+  return actor.accessRole?.scope ?? actor.roleScope ?? (actor.role === 'ADMIN' ? 'ALL' : 'DEPARTMENT');
+}
 export function can(actor: PermissionActor, permission: string) {
-  if (!actor.accessRole) return actor.role === 'ADMIN';
+  if (!actor.accessRole) return actor.role === 'ADMIN' || Boolean(actor.rolePermissions?.includes(permission));
   const permissions = actor.accessRole.permissions;
   return Array.isArray(permissions) && permissions.includes(permission);
 }

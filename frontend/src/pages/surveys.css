@@ -772,15 +772,35 @@ html[data-theme="dark"] .survey-answer-modal > p {
 .survey-statistics-modal {
   width: min(680px, 94vw);
   max-height: 90vh;
-  overflow: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid #d8e4de;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
 }
-.survey-statistics-modal::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.survey-statistics-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a8beb2 transparent;
+}
+.survey-statistics-content::-webkit-scrollbar { width: 5px; }
+.survey-statistics-content::-webkit-scrollbar-track { background: transparent; }
+.survey-statistics-content::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #a8beb2;
+}
+.survey-statistics-content::-webkit-scrollbar-thumb:hover { background: #789889; }
+.survey-statistics-bottom-divider {
+  flex: 0 0 auto;
+  height: 0;
+  margin: 0 25px;
+  border-top: 1px solid #dce5df;
+}
 .survey-written-answers {
   display: grid;
   gap: 10px;
@@ -822,6 +842,7 @@ html[data-theme="dark"] .survey-written-answers li { background: #26392f; }
 html[data-theme="dark"] .survey-written-answers strong { color: #9ddfc7; }
 html[data-theme="dark"] .survey-written-answers p { color: var(--ui-text-secondary); }
 .survey-statistics-modal > header {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -948,6 +969,21 @@ html[data-theme="dark"] .survey-stat-summary > div {
 }
 html[data-theme="dark"] .survey-stat-question {
   border-color: #40574d;
+}
+html[data-theme="dark"] .survey-statistics-modal > header {
+  border-bottom-color: #40574d;
+}
+html[data-theme="dark"] .survey-statistics-bottom-divider {
+  border-top-color: #40574d;
+}
+html[data-theme="dark"] .survey-statistics-content {
+  scrollbar-color: #587468 transparent;
+}
+html[data-theme="dark"] .survey-statistics-content::-webkit-scrollbar-thumb {
+  background: #587468;
+}
+html[data-theme="dark"] .survey-statistics-content::-webkit-scrollbar-thumb:hover {
+  background: #789889;
 }
 html[data-theme="dark"] .survey-stat-bar i {
   background: #40574d;

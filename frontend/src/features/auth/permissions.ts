@@ -1,7 +1,7 @@
 import type { User } from '../../types';
 export function hasPermission(user: User | null, key: string) {
   if (!user) return false;
-  if (!user.accessRole) return true; // Existing roles retain their established UI rules.
+  if (!user.accessRole) return user.role === 'ADMIN' || user.role === 'CUSTOMER' || Boolean(user.rolePermissions?.includes(key));
   return user.accessRole.permissions.includes(key);
 }
 export function screenPermission(path: string): string | null {
@@ -19,5 +19,5 @@ export function screenPermission(path: string): string | null {
 export function permissionHome(user: User) {
   if (!user.accessRole) return null;
   const pages = ['dashboard', 'conversations', 'customers', 'reports', 'files', 'users', 'departments', 'staff-presence', 'guide/projects', 'surveys', 'integrations/channels', 'response-time-rules', 'tags', 'websites', 'saved-replies', 'activity-logs', 'calendar'];
-  return pages.map(page => `/admin/${page}`).find(path => hasPermission(user, screenPermission(path)!)) ?? '/admin/profile';
+  return pages.map(page => `${user.role === 'ADMIN' ? '/admin' : user.role === 'CUSTOMER' ? '/customer' : '/agent'}/${page}`).find(path => hasPermission(user, screenPermission(path)!)) ?? `${user.role === 'ADMIN' ? '/admin' : user.role === 'CUSTOMER' ? '/customer' : '/agent'}/profile`;
 }

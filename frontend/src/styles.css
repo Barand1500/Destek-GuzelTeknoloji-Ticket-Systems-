@@ -1800,6 +1800,218 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   font-size: 19px;
   color: #263a36;
 }
+.assignment-transfer-backdrop {
+  z-index: 90;
+}
+.assignment-transfer-modal {
+  width: min(1180px, calc(100vw - 48px));
+  max-height: min(92vh, 980px);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.assignment-transfer-modal > .confirm-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  top: 18px;
+  right: 18px;
+  border-radius: 8px;
+  font-size: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+.assignment-transfer-modal > .confirm-close:hover {
+  background: var(--ui-surface-subtle, #f1f6f3);
+  color: var(--ui-text-primary);
+}
+.assignment-transfer-modal > .confirm-close:focus-visible {
+  outline: 2px solid var(--ui-accent, #16846e);
+  outline-offset: 2px;
+}
+.assignment-transfer-header {
+  flex: 0 0 auto;
+  padding: 0 40px 16px 0;
+  border-bottom: 1px solid #dce5df;
+}
+.assignment-transfer-header p {
+  max-width: 850px;
+  margin: 0;
+  color: var(--ui-text-secondary);
+  line-height: 1.6;
+}
+.assignment-transfer-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  margin-top: 22px;
+  overflow: hidden;
+}
+.assignment-transfer-list-section {
+  min-width: 0;
+  overflow: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #a8beb2 transparent;
+}
+.assignment-transfer-list-section::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.assignment-transfer-list-section::-webkit-scrollbar-button {
+  display: none;
+}
+.assignment-transfer-list-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+.assignment-transfer-list-section::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #a8beb2;
+  background-clip: padding-box;
+}
+.assignment-transfer-list-section::-webkit-scrollbar-thumb:hover {
+  background: #789889;
+  background-clip: padding-box;
+}
+.assignment-transfer-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.assignment-transfer-section-heading h3,
+.assignment-transfer-groups h3,
+.assignment-transfer-builder h3 {
+  margin: 0 0 5px;
+  font-size: 15px;
+}
+.assignment-transfer-section-heading span,
+.assignment-transfer-group small {
+  display: block;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+.assignment-transfer-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+}
+.assignment-transfer-table {
+  width: 100%;
+  min-width: 650px;
+}
+.assignment-transfer-table th:first-child,
+.assignment-transfer-table td:first-child {
+  width: 42px;
+  text-align: center;
+}
+.assignment-transfer-table td strong {
+  display: block;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.assignment-transfer-table td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ui-text-secondary);
+}
+.assignment-transfer-empty {
+  padding: 26px;
+  border: 1px dashed var(--ui-border);
+  border-radius: 10px;
+  color: var(--ui-text-secondary);
+  text-align: center;
+}
+.assignment-transfer-groups {
+  margin-top: 18px;
+}
+.assignment-transfer-groups h3 {
+  margin-bottom: 9px;
+}
+.assignment-transfer-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 9px;
+  margin-bottom: 8px;
+  background: var(--ui-surface-subtle, #f7faf8);
+}
+.assignment-transfer-group span {
+  display: block;
+  margin: 4px 0;
+  font-size: 13px;
+}
+.assignment-transfer-group small {
+  max-width: 700px;
+  overflow-wrap: anywhere;
+}
+.assignment-transfer-builder {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-surface-subtle, #f7faf8);
+}
+.assignment-transfer-builder > p {
+  margin: -10px 0 0;
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+}
+.assignment-transfer-add {
+  justify-content: center;
+  margin-top: auto;
+}
+.assignment-transfer-permission-note {
+  color: var(--ui-danger, #b42318);
+  font-size: 12px;
+}
+.assignment-transfer-footer {
+  flex: 0 0 auto;
+  padding-top: 14px;
+  border-top: 1px solid #dce5df;
+  margin-top: 16px;
+}
+.assignment-transfer-footer .confirm-actions {
+  margin-top: 10px;
+}
+.assignment-transfer-footer .confirm-actions .button.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+@media (max-width: 850px) {
+  .assignment-transfer-modal {
+    width: min(100%, calc(100vw - 24px));
+    max-height: 96vh;
+    padding: 22px 16px;
+  }
+  .assignment-transfer-content {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+  .assignment-transfer-list-section {
+    overflow: visible;
+  }
+  .assignment-transfer-builder {
+    order: -1;
+  }
+  .assignment-transfer-footer .confirm-actions {
+    flex-wrap: wrap;
+  }
+}
 .confirm-modal p {
   margin: 0;
   color: var(--ui-text-secondary);
@@ -2100,6 +2312,10 @@ html[data-theme="dark"] .confirm-modal .confirm-close:hover {
   color: #e5eee9;
   background: #2b493c;
 }
+html[data-theme="dark"] .assignment-transfer-modal > .confirm-close:hover {
+  color: #e5eee9;
+  background: #2b493c;
+}
 html[data-theme="dark"] .confirm-backdrop {
   background: rgba(4, 12, 9, 0.72);
   backdrop-filter: blur(2px);
@@ -2113,6 +2329,28 @@ html[data-theme="dark"] .confirm-modal {
 }
 html[data-theme="dark"] .confirm-modal strong {
   color: #f0f6f3;
+}
+html[data-theme="dark"] .assignment-transfer-builder {
+  border-color: #31463d;
+  background: #1d2c26;
+  color: #e5eee9;
+}
+html[data-theme="dark"] .assignment-transfer-header {
+  border-bottom-color: #40574d;
+}
+html[data-theme="dark"] .assignment-transfer-footer {
+  border-top-color: #40574d;
+}
+html[data-theme="dark"] .assignment-transfer-list-section {
+  scrollbar-color: #587468 transparent;
+}
+html[data-theme="dark"] .assignment-transfer-list-section::-webkit-scrollbar-thumb {
+  background: #587468;
+  background-clip: padding-box;
+}
+html[data-theme="dark"] .assignment-transfer-list-section::-webkit-scrollbar-thumb:hover {
+  background: #789889;
+  background-clip: padding-box;
 }
 html[data-theme="dark"] .confirm-modal .confirm-actions .button.secondary {
   background: #243a31;
@@ -2524,8 +2762,8 @@ html[data-theme="dark"] .saved-reply-action-delete::before {
   color: var(--customer-modal-muted);
 }
 .customer-form-panel > .customer-form-heading > .customer-form-close:hover {
-  background: var(--customer-modal-field);
-  color: var(--customer-modal-text);
+  background: #edf5ef;
+  color: #166b5c;
 }
 .customer-form-body {
   display: grid;
@@ -2658,6 +2896,28 @@ html[data-theme="dark"] .confirm-backdrop.customer-form-backdrop {
   background: #edf5ef;
   color: #166b5c;
 }
+.standard-modal-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ui-text-secondary);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.standard-modal-close:hover {
+  background: #edf5ef;
+  color: #166b5c;
+}
+.standard-modal-close:focus-visible {
+  outline: 2px solid #16846e;
+  outline-offset: 2px;
+}
 .customer-form-panel textarea {
   resize: none;
   overflow-y: auto;
@@ -2670,6 +2930,14 @@ html[data-theme="dark"] .customer-form-close {
 html[data-theme="dark"] .customer-form-close:hover {
   background: #263c32;
   border-color: #6cae9a;
+  color: #e5eee9;
+}
+html[data-theme="dark"] .standard-modal-close:hover {
+  background: #2a3e34;
+  color: #e5eee9;
+}
+html[data-theme="dark"] .customer-form-panel > .customer-form-heading > .customer-form-close:hover {
+  background: #2a3e34;
   color: #e5eee9;
 }
 .phone-support-request-title {
@@ -5033,10 +5301,13 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
   text-decoration: underline;
 }
 .attachment-preview-modal header button {
+  display: grid;
+  place-items: center;
   margin-left: auto;
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
+  padding: 0;
   border: 0;
   border-radius: 7px;
   background: transparent;
@@ -5048,6 +5319,9 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
 .attachment-preview-modal header button:hover {
   background: #edf4ef;
   color: #176f5d;
+}
+.attachment-preview-modal header .attachment-preview-name {
+  display: block;
 }
 .attachment-preview-modal header .attachment-preview-name {
   font-size: 14px;

@@ -81,7 +81,10 @@ html[data-theme="dark"] .announcements-modal {
 }
 .announcements-close:hover {
   background: var(--ann-field);
-  color: var(--ann-text);
+  color: #166b5c;
+}
+html[data-theme="dark"] .announcements-close:hover {
+  color: #8dd1ba;
 }
 .announcements-tabs {
   display: flex;
