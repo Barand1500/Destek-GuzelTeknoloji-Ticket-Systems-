@@ -2924,10 +2924,19 @@ td {
   transition: background-color 140ms ease;
 }
 .inbox-ticket-row:hover > td {
-  background-color: #edf5ef;
+  background-color: #e2f1e7;
+}
+.inbox-ticket-row .management-pill {
+  background-color: #edf7ef;
+  color: #2d8052;
 }
 html[data-theme="dark"] .inbox-ticket-row:hover > td {
-  background-color: #263a31;
+  background-color: #304b3f;
+}
+html[data-theme="dark"] .inbox-ticket-row .management-pill {
+  border-color: #3e7054;
+  background-color: #244535;
+  color: #9ed8b4;
 }
 .ticket-title:hover {
   color: #1f8057;
