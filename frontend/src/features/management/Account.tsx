@@ -399,6 +399,7 @@ export function ProfilePage() {
     save.mutate({
       name: values.get("name"),
       ...(email !== profile.data?.email ? { email } : {}),
+      phone: values.get("phone"),
       ...(values.get("password") ? { password: values.get("password") } : {}),
       ...(values.get("currentPassword")
         ? { currentPassword: values.get("currentPassword") }
@@ -441,6 +442,10 @@ export function ProfilePage() {
             <label>
               <span className="field-label">E-posta adresi</span>
               <EmailInput name="email" required defaultValue={profile.data.email ?? ""} />
+            </label>
+            <label>
+              <span className="field-label">Telefon numarası</span>
+              <input name="phone" type="tel" maxLength={30} defaultValue={profile.data.phone ?? ""} autoComplete="tel" placeholder="Telefon numaranızı girin" />
             </label>
             </section>
             <section className="profile-security" aria-labelledby="profile-security-title">

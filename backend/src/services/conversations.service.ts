@@ -25,13 +25,14 @@ const conversationInclude = {
 } as const;
 const normalizeSearch = (value: string) =>
   value.normalize("NFKC").toLocaleLowerCase("tr-TR");
-async function supportContact() {
+async function supportContact(userId: string) {
   const settings = await db.integrationSettings.findUnique({
     where: { id: "default" },
-    select: { smtpEnabled: true, smtpFromAddress: true, smsEnabled: true, smsVirtualNumber: true },
+    select: { smtpEnabled: true, smtpFromAddress: true },
   });
+  const profile = await db.user.findUnique({ where: { id: userId }, select: { phone: true } });
   return [
-    settings?.smsEnabled && settings.smsVirtualNumber && `Telefon: ${settings.smsVirtualNumber}`,
+    profile?.phone && `Telefon: ${profile.phone}`,
     settings?.smtpEnabled && settings.smtpFromAddress && `E-posta: ${settings.smtpFromAddress}`,
   ].filter(Boolean).join("\n");
 }
@@ -92,9 +93,9 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
     ? q.category === "EMAIL"
       ? [{ channel: "EMAIL", source: { not: "PHONE_SUPPORT" } }]
       : q.category === "TICKET"
-        ? [{ OR: [{ channel: "TICKET" }, { source: "PHONE_SUPPORT" }] }]
+        ? [{ OR: [{ channel: "TICKET" }, { channel: "EMAIL", source: "PHONE_SUPPORT" }] }]
       : q.category === "SMS" || q.category === "WHATSAPP"
-        ? [{ channel: q.category === "SMS" ? "SMS" : "WHATSAPP", source: { not: "PHONE_SUPPORT" } }]
+        ? [{ channel: q.category === "SMS" ? "SMS" : "WHATSAPP" }]
       : q.category === "MINE"
         ? [{ assignedAgentId: actor.id }]
         : q.category === "UNASSIGNED"
@@ -230,6 +231,7 @@ export async function createConversation(
   const result=await db.$transaction(async (tx) => {
     if (!(await tx.priorityOption.findFirst({ where: { code: input.priority, isActive: true } }))) throw new AppError(400, "INVALID_PRIORITY", "Öncelik seçeneği geçersiz.");
     if(input.tagIds && (new Set(input.tagIds).size!==input.tagIds.length || await tx.tag.count({where:{id:{in:input.tagIds}}})!==input.tagIds.length)) throw new AppError(400,'INVALID_TAG','Etiketler geçersiz.');
+    const customerInitiatedMessage = actor.role === "CUSTOMER" || input.channel === "TICKET" || input.source === "PHONE_SUPPORT";
     if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
     const website = input.websiteId ? await tx.website.findFirst({ where: { id: input.websiteId, isActive: true } }) : null;
     if (input.websiteId && !website) throw new AppError(400, "INVALID_WEBSITE", "Geçerli bir web sitesi seçin.");
@@ -246,7 +248,7 @@ export async function createConversation(
         priority: input.priority,
         customerId,
         ...(input.tagIds ? { tags: { create: input.tagIds.map(tagId => ({ tagId })) } } : {}),
-        messages: { create: { authorId: actor.role === "CUSTOMER" || input.channel === "TICKET" ? customerId : actor.id, body: input.message,type: actor.role === "CUSTOMER" || input.channel === "TICKET" ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
+        messages: { create: { authorId: customerInitiatedMessage ? customerId : actor.id, body: input.message,type: customerInitiatedMessage ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
       },
       include: conversationInclude,
     });
@@ -258,9 +260,9 @@ export async function createConversation(
   });
   publishChange(result.id);
   if (result.customer.email) {
-    const contact = await supportContact(); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
+    const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
     const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
-    const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL";
+    const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT";
     queueSupportEmail(result.customer.email, selectedEmailMessage ? result.subject : replace(template.ticketCreatedSubject), selectedEmailMessage ? input.message : `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, selectedEmailMessage ? "Talep kanal mesajı" : "Talep oluşturma", { conversationId: result.id, userId: actor.id });
   }
   if (actor.role !== "CUSTOMER" && (input.channel === "SMS" || input.channel === "WHATSAPP")) {
@@ -404,7 +406,7 @@ export async function addMessage(
       where: { id }, include: { customer: { select: { name: true, email: true, phone: true } } },
     });
     if (conversation?.channel !== "SMS" && conversation?.channel !== "WHATSAPP" && conversation?.customer.email) {
-      const contact = await supportContact(); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
+      const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
       const replace = (value: string) => value.replaceAll("{name}", conversation.customer.name).replaceAll("{subject}", conversation.subject).replaceAll("{number}", String(conversation.number)).replaceAll("{reply}", result.body);
       queueSupportEmail(conversation.customer.email, replace(template.ticketReplySubject), `${replace(template.ticketReplyBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });
     }

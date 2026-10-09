@@ -427,8 +427,8 @@ export function TicketList() {
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${ticket.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
-                      <span className="management-pill">{ticket.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[ticket.channel]}</span>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${ticket.source === "PHONE_SUPPORT" && ticket.channel === "EMAIL" ? "Telefon talebi" : channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                      <span className="management-pill">{ticket.source === "PHONE_SUPPORT" && ticket.channel === "EMAIL" ? "Telefon talebi" : channels[ticket.channel]}</span>
                     </td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
                     </td>
@@ -766,7 +766,7 @@ export function TicketDetail() {
         </div>
         <div className="ticket-status-cluster">
           <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
-          <span className="management-pill">{t.source === "PHONE_SUPPORT" ? "Telefon talebi" : channels[t.channel]}</span>
+          <span className="management-pill">{t.source === "PHONE_SUPPORT" && t.channel === "EMAIL" ? "Telefon talebi" : channels[t.channel]}</span>
           <Badge status={t.status} />
         </div>
       </div>

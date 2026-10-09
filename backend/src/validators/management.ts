@@ -353,4 +353,4 @@ export const profileSchema = registerSchema
   .partial()
   .extend({ currentPassword: z.string().min(1).max(200).optional() })
   .strict()
-  .refine((v) => Boolean(v.name || v.email || v.password));
+  .refine((v) => Boolean(v.name || v.email || v.phone !== undefined || v.password));
