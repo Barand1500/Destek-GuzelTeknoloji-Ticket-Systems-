@@ -34,6 +34,13 @@
   min-height: 0;
   overflow: hidden;
   cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.calendar-page .calendar-cell:hover {
+  background: #e2f1e7;
+}
+html[data-theme="dark"] .calendar-page .calendar-cell:hover {
+  background: #304b3f;
 }
 .calendar-cell:focus-visible { outline: 2px solid #167766; outline-offset: -2px; }
 .calendar-event-more { margin-left: auto; flex: none; font-size: 10px; }

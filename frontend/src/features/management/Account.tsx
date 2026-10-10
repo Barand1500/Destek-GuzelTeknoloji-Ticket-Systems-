@@ -104,55 +104,21 @@ export function NotificationsPage() {
           Yalnızca okunmamış bildirimler
         </label>
         <ErrorMessage error={read.error} />
-        <div className="management-notifications notification-grid">
-          <div className="notification-grid-head"><span>Bildirim</span><span>Mesaj</span><span>Tarih</span><span>Durum</span><span>İşlem</span></div>
-          {list.data?.data.map((notification) => (
-            <article
-              key={notification.id}
-              className={`management-notification ${notification.isRead ? "" : "unread"}`}
-            >
-              <div>
-                <strong>{notification.title}</strong>
-                <p>{notification.message}</p>
-                <small>
-                  {formatDate(notification.createdAt)}
-                </small>
-                <span className="notification-read-state">{notification.isRead ? "Okundu" : "Okunmadı"}</span>
-                {notification.conversationId && (
-                  <div className="notification-conversation-actions">
-                    {!notification.isRead && (
-                      <button
-                        type="button"
-                        className="button secondary"
-                        disabled={read.isPending}
-                        onClick={() => read.mutate(notification.id)}
-                      >
-                        Okundu işaretle
-                      </button>
-                    )}
-                    <Link
-                      className={`notification-conversation-link${notification.isRead ? " standalone" : ""}`}
-                      to={conversationPath(user!.role, notification.conversationId)}
-                      aria-label="Görüşmeye git"
-                      title="Görüşmeye git"
-                    >
-                      {notification.isRead ? "Görüşmeye git →" : "→"}
-                    </Link>
-                  </div>
-                )}
-              </div>
-              {!notification.isRead && !notification.conversationId && (
-                <button
-                  className="button secondary"
-                  disabled={read.isPending}
-                  onClick={() => read.mutate(notification.id)}
-                >
-                  Okundu işaretle
-                </button>
-              )}
-            </article>
-          ))}
-        </div>
+        {!!list.data?.data.length && <div className="management-table-wrap notification-table-wrap">
+          <table className="management-table notification-table" aria-label="Bildirimler">
+            <thead><tr><th>Bildirim</th><th>Mesaj</th><th>Tarih</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody>{list.data.data.map((notification) => <tr key={notification.id}>
+              <td><strong>{notification.title}</strong></td>
+              <td>{notification.message}</td>
+              <td><time>{formatDate(notification.createdAt)}</time></td>
+              <td><span className="notification-read-state">{notification.isRead ? "Okundu" : "Okunmadı"}</span></td>
+              <td>{notification.conversationId ? <div className="notification-conversation-actions">
+                {!notification.isRead && <button type="button" className="button secondary" disabled={read.isPending} onClick={() => read.mutate(notification.id)}>Okundu işaretle</button>}
+                <Link className={`notification-conversation-link${notification.isRead ? " standalone" : ""}`} to={conversationPath(user!.role, notification.conversationId)} aria-label="Görüşmeye git" title="Görüşmeye git">{notification.isRead ? "Görüşmeye git →" : "→"}</Link>
+              </div> : !notification.isRead && <button type="button" className="button secondary notification-mark-read" disabled={read.isPending} onClick={() => read.mutate(notification.id)}>Okundu işaretle</button>}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
         <ListState
           loading={list.isPending}
           error={list.error}

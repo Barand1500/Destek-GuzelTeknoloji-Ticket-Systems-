@@ -28,6 +28,9 @@ html[data-theme="dark"] .roles-page { --roles-surface: #1b2b24; --roles-soft: #1
 .roles-table { width: 100%; border-collapse: collapse; text-align: left; }
 .roles-table th { padding: 11px 22px; border-top: 1px solid var(--roles-border); border-bottom: 1px solid var(--roles-border); background: var(--roles-soft); color: var(--ui-text-secondary); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .roles-table td { padding: 18px 22px; border-bottom: 1px solid var(--roles-border); font-size: 12px; color: var(--ui-text-primary); vertical-align: middle; }
+.roles-table tbody td { transition: background-color 140ms ease; }
+.roles-table tbody tr:hover > td { background: #e2f1e7; }
+html[data-theme="dark"] .roles-table tbody tr:hover > td { background: #304b3f; }
 .roles-table tr:last-child td { border-bottom: 0; }
 .roles-name-cell { display: flex; align-items: center; gap: 12px; min-width: 160px; }
 .roles-name-cell strong { display: block; font-weight: 600; overflow-wrap: anywhere; }

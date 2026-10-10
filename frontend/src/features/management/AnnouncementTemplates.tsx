@@ -62,46 +62,20 @@ export function AnnouncementTemplates() {
             error={list.error}
             empty={!visible.length}
           />
-          <div className="management-notifications announcement-template-list">
-            {visible.map((item) => {
-              return (
-                <article key={item.id} className="management-notification">
-                  <div>
-                    <strong>{item.label}</strong>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{item.body}</p>
-                    <small>{item.title}</small>
-                  </div>
-                  <div className="management-actions announcement-template-actions">
-                    <button
-                      type="button"
-                      className="button secondary saved-reply-action saved-reply-action-edit"
-                      aria-label={`${item.label} şablonunu düzenle`}
-                      title="Düzenle"
-                      onClick={() => {
-                        setEditing(item);
-                        setVersion((value) => value + 1);
-                        save.reset();
-                      }}
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="button management-danger saved-reply-action saved-reply-action-delete"
-                      aria-label={`${item.label} şablonunu sil`}
-                      title="Sil"
-                      onClick={() => {
-                        remove.reset();
-                        setDeleting(item);
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          {!!visible.length && <div className="management-table-wrap saved-content-table-wrap">
+            <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır şablonlar">
+              <thead><tr><th>Şablon adı</th><th>Duyuru başlığı</th><th>İçerik</th><th>İşlemler</th></tr></thead>
+              <tbody>{visible.map((item) => <tr key={item.id}>
+                <td><strong>{item.label}</strong></td>
+                <td>{item.title}</td>
+                <td><p className="saved-content-preview">{item.body}</p></td>
+                <td><div className="management-actions announcement-template-actions">
+                  <button type="button" className="button secondary saved-reply-action saved-reply-action-edit" aria-label={`${item.label} şablonunu düzenle`} title="Düzenle" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} /></button>
+                  <button type="button" className="button management-danger saved-reply-action saved-reply-action-delete" aria-label={`${item.label} şablonunu sil`} title="Sil" onClick={() => { remove.reset(); setDeleting(item); }}><Trash2 size={15} /></button>
+                </div></td>
+              </tr>)}</tbody>
+            </table>
+          </div>}
           <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
         </section>
         <section className="management-panel">

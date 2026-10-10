@@ -483,55 +483,23 @@ function SavedRepliesContent() {
             error={list.error}
             empty={!list.data?.data.length}
           />
-          <div className="management-notifications">
-            {list.data?.data.map((reply) => {
-              const canEdit =
-                user?.role === "ADMIN" || user?.id === reply.authorId;
-              return (
-                <article key={reply.id} className="management-notification">
-                  <div>
-                    <strong>{reply.title}</strong>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{reply.body}</p>
-                    <small>{reply.author?.name ?? "Ekip"}</small>
-                  </div>
-                  {canEdit && (
-                    <div className="management-actions">
-                      <button
-                        className="button secondary saved-reply-action saved-reply-action-edit"
-                        type="button"
-                        aria-label={`${reply.title} düzenle`}
-                        title="Düzenle"
-                        onClick={() => {
-                          setEditing(reply);
-                          setVersion((v) => v + 1);
-                          save.reset();
-                        }}
-                      >
-                        <Pencil size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        className="button management-danger saved-reply-action saved-reply-action-delete"
-                        type="button"
-                        aria-label={`${reply.title} sil`}
-                        title="Sil"
-                        disabled={remove.isPending}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `“${reply.title}” hazır yanıtı silinsin mi?`,
-                            )
-                          )
-                            remove.mutate(reply.id);
-                        }}
-                      >
-                        <Trash2 size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
+          {!!list.data?.data.length && <div className="management-table-wrap saved-content-table-wrap">
+            <table className="management-table saved-content-table" aria-label="Hazır yanıtlar">
+              <thead><tr><th>Yanıt başlığı</th><th>Yanıt metni</th><th>Ekleyen</th><th>İşlemler</th></tr></thead>
+              <tbody>{list.data.data.map((reply) => {
+                const canEdit = user?.role === "ADMIN" || user?.id === reply.authorId;
+                return <tr key={reply.id}>
+                  <td><strong>{reply.title}</strong></td>
+                  <td><p className="saved-content-preview">{reply.body}</p></td>
+                  <td>{reply.author?.name ?? "Ekip"}</td>
+                  <td>{canEdit && <div className="management-actions">
+                    <button className="button secondary saved-reply-action saved-reply-action-edit" type="button" aria-label={`${reply.title} düzenle`} title="Düzenle" onClick={() => { setEditing(reply); setVersion((v) => v + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>
+                    <button className="button management-danger saved-reply-action saved-reply-action-delete" type="button" aria-label={`${reply.title} sil`} title="Sil" disabled={remove.isPending} onClick={() => { if (window.confirm(`“${reply.title}” hazır yanıtı silinsin mi?`)) remove.mutate(reply.id); }}><Trash2 size={15} aria-hidden="true" /></button>
+                  </div>}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          </div>}
           <Pagination
             pagination={list.data?.pagination}
             onChange={list.setPage}
@@ -553,6 +521,7 @@ function SavedRepliesContent() {
             <label>
               <span className="field-label">Yanıt metni</span>
               <textarea
+                className="saved-reply-body"
                 name="body"
                 required
                 minLength={1}

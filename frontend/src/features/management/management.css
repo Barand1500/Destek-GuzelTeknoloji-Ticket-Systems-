@@ -180,6 +180,7 @@
 }
 .management-table-wrap {
   overflow: auto;
+  margin-inline: -24px;
 }
 .management-table {
   width: 100%;
@@ -201,12 +202,19 @@
 }
 .management-table th,
 .management-table td {
-  padding: 14px 12px;
+  padding: 14px 24px;
   border-bottom: 1px solid #edf0ed;
   vertical-align: middle;
 }
 .management-table td {
   font-size: 13px;
+}
+.management-table tbody td {
+  background: #fff;
+  transition: background-color 140ms ease;
+}
+.management-table tbody tr:hover > td {
+  background: #e2f1e7;
 }
 .management-table td small {
   display: block;
@@ -218,7 +226,7 @@
 }
 .management-table th:first-child,
 .management-table td:first-child {
-  padding-left: 0;
+  padding-left: 24px;
 }
 .management-pagination {
   display: flex;
@@ -271,6 +279,9 @@
 .management-notifications {
   display: grid;
   gap: 12px;
+}
+.management-notifications.notification-grid {
+  gap: 0;
 }
 .management-notification {
   padding: 18px;
@@ -846,6 +857,16 @@ html[data-theme="dark"] .profile-role {
   .management-panel {
     padding: 18px;
   }
+  .management-table-wrap {
+    margin-inline: -18px;
+  }
+  .management-table-wrap.notification-table-wrap {
+    margin-inline: -18px;
+  }
+  .management-table th,
+  .management-table td {
+    padding-inline: 18px;
+  }
   .management-reports-grid {
     grid-template-columns: 1fr;
   }
@@ -1024,8 +1045,17 @@ html[data-theme="dark"] .notification-grid .management-notification {
   color: #e5eee9;
 }
 html[data-theme="dark"] .notification-grid .management-notification.unread {
-  background: #223a30;
+  background: #1d2c26;
   border-left-color: #59a98e;
+}
+html[data-theme="dark"] .notification-grid .management-notification:hover {
+  background: #304b3f;
+}
+html[data-theme="dark"] .management-table tbody td {
+  background: #1d2c26;
+}
+html[data-theme="dark"] .management-table tbody tr:hover > td {
+  background: #304b3f;
 }
 html[data-theme="dark"] .notification-grid .management-notification strong {
   color: #e5eee9;

@@ -1636,6 +1636,7 @@ html[data-theme="dark"] .ticket-customer-summary .ticket-number {
 }
 .notification-grid {
   overflow: hidden;
+  gap: 0;
   border: 1px solid #e0e7e2;
   border-radius: 10px;
 }
@@ -1770,7 +1771,55 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   color: #174c3b;
 }
 .notification-grid .management-notification.unread {
-  background: #f5fbf7;
+  background: #fff;
+}
+.notification-grid .management-notification {
+  background: #fff;
+  transition: background-color 140ms ease;
+}
+.notification-grid .management-notification:hover {
+  background: #e2f1e7;
+}
+.notifications-page .notification-toolbar {
+  min-height: 0;
+  margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.notifications-page .notification-search {
+  flex: 1 1 320px;
+  max-width: none;
+}
+.notifications-page .notification-toggle {
+  margin-left: 0;
+}
+.management-table-wrap.notification-table-wrap {
+  margin-inline: -24px;
+}
+.notification-table {
+  min-width: 850px;
+  table-layout: fixed;
+}
+.notification-table th:nth-child(1),
+.notification-table td:nth-child(1) { width: 20%; }
+.notification-table th:nth-child(2),
+.notification-table td:nth-child(2) { width: 37%; }
+.notification-table th:nth-child(3),
+.notification-table td:nth-child(3) { width: 18%; }
+.notification-table th:nth-child(4),
+.notification-table td:nth-child(4) { width: 12%; }
+.notification-table th:nth-child(5),
+.notification-table td:nth-child(5) { width: 13%; }
+.notification-table td { overflow-wrap: anywhere; }
+.notification-table td:nth-child(3) { white-space: nowrap; }
+.notification-table .notification-mark-read {
+  width: 170px;
+  min-width: 170px;
+  height: 36px;
+  min-height: 36px;
+  box-sizing: border-box;
 }
 .management-table tr.inactive-record {
   opacity: 0.52;
@@ -3648,6 +3697,13 @@ html[data-theme="dark"] .ticket-properties .ticket-actions > .danger-icon:hover 
 .conversation-log-table th:nth-child(3) { width: 17%; }
 .conversation-log-table th:nth-child(4) { width: 45%; }
 .conversation-log-table tbody tr:last-child td { border-bottom: 0; }
+.conversation-log-table tbody td {
+  background: #fff;
+  transition: background-color 140ms ease;
+}
+.conversation-log-table tbody tr:hover > td {
+  background: #e2f1e7;
+}
 .conversation-log-table strong { font-weight: 600; }
 .conversation-log-table small {
   display: block;
@@ -3697,6 +3753,8 @@ html[data-theme="dark"] .conversation-log-table th {
 }
 html[data-theme="dark"] .conversation-log-table th,
 html[data-theme="dark"] .conversation-log-table td { border-color: #355046; }
+html[data-theme="dark"] .conversation-log-table tbody td { background: #1d2c26; }
+html[data-theme="dark"] .conversation-log-table tbody tr:hover > td { background: #304b3f; }
 html[data-theme="dark"] .conversation-log-table small { color: var(--ui-text-secondary); }
 html[data-theme="dark"] .conversation-log-table .conversation-log-note {
   background: #383321;
@@ -7191,6 +7249,10 @@ html[data-theme="dark"] .message-mentions span {
   border-color: #76672f;
   background: #4a401f;
   color: #f0d77c;
+}
+html[data-theme="dark"] .notifications-page .notification-toolbar {
+  background: transparent !important;
+  border-color: transparent !important;
 }
 @media (max-width: 600px) {
   .mention-suggestions {
