@@ -1785,7 +1785,8 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(22, 42, 34, 0.28);
+  background: #07140f99;
+  backdrop-filter: blur(5px);
 }
 .confirm-modal {
   position: relative;
@@ -1809,7 +1810,7 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   padding: 28px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 .assignment-transfer-modal > .confirm-close {
   display: grid;
@@ -1848,7 +1849,7 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 20px;
   margin-top: 22px;
-  overflow: hidden;
+  overflow: visible;
 }
 .assignment-transfer-list-section {
   min-width: 0;
@@ -1956,6 +1957,8 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   overflow-wrap: anywhere;
 }
 .assignment-transfer-builder {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1964,6 +1967,11 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   border: 1px solid var(--ui-border);
   border-radius: 10px;
   background: var(--ui-surface-subtle, #f7faf8);
+}
+.assignment-transfer-builder .styled-dropdown-menu {
+  z-index: 60;
+  max-height: min(220px, calc(100dvh - 300px));
+  overflow-y: auto;
 }
 .assignment-transfer-builder > p {
   margin: -10px 0 0;
@@ -2317,8 +2325,8 @@ html[data-theme="dark"] .assignment-transfer-modal > .confirm-close:hover {
   background: #2b493c;
 }
 html[data-theme="dark"] .confirm-backdrop {
-  background: rgba(4, 12, 9, 0.72);
-  backdrop-filter: blur(2px);
+  background: #07140f99;
+  backdrop-filter: blur(5px);
 }
 html[data-theme="dark"] .confirm-modal {
   border: 1px solid #4b6b5e;
@@ -2601,13 +2609,6 @@ html[data-theme="dark"] .saved-reply-action-delete::before {
   max-height: 86px;
   overflow-y: auto;
   z-index: 80;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.tabs-modal-add .styled-dropdown-menu::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
 }
 .tabs-add-tag-link {
   display: block;
@@ -2827,6 +2828,10 @@ html[data-theme="dark"] .saved-reply-action-delete::before {
   background: #07140f99;
   backdrop-filter: blur(5px);
 }
+.confirm-backdrop.customer-files-backdrop {
+  background: #07140f99;
+  backdrop-filter: blur(5px);
+}
 html[data-theme="dark"] .confirm-modal.customer-form-panel {
   --customer-modal-surface: #203129;
   --customer-modal-field: #2a3e34;
@@ -2838,6 +2843,10 @@ html[data-theme="dark"] .confirm-modal.customer-form-panel {
   box-shadow: 0 24px 90px #0009;
 }
 html[data-theme="dark"] .confirm-backdrop.customer-form-backdrop {
+  background: #07140f99;
+  backdrop-filter: blur(5px);
+}
+html[data-theme="dark"] .confirm-backdrop.customer-files-backdrop {
   background: #07140f99;
   backdrop-filter: blur(5px);
 }
@@ -3483,7 +3492,7 @@ html[data-theme="dark"] .stat-card-link:hover { border-color: var(--ui-tab-indic
 }
 .detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 265px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   align-items: stretch;
   gap: 22px;
   flex: 0 0 auto;
@@ -3760,9 +3769,13 @@ html[data-theme="dark"] .conversation-log-table .conversation-log-note {
 }
 .composer-tabs {
   display: flex;
+  align-items: center;
   border-bottom: 1px solid #e9eee4;
   gap: 20px;
   padding: 0 14px;
+}
+.composer-channel-pill {
+  margin-left: auto;
 }
 .composer-tabs button {
   display: flex;
@@ -4498,12 +4511,56 @@ html[data-theme="dark"] .notification-popover-footer {
   top: calc(100% + 6px);
   left: 0;
   right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a8beb2 transparent;
   padding: 5px;
   border: 1px solid #dce5df;
   border-radius: 9px;
   background: #fff;
   box-shadow: 0 12px 28px rgba(25, 48, 39, 0.18);
   animation: notification-menu-enter 0.14s ease-out;
+}
+.styled-dropdown-menu::-webkit-scrollbar,
+.searchable-dropdown-menu::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.styled-dropdown-menu::-webkit-scrollbar-button,
+.searchable-dropdown-menu::-webkit-scrollbar-button {
+  display: none;
+}
+.styled-dropdown-menu::-webkit-scrollbar-track,
+.searchable-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.styled-dropdown-menu::-webkit-scrollbar-thumb,
+.searchable-dropdown-menu::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #a8beb2;
+  background-clip: padding-box;
+}
+.styled-dropdown-menu::-webkit-scrollbar-thumb:hover,
+.searchable-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #789889;
+  background-clip: padding-box;
+}
+html[data-theme="dark"] .styled-dropdown-menu,
+html[data-theme="dark"] .searchable-dropdown-menu {
+  scrollbar-color: #587468 transparent;
+}
+html[data-theme="dark"] .styled-dropdown-menu::-webkit-scrollbar-thumb,
+html[data-theme="dark"] .searchable-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #587468;
+  background-clip: padding-box;
+}
+html[data-theme="dark"] .styled-dropdown-menu::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] .searchable-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #789889;
+  background-clip: padding-box;
 }
 .styled-dropdown-menu button {
   display: block;
@@ -4625,10 +4682,8 @@ html[data-theme="dark"] .styled-dropdown-menu button[aria-selected="true"] {
 .searchable-dropdown-menu {
   max-height: 190px;
   overflow-y: auto;
-  scrollbar-width: none;
-}
-.searchable-dropdown-menu::-webkit-scrollbar {
-  display: none;
+  scrollbar-width: thin;
+  scrollbar-color: #a8beb2 transparent;
 }
 .searchable-dropdown-empty {
   display: block;
@@ -5243,7 +5298,8 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(17, 32, 26, 0.56);
+  background: #07140f99;
+  backdrop-filter: blur(5px);
 }
 .attachment-preview-modal {
   display: grid;

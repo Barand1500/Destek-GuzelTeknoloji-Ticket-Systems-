@@ -2,7 +2,7 @@ import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Actor } from "../types/express.js";
 import { AppError } from "../utils/errors.js";
-import { can } from './permissions.js';
+import { can, permissionScope } from './permissions.js';
 import type { StoredUpload } from './uploads.service.js';
 import { notifyConversation, publishChange } from './events.service.js';
 import { queueSupportEmail } from './mailer.service.js';
@@ -37,16 +37,16 @@ async function supportContact(userId: string) {
   ].filter(Boolean).join("\n");
 }
 export function visibility(actor: Actor): Prisma.ConversationWhereInput {
-  if (actor.accessRole) {
-    if (actor.accessRole.scope === 'OWN') return { deletedAt: null, assignedAgentId: actor.id };
-    if (actor.accessRole.scope === 'DEPARTMENT') return { deletedAt: null, departmentId: { in: actor.departmentIds } };
+  if (actor.role === 'CUSTOMER') return { deletedAt: null, customerId: actor.id };
+  if (actor.accessRole || actor.roleScope) {
+    const scope = permissionScope(actor);
+    if (scope === 'OWN') return { deletedAt: null, assignedAgentId: actor.id };
+    if (scope === 'DEPARTMENT') return { deletedAt: null, departmentId: { in: actor.departmentIds } };
     return { deletedAt: null };
   }
   switch (actor.role) {
     case "ADMIN":
       return { deletedAt: null };
-    case "CUSTOMER":
-      return { deletedAt: null, customerId: actor.id };
     case "AGENT":
       return { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { assignedAgentId: null, departmentId: { in: actor.departmentIds } }, { participants: { some: { userId: actor.id } } }] };
     case "SUPERVISOR":
@@ -222,9 +222,8 @@ export async function createConversation(
     if (!recipient?.phone) throw new AppError(400, "CHANNEL_RECIPIENT_MISSING", "Seçilen kanaldan göndermek için müşterinin telefon numarası kayıtlı olmalı.");
   }
   if(actor.role!=='CUSTOMER'){
-    if (actor.accessRole && actor.accessRole.scope !== 'ALL' && !actor.departmentIds.includes(input.departmentId)) throw new AppError(403, 'FORBIDDEN', 'Bu departmana talep açma yetkiniz yok.');
-    if (actor.accessRole && input.assignedAgentId && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
-    if(actor.role!=='ADMIN'&&!actor.departmentIds.includes(input.departmentId))throw new AppError(403,'FORBIDDEN','Bu departmana talep açma yetkiniz yok.');
+    if (permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)) throw new AppError(403, 'FORBIDDEN', 'Bu departmana talep açma yetkiniz yok.');
+    if (input.assignedAgentId && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
     const customer=await db.user.findFirst({where:{id:customerId,role:'CUSTOMER',isActive:true}});
     if(!customer)throw new AppError(400,'INVALID_CUSTOMER','Aktif bir müşteri seçin.');
   }
@@ -259,7 +258,7 @@ export async function createConversation(
     return conversation;
   });
   publishChange(result.id);
-  if (result.customer.email) {
+  if (result.customer.email && (input.source !== "PHONE_SUPPORT" || input.channel === "EMAIL")) {
     const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
     const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
     const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT";
@@ -426,18 +425,18 @@ export async function updateConversation(
 ) {
   if (actor.role === "CUSTOMER")
     throw new AppError(403, "FORBIDDEN", "Bu işlem için yetkiniz yok.");
-  if (
-    (input.assignedAgentId !== undefined || input.departmentId!==undefined) &&
-    !["ADMIN", "SUPERVISOR"].includes(actor.role)
-  )
+  if ((input.assignedAgentId !== undefined && !can(actor, 'conversations.assign')) || (input.departmentId !== undefined && !can(actor, 'conversations.transfer')) || (input.departmentId !== undefined && permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)))
     throw new AppError(
       403,
       "FORBIDDEN",
-      "Atama işlemini yönetici veya departman sorumlusu yapabilir.",
+      "Atama veya departman aktarma yetkiniz yok ya da hedef departman kapsamınız dışında.",
     );
   const result=await db.$transaction(async (tx) => {
+    const accessScope = input.assignedAgentId !== undefined || input.departmentId !== undefined
+      ? visibility(actor)
+      : mutationVisibility(actor);
     const lock = await tx.conversation.updateMany({
-      where: { AND: [mutationVisibility(actor), { id }] },
+      where: { AND: [accessScope, { id }] },
       data: { updatedAt: new Date() },
     });
     if (lock.count !== 1)
@@ -523,7 +522,7 @@ export async function assignToMe(actor:Actor,id:string){
   return result;
 }
 export async function deleteConversation(actor:Actor,id:string){
-  if(actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Silme işlemi yalnızca yöneticiye açıktır.');
+  if(!can(actor, 'conversations.delete'))throw new AppError(403,'FORBIDDEN','Talep silme izniniz yok.');
   await db.$transaction(async tx=>{
     const result=await tx.conversation.updateMany({where:{AND:[visibility(actor),{id}]},data:{deletedAt:new Date()}});
     if(!result.count)throw new AppError(404,'TICKET_NOT_FOUND','Talep bulunamadı.');
@@ -532,7 +531,7 @@ export async function deleteConversation(actor:Actor,id:string){
   publishChange();
 }
 export async function deleteConversations(actor:Actor,period:'day'|'week'|'month'|'all'){
-  if(actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Silme işlemi yalnızca yöneticiye açıktır.');
+  if(!can(actor, 'conversations.delete'))throw new AppError(403,'FORBIDDEN','Talep silme izniniz yok.');
   const days=period==='day'?1:period==='week'?7:period==='month'?30:null;
   const since=days?new Date(Date.now()-days*24*60*60*1000):undefined;
   const result=await db.$transaction(async tx=>{

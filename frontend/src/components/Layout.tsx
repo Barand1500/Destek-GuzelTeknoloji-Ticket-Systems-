@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
-  Building2,
   Users,
   Tags,
   Bell,
@@ -107,7 +106,7 @@ export function Layout() {
 }
 function WorkspaceLayout() {
   const { user, loading, logout } = useAuth();
-  const { resumePath } = useWorkSession();
+  const { startNewRequest } = useWorkSession();
   const [error, setError] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -231,9 +230,17 @@ function WorkspaceLayout() {
           {
             label: "Talep aç",
             group: "Sayfalar",
-            to: resumePath,
+            to: path("phone-support"),
           },
           { label: "Anketler", group: "Sayfalar", to: path("surveys") },
+          { label: "Departmanlar", group: "Personeller", to: path("departments") },
+          { label: "Projeler", group: "Yönetim", to: path("websites") },
+          { label: "Kategoriler", group: "Yönetim", to: path("tags") },
+          { label: "Raporlar", group: "Yönetim", to: path("reports") },
+          { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations/channels") },
+          { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
+          { label: "Personel aktivitesi", group: "Yönetim", to: path("staff-presence") },
+          { label: "İşlem geçmişi", group: "Yönetim", to: path("activity-logs") },
           ...(user.role !== "ADMIN"
             ? [
                 {
@@ -289,6 +296,10 @@ function WorkspaceLayout() {
       : user.role === "ADMIN"
         ? "Yönetim paneli"
         : "Destek çalışma alanı";
+  const showSettings = user.role !== "CUSTOMER" && (
+    (user.role === "ADMIN" && !user.accessRole) ||
+    ["websites.view", "tags.view", "reports.view", "integrations.view", "response.view", "guide.view", "surveys.view"].some(permission => hasPermission(user, permission))
+  );
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -315,7 +326,7 @@ function WorkspaceLayout() {
             <LayoutDashboard size={19} />
             Genel bakış
           </NavLink>
-          {(user.role === "ADMIN" || user.role === "SUPERVISOR") && (
+          {user.role !== "CUSTOMER" && (
             <NavLink to={path("staff-presence")}>
               <Activity size={19} />
               Personel aktivitesi
@@ -341,22 +352,10 @@ function WorkspaceLayout() {
                 <Users size={19} />
                 Personeller
               </NavLink>
-              <NavLink to={resumePath}>
+              <NavLink to={path("phone-support")} onClick={startNewRequest}>
                 <Plus size={19} />
                 Talep aç
               </NavLink>
-              {user.role !== "ADMIN" && (
-                <NavLink to={path("surveys")}>
-                  <ClipboardList size={19} />
-                  Anketler
-                </NavLink>
-              )}
-              {user.role !== "ADMIN" && (
-                <NavLink to={path("guide/projects")}>
-                  <FolderOpen size={19} />
-                  Rehber
-                </NavLink>
-              )}
             </>
           )}
           {user.role !== "CUSTOMER" && (
@@ -365,7 +364,7 @@ function WorkspaceLayout() {
               Dosyalar
             </NavLink>
           )}
-          {user.role === "ADMIN" && (
+          {showSettings && (
             <>
               <button
                 className={`settings-nav-toggle${settingsOpen ? " open" : ""}`}
@@ -380,7 +379,7 @@ function WorkspaceLayout() {
               </button>
               {settingsOpen && (
                 <div className="settings-nav-links" id="admin-settings-nav">
-                  {!user.accessRole && <NavLink to={path('roles')}><Users size={16}/>Roller</NavLink>}
+                  {user.role === "ADMIN" && !user.accessRole && <NavLink to={path('roles')}><Users size={16}/>Roller</NavLink>}
                   <NavLink to={path("integrations/channels")}>
                     <Settings size={16} />
                     Entegrasyonlar
@@ -425,14 +424,14 @@ function WorkspaceLayout() {
               >
                 <FileText size={17} />
               </NavLink>
-              {user.role === "ADMIN" && <NavLink
+              <NavLink
                 to={path("activity-logs")}
                 className="sidebar-tool"
                 aria-label="İşlem geçmişi"
                 title="İşlem geçmişi"
               >
                 <History size={17} />
-              </NavLink>}
+              </NavLink>
               <NavLink
                 to={path("calendar")}
                 className="sidebar-tool"
@@ -471,7 +470,10 @@ function WorkspaceLayout() {
                   <NavLink
                     key={`${item.group}-${item.to}`}
                     to={item.to}
-                    onClick={() => setGlobalSearch("")}
+                    onClick={() => {
+                      if (item.label === "Talep aç") startNewRequest();
+                      setGlobalSearch("");
+                    }}
                   >
                     <small>{item.group}</small>
                     <span>{item.label}</span>
@@ -548,7 +550,7 @@ function WorkspaceLayout() {
             )}
           </div>
           <div className="topbar-actions">
-            {user.role === "ADMIN" && (
+            {hasPermission(user, "announcements.create") && (
               <button
                 className="topbar-icon-link"
                 type="button"

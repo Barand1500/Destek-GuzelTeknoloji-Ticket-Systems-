@@ -68,26 +68,31 @@ const requireAdmin = (actor: Actor) => {
       "Bu işlem için yönetici yetkisi gerekiyor.",
     );
 };
+const requirePermission = (actor: Actor, permission: string) => {
+  if (!can(actor, permission))
+    throw new AppError(403, "FORBIDDEN", "Rolünüz bu işlem için yetkili değil.");
+};
 const requireUserPermission = (actor: Actor, action: 'view' | 'create' | 'update' | 'delete') => {
   if (!can(actor, `users.${action}`)) throw new AppError(403, 'FORBIDDEN', 'Personel ekranı için gerekli rol izniniz yok.');
 };
 function staffDirectoryScope(actor: Actor): Prisma.UserWhereInput {
   const scope = permissionScope(actor);
   if (scope === 'ALL') return {};
-  if (scope === 'OWN') return { id: actor.id };
+  // OWN is the conversation visibility scope; personnel access follows department membership.
   return { departments: { some: { departmentId: { in: actor.departmentIds } } } };
 }
 function assertStaffInScope(actor: Actor, target: { id: string; departments?: Array<{ departmentId: string }> }) {
   const scope = permissionScope(actor);
   if (scope === 'ALL') return;
-  if (scope === 'OWN' && target.id === actor.id) return;
-  if (scope === 'DEPARTMENT' && target.departments?.some((department) => actor.departmentIds.includes(department.departmentId))) return;
+  if (target.id === actor.id || target.departments?.some((department) => actor.departmentIds.includes(department.departmentId))) return;
   throw new AppError(403, 'FORBIDDEN', 'Bu personel departman kapsamınızda değil.');
 }
 function assertDepartmentsInScope(actor: Actor, departmentIds: string[]) {
   const scope = permissionScope(actor);
   if (scope === 'ALL') return;
-  if (scope === 'DEPARTMENT' && departmentIds.every((id) => actor.departmentIds.includes(id))) return;
+  // OWN limits conversation visibility; it must not prevent user creation
+  // inside departments the actor belongs to when users.create is granted.
+  if (departmentIds.every((id) => actor.departmentIds.includes(id))) return;
   throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
 }
 const notFound = () => new AppError(404, "NOT_FOUND", "Kayıt bulunamadı.");
@@ -203,9 +208,6 @@ export async function users(
           ],
         }
       : {}),
-    ...(customersOnly && (actor.role !== "ADMIN" || (actor.accessRole && actor.accessRole.scope !== 'ALL'))
-      ? { customerConversations: { some: visibility(actor) } }
-      : {}),
   };
   const result = customersOnly
     ? (
@@ -264,11 +266,13 @@ export async function createUser(
 ) {
   requireUserPermission(actor, 'create');
   const { password, departmentIds, skills, ...rest } = input;
+  const isSystemAdmin = actor.role === 'ADMIN' && !actor.accessRole;
   const passwordHash = await bcrypt.hash(password, 12);
   return serial(async (tx) => {
     await validateDepartments(tx, departmentIds, rest.role);
     assertDepartmentsInScope(actor, departmentIds);
-    if (actor.role !== 'ADMIN' && rest.role === 'ADMIN' && !rest.accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi hesabi olusturamazsiniz.');
+    if (!isSystemAdmin && rest.role === 'ADMIN' && !rest.accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi hesabi olusturamazsiniz.');
+    if (!isSystemAdmin && rest.role === 'SUPERVISOR') throw new AppError(403, 'FORBIDDEN', 'Departman sorumlusu rolünü yalnızca sistem yöneticisi atayabilir.');
     if (rest.accessRoleId && !await tx.accessRole.findUnique({ where: { id: rest.accessRoleId } })) throw notFound();
     if (rest.accessRoleId && rest.role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (!rest.accessRoleId || rest.accessRoleId !== actor.accessRole.id)) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzde personel oluşturabilirsiniz.');
@@ -285,7 +289,13 @@ export async function createUser(
       select: person,
     });
     await audit(tx, actor, "user.created", "User", data.id, {
-      role: data.role,
+      details: [
+        `Ad soyad: ${data.name}`,
+        data.email && `E-posta: ${data.email}`,
+        data.phone && `Telefon: ${data.phone}`,
+        `Rol: ${data.accessRole?.name ?? ({ ADMIN: "Yönetici", SUPERVISOR: "Departman sorumlusu", AGENT: "Destek uzmanı", CUSTOMER: "Müşteri" }[data.role] ?? data.role)}`,
+        data.departments.length > 0 && `Departman: ${data.departments.map(({ department }) => department.name).join(", ")}`,
+      ].filter((detail): detail is string => Boolean(detail)),
     });
     return data;
   });
@@ -371,9 +381,6 @@ export async function customer(actor: Actor, id: string) {
       id,
       role: "CUSTOMER",
       deletedAt: null,
-      ...(actor.role === "ADMIN" && (!actor.accessRole || actor.accessRole.scope === 'ALL')
-        ? {}
-        : { customerConversations: { some: visibility(actor) } }),
     },
     select: person,
   });
@@ -389,7 +396,7 @@ export async function updateCustomer(
   requireStaff(actor);
   return serial(async (tx) => {
     const current = await tx.user.findFirst({
-      where: { id, role: "CUSTOMER", deletedAt: null, ...(actor.accessRole && actor.accessRole.scope !== 'ALL' ? { customerConversations: { some: visibility(actor) } } : {}) },
+      where: { id, role: "CUSTOMER", deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -501,7 +508,7 @@ export async function deleteCustomer(actor: Actor, id: string) {
   requireStaff(actor);
   return serial(async (tx) => {
     const current = await tx.user.findFirst({
-      where: { id, role: "CUSTOMER", ...(actor.accessRole && actor.accessRole.scope !== 'ALL' ? { customerConversations: { some: visibility(actor) } } : {}) },
+      where: { id, role: "CUSTOMER" },
       select: { id: true, name: true, phone: true, email: true },
     });
     if (!current) throw notFound();
@@ -600,8 +607,10 @@ export async function updateUser(
     assertStaffInScope(actor, current);
     const role = input.role ?? current.role;
     const accessRoleId = input.accessRoleId !== undefined ? input.accessRoleId : current.accessRoleId;
+    const isSystemAdmin = actor.role === 'ADMIN' && !actor.accessRole;
+    if (!isSystemAdmin && input.role === 'SUPERVISOR' && current.role !== 'SUPERVISOR') throw new AppError(403, 'FORBIDDEN', 'Departman sorumlusu rolünü yalnızca sistem yöneticisi atayabilir.');
     if (accessRoleId && !await tx.accessRole.findUnique({ where: { id: accessRoleId } })) throw notFound();
-    if (actor.role !== 'ADMIN' && role === 'ADMIN' && !accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi rolu atayamazsiniz.');
+    if (!isSystemAdmin && role === 'ADMIN' && !accessRoleId) throw new AppError(403, 'FORBIDDEN', 'Sistem yoneticisi rolu atayamazsiniz.');
     if (accessRoleId && role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (current.accessRoleId !== actor.accessRole.id || (input.role !== undefined && input.role !== current.role) || (input.accessRoleId !== undefined && input.accessRoleId !== current.accessRoleId))) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzdeki personelleri yönetebilirsiniz; rol değiştiremezsiniz.');
     if (actor.id === id && current.role === 'ADMIN' && !current.accessRoleId && accessRoleId) throw new AppError(409, 'SELF_PROTECTION', 'Kendi sistem yöneticisi yetkinizi kaldıramazsınız.');
@@ -749,7 +758,7 @@ export async function updateDepartment(
   id: string,
   input: z.infer<typeof schema.departmentSchema>,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "departments.update");
   return serial(async (tx) => {
     if (!(await tx.department.findFirst({ where: { id, deletedAt: null } })))
       throw notFound();
@@ -767,7 +776,7 @@ export async function updateDepartment(
   });
 }
 export async function deleteDepartment(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requirePermission(actor, "departments.delete");
   return serial(async (tx) => {
     const current = await tx.department.findFirst({
       where: { id, deletedAt: null },
@@ -857,8 +866,9 @@ export async function tags(q: z.infer<typeof schema.searchQuery>) {
 }
 export async function staffSuggestions(actor: Actor, text: string) {
   requireStaff(actor);
+  requirePermission(actor, 'conversations.assign');
   if (!text.trim()) return [];
-  const accessible = { isActive: true, deletedAt: null, ...(actor.role === 'ADMIN' && (!actor.accessRole || actor.accessRole.scope === 'ALL') ? {} : { id: { in: actor.departmentIds } }) };
+  const accessible = { isActive: true, deletedAt: null, ...(permissionScope(actor) === 'ALL' ? {} : { id: { in: actor.departmentIds } }) };
   const staff = await db.user.findMany({
     where: {
       OR: [{ role: { in: ['AGENT', 'SUPERVISOR'] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null,
@@ -877,6 +887,7 @@ export async function departmentAgents(
   q: z.infer<typeof schema.searchQuery>,
 ) {
   requireStaff(actor);
+  requirePermission(actor, 'conversations.assign');
   if (permissionScope(actor) !== "ALL" && !actor.departmentIds.includes(departmentId))
     throw new AppError(
       403,
@@ -919,7 +930,7 @@ export async function writeTag(
   input: z.infer<typeof schema.updateTagSchema>,
   id?: string,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, id ? "tags.update" : "tags.create");
   return db.$transaction(async (tx) => {
     if (id && !(await tx.tag.findUnique({ where: { id } }))) throw notFound();
     const data = id
@@ -935,7 +946,7 @@ export async function writeTag(
   });
 }
 export async function deleteTag(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requirePermission(actor, "tags.delete");
   return db.$transaction(async (tx) => {
     const tag = await tx.tag.findUnique({ where: { id } });
     if (!tag) throw notFound();
@@ -991,7 +1002,7 @@ export async function writeStatusOption(
   input: z.infer<typeof schema.updateStatusOptionSchema>,
   id?: string,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, id ? "tags.update" : "tags.create");
   return db.$transaction(async (tx) => {
     if (id && !(await tx.statusOption.findUnique({ where: { id } })))
       throw notFound();
@@ -1021,7 +1032,7 @@ export async function writePriorityOption(
   input: z.infer<typeof schema.updatePriorityOptionSchema>,
   id?: string,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, id ? "tags.update" : "tags.create");
   return db.$transaction(async (tx) => {
     if (id && !(await tx.priorityOption.findUnique({ where: { id } })))
       throw notFound();
@@ -1047,7 +1058,7 @@ export async function writePriorityOption(
   });
 }
 export async function deleteStatusOption(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requirePermission(actor, "tags.delete");
   return db.$transaction(async (tx) => {
     const option = await tx.statusOption.findUnique({ where: { id } });
     if (!option) throw notFound();
@@ -1065,7 +1076,7 @@ export async function deleteStatusOption(actor: Actor, id: string) {
   });
 }
 export async function deletePriorityOption(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requirePermission(actor, "tags.delete");
   return db.$transaction(async (tx) => {
     const option = await tx.priorityOption.findUnique({ where: { id } });
     if (!option) throw notFound();
@@ -1111,7 +1122,7 @@ export async function writeWebsite(
   input: z.infer<typeof schema.updateWebsiteSchema>,
   id?: string,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, id ? "websites.update" : "websites.create");
   return db.$transaction(async (tx) => {
     if (id && !(await tx.website.findUnique({ where: { id } })))
       throw notFound();
@@ -1136,7 +1147,7 @@ export async function writeWebsite(
   });
 }
 export async function deleteWebsite(actor: Actor, id: string) {
-  requireAdmin(actor);
+  requirePermission(actor, "websites.delete");
   const storageKeys = await db.$transaction(async (tx) => {
     const website = await tx.website.findUnique({
       where: { id },
@@ -1192,7 +1203,7 @@ export async function addProjectGuideFiles(
   websiteId: string,
   files: StoredUpload[],
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "guide.create");
   if (!files.length)
     throw new AppError(
       400,
@@ -1262,7 +1273,7 @@ export async function deleteProjectGuideFile(
   websiteId: string,
   fileId: string,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "guide.delete");
   const file = await db.$transaction(async (tx) => {
     const current = await tx.projectGuideFile.findFirst({
       where: { id: fileId, websiteId },
@@ -1503,7 +1514,7 @@ export async function activityLogs(
   actor: Actor,
   q: z.infer<typeof schema.activityQuery>,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "logs.view");
   const ticketPrefix = q.search?.match(/^(?:#\s*)?TK-?(\d{0,10})$/i);
   const ticketNumberPrefix = ticketPrefix?.[1] ?? "";
   const searchNumber = ticketPrefix
@@ -1674,7 +1685,7 @@ export async function deleteActivityLogs(
   actor: Actor,
   period: "day" | "week" | "month" | "all",
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "logs.delete");
   const days =
     period === "day"
       ? 1
@@ -1693,7 +1704,7 @@ export async function deleteActivityLogs(
   return { deleted: result.count };
 }
 export async function integrationSettings(actor: Actor) {
-  requireAdmin(actor);
+  requirePermission(actor, "integrations.view");
   return db.integrationSettings.upsert({
     where: { id: "default" },
     create: { id: "default" },
@@ -1701,7 +1712,7 @@ export async function integrationSettings(actor: Actor) {
   });
 }
 export async function responseTimeSettings(actor: Actor) {
-  requireAdmin(actor);
+  requirePermission(actor, "response.view");
   return db.responseTimeSettings.upsert({
     where: { id: "default" },
     create: { id: "default" },
@@ -1712,7 +1723,7 @@ export async function updateResponseTimeSettings(
   actor: Actor,
   input: z.infer<typeof schema.responseTimeSettingsSchema>,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "response.update");
   return db.responseTimeSettings.upsert({
     where: { id: "default" },
     create: { id: "default", ...input },
@@ -1720,7 +1731,7 @@ export async function updateResponseTimeSettings(
   });
 }
 export async function notificationSettings(actor: Actor) {
-  requireAdmin(actor);
+  requirePermission(actor, "integrations.view");
   return db.notificationSettings.upsert({
     where: { id: "default" },
     create: {
@@ -1739,7 +1750,7 @@ export async function updateNotificationSettings(
   actor: Actor,
   input: z.infer<typeof schema.notificationSettingsSchema>,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "integrations.update");
   return db.notificationSettings.upsert({
     where: { id: "default" },
     create: { id: "default", ...input },
@@ -1750,7 +1761,7 @@ export async function updateIntegrationSettings(
   actor: Actor,
   input: z.infer<typeof schema.integrationSettingsSchema>,
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "integrations.update");
   const { emailNotifications, ...integrationInput } = input;
   return db.$transaction(async (tx) => {
     const previousSettings = await tx.integrationSettings.findUnique({ where: { id: "default" } });
@@ -1841,7 +1852,7 @@ export async function testIntegration(
   actor: Actor,
   channel: "SMTP" | "IMAP" | "SMS" | "WHATSAPP",
 ) {
-  requireAdmin(actor);
+  requirePermission(actor, "integrations.test");
   const settings = await integrationSettings(actor);
   let success = false;
   let message = "";
@@ -2002,7 +2013,7 @@ export async function updateProfile(
   });
 }
 export async function reports(actor: Actor, q: Page & { agentId?: string; departmentId?: string; days?: number }) {
-  if (!["ADMIN", "SUPERVISOR"].includes(actor.role))
+  if (!can(actor, "reports.view"))
     throw new AppError(403, "FORBIDDEN", "Raporlara erişim yetkiniz yok.");
   const scope: Prisma.ConversationWhereInput = { AND: [visibility(actor),
     ...(q.agentId ? [{ assignedAgentId: q.agentId }] : []),
@@ -2015,9 +2026,9 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
   const agentWhere: Prisma.UserWhereInput = {
     OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
     deletedAt: null,
-    ...(actor.role === "SUPERVISOR"
+    ...(permissionScope(actor) === "DEPARTMENT"
       ? { departments: { some: { departmentId: { in: actor.departmentIds } } } }
-      : {}),
+      : permissionScope(actor) === "OWN" ? { id: actor.id } : {}),
   };
   const { statuses, priorities, departmentCounts, agents, agentTotal } =
     await db.$transaction(async (tx) => {

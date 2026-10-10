@@ -64,7 +64,7 @@ function LegacyRedirect({ suffix }: { suffix?: string }) {
       : suffix === "new"
         ? user.role === "CUSTOMER"
           ? workspacePath(user.role, "tickets/new")
-          : roleHome(user.role)
+          : workspacePath(user.role, "phone-support")
         : suffix
           ? workspacePath(user.role, suffix)
           : roleHome(user.role);
@@ -111,6 +111,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
               <Route path="/agent/customers" element={<CustomersPage />} />
               <Route path="/agent/users" element={<UsersPage />} />
+              <Route path="/agent/departments" element={<DepartmentsPage />} />
+              <Route path="/agent/websites" element={<WebsitesPage />} />
+              <Route path="/agent/reports" element={<ReportsPage />} />
+              <Route path="/agent/tags" element={<TagsPage />} />
+              <Route path="/agent/integrations/:section" element={<IntegrationsHubPage />} />
+              <Route path="/agent/response-time-rules" element={<ResponseTimeRulesPage />} />
+              <Route path="/agent/activity-logs" element={<ActivityLogsPage />} />
               <Route
                 path="/agent/phone-support"
                 element={<PhoneSupportPage />}

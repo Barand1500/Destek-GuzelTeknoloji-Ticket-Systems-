@@ -16,7 +16,6 @@ export const announcementsRouter = Router();
 announcementsRouter.use(authorize("ADMIN", "SUPERVISOR", "AGENT"));
 announcementsRouter.get(
   "/directory",
-  authorize("ADMIN", "SUPERVISOR"),
   async (req, res) =>
     res.json({
       success: true,
@@ -32,7 +31,6 @@ announcementsRouter.get("/", async (req, res) => {
 });
 announcementsRouter.post(
   "/",
-  authorize("ADMIN", "SUPERVISOR"),
   announcementUpload,
   async (req, res) => {
     let payload: unknown;
@@ -53,6 +51,10 @@ announcementsRouter.post(
     res.status(201).json({ success: true, data });
   },
 );
+announcementsRouter.delete("/:id", async (req, res) => {
+  await service.deleteAnnouncement(req.actor, idSchema.parse(req.params.id));
+  res.json({ success: true, data: null });
+});
 announcementsRouter.get("/:id/files/:index", async (req, res, next) => {
   const file = await service.announcementFile(
     req.actor,

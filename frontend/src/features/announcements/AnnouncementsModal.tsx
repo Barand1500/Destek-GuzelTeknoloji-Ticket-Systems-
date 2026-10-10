@@ -16,6 +16,7 @@ import {
   Paperclip,
   Pencil,
   Pin,
+  Trash2,
   Search,
   Send,
   Upload,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { api, errorText } from "../../services/api";
 import { priorities, type Page, type User } from "../../types";
+import { hasPermission } from "../auth/permissions";
 import { DropdownSelect } from "../../components/DropdownSelect";
 import "./announcements.css";
 import type { AnnouncementTemplate } from "./templates";
@@ -95,7 +97,7 @@ export function AnnouncementsModal({
   initialTab?: "new" | "history";
   readOnly?: boolean;
 }) {
-  const canPublish = !readOnly && (user.role === "ADMIN" || user.role === "SUPERVISOR");
+  const canPublish = !readOnly && hasPermission(user, "announcements.create");
   const dialog = useRef<HTMLDialogElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recipientPicker = useRef<HTMLDivElement>(null);
@@ -171,6 +173,11 @@ export function AnnouncementsModal({
       ).data,
     enabled: tab === "history",
     refetchInterval: tab === "history" ? 4000 : false,
+  });
+  const removeAnnouncement = useMutation({
+    mutationFn: (id: string) => api.delete(`/announcements/${id}`),
+    onSuccess: async () => { await client.invalidateQueries({ queryKey: ["/announcements"] }); setExpandedId(""); setNotice("Duyuru silindi."); },
+    onError: error => setError(errorText(error)),
   });
   const people = (directory.data?.people ?? []).filter(
     (p) => !departmentId || p.departmentIds.includes(departmentId),
@@ -917,6 +924,7 @@ export function AnnouncementsModal({
                           );
                         })}
                     </div>
+                    {hasPermission(user, "announcements.delete") && <button type="button" className="button danger announcement-delete" disabled={removeAnnouncement.isPending} onClick={() => { if (window.confirm(`“${item.title}” duyurusu silinsin mi?`)) removeAnnouncement.mutate(item.id); }}><Trash2 size={15}/>Duyuruyu sil</button>}
                     {!!failed.length && (
                       <details className="announcement-failures">
                         <summary>

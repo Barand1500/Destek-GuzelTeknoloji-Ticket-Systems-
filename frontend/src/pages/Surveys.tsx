@@ -81,7 +81,10 @@ const makeQuestion = (n: number): Question => ({
 export function SurveysPage() {
   const { user } = useAuth();
   const client = useQueryClient();
-  const admin = user?.role === "ADMIN";
+  const canCreate = hasPermission(user, 'surveys.create');
+  const canUpdate = hasPermission(user, 'surveys.update');
+  const canDelete = hasPermission(user, 'surveys.delete');
+  const canStatistics = hasPermission(user, 'surveys.statistics');
   const [screen, setScreen] = useState<"list" | "create">("list"),
     [answering, setAnswering] = useState<Survey | null>(null),
     [statistics, setStatistics] = useState<Survey | null>(null);
@@ -121,7 +124,7 @@ export function SurveysPage() {
             {active.length} aktif anket · {completed.length} tamamlanmış
           </p>
         </div>
-        {admin && hasPermission(user, 'surveys.create') && (
+        {canCreate && (
           <button
             className="button primary survey-create-trigger"
             onClick={() => setScreen("create")}
@@ -138,7 +141,7 @@ export function SurveysPage() {
           <BarChart3 size={32} />
           <strong>Henüz anket oluşturulmamış</strong>
           <p>
-            {admin
+            {canCreate
               ? "İlk anketi oluşturarak personel görüşlerini toplayın."
               : "Size gönderilen anketler burada görünecek."}
           </p>
@@ -150,7 +153,9 @@ export function SurveysPage() {
             <Card
               key={x.id}
               survey={x}
-              admin={!!admin}
+              canStatistics={canStatistics}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
               answer={() => setAnswering(x)}
               remove={() => remove.mutate(x.id)}
               close={() => close.mutate(x.id)}
@@ -165,7 +170,9 @@ export function SurveysPage() {
             <Card
               key={x.id}
               survey={x}
-              admin={!!admin}
+              canStatistics={canStatistics}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
               answer={() => undefined}
               remove={() => remove.mutate(x.id)}
               close={() => undefined}
@@ -214,20 +221,23 @@ function Section({
 }
 function Card({
   survey,
-  admin,
+  canStatistics,
+  canUpdate,
+  canDelete,
   answer,
   remove,
   close,
   stats,
 }: {
   survey: Survey;
-  admin: boolean;
+  canStatistics: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
   answer: () => void;
   remove: () => void;
   close: () => void;
   stats: () => void;
 }) {
-  const { user } = useAuth();
   const days = Math.max(
     0,
     Math.ceil((new Date(survey.endsAt).getTime() - Date.now()) / 86400000),
@@ -248,38 +258,35 @@ function Card({
         )}
         <span>{survey.questions.length} soru</span>
         <div className="survey-card-actions">
-          {admin && (
-            <>
+          <>
+              {canStatistics && (
               <button
                 title="İstatistikler"
                 aria-label="İstatistikler"
                 onClick={stats}
-                disabled={!hasPermission(user, 'surveys.statistics')}
               >
                 <BarChart3 size={17} />
               </button>
-              {survey.active && (
+              )}
+              {survey.active && canUpdate && (
                 <button
                   className="close-icon"
                   title="Anketi kapat"
                   aria-label="Anketi kapat"
                   onClick={close}
-                  disabled={!hasPermission(user, 'surveys.update')}
                 >
                   <Lock size={17} />
                 </button>
               )}
-              <button
+              {canDelete && <button
                 className="danger-icon"
                 title="Anketi sil"
                 aria-label="Anketi sil"
                 onClick={remove}
-                disabled={!hasPermission(user, 'surveys.delete')}
               >
                 <Trash2 size={17} />
-              </button>
-            </>
-          )}
+              </button>}
+          </>
         </div>
       </div>
       <h3>{survey.title}</h3>

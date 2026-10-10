@@ -15,7 +15,7 @@ const include = { recipients: true, responses: true } as const;
 
 function publicSurvey(row: any, actor: Actor) {
   const answered = row.responses.some((item: any) => item.userId === actor.id);
-  const admin = actor.role === "ADMIN" && (!actor.accessRole || can(actor, 'surveys.statistics'));
+  const canSeeStatistics = can(actor, 'surveys.statistics');
   return {
     id: row.id,
     title: row.title,
@@ -29,16 +29,17 @@ function publicSurvey(row: any, actor: Actor) {
     active: !row.closedAt && row.endsAt > new Date(),
     closedAt: row.closedAt,
     answered,
-    participantCount: admin ? row.responses.length : undefined,
-    recipientCount: admin ? row.recipients.length : undefined,
-    completionRate: admin ? surveyCompletionRate(row.recipients, row.responses) : undefined,
-    responses: admin ? row.responses.map((response: any) => ({ ...response, respondentName: row.anonymous ? null : response.respondentName })) : undefined,
+    participantCount: canSeeStatistics ? row.responses.length : undefined,
+    recipientCount: canSeeStatistics ? row.recipients.length : undefined,
+    completionRate: canSeeStatistics ? surveyCompletionRate(row.recipients, row.responses) : undefined,
+    responses: canSeeStatistics ? row.responses.map((response: any) => ({ ...response, respondentName: row.anonymous ? null : response.respondentName })) : undefined,
   };
 }
 
 export async function listSurveys(actor: Actor) {
+  const canManageSurveys = ['surveys.statistics', 'surveys.update', 'surveys.delete'].some(permission => can(actor, permission));
   const rows = await db.survey.findMany({
-    where: actor.role === "ADMIN" ? {} : { recipients: { some: { userId: actor.id } } },
+    where: actor.role === "ADMIN" || canManageSurveys ? {} : { OR: [{ authorId: actor.id }, { recipients: { some: { userId: actor.id } } }] },
     include,
     orderBy: [{ createdAt: "desc" }],
   });
@@ -46,7 +47,7 @@ export async function listSurveys(actor: Actor) {
 }
 
 export async function createSurvey(actor: Actor, input: z.infer<typeof createSurveySchema>) {
-  if (actor.role !== "ADMIN") throw new AppError(403, "FORBIDDEN", "Anketi yalnızca yöneticiler oluşturabilir.");
+  if (!can(actor, 'surveys.create')) throw new AppError(403, "FORBIDDEN", "Anket oluşturma yetkiniz yok.");
   const directory = await announcementDirectory(actor);
   const scope = directory.people.filter((person) => !input.departmentId || person.departmentIds.includes(input.departmentId));
   const ids = new Set(input.recipientIds);
@@ -106,13 +107,13 @@ export async function respond(actor: Actor, id: string, input: z.infer<typeof su
 }
 
 export async function removeSurvey(actor: Actor, id: string) {
-  if (actor.role !== "ADMIN") throw new AppError(403, "FORBIDDEN", "Yetkiniz yok.");
+  if (!can(actor, 'surveys.delete')) throw new AppError(403, "FORBIDDEN", "Anket silme yetkiniz yok.");
   await db.survey.delete({ where: { id } }).catch(() => { throw new AppError(404, "NOT_FOUND", "Anket bulunamadı."); });
   publishChange();
 }
 
 export async function closeSurvey(actor: Actor, id: string) {
-  if (actor.role !== "ADMIN") throw new AppError(403, "FORBIDDEN", "Yetkiniz yok.");
+  if (!can(actor, 'surveys.update')) throw new AppError(403, "FORBIDDEN", "Anket düzenleme yetkiniz yok.");
   const survey = await db.survey.findUnique({ where: { id } });
   if (!survey) throw new AppError(404, "NOT_FOUND", "Anket bulunamadı.");
   if (!survey.closedAt) {

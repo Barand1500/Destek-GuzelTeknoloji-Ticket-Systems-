@@ -45,7 +45,19 @@ rolesRouter.get('/roles', async (_req, res) => {
     const item = saved[id];
     const permissions = Array.isArray(item?.permissions) ? item.permissions.filter((key): key is string => typeof key === 'string' && permissionKeys.includes(key)) : templatePermissions(id);
     const scope = ['OWN', 'DEPARTMENT', 'ALL'].includes(String(item?.scope)) ? item!.scope as string : id === 'ADMIN' ? 'ALL' : 'DEPARTMENT';
-    return { id, name: typeof item?.name === 'string' ? item.name : templateDetails[id].name, description: typeof item?.description === 'string' ? item.description : templateDetails[id].description, permissions, scope };
+    return {
+      id,
+      name: typeof item?.name === 'string' ? item.name : templateDetails[id].name,
+      description: typeof item?.description === 'string' ? item.description : templateDetails[id].description,
+      permissions,
+      scope,
+      defaults: {
+        name: templateDetails[id].name,
+        description: templateDetails[id].description,
+        permissions: templatePermissions(id),
+        scope: id === 'ADMIN' ? 'ALL' : 'DEPARTMENT',
+      },
+    };
   });
   res.json({ success: true, data, groups: permissionGroups, templates });
 });

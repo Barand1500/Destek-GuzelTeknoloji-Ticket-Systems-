@@ -49,7 +49,7 @@ function sendSession(
     });
 }
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 2 * 60 * 1000,
   limit: 30,
   standardHeaders: "draft-8",
   legacyHeaders: false,
@@ -124,8 +124,12 @@ router.post('/webhooks/whatsapp', async (req, res) => {
 });
 router.use(authenticate);
 router.get('/communication-channels', async (_req, res) => {
-  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { smsEnabled: true, whatsappEnabled: true, smtpEnabled: true } });
-  res.json({ success: true, data: { EMAIL: true, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
+  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { smsEnabled: true, whatsappEnabled: true, smtpEnabled: true, smtpHost: true, smtpFromAddress: true, smtpUser: true, smtpPassword: true } });
+  const hasStoredSmtpConfig = Boolean(settings && (settings.smtpHost || settings.smtpFromAddress || settings.smtpUser || settings.smtpPassword));
+  const emailEnabled = (hasStoredSmtpConfig ? Boolean(settings?.smtpEnabled) : true)
+    && Boolean(settings?.smtpHost || env.SMTP_HOST)
+    && Boolean(settings?.smtpFromAddress || env.SMTP_FROM);
+  res.json({ success: true, data: { EMAIL: emailEnabled, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
 });
 // Keep saved links and API clients working while Conversation is the canonical resource.
 router.use((req, _res, next) => {
@@ -147,14 +151,15 @@ router.get('/departments',async(req,res)=>{
   const {page,limit}=paginationSchema.parse(req.query);
   const includeInactive=z.enum(['true','false']).optional().parse(req.query.includeInactive)==='true';
   if(includeInactive&&req.actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Yetkiniz yok.');
+  const accessibleOnly=z.enum(['true','false']).optional().parse(req.query.accessible)==='true';
   const search=z.string().max(100).optional().parse(req.query.search);
   const scope = req.actor.accessRole?.scope ?? req.actor.roleScope ?? (req.actor.role === 'ADMIN' ? 'ALL' : 'DEPARTMENT');
-  const where={deletedAt:null,...(includeInactive?{}:{isActive:true}),...(scope !== 'ALL' ? {id:{in:req.actor.departmentIds}} : {}),...(search?{name:{contains:search}}:{})};
+  const where={deletedAt:null,...(includeInactive?{}:{isActive:true}),...(accessibleOnly&&scope!=='ALL' ? {id:{in:req.actor.departmentIds}} : {}),...(search?{name:{contains:search}}:{})};
   const data=await db.department.findMany({where,orderBy:{name:'asc'},skip:(page-1)*limit,take:limit});
   const total=await db.department.count({where});
   res.json({success:true,data,pagination:{page,limit,total,totalPages:Math.ceil(total/limit)}});
 });
-router.post("/departments", authorize("ADMIN"), async (req, res) => {
+router.post("/departments", authorize("ADMIN", "SUPERVISOR", "AGENT"), async (req, res) => {
   const input = z
     .object({ name: z.string().trim().min(2).max(100) })
     .strict()

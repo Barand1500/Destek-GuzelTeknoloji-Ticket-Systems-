@@ -13,12 +13,12 @@ test('roles: API permissions, live changes, account protection and role deletion
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1`;
   const prefix = randomUUID(), password = `Role-${randomUUID()}`, hash = await bcrypt.hash(password, 12);
   const users: string[] = [], roles: string[] = [];
-  const departments: string[] = [], conversations: string[] = [];
+  const departments: string[] = [], conversations: string[] = [], surveys: string[] = [], announcements: string[] = [];
   async function request(path: string, token = '', method = 'GET', body?: unknown) {
     const response = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: response.status, body: await response.json() as any };
   }
-  async function account(name: string, role: 'ADMIN' | 'AGENT', accessRoleId?: string) {
+  async function account(name: string, role: 'ADMIN' | 'SUPERVISOR' | 'AGENT', accessRoleId?: string) {
     const email = `${name}-${prefix}@example.test`;
     const user = await db.user.create({ data: { name, role, email, loginEmail: email, passwordHash: hash, accessRoleId } });
     users.push(user.id);
@@ -26,15 +26,21 @@ test('roles: API permissions, live changes, account protection and role deletion
     assert.equal(response.status, 200);
     return { id: user.id, token: response.body.data.accessToken };
   }
+  async function requestMultipart(path: string, token: string, payload: unknown) {
+    const form = new FormData();
+    form.set('payload', JSON.stringify(payload));
+    const response = await fetch(base + path, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+    return { status: response.status, body: await response.json() as any };
+  }
   try {
     const admin = await account('system', 'ADMIN');
     const agent = await account('agent', 'AGENT');
     assert.equal((await request('/roles', agent.token)).status, 403);
-    const input = { name: `Reports-${prefix}`, description: 'Report-only test role', scope: 'ALL', permissions: ['reports.view'] };
+    const input = { name: `Reports-${prefix}`, description: 'Permission view test role', scope: 'ALL', permissions: ['reports.view'] };
     const created = await request('/roles', admin.token, 'POST', input);
     assert.equal(created.status, 201);
     const roleId = created.body.data.id; roles.push(roleId);
-    const reader = await account('reader', 'ADMIN', roleId);
+    const reader = await account('reader', 'AGENT', roleId);
     const me = await request('/auth/me', reader.token);
     assert.equal(me.body.data.accessRole.id, roleId);
     assert.equal((await request('/reports', reader.token)).status, 200);
@@ -42,18 +48,64 @@ test('roles: API permissions, live changes, account protection and role deletion
     assert.equal((await request('/conversations', reader.token)).status, 403);
     assert.equal((await request('/roles', reader.token)).status, 403);
     assert.equal((await request('/integrations', reader.token)).status, 403);
+    assert.equal((await request('/response-time-settings', reader.token)).status, 403);
+    assert.equal((await request('/staff-presence', reader.token)).status, 403);
+    assert.equal((await request('/activity-logs', reader.token)).status, 403);
+    assert.equal((await request('/tags', reader.token)).status, 403);
+    assert.equal((await request('/departments', reader.token)).status, 403);
+    assert.equal((await request('/websites', reader.token)).status, 403);
     assert.equal((await request('/roles/' + roleId, admin.token, 'DELETE')).status, 409);
     assert.equal((await request('/roles/' + roleId, admin.token, 'PATCH', { ...input, permissions: ['customers.delete'] })).status, 400);
-    assert.equal((await request('/roles/' + roleId, admin.token, 'PATCH', { ...input, permissions: ['users.view', 'users.update', 'customers.view'] })).status, 200);
+    const rolePermissions = ['users.view', 'users.update', 'customers.view', 'departments.view', 'websites.view', 'tags.view', 'integrations.view', 'response.view', 'presence.view', 'logs.view', 'surveys.view', 'surveys.create', 'surveys.update', 'surveys.delete', 'surveys.statistics', 'announcements.view', 'announcements.create', 'announcements.delete'];
+    assert.equal((await request('/roles/' + roleId, admin.token, 'PATCH', { ...input, permissions: rolePermissions })).status, 200);
+    const supervisor = await account('supervisor', 'SUPERVISOR', roleId);
     // The same access token must see changed role permissions immediately.
     assert.equal((await request('/reports', reader.token)).status, 403);
     assert.equal((await request('/customers', reader.token)).status, 200);
+    assert.equal((await request('/departments', reader.token)).status, 200);
+    assert.equal((await request('/websites', reader.token)).status, 200);
+    assert.equal((await request('/tags', reader.token)).status, 200);
+    assert.equal((await request('/integrations', reader.token)).status, 200);
+    assert.equal((await request('/response-time-settings', reader.token)).status, 200);
+    assert.equal((await request('/staff-presence', reader.token)).status, 200);
+    assert.equal((await request('/activity-logs', reader.token)).status, 200);
+    assert.equal((await request('/departments', reader.token, 'POST', { name: `Denied-${prefix}` })).status, 403);
+    assert.equal((await request('/surveys/directory', reader.token)).status, 200);
+    assert.equal((await request('/announcement-templates', reader.token)).status, 200);
+    const surveyPayload = { title: `Role survey ${prefix}`, description: '', durationDays: 7, anonymous: false, questions: [{ id: 'q1', type: 'TEXT', text: 'Test question' }], departmentId: null, recipientMode: 'SELECTED', recipientIds: [reader.id], channels: ['NOTIFICATION'] };
+    const createdSurvey = await request('/surveys', reader.token, 'POST', surveyPayload);
+    assert.equal(createdSurvey.status, 201);
+    surveys.push(createdSurvey.body.data.id);
+    assert.ok((await request('/surveys', reader.token)).body.data.some((item: { id: string }) => item.id === createdSurvey.body.data.id));
+    assert.equal((await request(`/surveys/${createdSurvey.body.data.id}/close`, reader.token, 'POST')).status, 200);
+    assert.equal((await request(`/surveys/${createdSurvey.body.data.id}`, reader.token, 'DELETE')).status, 200);
+    const supervisorSurvey = await request('/surveys', supervisor.token, 'POST', { ...surveyPayload, title: `Supervisor survey ${prefix}`, recipientIds: [supervisor.id] });
+    assert.equal(supervisorSurvey.status, 201);
+    surveys.push(supervisorSurvey.body.data.id);
+    assert.equal((await request(`/surveys/${supervisorSurvey.body.data.id}/close`, supervisor.token, 'POST')).status, 200);
+    assert.equal((await request(`/surveys/${supervisorSurvey.body.data.id}`, supervisor.token, 'DELETE')).status, 200);
+    const announcementPayload = { title: `Role announcement ${prefix}`, body: 'Permission test', priority: 'NORMAL', departmentId: null, recipientMode: 'SELECTED', recipientIds: [reader.id], channels: ['NOTIFICATION'], eventAt: null, pinned: false };
+    const createdAnnouncement = await requestMultipart('/announcements', reader.token, announcementPayload);
+    assert.equal(createdAnnouncement.status, 201);
+    announcements.push(createdAnnouncement.body.data.id);
+    assert.equal((await request(`/announcements/${createdAnnouncement.body.data.id}`, reader.token, 'DELETE')).status, 200);
+    const supervisorAnnouncement = await requestMultipart('/announcements', supervisor.token, { ...announcementPayload, title: `Supervisor announcement ${prefix}`, recipientIds: [supervisor.id] });
+    assert.equal(supervisorAnnouncement.status, 201);
+    announcements.push(supervisorAnnouncement.body.data.id);
+    assert.equal((await request(`/announcements/${supervisorAnnouncement.body.data.id}`, supervisor.token, 'DELETE')).status, 200);
+    assert.equal((await request('/websites', reader.token, 'POST', { name: 'Denied', url: 'https://example.test' })).status, 403);
     assert.equal((await request('/customers', reader.token, 'DELETE')).status, 403);
     assert.equal((await request('/users/' + admin.id, reader.token, 'PATCH', { name: 'takeover' })).status, 403);
     assert.equal((await request('/users/' + reader.id, reader.token, 'PATCH', { accessRoleId: null })).status, 403);
     assert.equal((await request('/users/' + admin.id, admin.token, 'PATCH', { role: 'ADMIN', accessRoleId: roleId })).status, 409);
     assert.equal((await request('/users/' + reader.id, admin.token, 'PATCH', { role: 'AGENT', accessRoleId: roleId })).status, 400);
     const department = await db.department.create({ data: { name: `RoleDept-${prefix}` } }); departments.push(department.id);
+    assert.ok((await request('/departments', supervisor.token)).body.data.some((item: { id: string }) => item.id === department.id));
+    assert.ok((await request('/departments', admin.token)).body.data.some((item: { id: string }) => item.id === department.id));
+    assert.equal((await request('/roles/' + roleId, admin.token, 'PATCH', { ...input, scope: 'DEPARTMENT', permissions: ['departments.view'] })).status, 200);
+    const departmentViewerList = await request('/departments', reader.token);
+    assert.equal(departmentViewerList.status, 200);
+    assert.ok(departmentViewerList.body.data.some((item: { id: string }) => item.id === department.id), 'departments.view grants the department directory independently of ticket membership');
     assert.equal((await request('/roles/' + roleId, admin.token, 'PATCH', { ...input, scope: 'DEPARTMENT', permissions: ['users.view', 'users.update'] })).status, 200);
     assert.equal((await request('/users/' + reader.id, reader.token, 'PATCH', { departmentIds: [department.id] })).status, 403);
     const customer = await db.user.create({ data: { name: 'Role scope customer', role: 'CUSTOMER', passwordHash: hash } }); users.push(customer.id);
@@ -71,6 +123,8 @@ test('roles: API permissions, live changes, account protection and role deletion
     assert.equal((await request('/conversations/' + own.id, reader.token, 'DELETE')).status, 200);
     assert.equal((await db.conversation.findUniqueOrThrow({ where: { id: other.id } })).deletedAt, null);
   } finally {
+    await db.announcement.deleteMany({ where: { id: { in: announcements } } });
+    await db.survey.deleteMany({ where: { id: { in: surveys } } });
     await db.notification.deleteMany({ where: { conversationId: { in: conversations } } });
     await db.conversationMessage.deleteMany({ where: { conversationId: { in: conversations } } });
     await db.conversation.deleteMany({ where: { id: { in: conversations } } });

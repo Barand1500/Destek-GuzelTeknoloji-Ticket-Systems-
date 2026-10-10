@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../auth/Auth";
+import { hasPermission } from "../auth/permissions";
 import { DeleteModal } from '../../components/DeleteModal';
 import { api } from "../../services/api";
+import { workspacePath } from "../../router/paths";
 import { ProjectGuideFileModal } from "./ProjectGuideFileModal";
 import { AnnouncementTemplates } from "./AnnouncementTemplates";
 import { ComposerFiles } from "../tickets/TicketExtras";
@@ -34,7 +36,11 @@ type SavedReply = {
 
 export function DepartmentsPage() {
   const navigate = useNavigate();
-  const list = useList<ManagedDepartment>("/departments", { includeInactive: true });
+  const { user } = useAuth();
+  const canCreate = hasPermission(user, "departments.create");
+  const canUpdate = hasPermission(user, "departments.update");
+  const canDelete = hasPermission(user, "departments.delete");
+  const list = useList<ManagedDepartment>("/departments", user?.role === "ADMIN" ? { includeInactive: true } : {});
   const changeStatus = useSave('/departments', undefined, ['departments']);
   const [editing, setEditing] = useState<ManagedDepartment | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedDepartment | null>(null);
@@ -52,10 +58,10 @@ export function DepartmentsPage() {
   return (
     <main className="page">
       <Heading
-        title="Personeller"
-        description="Görüşmeleri doğru ekibe yönlendirin, departman yapınızı düzenleyin."
+        title="Departmanlar"
+        description="Erişiminiz olan departmanları görüntüleyin ve yetkiniz varsa yönetin."
       />
-      <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" onClick={() => navigate("/admin/users")}>Kullanıcılar</button><button type="button" className="active">Departmanlar</button></nav>
+      {hasPermission(user, "users.view") && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" onClick={() => user && navigate(workspacePath(user.role, "users"))}>Kullanıcılar</button><button type="button" className="active">Departmanlar</button></nav>}
       <div className="management-grid">
         <section className="management-panel">
           <Search value={list.search} onChange={list.setSearch} limit={list.limit} onLimitChange={list.setLimit} />
@@ -72,8 +78,8 @@ export function DepartmentsPage() {
                 <thead>
                   <tr>
                     <th>Departman</th>
-                    <th>Durum</th>
-                    <th>İşlemler</th>
+                    {canUpdate && <th>Durum</th>}
+                    {(canUpdate || canDelete) && <th>İşlemler</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -82,12 +88,12 @@ export function DepartmentsPage() {
                       <td>
                         <strong>{item.name}</strong>
                       </td>
-                      <td>
+                      {canUpdate && <td>
                         <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${item.name} aktif`} checked={item.isActive} disabled={changeStatus.isPending} onChange={() => changeStatus.mutate({ id: item.id, data: { isActive: !item.isActive } })} /><span /></label><span>{item.isActive ? 'Aktif' : 'Pasif'}</span></div>
-                      </td>
-                      <td>
+                      </td>}
+                      {(canUpdate || canDelete) && <td>
                         <div className="management-actions">
-                          <button
+                          {canUpdate && <button
                             type="button"
                             className="icon-button"
                             aria-label={`${item.name} düzenle`}
@@ -99,8 +105,8 @@ export function DepartmentsPage() {
                             }}
                           >
                             <Pencil size={15} aria-hidden="true" />
-                          </button>
-                          <button
+                          </button>}
+                          {canDelete && <button
                             type="button"
                             className="icon-button danger-icon"
                             aria-label={`${item.name} sil`}
@@ -109,9 +115,9 @@ export function DepartmentsPage() {
                             onClick={() => { remove.reset(); setDeleteTarget(item); }}
                           >
                             <Trash2 size={15} aria-hidden="true" />
-                          </button>
+                          </button>}
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>
@@ -124,7 +130,7 @@ export function DepartmentsPage() {
             alwaysVisible
           />
         </section>
-        <section className="management-panel">
+      {(editing ? canUpdate : canCreate) && <section className="management-panel">
           <h2>{editing ? "Departmanı düzenle" : "Departman oluştur"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
@@ -148,7 +154,7 @@ export function DepartmentsPage() {
               onCancel={editing ? reset : undefined}
             />
           </form>
-        </section>
+        </section>}
       </div>
       {deleteTarget && <DeleteModal title="Departmanı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> listeden silinecek. Mevcut görüşmeler ve ekip erişimi korunur.</p></DeleteModal>}
     </main>
@@ -157,6 +163,9 @@ export function DepartmentsPage() {
 
 export function TagsPage() {
   const { user } = useAuth();
+  const canCreate = hasPermission(user, "tags.create");
+  const canUpdate = hasPermission(user, "tags.update");
+  const canDelete = hasPermission(user, "tags.delete");
   const [params, setParams] = useSearchParams();
   const section = params.get("section") === "statuses" || params.get("section") === "priorities" ? params.get("section") : "tags";
   const [editing, setEditing] = useState<Tag | null>(null);
@@ -230,7 +239,7 @@ export function TagsPage() {
                   <tr>
                     <th>Görünen ad</th>
                     <th>Sistem kodu</th>
-                    <th>İşlemler</th>
+                    {(canUpdate || canDelete) && <th>İşlemler</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -238,16 +247,16 @@ export function TagsPage() {
                     <tr key={view.id}>
                       <td>{view.name}</td>
                       <td><code>{view.code}</code></td>
-                      <td><div className="management-actions"><button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button></div></td>
+                      {(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button>}</div></td>}
                     </tr>
                   ))}
                   {list.data?.data.map((tag) => (
                     <tr key={tag.id}>
                       <td>{tag.name}</td>
                       <td><code>{tag.code}</code></td>
-                      <td>
+                      {(canUpdate || canDelete) && <td>
                         <div className="management-actions">
-                          <button
+                          {canUpdate && <button
                             className="button secondary"
                             type="button"
                             onClick={() => {
@@ -258,16 +267,16 @@ export function TagsPage() {
                             }}
                           >
                             Düzenle
-                          </button>
-                          <button
+                          </button>}
+                          {canDelete && <button
                             className="button management-danger"
                             disabled={remove.isPending}
                             onClick={() => setDeleteTarget(tag)}
                           >
                             Sil
-                          </button>
+                          </button>}
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>
@@ -280,7 +289,7 @@ export function TagsPage() {
             alwaysVisible
           />
         </section>
-        <section className="management-panel">
+        {(editing || editingView ? canUpdate : canCreate) && <section className="management-panel">
           <h2>{editing || editingView ? "Etiketi düzenle" : "Etiket oluştur"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
@@ -304,7 +313,7 @@ export function TagsPage() {
               submitLabel={editing || editingView ? "Güncelle" : "Kaydet"}
             />
           </form>
-        </section>
+        </section>}
         {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Etiket silme onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>Etiketi sil</h2><p><strong>{deleteTarget.name}</strong> etiketini silmek istediğinize emin misiniz? Görüşmelerdeki etiket bağlantıları da kaldırılır.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Etiketi sil"}</button></div></form></div>}
       </div> : <OptionSection kind={section === "statuses" ? "status" : "priority"} />}
     </main>
@@ -313,6 +322,10 @@ export function TagsPage() {
 
 type ManagedOption = { id: string; code: string; name: string; color: string; isActive: boolean };
 function OptionSection({ kind }: { kind: "status" | "priority" }) {
+  const { user } = useAuth();
+  const canCreate = hasPermission(user, "tags.create");
+  const canUpdate = hasPermission(user, "tags.update");
+  const canDelete = hasPermission(user, "tags.delete");
   const isStatus = kind === "status";
   const basePath = isStatus ? "/status-options" : "/priority-options";
   const title = isStatus ? "Durumlar" : "Öncelikler";
@@ -336,16 +349,22 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
       <Search value={list.search} onChange={list.setSearch} label={`${title} içinde ara`} limit={list.limit} onLimitChange={list.setLimit} />
       <ErrorMessage error={remove.error} />
       <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-      {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td><td><div className="management-actions"><button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button><button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button></div></td></tr>)}</tbody></table></div>}
+    {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th>{(canUpdate || canDelete) && <th>İşlemler</th>}</tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
       <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
-    <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>
+    {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
     {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label={`${title.slice(0, -1)} silme onayı`} onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>{title.slice(0, -1)} sil</h2><p><strong>{deleteTarget.name}</strong> kaydını silmek istediğinize emin misiniz?</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></form></div>}
   </div>;
 }
 
 export function WebsitesPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canCreate = hasPermission(user, "websites.create");
+  const canUpdate = hasPermission(user, "websites.update");
+  const canDelete = hasPermission(user, "websites.delete");
+  const canAddGuideFiles = hasPermission(user, "guide.create");
+  const canDeleteGuideFiles = hasPermission(user, "guide.delete");
   const client = useQueryClient();
   const list = useList<Website>("/websites");
   const [editing, setEditing] = useState<Website | null>(null);
@@ -383,10 +402,10 @@ export function WebsitesPage() {
         <Search value={list.search} onChange={list.setSearch} label="Proje ara" limit={list.limit} onLimitChange={list.setLimit} />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td><td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td><td><div className="management-actions"><button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button><button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button><button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button></div></td></tr>)}</tbody></table></div>}
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th>{canUpdate && <th>Durum</th>}<th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
       </section>
-      <section className="management-panel">
+      {(editing ? canUpdate : canCreate) && <section className="management-panel">
         <h2>{editing ? "Projeyi düzenle" : "Proje ekle"}</h2>
         <form key={version} className="management-form" onSubmit={submit}>
           <label><span className="field-label">Proje adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
@@ -394,7 +413,7 @@ export function WebsitesPage() {
           <div className="customer-form-upload">
           <label className="project-guide-upload-trigger">
             <span className="field-label">Dosya ekle</span>
-            <input name="guideFiles" type="file" aria-label="Dosya seçin" aria-describedby="project-guide-size-hint" multiple disabled={save.isPending} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => {
+            <input name="guideFiles" type="file" aria-label="Dosya seçin" aria-describedby="project-guide-size-hint" multiple disabled={save.isPending || !canAddGuideFiles} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => {
               const selected = Array.from(event.target.files ?? []);
               if (selected.some(file => file.size > 25 * 1024 * 1024)) {
                 setFileError("Dosya başına en fazla 25 MB yüklenebilir.");
@@ -404,15 +423,15 @@ export function WebsitesPage() {
           </label>
           </div>
           <p className="field-warning" id="project-guide-size-hint"><span className="field-warning-icon" aria-hidden="true">!</span><span>Dosya başına en fazla 25 MB yüklenebilir.</span></p>
-          <ComposerFiles files={guideFiles} setFiles={setGuideFiles} disabled={save.isPending} />
+          {canAddGuideFiles && <ComposerFiles files={guideFiles} setFiles={setGuideFiles} disabled={save.isPending} />}
           {fileError && <p className="error" role="alert">{fileError}</p>}
           <ErrorMessage error={save.error} />
           <FormActions pending={save.isPending} onCancel={editing ? reset : undefined} />
         </form>
-      </section>
+      </section>}
     </div>
     {deleteTarget && <DeleteModal title="Projeyi sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> projesi ve bağlı rehber dosyaları silinecek.</p></DeleteModal>}
-    {previewProject && <ProjectGuideFileModal websiteId={previewProject.id} projectName={previewProject.name} canManage onClose={() => setPreviewProject(null)} />}
+    {previewProject && <ProjectGuideFileModal websiteId={previewProject.id} projectName={previewProject.name} canManage={canDeleteGuideFiles} onClose={() => setPreviewProject(null)} />}
   </main>;
 }
 

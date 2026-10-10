@@ -42,9 +42,11 @@ export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
     'saved-replies': ['savedReplies.view', 'conversations.reply'],
   };
   const segment = path.split('/')[1];
+  if (/^\/departments\/[^/]+\/agents$/.test(path)) { allow('conversations.assign'); next(); return; }
   if (path === '/surveys/directory') { allow('surveys.create'); next(); return; }
-  if (path === '/announcements/directory') { allow('announcements.create'); next(); return; }
-  if (path === '/staff-suggestions') { allow('conversations.create'); next(); return; }
+  if (/^\/surveys\/[^/]+\/responses$/.test(path)) { allow('surveys.view'); next(); return; }
+  if (path === '/announcements/directory' || (read && path.startsWith('/announcement-templates'))) { allow('announcements.create'); next(); return; }
+  if (path === '/staff-suggestions') { allow('conversations.assign'); next(); return; }
   if (read && dependencies[segment] && !path.includes('/guide-files')) {
     if (!dependencies[segment].some(key => can(req.actor, key))) allow(`${segment}.view`);
     next(); return;

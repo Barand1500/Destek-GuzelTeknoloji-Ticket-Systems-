@@ -15,6 +15,7 @@ export const actionLabels: Record<string, string> = {
   "survey.created": "Anket oluşturuldu",
   "survey.closed": "Anket kapatıldı",
   "announcement.created": "Duyuru oluşturuldu",
+  "announcement.deleted": "Duyuru silindi",
   "conversation.whatsapp_received": "WhatsApp mesajı alındı",
   "conversation.sms_received": "SMS alındı",
   "conversation.channel_reply_failed": "Kanal mesajı gönderilemedi",

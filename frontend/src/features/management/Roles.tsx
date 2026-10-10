@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUpRight, Building2, Check, ChevronRight, Copy, Headphones, Info, LockKeyhole, Pencil, Plus, Save, Shield, ShieldCheck, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, Check, ChevronRight, Copy, Headphones, Info, LockKeyhole, Pencil, Plus, RotateCcw, Save, Shield, ShieldCheck, Trash2, Users } from 'lucide-react';
 import { api } from '../../services/api';
 import { Heading, ErrorMessage } from './shared';
 import { DropdownSelect } from '../../components/DropdownSelect';
@@ -9,7 +9,8 @@ import './roles.css';
 
 type Group = { id: string; name: string; actions: Record<string, string> };
 type RoleDefinition = { id: string; name: string; description: string; permissions: string[]; scope: string; users?: { id: string; name: string }[]; _count?: { users: number } };
-type Catalog = { data: RoleDefinition[]; groups: Group[]; templates: { id: string; name: string; description: string; permissions: string[]; scope: string }[] };
+type TemplateDefaults = { name: string; description: string; permissions: string[]; scope: string };
+type Catalog = { data: RoleDefinition[]; groups: Group[]; templates: { id: string; name: string; description: string; permissions: string[]; scope: string; defaults: TemplateDefaults }[] };
 const labels: Record<string,string> = { ADMIN: 'Sistem yöneticisi', SUPERVISOR: 'Departman sorumlusu', AGENT: 'Destek uzmanı' };
 const empty = (): RoleDefinition => ({ id: '', name: '', description: '', permissions: [], scope: 'DEPARTMENT' });
 const scopeLabels: Record<string, string> = { OWN: 'Kendisine atanan', DEPARTMENT: 'Bağlı departmanlar', ALL: 'Tüm departmanlar' };
@@ -57,6 +58,12 @@ export function RolesPage() {
     save.reset(); setEditingTemplateId(template.id); setGroupId('conversations');
     setDraft({ ...empty(), name: template.name, description: template.description, permissions: [...template.permissions], scope: template.scope });
     window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+  const resetTemplate = () => {
+    const template = catalog.data?.templates.find(item => item.id === editingTemplateId);
+    if (!template || !draft) return;
+    setDraft({ ...draft, ...template.defaults, permissions: [...template.defaults.permissions] });
+    setGroupId('conversations');
   };
   return <main className="page roles-page">
     {draft && <button className="roles-back" type="button" disabled={save.isPending} onClick={() => { setDraft(null); setEditingTemplateId(null); }}><ArrowLeft size={15}/>Rollere dön</button>}
@@ -110,7 +117,7 @@ export function RolesPage() {
         })}</div><div className="roles-permission-note"><Info size={15}/><p>İşlem izni seçildiğinde ekran erişimi de açılır. Ekran erişimini kapatınca bu ekranın işlem izinleri kaldırılır.</p></div></div>
       </section></fieldset>
       <ErrorMessage error={save.error}/>
-      <div className="roles-editor-footer"><div className="roles-selection-summary"><ShieldCheck size={18}/><span><strong>{selectedScreens} ekran</strong> · {selectedActions} işlem izni<small>{editingTemplateId ? 'Bu şablondan sonra oluşturulacak rollerde kullanılır.' : 'Değişiklikler kaydedildiğinde bağlı personellere uygulanır.'}</small></span></div><div className="roles-footer-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={() => { setDraft(null); setEditingTemplateId(null); }}>Vazgeç</button><button className="button primary" disabled={save.isPending}><Save size={15}/>{save.isPending ? 'Kaydediliyor…' : editingTemplateId ? 'Şablonu kaydet' : 'Rolü kaydet'}</button></div></div>
+      <div className="roles-editor-footer"><div className="roles-selection-summary"><ShieldCheck size={18}/><span><strong>{selectedScreens} ekran</strong> · {selectedActions} işlem izni<small>{editingTemplateId ? 'Bu şablondan sonra oluşturulacak rollerde kullanılır.' : 'Değişiklikler kaydedildiğinde bağlı personellere uygulanır.'}</small></span></div><div className="roles-footer-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={() => { setDraft(null); setEditingTemplateId(null); }}>Vazgeç</button>{editingTemplateId && <button type="button" className="button secondary" disabled={save.isPending} onClick={resetTemplate}><RotateCcw size={15}/>Varsayılana dön</button>}<button className="button primary" disabled={save.isPending}><Save size={15}/>{save.isPending ? 'Kaydediliyor…' : editingTemplateId ? 'Şablonu kaydet' : 'Rolü kaydet'}</button></div></div>
     </form>}
     {deleteTarget && <DeleteModal title="Rolü sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id)} error={<ErrorMessage error={remove.error}/>}><p>{deleteTarget.name} rolü silinecek. Kullanılan rolleri silmeden önce bağlı personellere başka rol atayın.</p></DeleteModal>}
   </main>;

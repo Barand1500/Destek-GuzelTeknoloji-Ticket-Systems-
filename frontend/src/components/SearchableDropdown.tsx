@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Pencil } from "lucide-react";
 
-type Option = { value: string; label: string; presence?: "ONLINE" | "IDLE" | "OFFLINE" };
+type Option = { value: string; label: string; presence?: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount?: number };
 const presenceLabels = { ONLINE: "Çevrim içi", IDLE: "Boşta", OFFLINE: "Çevrim dışı" } as const;
 
 export function SearchableDropdown({ label, name, value, options, onChange, disabled = false, placeholder = "Seçin", onEdit }: { label: string; name: string; value: string; options: Option[]; onChange: (value: string) => void; disabled?: boolean; placeholder?: string; onEdit?: () => void }) {
@@ -14,7 +14,7 @@ export function SearchableDropdown({ label, name, value, options, onChange, disa
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-  const optionContent = (item: Option) => <>{item.label}{item.presence && <span className={`presence-option-status presence-${item.presence}`}><i />{presenceLabels[item.presence]}</span>}</>;
+  const optionContent = (item: Option) => <><span className="dropdown-option-label">{item.label}</span>{(item.presence || item.openConversationCount !== undefined) && <span className="dropdown-option-details">{item.openConversationCount !== undefined && <span className="assignee-open-count">{item.openConversationCount} açık talep</span>}{item.presence && <span className={`presence-option-status presence-${item.presence}`}><i />{presenceLabels[item.presence]}</span>}</span>}</>;
   return <div ref={ref} className={`styled-dropdown searchable-dropdown${open ? " open" : ""}${disabled ? " disabled" : ""}`}>
     {label && <span className="styled-dropdown-label">{label}{onEdit && <button type="button" className="searchable-dropdown-edit" aria-label={`${label} ekle veya düzenle`} title={`${label} ekle veya düzenle`} onClick={() => { inputRef.current?.focus(); onEdit(); }}><Pencil size={11} /></button>}</span>}
     <input type="hidden" name={name} value={value} />

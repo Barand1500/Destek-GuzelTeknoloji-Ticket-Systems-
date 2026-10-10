@@ -10,12 +10,16 @@ import { uploadRoot, type StoredUpload } from "./uploads.service.js";
 import { publishChange } from "./events.service.js";
 import { sendChannelReply } from "./integrations.service.js";
 import { sendSupportEmail } from "./mailer.service.js";
+import { can, permissionScope } from "./permissions.js";
+import { unlink } from "node:fs/promises";
+
+const hasFullDepartmentScope = (actor: Actor) => permissionScope(actor) === "ALL";
 
 const staffWhere = (actor: Actor): Prisma.UserWhereInput => ({
   role: { in: ["ADMIN", "SUPERVISOR", "AGENT"] },
   isActive: true,
   deletedAt: null,
-  ...(actor.role !== "ADMIN"
+  ...(!hasFullDepartmentScope(actor)
     ? {
         departments: {
           some: {
@@ -27,7 +31,7 @@ const staffWhere = (actor: Actor): Prisma.UserWhereInput => ({
     : {}),
 });
 const visible = (actor: Actor): Prisma.AnnouncementWhereInput =>
-  actor.role === "ADMIN"
+  hasFullDepartmentScope(actor)
     ? {}
     : {
         OR: [
@@ -53,7 +57,7 @@ export async function announcementDirectory(actor: Actor) {
       where: {
         isActive: true,
         deletedAt: null,
-        ...(actor.role !== "ADMIN" ? { id: { in: actor.departmentIds } } : {}),
+        ...(!hasFullDepartmentScope(actor) ? { id: { in: actor.departmentIds } } : {}),
       },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
@@ -146,12 +150,8 @@ export async function createAnnouncement(
   input: z.infer<typeof announcementSchema>,
   files: StoredUpload[],
 ) {
-  if (actor.role !== "ADMIN" && actor.role !== "SUPERVISOR")
-    throw new AppError(
-      403,
-      "FORBIDDEN",
-      "Duyuru yayınlamak için yönetici veya departman sorumlusu olmalısınız.",
-    );
+  if (!can(actor, "announcements.create"))
+    throw new AppError(403, "FORBIDDEN", "Duyuru oluşturma yetkiniz yok.");
   if (files.some((file) => file.size > 10 * 1024 * 1024))
     throw new AppError(
       400,
@@ -260,6 +260,29 @@ export async function createAnnouncement(
   });
   publishChange();
   return publicRow(row, actor);
+}
+
+export async function deleteAnnouncement(actor: Actor, id: string) {
+  if (!can(actor, "announcements.delete"))
+    throw new AppError(403, "FORBIDDEN", "Duyuru silme yetkiniz yok.");
+  const row = await db.announcement.findFirst({ where: { id, ...visible(actor) } });
+  if (!row) throw new AppError(404, "NOT_FOUND", "Duyuru bulunamadı.");
+  await db.$transaction(async tx => {
+    await tx.announcement.delete({ where: { id } });
+    await tx.activityLog.create({
+      data: {
+        userId: actor.id,
+        action: "announcement.deleted",
+        entityType: "Announcement",
+        entityId: id,
+        metadata: { title: row.title },
+        ipAddress: actor.ipAddress,
+      },
+    });
+  });
+  const files = (row.files as StoredUpload[]).map(file => file.storageKey);
+  await Promise.allSettled(files.map(storageKey => unlink(path.join(uploadRoot, storageKey))));
+  publishChange();
 }
 
 export async function announcementFile(

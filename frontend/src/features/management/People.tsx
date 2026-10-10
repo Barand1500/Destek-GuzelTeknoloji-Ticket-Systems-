@@ -20,7 +20,7 @@ import { SearchableDropdown } from "../../components/SearchableDropdown";
 import { EmailInput } from "../../components/EmailInput";
 import { useWorkSession } from "../../components/WorkSession";
 import { DeleteModal } from '../../components/DeleteModal';
-import { conversationPath } from "../../router/paths";
+import { conversationPath, workspacePath } from "../../router/paths";
 import { TagSelect, FormDropdown, ComposerFiles } from "../tickets/TicketExtras";
 import {
   ErrorMessage,
@@ -52,6 +52,21 @@ type AssignmentImpact = { id: string; number: number; subject: string; status: s
 type AssignmentTransferGroup = { conversationIds: string[]; departmentId: string; assignedAgentId: string | null; departmentName: string; assignedAgentName: string | null };
 type CustomerFile = { id: string; originalName: string; mimeType: string; size: number; createdAt: string };
 const formatFileSize = (size: number) => size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+function usePageScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+    };
+  }, [locked]);
+}
 function CustomerFileRow({ customerId, file, onDelete }: { customerId: string; file: CustomerFile; onDelete: () => void }) {
   const isImage = file.mimeType.startsWith('image/');
   const preview = useQuery({ queryKey: ['/customers', customerId, 'file-preview', file.id], enabled: isImage, queryFn: async () => (await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' })).data });
@@ -121,24 +136,22 @@ function LocationFields({ city = "", district = "", idPrefix }: { city?: string 
 
 type Website = { id: string; name: string; url: string; isActive: boolean };
 type OutgoingChannel = "EMAIL" | "SMS" | "WHATSAPP";
-function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, channel, setChannel, customer }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; channel: OutgoingChannel; setChannel: (value: OutgoingChannel) => void; customer?: ManagedUser | null }) {
+type CommunicationChannels = Record<OutgoingChannel, boolean>;
+function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, channel, setChannel, availableChannels, channelStatus, customer }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; channel: OutgoingChannel; setChannel: (value: OutgoingChannel) => void; availableChannels: OutgoingChannel[]; channelStatus: string; customer?: ManagedUser | null }) {
+  const { user } = useAuth();
+  const canAssignStaff = hasPermission(user, 'conversations.assign');
   const [suggestedAgent, setSuggestedAgent] = useState<{ id: string; name: string; departmentId: string; departmentName: string } | null>(null);
   const websites = useQuery({ queryKey: ["websites", "phone-request"], queryFn: async () => (await api.get<Page<Website>>("/websites", { params: { limit: 100 } })).data });
-  const channels = useQuery({ queryKey: ["communication-channels"], queryFn: async () => (await api.get<{ data: { EMAIL: boolean; SMS: boolean; WHATSAPP: boolean } }>("/communication-channels")).data.data });
-  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId), refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
+  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId) && canAssignStaff, refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
   return <>
     {customer && <label className="phone-request-selected"><span className="field-label">Seçilen kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
-      <div className="phone-request-channel"><DropdownSelect label="Mesaj kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Mesaj kanalını seçin" options={[
-        { value: "EMAIL", label: "Telefon talebi" },
-        { value: "SMS", label: channels.isPending ? "SMS (durum kontrol ediliyor)" : channels.isError ? "SMS (durum alınamadı)" : channels.data?.SMS ? "SMS" : "SMS (ayarlarda etkin değil)" },
-        { value: "WHATSAPP", label: channels.isPending ? "WhatsApp (durum kontrol ediliyor)" : channels.isError ? "WhatsApp (durum alınamadı)" : channels.data?.WHATSAPP ? "WhatsApp" : "WhatsApp (ayarlarda etkin değil)" },
-      ]} /></div>
+      <div className="phone-request-channel"><DropdownSelect label="Dönüş kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Dönüş kanalını seçin" options={availableChannels.map(value => ({ value, label: value === "EMAIL" ? "E-posta" : value === "SMS" ? "SMS" : "WhatsApp" }))} />{channelStatus && <small className="muted">{channelStatus}</small>}</div>
       <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje seçin" options={[{ value: "", label: "Proje seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} /></label>
-      <SuggestedDescription departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />
+      {canAssignStaff && <SuggestedDescription departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />}
       <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} current={suggestedAgent?.departmentId === departmentId ? { id: departmentId, name: suggestedAgent.departmentName } : undefined} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
-      <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div>
+      {canAssignStaff ? <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div> : <div className="phone-request-assignee"><span className="field-label">Atama</span><span>Departman kuyruğuna gönderilecek</span></div>}
     </div>
   </>;
 }
@@ -147,7 +160,12 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const canCreateUsers = hasPermission(user, 'users.create');
+  const canCreateSystemAdmin = user?.role === 'ADMIN' && !user.accessRole;
+  const canUpdateUsers = hasPermission(user, 'users.update');
+  const canDeleteUsers = hasPermission(user, 'users.delete');
   const [editing, setEditing] = useState<ManagedUser | null>(null);
+  const canCreateSupervisor = canCreateSystemAdmin || editing?.role === 'SUPERVISOR';
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
   const remove = useMutation({
     mutationFn: async (input: { id: string; assignmentTransfers?: Array<{ conversationIds: string[]; departmentId: string; assignedAgentId: string | null }> }) => api.delete(`/users/${input.id}`, { data: { assignmentTransfers: input.assignmentTransfers ?? [] } }),
@@ -166,6 +184,9 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   const [transferDepartmentId, setTransferDepartmentId] = useState("");
   const [transferAgentId, setTransferAgentId] = useState("");
   const [transferGroups, setTransferGroups] = useState<AssignmentTransferGroup[]>([]);
+  const canTransferDepartments = hasPermission(user, 'conversations.transfer');
+  const canAssignStaff = hasPermission(user, 'conversations.assign');
+  usePageScrollLock(assignmentModalOpen);
   const list = useList<ManagedUser>("/users", defaultRole ? { role: defaultRole } : {});
   const departments = useQuery({
     queryKey: ["/departments", "all-options"],
@@ -237,7 +258,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   });
   const transferAgents = useQuery({
     queryKey: ["/departments", transferDepartmentId, "assignment-transfer-agents"],
-    enabled: assignmentModalOpen && Boolean(transferDepartmentId),
+    enabled: assignmentModalOpen && Boolean(transferDepartmentId) && canAssignStaff,
     queryFn: async () => (await api.get<Page<{ id: string; name: string }>>(`/departments/${transferDepartmentId}/agents`, { params: { page: 1, limit: 100 } })).data.data,
   });
   function addTransferGroup() {
@@ -257,8 +278,6 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   }
   const assignedInGroups = new Set(transferGroups.flatMap((group) => group.conversationIds));
   const remainingAssignments = assignmentImpact.filter((conversation) => !assignedInGroups.has(conversation.id));
-  const canTransferDepartments = hasPermission(user, 'conversations.transfer');
-  const canAssignStaff = hasPermission(user, 'conversations.assign');
   const editedUserCanReceive = Boolean(assignmentAction === "update" && editing?.isActive && transferDepartmentId && selectedDepartmentIds.includes(transferDepartmentId) && (accessRoleId || role === 'AGENT' || role === 'SUPERVISOR'));
   const selectedChangesDepartment = selectedAssignmentIds.some((id) => assignmentImpact.find((conversation) => conversation.id === id)?.departmentId !== transferDepartmentId);
   const transferGroupsNeedDepartmentPermission = transferGroups.some((group) => group.conversationIds.some((id) => assignmentImpact.find((conversation) => conversation.id === id)?.departmentId !== group.departmentId));
@@ -316,7 +335,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
         title={defaultRole === "AGENT" ? "Destek uzmanları" : defaultRole === "SUPERVISOR" ? "Departman sorumluları" : "Personeller"}
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."
       />
-      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button>{user?.role === 'ADMIN' && <button type="button" onClick={() => navigate("/admin/departments")}>Departmanlar</button>}</nav>}
+      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button>{hasPermission(user, "departments.view") && <button type="button" onClick={() => user && navigate(workspacePath(user.role, "departments"))}>Departmanlar</button>}</nav>}
       <div className="management-grid users-management-grid">
         <section className="management-panel">
           <Search
@@ -340,8 +359,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                   <tr>
                     <th>Kullanıcı</th>
                     <th>Rol ve departman</th>
-                    <th>Durum</th>
-                    <th>İşlemler</th>
+                    {canUpdateUsers && <th>Durum</th>}
+                    {(canUpdateUsers || canDeleteUsers) && <th>İşlemler</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -360,12 +379,12 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             .join(", ") || "Departman yok"}
                         </small>
                       </td>
-                      <td>
+                      {canUpdateUsers && <td>
                         {(person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>}
-                      </td>
-                      <td>
+                      </td>}
+                      {(canUpdateUsers || canDeleteUsers) && <td>
                         <div className="management-actions">
-                          <button
+                          {canUpdateUsers && <button
                             type="button"
                             className="icon-button"
                             aria-label={`${person.name} düzenle`}
@@ -374,8 +393,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             disabled={!hasPermission(user, 'users.update') || Boolean(user?.accessRole && person.accessRoleId !== user.accessRole.id)}
                           ><Pencil size={15} aria-hidden="true" />
                             
-                          </button>
-                          {(person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <button
+                          </button>}
+                          {canDeleteUsers && (person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <button
                             type="button"
                             className="icon-button danger-icon"
                             aria-label={`${person.name} sil`}
@@ -388,7 +407,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             
                           </button>}
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>
@@ -401,7 +420,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             alwaysVisible
           />
         </section>
-        <section className="management-panel users-editor-panel">
+        {(editing ? canUpdateUsers : canCreateUsers) && <section className="management-panel users-editor-panel">
           <h2>{editing ? "Kullanıcıyı düzenle" : "Kullanıcı oluştur"}</h2>
           <form key={formVersion} className="management-form" onSubmit={submit}>
             <label>
@@ -463,7 +482,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
               ariaLabel="Kullanıcı rolü"
               value={accessRoleId ?? role}
               onChange={(value) => { const custom = roleOptions.data?.find(item => item.id === value); setAccessRoleId(custom?.id ?? null); setRole(custom ? 'ADMIN' : value as Role); }}
-              options={user?.accessRole ? [{ value: user.accessRole.id, label: user.accessRole.name }] : [...Object.entries(roles).map(([value, label]) => ({ value, label })), ...(roleOptions.data ?? []).map(item => ({ value: item.id, label: item.name }))]}
+              options={user?.accessRole ? [{ value: user.accessRole.id, label: user.accessRole.name }] : [...Object.entries(roles).filter(([value]) => (value !== 'ADMIN' || canCreateSystemAdmin) && (value !== 'SUPERVISOR' || canCreateSupervisor)).map(([value, label]) => ({ value, label })), ...(roleOptions.data ?? []).map(item => ({ value: item.id, label: item.name }))]}
             />
             {role !== "CUSTOMER" && (
               <div className="users-department-control">
@@ -492,7 +511,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
               onCancel={editing ? reset : undefined}
             />
           </form>
-        </section>
+        </section>}
       </div>
       {deleteTarget && !assignmentModalOpen && <DeleteModal title="Kullanıcıyı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate({ id: deleteTarget.id }, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error ?? prepareDelete.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Geçmiş görüşmeler korunur.</p></DeleteModal>}
       {assignmentModalOpen && (editing || deleteTarget) && <div className="confirm-backdrop assignment-transfer-backdrop" role="presentation">
@@ -505,7 +524,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
               {remainingAssignments.length ? <div className="assignment-transfer-table-wrap"><table className="management-table assignment-transfer-table"><thead><tr><th aria-label="Seçim" /><th>Talep</th><th>Mevcut departman</th><th>Atanan personel</th></tr></thead><tbody>{remainingAssignments.map((conversation) => <tr key={conversation.id}><td><input type="checkbox" aria-label={`${conversation.number} numaralı talebi seç`} checked={selectedAssignmentIds.includes(conversation.id)} onChange={(event) => setSelectedAssignmentIds((current) => event.target.checked ? [...current, conversation.id] : current.filter((id) => id !== conversation.id))} /></td><td><strong>#{conversation.number} · {conversation.subject}</strong><small>{conversation.customer.name} · {conversation.status}</small></td><td>{conversation.department.name}</td><td>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}<small>Bu kullanıcı</small></td></tr>)}</tbody></table></div> : <p className="assignment-transfer-empty">Tüm açık talepler aktarım gruplarına eklendi.</p>}
               {!!transferGroups.length && <div className="assignment-transfer-groups"><h3>Aktarım grupları</h3>{transferGroups.map((group, index) => <article className="assignment-transfer-group" key={`${group.departmentId}-${index}`}><div><strong>Grup {index + 1} · {group.conversationIds.length} talep</strong><span>{group.departmentName} → {group.assignedAgentName ?? "Atanmamış (departman kuyruğu)"}</span><small>{group.conversationIds.map((id) => `#${assignmentImpact.find((conversation) => conversation.id === id)?.number ?? id}`).join(", ")}</small></div><button type="button" className="icon-button danger-icon" aria-label={`Grup ${index + 1} kaldır`} title="Grubu kaldır" onClick={() => { setTransferGroups((current) => current.filter((_, groupIndex) => groupIndex !== index)); setSelectedAssignmentIds((current) => [...current, ...group.conversationIds]); }}><Trash2 size={15} /></button></article>)}</div>}
             </section>
-            <aside className="assignment-transfer-builder"><h3>Seçilenleri aktarım grubuna ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan personel" ariaLabel="Aktarım hedefi personeli" value={transferAgentId} onChange={setTransferAgentId} options={[{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım grubuna ekle</button></aside>
+            <aside className="assignment-transfer-builder"><h3>Seçilenleri aktarım grubuna ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan personel" ariaLabel="Aktarım hedefi personeli" value={transferAgentId} onChange={setTransferAgentId} options={canAssignStaff ? [{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))] : [{ value: "", label: "Atama izniniz yok" }]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım grubuna ekle</button></aside>
           </div>
           <footer className="assignment-transfer-footer"><ErrorMessage error={checkAssignmentImpact.error ?? save.error ?? remove.error} /><div className="confirm-actions"><button type="button" className="button secondary" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }} disabled={save.isPending || remove.isPending}>Vazgeç</button><button type="button" className="button primary" onClick={applyTransferGroups} disabled={save.isPending || remove.isPending || remainingAssignments.length > 0 || !transferGroups.length || (transferGroupsNeedDepartmentPermission && !canTransferDepartments) || (!canAssignStaff && transferGroups.some((group) => group.assignedAgentId !== editing?.id))}>{save.isPending || remove.isPending ? "İşleniyor…" : <><Check size={16} /> {assignmentAction === "delete" ? "Aktarımları uygula ve kullanıcıyı sil" : "Aktarımları uygula ve kullanıcıyı kaydet"}</>}</button></div></footer>
         </section>
@@ -516,6 +535,11 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
 
 export function CustomersPage() {
   const {user} = useAuth();
+  const canCreateCustomers = hasPermission(user, 'customers.create');
+  const canUpdateCustomers = hasPermission(user, 'customers.update');
+  const canDeleteCustomers = hasPermission(user, 'customers.delete');
+  const canViewConversations = hasPermission(user, 'conversations.view');
+  const canCreateConversations = hasPermission(user, 'conversations.create');
   const queryClient = useQueryClient();
   const list = useList<ManagedUser>("/customers");
   const [editing, setEditing] = useState<ManagedUser | null>(null);
@@ -528,6 +552,7 @@ export function CustomersPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
+  usePageScrollLock(customerModalOpen || Boolean(filesCustomer));
   useEffect(() => {
     setCustomerFiles([]);
   }, [customerModalOpen, formVersion]);
@@ -564,7 +589,7 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} /><button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button><button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button></div>
+        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button>}</div>
         <ListState
           loading={list.isPending}
           error={list.error}
@@ -589,19 +614,19 @@ export function CustomersPage() {
                       <strong>{customer.name}</strong>
                     </td>
                     <td>{customer.phone ?? "Telefon yok"}<small>{customer.email ?? "E-posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</td>
-                    <td><label className="switch"><input type="checkbox" checked={customer.isActive} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
+                    <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
-                      <Link
+                      {canViewConversations && <Link
                         className="button secondary"
                         to={`${inboxPath(user!.role)}?customerId=${encodeURIComponent(customer.id)}`}
                       >
                         Görüşmeleri aç
-                      </Link>
-                      <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>
-                      <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" disabled={!hasPermission(user, 'customers.update')} onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>
+                      </Link>}
+                      {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>}
+                      {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
                       <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları gör' : 'Dosya yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
-                      <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" disabled={!hasPermission(user, 'customers.delete')} onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>
+                      {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
                     </td>
                   </tr>
@@ -668,7 +693,7 @@ export function CustomersPage() {
         </form>
       </section>
       </div>}
-      {filesCustomer && <div className="confirm-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="standard-modal-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
+      {filesCustomer && <div className="confirm-backdrop customer-files-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="standard-modal-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
     </main>
   );
 }
@@ -698,6 +723,17 @@ export function PhoneSupportPage() {
   const [assignedAgentId, setAssignedAgentId] = useState("");
   const [channel, setChannel] = useState<OutgoingChannel>("EMAIL");
   const [channelFormError, setChannelFormError] = useState("");
+  const communicationChannels = useQuery({ queryKey: ["communication-channels"], queryFn: async () => (await api.get<{ data: CommunicationChannels }>("/communication-channels")).data.data });
+  const channelOrder: OutgoingChannel[] = ["EMAIL", "SMS", "WHATSAPP"];
+  const availableChannels = channelOrder.filter((value) => communicationChannels.data?.[value]);
+  const channelAvailable = Boolean(communicationChannels.data?.[channel]);
+  const channelStatus = communicationChannels.isPending ? "Dönüş kanalları yükleniyor…" : communicationChannels.isError ? "Dönüş kanalları yüklenemedi." : availableChannels.length === 0 ? "Etkin dönüş kanalı yok." : "";
+  const handleChannelChange = (value: OutgoingChannel) => { setChannel(value); setChannelFormError(""); };
+  useEffect(() => {
+    if (!communicationChannels.data || communicationChannels.data[channel]) return;
+    const fallback = channelOrder.find((value) => communicationChannels.data?.[value]);
+    if (fallback) setChannel(fallback);
+  }, [communicationChannels.data, channel]);
   const initialCustomer = useQuery({
     queryKey: ["/customers", initialCustomerId],
     queryFn: async () => (await api.get<{ data: ManagedUser }>(`/customers/${initialCustomerId}`)).data.data,
@@ -760,8 +796,16 @@ export function PhoneSupportPage() {
   }
   function submitCustomer(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
+    if (!channelAvailable) {
+      setChannelFormError("Etkin bir dönüş kanalı seçin.");
+      return;
+    }
     if (channel === "EMAIL" && !String(values.get("email") ?? "").trim()) {
       setChannelFormError("E-posta kanalını kullanmak için yeni müşterinin e-posta adresini girin veya başka kanal seçin.");
+      return;
+    }
+    if ((channel === "SMS" || channel === "WHATSAPP") && !String(values.get("phone") ?? "").trim()) {
+      setChannelFormError("Seçilen dönüş kanalı için müşterinin telefon numarası gerekli.");
       return;
     }
     setChannelFormError("");
@@ -778,6 +822,19 @@ export function PhoneSupportPage() {
   }
   function submitConversation(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
+    if (!channelAvailable) {
+      setChannelFormError("Etkin bir dönüş kanalı seçin.");
+      return;
+    }
+    if (channel === "EMAIL" && !activeCustomer?.email) {
+      setChannelFormError("E-posta kanalını kullanmak için müşterinin e-posta adresi gerekli.");
+      return;
+    }
+    if ((channel === "SMS" || channel === "WHATSAPP") && !activeCustomer?.phone) {
+      setChannelFormError("Seçilen dönüş kanalı için müşterinin telefon numarası gerekli.");
+      return;
+    }
+    setChannelFormError("");
     createConversation.mutate(
       { data: { customerId, departmentId, channel, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
       { onSuccess: (result) => openCreatedConversation((result as { data: { data: Conversation } }).data.data.id) },
@@ -813,11 +870,11 @@ export function PhoneSupportPage() {
             </section>
             <section className="phone-new-request-fields">
               <h2>Talep bilgileri</h2>
-              <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={setChannel} />
+              <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} />
             </section>
             {channelFormError && <p className="error">{channelFormError}</p>}
             <ErrorMessage error={createCustomer.error ?? createConversation.error} />
-            <div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve talebi oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div>
+            <div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId || !channelAvailable}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve talebi oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div>
           </form>}
         </section>
         {activeCustomer && <section className="management-panel phone-support-action-panel">
@@ -826,9 +883,10 @@ export function PhoneSupportPage() {
         {activeCustomer && <section className="management-panel phone-support-action-panel phone-support-action-panel-v2">
           <form className="management-form phone-support-request-form" onSubmit={submitConversation}>
             <h2>Talep bilgileri</h2>
-          <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={setChannel} customer={activeCustomer} />
+          <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
             <ErrorMessage error={createConversation.error} />
-            <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi oluştur ve gönder"}</button></div>
+            {channelFormError && <p className="error">{channelFormError}</p>}
+            <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi oluştur ve gönder"}</button></div>
           </form>
         </section>}
       </div>

@@ -360,7 +360,7 @@ export function TicketList() {
               options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))}
             />
           </div>
-          {user?.role === "ADMIN" && hasPermission(user, 'conversations.delete') && (
+          {hasPermission(user, 'conversations.delete') && (
             <div className={`notification-delete inbox-delete${deleteMenuOpen ? " open" : ""}`}>
               <button type="button" className="notification-delete-trigger" aria-label="Talepleri sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
                 <Trash2 size={16} aria-hidden="true" />
@@ -427,8 +427,8 @@ export function TicketList() {
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${ticket.source === "PHONE_SUPPORT" && ticket.channel === "EMAIL" ? "Telefon talebi" : channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
-                      <span className="management-pill">{ticket.source === "PHONE_SUPPORT" && ticket.channel === "EMAIL" ? "Telefon talebi" : channels[ticket.channel]}</span>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                      <span className="management-pill">{channels[ticket.channel]}</span>
                     </td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
                     </td>
@@ -676,6 +676,9 @@ export function TicketDetail() {
   const statusOptions = statusOptionsQuery.data?.map((option) => ({ value: option.code, label: option.name })) ?? Object.entries(statuses).map(([value, label]) => ({ value, label }));
   const priorityOptions = priorityOptionsQuery.data?.map((option) => ({ value: option.code, label: option.name })) ?? Object.entries(priorities).map(([value, label]) => ({ value, label }));
   const manager = ["ADMIN", "SUPERVISOR"].includes(user?.role ?? "");
+  const canEditProject = hasPermission(user, 'conversations.update');
+  const canAssignStaff = hasPermission(user, 'conversations.assign');
+  const canTransferDepartments = hasPermission(user, 'conversations.transfer');
   const agents = useQuery({
     queryKey: ["agents", ticket.data?.department.id],
     queryFn: async () =>
@@ -683,15 +686,16 @@ export function TicketDetail() {
         await api.get(`/departments/${ticket.data?.department.id}/agents`, {
           params: { limit: 100 },
         })
-      ).data.data as User[],
-    enabled: manager && !!ticket.data,
+      ).data.data as Array<User & { presence?: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>,
+    enabled: canAssignStaff && !!ticket.data,
+    refetchInterval: 30_000,
   });
-  const presence = useQuery({ queryKey: ["/staff-presence"], enabled: manager && !!ticket.data, queryFn: async () => (await api.get<{ data: { staff: Array<{ id: string; state: "ONLINE" | "IDLE" | "OFFLINE" }> } }>("/staff-presence")).data.data });
+  const presence = useQuery({ queryKey: ["/staff-presence"], enabled: canAssignStaff && !!ticket.data, queryFn: async () => (await api.get<{ data: { staff: Array<{ id: string; state: "ONLINE" | "IDLE" | "OFFLINE" }> } }>("/staff-presence")).data.data });
   const presenceById = new Map((presence.data?.staff ?? []).map((person) => [person.id, person.state]));
   const websites = useQuery({
     queryKey: ["websites", "conversation-picker"],
     queryFn: async () => (await api.get<Page<{ id: string; name: string; url: string; isActive: boolean }>>("/websites", { params: { limit: 100 } })).data.data,
-    enabled: manager,
+    enabled: canEditProject,
   });
   function invalidate() {
     for (const key of ["conversation", "conversations", "messages", "dashboard"])
@@ -733,10 +737,11 @@ export function TicketDetail() {
       </main>
     );
   const t = ticket.data;
+  const agentById = new Map((agents.data ?? []).map((agent) => [agent.id, agent]));
   const assigneeOptions = [
     { value: '', label: 'Atanmamış' },
-    ...(t.assignedAgent ? [{ value: t.assignedAgent.id, label: t.assignedAgent.name, presence: presenceById.get(t.assignedAgent.id) }] : []),
-    ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id) })),
+    ...(t.assignedAgent ? [{ value: t.assignedAgent.id, label: t.assignedAgent.name, presence: presenceById.get(t.assignedAgent.id), openConversationCount: agentById.get(t.assignedAgent.id)?.openConversationCount }] : []),
+    ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id), openConversationCount: agent.openConversationCount })),
   ];
   const websiteOptions = [
     { value: "", label: "Proje seçilmedi" },
@@ -766,7 +771,6 @@ export function TicketDetail() {
         </div>
         <div className="ticket-status-cluster">
           <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
-          <span className="management-pill">{t.source === "PHONE_SUPPORT" && t.channel === "EMAIL" ? "Telefon talebi" : channels[t.channel]}</span>
           <Badge status={t.status} />
         </div>
       </div>
@@ -870,6 +874,7 @@ export function TicketDetail() {
                   Dahili not
                 </button>
               )}
+              <span className="management-pill composer-channel-pill" aria-label={`Bu talep ${channels[t.channel]} kanalı tercih edilerek açıldı.`}>Bu talep {channels[t.channel]} kanalı tercih edilerek açıldı.</span>
             </div>
             {internal ? <MentionTextarea
               conversationId={t.id}
@@ -922,8 +927,8 @@ export function TicketDetail() {
         </section>
         <aside className="ticket-properties">
           <h2>Talep bilgileri</h2>
-          {(manager || t.websiteUrl) && <div className="property-editor">
-            {manager ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje<a href={t.websiteUrl!} target="_blank" rel="noreferrer">{t.websiteUrl}</a></label>}
+          {(canEditProject || t.website) && <div className="property-editor">
+            {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</label>}
           </div>}
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
@@ -940,14 +945,14 @@ export function TicketDetail() {
             )}
           </div>
           <div className="ticket-assignee-property">
-            {manager ? (
+            {canAssignStaff ? (
               <SearchableDropdown label="Atanan personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
             ) : (
               <label>Atanan personel<span>{t.assignedAgent?.name ?? "Atanmamış"}</span></label>
             )}
           </div>
           {agents.isError && <QueryError error={agents.error} />}
-          {manager&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending || !hasPermission(user, 'conversations.transfer')}/>}
+          {canTransferDepartments&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} params={{ accessible: "true" }} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending || !hasPermission(user, 'conversations.update')}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}
@@ -966,11 +971,11 @@ export function TicketDetail() {
                 <CheckCheck size={16} /> Çözüldü olarak işaretle
               </button>
             )}
-          {user?.role==='ADMIN'&&hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi sil" title="Görüşmeyi sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
+          {hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi sil" title="Görüşmeyi sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
           </div>
         </aside>
       </div>
-      {user?.role === 'ADMIN' && deleteConfirm && <DeleteModal title="Görüşmeyi sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
+      {hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
     </main>
   );
 }
