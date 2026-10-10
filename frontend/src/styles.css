@@ -1813,7 +1813,14 @@ html[data-theme="dark"] .notification-conversation-link:hover {
 .notification-table th:nth-child(5),
 .notification-table td:nth-child(5) { width: 13%; }
 .notification-table td { overflow-wrap: anywhere; }
+.notification-table td:nth-child(2) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .notification-table td:nth-child(3) { white-space: nowrap; }
+.notification-table td:nth-child(4),
+.notification-table td:nth-child(5) { white-space: nowrap; }
 .notification-table .notification-mark-read {
   width: 170px;
   min-width: 170px;
