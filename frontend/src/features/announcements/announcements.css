@@ -124,6 +124,51 @@ html[data-theme="dark"] .announcements-close:hover {
 }
 .announcement-history-search > svg { flex: 0 0 16px; }
 .announcement-history-search:focus-within { border-color: var(--ann-accent); }
+.announcements-tabs .announcement-history-delete {
+  align-self: center;
+  height: 36px;
+  margin: 8px 0;
+}
+.announcements-tabs .announcement-history-delete .notification-delete-trigger {
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+}
+.announcements-tabs .announcement-history-delete:hover,
+.announcements-tabs .announcement-history-delete:focus-within,
+.announcements-tabs .announcement-history-delete.open {
+  border-color: #218675;
+  background: #edf5ef;
+  color: #166b5c;
+  box-shadow: 0 0 0 3px #21867517;
+}
+.announcements-tabs .announcement-history-delete .notification-delete-trigger:focus-visible {
+  outline: 0;
+}
+.announcements-tabs .announcement-history-delete .notification-delete-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.announcements-tabs .announcement-history-delete .notification-delete-menu button:hover,
+.announcements-tabs .announcement-history-delete .notification-delete-menu button:focus-visible {
+  background: #edf5ef;
+  color: #166b5c;
+  outline: 0;
+}
 .announcements-tabs button {
   display: flex;
   align-items: center;
@@ -140,6 +185,10 @@ html[data-theme="dark"] .announcements-close:hover {
 .announcements-tabs button[aria-current="page"] {
   color: var(--ann-accent);
   border-bottom-color: var(--ann-accent);
+}
+.announcements-tabs > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .announcement-form {
   display: flex;

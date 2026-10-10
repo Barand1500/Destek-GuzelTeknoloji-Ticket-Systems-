@@ -2750,14 +2750,14 @@ html[data-theme="dark"] .saved-reply-action-delete::before {
   font-weight: 700;
 }
 .customer-select-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: table-cell;
+  vertical-align: middle;
 }
 .customer-select-cell input {
   width: 17px;
   height: 17px;
-  margin: 0;
+  margin: 0 10px 0 0;
+  vertical-align: middle;
   accent-color: #167766;
 }
 .customer-add-button {

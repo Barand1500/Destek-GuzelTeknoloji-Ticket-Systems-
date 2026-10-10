@@ -24,6 +24,7 @@ import { conversationPath, workspacePath } from "../../router/paths";
 import { TagSelect, FormDropdown, ComposerFiles } from "../tickets/TicketExtras";
 import {
   ErrorMessage,
+  editableRowProps,
   FormActions,
   Heading,
   ListState,
@@ -365,7 +366,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 </thead>
                 <tbody>
                   {list.data.data.map((person) => (
-                    <tr key={person.id} className={!person.isActive ? "inactive-record" : undefined}>
+                    <tr key={person.id} {...editableRowProps(() => { if (canUpdateUsers && hasPermission(user, 'users.update') && !(user?.accessRole && person.accessRoleId !== user.accessRole.id)) edit(person); })} className={!person.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                       <td>
                         <strong>{person.name}</strong>
                         <small>{person.email}</small>
@@ -608,7 +609,7 @@ export function CustomersPage() {
               </thead>
               <tbody>
                 {list.data.data.map((customer) => (
-                  <tr key={customer.id} className={!customer.isActive ? "inactive-record" : undefined}>
+                  <tr key={customer.id} {...editableRowProps(() => { if (canUpdateCustomers) edit(customer); })} className={!customer.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                     <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
                       {bulkSelectionMode && <input type="checkbox" checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>

@@ -216,6 +216,13 @@
 .management-table tbody tr:hover > td {
   background: #e2f1e7;
 }
+.management-table tbody tr.management-editable-row {
+  cursor: pointer;
+}
+.management-table tbody tr.management-editable-row:focus-visible > td {
+  outline: 2px solid #218675;
+  outline-offset: -2px;
+}
 .management-table td small {
   display: block;
   color: var(--ui-text-secondary);

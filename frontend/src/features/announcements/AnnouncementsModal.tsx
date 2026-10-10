@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -27,6 +28,7 @@ import { api, errorText } from "../../services/api";
 import { priorities, type Page, type User } from "../../types";
 import { hasPermission } from "../auth/permissions";
 import { DropdownSelect } from "../../components/DropdownSelect";
+import { DeleteModal } from "../../components/DeleteModal";
 import "./announcements.css";
 import type { AnnouncementTemplate } from "./templates";
 
@@ -123,6 +125,9 @@ export function AnnouncementsModal({
   const [page, setPage] = useState(1);
   const [historySearch, setHistorySearch] = useState("");
   const [expandedId, setExpandedId] = useState("");
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<Announcement | null>(null);
+  const [deletePeriod, setDeletePeriod] = useState<"day" | "week" | "month" | "all" | null>(null);
+  const [announcementDeleteMenuOpen, setAnnouncementDeleteMenuOpen] = useState(false);
   useEffect(() => {
     const closePicker = (event: MouseEvent) => {
       if (
@@ -177,6 +182,11 @@ export function AnnouncementsModal({
   const removeAnnouncement = useMutation({
     mutationFn: (id: string) => api.delete(`/announcements/${id}`),
     onSuccess: async () => { await client.invalidateQueries({ queryKey: ["/announcements"] }); setExpandedId(""); setNotice("Duyuru silindi."); },
+    onError: error => setError(errorText(error)),
+  });
+  const removeAnnouncements = useMutation({
+    mutationFn: (period: "day" | "week" | "month" | "all") => api.delete("/announcements", { params: { period } }),
+    onSuccess: async () => { await client.invalidateQueries({ queryKey: ["/announcements"] }); setDeletePeriod(null); setNotice("Duyurular silindi."); },
     onError: error => setError(errorText(error)),
   });
   const people = (directory.data?.people ?? []).filter(
@@ -359,10 +369,18 @@ export function AnnouncementsModal({
           {canPublish ? "Duyuru geçmişi" : "Duyurularım"}
         </button>
         {tab === "history" && (
-          <label className="announcement-history-search">
-            <Search size={16} aria-hidden="true" />
-            <input type="search" aria-label="Geçmiş duyurularda ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
-          </label>
+          <>
+            {hasPermission(user, "announcements.delete") && <div className={`notification-delete announcement-history-delete${announcementDeleteMenuOpen ? " open" : ""}`}>
+              <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={announcementDeleteMenuOpen} onClick={() => setAnnouncementDeleteMenuOpen(value => !value)}><Trash2 size={16} aria-hidden="true" /><span>Duyuruları sil</span><ChevronDown size={15} aria-hidden="true" /></button>
+              {announcementDeleteMenuOpen && <div className="notification-delete-menu" role="menu">
+                {([["day", "Son 24 saatteki duyuruları sil"], ["week", "Son 7 gündeki duyuruları sil"], ["month", "Son 30 gündeki duyuruları sil"], ["all", "Tüm duyuruları sil"]] as const).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setAnnouncementDeleteMenuOpen(false); setDeletePeriod(period); }}>{label}</button>)}
+              </div>}
+            </div>}
+            <label className="announcement-history-search">
+              <Search size={16} aria-hidden="true" />
+              <input type="search" aria-label="Geçmiş duyurularda ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
+            </label>
+          </>
         )}
       </nav>
       {tab === "new" ? (
@@ -924,7 +942,7 @@ export function AnnouncementsModal({
                           );
                         })}
                     </div>
-                    {hasPermission(user, "announcements.delete") && <button type="button" className="button danger announcement-delete" disabled={removeAnnouncement.isPending} onClick={() => { if (window.confirm(`“${item.title}” duyurusu silinsin mi?`)) removeAnnouncement.mutate(item.id); }}><Trash2 size={15}/>Duyuruyu sil</button>}
+                    {hasPermission(user, "announcements.delete") && <button type="button" className="button danger announcement-delete" disabled={removeAnnouncement.isPending} onClick={() => { removeAnnouncement.reset(); setDeletingAnnouncement(item); }}><Trash2 size={15}/>Duyuruyu sil</button>}
                     {!!failed.length && (
                       <details className="announcement-failures">
                         <summary>
@@ -976,6 +994,8 @@ export function AnnouncementsModal({
           )}
         </div>
       )}
+      {deletingAnnouncement && <DeleteModal title="Duyuruyu sil" pending={removeAnnouncement.isPending} onClose={() => setDeletingAnnouncement(null)} onConfirm={() => removeAnnouncement.mutate(deletingAnnouncement.id, { onSuccess: () => setDeletingAnnouncement(null) })} error={<p className="error">{removeAnnouncement.error ? errorText(removeAnnouncement.error) : ""}</p>}><p><strong>{deletingAnnouncement.title}</strong> duyurusu silinecek.</p></DeleteModal>}
+      {deletePeriod && <DeleteModal title="Duyuruları sil" pending={removeAnnouncements.isPending} onClose={() => setDeletePeriod(null)} onConfirm={() => removeAnnouncements.mutate(deletePeriod)} error={<p className="error">{removeAnnouncements.error ? errorText(removeAnnouncements.error) : ""}</p>}><p>Seçilen tarih aralığındaki duyurular ve gönderim kayıtları silinecek.</p></DeleteModal>}
     </dialog>
   );
 }

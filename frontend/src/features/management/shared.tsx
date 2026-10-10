@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../services/api";
 import type { Page } from "../../types";
@@ -10,6 +10,22 @@ import { useLocation } from 'react-router-dom';
 
 export const formatDate = (value: string) =>
   new Date(value).toLocaleString("tr-TR");
+export function editableRowProps(onEdit: () => void) {
+  const activate = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onEdit();
+  };
+  return {
+    tabIndex: 0,
+    className: "management-editable-row",
+    onClick: (event: MouseEvent<HTMLTableRowElement>) => {
+      if ((event.target as HTMLElement).closest("button, a, input, select, textarea, label")) return;
+      onEdit();
+    },
+    onKeyDown: activate,
+  };
+}
 export function Heading({
   title,
   description,

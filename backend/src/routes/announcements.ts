@@ -51,6 +51,10 @@ announcementsRouter.post(
     res.status(201).json({ success: true, data });
   },
 );
+announcementsRouter.delete("/", async (req, res) => {
+  const period = z.enum(["day", "week", "month", "all"]).parse(req.query.period);
+  res.json({ success: true, data: await service.deleteAnnouncements(req.actor, period) });
+});
 announcementsRouter.delete("/:id", async (req, res) => {
   await service.deleteAnnouncement(req.actor, idSchema.parse(req.params.id));
   res.json({ success: true, data: null });

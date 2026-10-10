@@ -285,6 +285,22 @@ export async function deleteAnnouncement(actor: Actor, id: string) {
   publishChange();
 }
 
+export async function deleteAnnouncements(actor: Actor, period: "day" | "week" | "month" | "all") {
+  if (!can(actor, "announcements.delete"))
+    throw new AppError(403, "FORBIDDEN", "Duyuru silme yetkiniz yok.");
+  const createdAt = period === "all" ? undefined : { gte: new Date(Date.now() - ({ day: 1, week: 7, month: 30 }[period] * 24 * 60 * 60 * 1000)) };
+  const rows = await db.announcement.findMany({ where: { ...visible(actor), ...(createdAt ? { createdAt } : {}) }, select: { id: true, authorId: true, title: true, files: true } });
+  if (!rows.length) return { count: 0 };
+  await db.$transaction(async tx => {
+    await tx.announcement.deleteMany({ where: { id: { in: rows.map(row => row.id) } } });
+    await tx.activityLog.createMany({ data: rows.map(row => ({ userId: actor.id, action: "announcement.deleted", entityType: "Announcement", entityId: row.id, metadata: { title: row.title, bulk: true }, ipAddress: actor.ipAddress })) });
+  });
+  const files = rows.flatMap(row => (row.files as StoredUpload[]).map(file => file.storageKey));
+  await Promise.allSettled(files.map(storageKey => unlink(path.join(uploadRoot, storageKey))));
+  publishChange();
+  return { count: rows.length };
+}
+
 export async function announcementFile(
   actor: Actor,
   id: string,

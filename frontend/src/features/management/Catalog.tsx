@@ -18,6 +18,7 @@ import {
   ListState,
   Pagination,
   Search,
+  editableRowProps,
   formValues,
   useDelete,
   useList,
@@ -84,7 +85,7 @@ export function DepartmentsPage() {
                 </thead>
                 <tbody>
                   {list.data.data.map((item) => (
-                    <tr key={item.id} className={!item.isActive ? "inactive-record" : undefined}>
+                    <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((v) => v + 1); save.reset(); })} className={!item.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                       <td>
                         <strong>{item.name}</strong>
                       </td>
@@ -244,14 +245,14 @@ export function TagsPage() {
                 </thead>
                 <tbody>
                   {(list.page === 1 ? inboxViews : []).map((view) => (
-                    <tr key={view.id}>
+                    <tr key={view.id} {...editableRowProps(() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); })}>
                       <td>{view.name}</td>
                       <td><code>{view.code}</code></td>
                       {(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: view.id, name: view.name, code: view.code }); setVersion((v) => v + 1); }}>Düzenle</button>}</div></td>}
                     </tr>
                   ))}
                   {list.data?.data.map((tag) => (
-                    <tr key={tag.id}>
+                    <tr key={tag.id} {...editableRowProps(() => { setEditing({ ...tag }); setEditingView(null); setVersion((v) => v + 1); save.reset(); })}>
                       <td>{tag.name}</td>
                       <td><code>{tag.code}</code></td>
                       {(canUpdate || canDelete) && <td>
@@ -349,7 +350,7 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
       <Search value={list.search} onChange={list.setSearch} label={`${title} içinde ara`} limit={list.limit} onLimitChange={list.setLimit} />
       <ErrorMessage error={remove.error} />
       <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-    {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th>{(canUpdate || canDelete) && <th>İşlemler</th>}</tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
+    {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th>{(canUpdate || canDelete) && <th>İşlemler</th>}</tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
       <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
     {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
@@ -402,7 +403,7 @@ export function WebsitesPage() {
         <Search value={list.search} onChange={list.setSearch} label="Proje ara" limit={list.limit} onLimitChange={list.setLimit} />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th>{canUpdate && <th>Durum</th>}<th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} className={!site.isActive ? "inactive-record" : undefined}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th>{canUpdate && <th>Durum</th>}<th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} {...editableRowProps(() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); })} className={!site.isActive ? "inactive-record management-editable-row" : "management-editable-row"}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
       </section>
       {(editing ? canUpdate : canCreate) && <section className="management-panel">
@@ -458,6 +459,7 @@ function SavedRepliesContent() {
   const { user } = useAuth();
   const list = useList<SavedReply>("/saved-replies");
   const [editing, setEditing] = useState<SavedReply | null>(null);
+  const [deleting, setDeleting] = useState<SavedReply | null>(null);
   const [version, setVersion] = useState(0);
   function reset() {
     setEditing(null);
@@ -488,13 +490,13 @@ function SavedRepliesContent() {
               <thead><tr><th>Yanıt başlığı</th><th>Yanıt metni</th><th>Ekleyen</th><th>İşlemler</th></tr></thead>
               <tbody>{list.data.data.map((reply) => {
                 const canEdit = user?.role === "ADMIN" || user?.id === reply.authorId;
-                return <tr key={reply.id}>
+                return <tr key={reply.id} {...editableRowProps(() => { setEditing(reply); setVersion((v) => v + 1); save.reset(); })}>
                   <td><strong>{reply.title}</strong></td>
                   <td><p className="saved-content-preview">{reply.body}</p></td>
                   <td>{reply.author?.name ?? "Ekip"}</td>
                   <td>{canEdit && <div className="management-actions">
                     <button className="button secondary saved-reply-action saved-reply-action-edit" type="button" aria-label={`${reply.title} düzenle`} title="Düzenle" onClick={() => { setEditing(reply); setVersion((v) => v + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>
-                    <button className="button management-danger saved-reply-action saved-reply-action-delete" type="button" aria-label={`${reply.title} sil`} title="Sil" disabled={remove.isPending} onClick={() => { if (window.confirm(`“${reply.title}” hazır yanıtı silinsin mi?`)) remove.mutate(reply.id); }}><Trash2 size={15} aria-hidden="true" /></button>
+                    <button className="button management-danger saved-reply-action saved-reply-action-delete" type="button" aria-label={`${reply.title} sil`} title="Sil" disabled={remove.isPending} onClick={() => { remove.reset(); setDeleting(reply); }}><Trash2 size={15} aria-hidden="true" /></button>
                   </div>}</td>
                 </tr>;
               })}</tbody>
@@ -538,6 +540,7 @@ function SavedRepliesContent() {
           </form>
         </section>
       </div>
+      {deleting && <DeleteModal title="Hazır yanıtı sil" pending={remove.isPending} onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting.id, { onSuccess: () => { if (editing?.id === deleting.id) reset(); setDeleting(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleting.title}</strong> hazır yanıtı silinecek.</p></DeleteModal>}
     </>
   );
 }

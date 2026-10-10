@@ -9,6 +9,7 @@ import {
   ListState,
   Pagination,
   Search,
+  editableRowProps,
   formValues,
   useDelete,
   useList,
@@ -65,7 +66,7 @@ export function AnnouncementTemplates() {
           {!!visible.length && <div className="management-table-wrap saved-content-table-wrap">
             <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır şablonlar">
               <thead><tr><th>Şablon adı</th><th>Duyuru başlığı</th><th>İçerik</th><th>İşlemler</th></tr></thead>
-              <tbody>{visible.map((item) => <tr key={item.id}>
+              <tbody>{visible.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}>
                 <td><strong>{item.label}</strong></td>
                 <td>{item.title}</td>
                 <td><p className="saved-content-preview">{item.body}</p></td>
