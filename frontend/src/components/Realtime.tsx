@@ -31,6 +31,7 @@ export function Realtime(){
     const renew=async()=>{if(renewing||!active)return;renewing=true;try{await refreshAccess();if(active)socket.connect();}catch{if(active){setToken(null);window.dispatchEvent(new Event('session-expired'));}}finally{renewing=false;}};
     socket.on('connect',()=>{sync();emitPresence();});
     for(const event of ['conversation:updated','conversation:message:new','notification:new','access:refresh'])socket.on(event,sync);
+    socket.on('files:changed',()=>{void client.invalidateQueries({queryKey:['shared-files']});});
     socket.on('access:refresh',()=>{void api.get('/auth/me').then(result=>{if(active)updateUser(result.data.data);}).catch(()=>{});});
     socket.on('presence:changed',(change:{id:string;state:'ONLINE'|'IDLE'|'OFFLINE';page:string;path:string;lastActivityAt:string|null;lastSeenAt:string|null})=>{
       void client.invalidateQueries({queryKey:['dashboard']});

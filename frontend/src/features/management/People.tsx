@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Eye, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
@@ -173,6 +173,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
     onSuccess: async () => Promise.all(["/users", "/customers"].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))),
   });
   const [formVersion, setFormVersion] = useState(0);
+  const [showInitialPassword, setShowInitialPassword] = useState(false);
+  useEffect(() => setShowInitialPassword(false), [formVersion]);
   const [role, setRole] = useState<Role>(user?.accessRole ? 'ADMIN' : defaultRole ?? "AGENT");
   const [accessRoleId, setAccessRoleId] = useState<string | null>(user?.accessRole?.id ?? null);
   const roleOptions = useQuery({ queryKey: ['/role-options'], queryFn: async () => (await api.get<{ data: Array<{ id: string; name: string }> }>('/role-options')).data.data });
@@ -465,16 +467,17 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             </label>
             </div>
             {!editing && (
-              <label>
+              <label className="users-password-field">
                 <span className="field-label">İlk şifre</span>
                 <input
                   name="password"
-                  type="password"
+                  type={showInitialPassword ? "text" : "password"}
                   required
                   minLength={10}
                   maxLength={72}
                   autoComplete="new-password"
                 />
+                <button type="button" className="password-toggle" aria-label={showInitialPassword ? "Şifreyi gizle" : "Şifreyi göster"} aria-pressed={showInitialPassword} onClick={() => setShowInitialPassword(visible => !visible)}>{showInitialPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
               </label>
             )}
             <div className={`users-form-row${role === "CUSTOMER" ? " single" : ""}`}>

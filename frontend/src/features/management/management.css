@@ -4741,3 +4741,13 @@ html[data-theme="dark"] .presence-metrics > div {
   color: var(--ui-text-secondary);
   font-size: 12px;
 }
+.users-password-field {
+  position: relative;
+  display: block;
+}
+.management-form .users-password-field > input {
+  padding-right: 44px;
+}
+.users-password-field .password-toggle {
+  right: 8px;
+}

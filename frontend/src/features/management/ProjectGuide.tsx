@@ -455,17 +455,12 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
 
 const guideFor = (name: string): SupportGuide | null => {
   const key = name.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9]/g, "");
-  return key.includes("etic7")
+  return key === "etic7"
     ? guides.etic7
-    : key.includes("anypay")
+    : key === "anypay"
       ? guides.anypay
       : null;
 };
-
-const projectNameForDisplay = (name: string) =>
-  name.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9]/g, "").includes("etic7")
-    ? "Etic7"
-    : name;
 
 const ignoredQuestionWords = new Set([
   "acaba",
@@ -1027,7 +1022,7 @@ export function ProjectGuidePage() {
                   );
                 }}
               >
-                {projectNameForDisplay(project.name)}
+                {project.name}
               </button>
             ))}
           </div>

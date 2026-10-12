@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, errorText } from "../../services/api";
 import {
   BookOpen,
   Camera,
@@ -29,7 +31,7 @@ import { Heading } from "./shared";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
 import { FilePreviewModal } from "../tickets/TicketExtras";
-import { storeFileContents, readFileContents, deleteFileContents } from "./fileStorage";
+
 import "./files.css";
 type Item = {
   id: string;
@@ -43,44 +45,6 @@ type Item = {
   uploadedBy?: string;
   uploaderId?: string;
 };
-const seed: Item[] = [
-  {
-    id: "reports",
-    name: "Raporlar",
-    type: "folder",
-    parent: null,
-    createdAt: "",
-    icon: "book",
-    color: "blue",
-  },
-  {
-    id: "templates",
-    name: "Şablonlar",
-    type: "folder",
-    parent: null,
-    createdAt: "",
-    icon: "layers",
-    color: "purple",
-  },
-  {
-    id: "media",
-    name: "Medya",
-    type: "folder",
-    parent: null,
-    createdAt: "",
-    icon: "camera",
-    color: "pink",
-  },
-  {
-    id: "computer",
-    name: "bilgisayar",
-    type: "folder",
-    parent: null,
-    createdAt: "",
-    icon: "monitor",
-    color: "slate",
-  },
-];
 const iconMap: Record<string, typeof Folder> = {
   book: BookOpen,
   layers: Layers,
@@ -100,15 +64,14 @@ const iconMap: Record<string, typeof Folder> = {
 };
 export function FilesPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Item[]>(() => {
-    try {
-      return (
-        JSON.parse(localStorage.getItem("helpdesk-files") || "null") ?? seed
-      );
-    } catch {
-      return seed;
-    }
+  const [hasLegacyFiles] = useState(() => {
+    try { return (JSON.parse(localStorage.getItem('helpdesk-files') || '[]') as Item[]).some(item => item.type === 'file' || !['reports','templates','media','computer'].includes(item.id)); }
+    catch { return false; }
   });
+  const client = useQueryClient();
+  const directory = useQuery({ queryKey: ['shared-files'], queryFn: async () => (await api.get<{data: Item[]}>('/files')).data.data, refetchInterval: 30_000 });
+  const items = directory.data ?? [];
+  const syncFiles = () => client.invalidateQueries({queryKey: ['shared-files']});
   const [current, setCurrent] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [list, setList] = useState(false);
@@ -124,13 +87,9 @@ export function FilesPage() {
   const nameInput = useRef<HTMLInputElement>(null);
   const editor = useRef<HTMLFormElement>(null);
   const editingItem = items.find((item) => item.id === editingId);
-  const canEditName = (item: Item) =>
-    user?.accessRole
-      ? hasPermission(user, 'files.updateAll') || (hasPermission(user, 'files.update') && item.uploaderId === user.id)
-      : user?.role === "ADMIN" || item.type === "folder" || Boolean(user && item.uploaderId === user.id);
-  const canDelete = (item: Item) => user?.accessRole
-    ? hasPermission(user, 'files.deleteAll') || (hasPermission(user, 'files.delete') && item.uploaderId === user.id)
-    : true;
+  const canEditName = (item: Item) => hasPermission(user, 'files.updateAll') || (hasPermission(user, 'files.update') && item.uploaderId === user?.id);
+  const canDelete = (item: Item) => hasPermission(user, 'files.deleteAll') || (hasPermission(user, 'files.delete') && item.uploaderId === user?.id);
+  useEffect(() => { if (directory.data && current && !directory.data.some(item => item.id === current)) setCurrent(null); }, [directory.data, current]);
   const EditorIcon = iconMap[folderIcon] || Folder;
   useEffect(() => {
     if (newFolder) {
@@ -153,21 +112,10 @@ export function FilesPage() {
     setFolderColor(item.color || "blue");
     setNewFolder(true);
   };
-  const save = (next: Item[] | ((previous: Item[]) => Item[])) => {
-    setItems(previous => {
-      const updated = typeof next === "function" ? next(previous) : next;
-      localStorage.setItem("helpdesk-files", JSON.stringify(updated));
-      return updated;
-    });
-  };
   const openFile = async (item: Item, download = false) => {
     setFileError("");
     try {
-      const data = await readFileContents(item.id);
-      if (!data) {
-        setFileError("Bu eski kaydın dosya içeriği saklanmamış. Açmak veya indirmek için dosyayı yeniden yükleyin.");
-        return;
-      }
+      const data = (await api.get<Blob>(`/files/${item.id}/download`, {responseType: 'blob'})).data;
       if (download) {
         const url = URL.createObjectURL(data);
         const link = document.createElement("a");
@@ -200,86 +148,30 @@ export function FilesPage() {
         { id: currentItem.id, name: currentItem.name },
       ]
     : [{ id: null, name: "Ana Dizin" }];
-  const saveItem = () => {
-    const clean = itemName.trim();
-    if (!clean) return;
-    if (editingId) {
-      const existing = items.find((item) => item.id === editingId);
-      if (!existing || !canEditName(existing)) {
-        closeEditor();
-        return;
-      }
-      save(
-        items.map((item) =>
-          item.id === editingId
-            ? { ...item, name: clean, icon: folderIcon, color: folderColor }
-            : item,
-        ),
-      );
-    } else {
-      if (!hasPermission(user, 'files.create')) return;
-      save([
-        ...items,
-        {
-          id: crypto.randomUUID(),
-          name: clean,
-          type: "folder",
-          parent: current,
-          createdAt: new Date().toISOString(),
-          icon: folderIcon,
-          color: folderColor,
-          uploaderId: user?.id,
-          uploadedBy: user?.name,
-        },
-      ]);
-    }
-    closeEditor();
+  const saveItem = async () => {
+    const clean = itemName.trim(); if (!clean) return;
+    setFileError('');
+    try {
+      const data = {name: clean, icon: folderIcon, color: folderColor};
+      if (editingId) await api.patch(`/files/${editingId}`, data);
+      else await api.post('/files/folders', {...data, parent: current});
+      await syncFiles(); closeEditor();
+    } catch(error) { setFileError(errorText(error)); }
   };
-  const remove = (id: string) => {
-    const target = items.find(item => item.id === id);
-    if (!target || !canDelete(target)) return;
-    const deleted = new Set([id]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      items.forEach((item) => {
-        if (item.parent && deleted.has(item.parent) && !deleted.has(item.id)) {
-          deleted.add(item.id);
-          changed = true;
-        }
-      });
-    }
-    if (items.some(item => deleted.has(item.id) && !canDelete(item))) { setFileError('Bu klasörde silme yetkiniz olmayan dosyalar bulunuyor.'); return; }
-    save(items.filter((item) => !deleted.has(item.id)));
-    void deleteFileContents([...deleted]).catch(() => setFileError("Silinen dosyanın depolanan içeriği temizlenemedi."));
-    if (current && deleted.has(current)) setCurrent(null);
-    if (editingId && deleted.has(editingId)) closeEditor();
+  const remove = async (id: string) => {
+    const target = items.find(item => item.id === id); if (!target || !canDelete(target)) return;
+    setFileError('');
+    try { await api.delete(`/files/${id}`); if (editingId === id) closeEditor(); await syncFiles(); }
+    catch(error) { setFileError(errorText(error)); }
   };
   const upload = async (files: FileList | null) => {
     if (!files || !hasPermission(user, 'files.create')) return;
-    const selected = Array.from(files);
-    const added = selected.map((file) => ({
-        id: crypto.randomUUID(),
-        name: file.name,
-        type: "file" as const,
-        parent: current,
-        size: file.size,
-        createdAt: new Date().toISOString(),
-        uploadedBy: user?.name,
-        uploaderId: user?.id,
-        icon: "file",
-        color: "blue",
-      }));
-    setFileError("");
-    setUploading(true);
-    try {
-      await storeFileContents(added.map((item, index) => ({ id: item.id, data: selected[index] })));
-      save(previous => [...previous, ...added]);
-    } catch {
-      setFileError("Dosyalar kaydedilemedi. Tarayıcı depolama alanını kontrol edip tekrar deneyin.");
-    } finally {
-      setUploading(false);
-    }
+    const data = new FormData(); for (const file of Array.from(files)) data.append('files', file);
+    if (current) data.append('parent', current);
+    setFileError(''); setUploading(true);
+    try { await api.post('/files/upload', data); await syncFiles(); }
+    catch(error) { setFileError(errorText(error)); }
+    finally { setUploading(false); }
   };
   return (
     <main className="page files-page">
@@ -319,6 +211,9 @@ export function FilesPage() {
           />
         </div>
       </Heading>
+      {hasLegacyFiles && <p className="muted">Eski tarayıcı kayıtları korunuyor. Önceden eklediğiniz dosyaları ortak alanda paylaşmak için yeniden yükleyin.</p>}
+      {directory.isPending && <p className="muted">Dosyalar yükleniyor...</p>}
+      {directory.error && <p className="error" role="alert">{errorText(directory.error)}</p>}
       {fileError && <p className="error" role="alert">{fileError}</p>}
       {preview && <FilePreviewModal file={preview} onClose={() => setPreview(null)} />}
       {newFolder && (
@@ -328,7 +223,7 @@ export function FilesPage() {
           aria-label={editingItem ? "Dosya veya klasör düzenle" : "Yeni klasör"}
           onSubmit={(event) => {
             event.preventDefault();
-            saveItem();
+            void saveItem();
           }}
         >
           <EditorIcon size={20} />
@@ -437,7 +332,7 @@ export function FilesPage() {
           </button>
         </div>
       </div>
-      {!visible.length ? (
+      {!visible.length && !directory.isPending && !directory.error ? (
         <div className="files-empty">
           <Folder size={42} />
           <strong>Bu klasör boş</strong>

@@ -36,10 +36,22 @@ export function ComposerFiles({files,setFiles,disabled=false}:{files:File[];setF
   const [preview, setPreview] = useState<File | null>(null);
   return <><ul className="composer-file-list" aria-label="Gönderilecek dosyalar">{files.map((file,i)=><li key={`${file.name}-${i}`}><Paperclip size={12} aria-hidden="true"/><button type="button" className="composer-file-preview" title={file.name} onClick={()=>setPreview(file)}>{file.name}</button><button type="button" aria-label={`${file.name} kaldır`} disabled={disabled} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}><X size={10} aria-hidden="true"/></button></li>)}</ul>{preview && <FilePreviewModal file={{ name: preview.name, mimeType: preview.type, data: preview }} onClose={() => setPreview(null)} />}</>;
 }
+function AttachmentThumbnail({file,onPreview}:{file:Attachment;onPreview:(file:PreviewFile)=>void}){
+  const [url,setUrl]=useState('');
+  const image=useQuery({queryKey:['attachment-image',file.id],queryFn:async()=>(await api.get<Blob>(`/attachments/${file.id}`,{responseType:'blob'})).data,staleTime:Infinity,retry:1});
+  useEffect(()=>{
+    if(!image.data)return;
+    const next=URL.createObjectURL(image.data);
+    setUrl(next);
+    return()=>URL.revokeObjectURL(next);
+  },[image.data]);
+  if(!url)return null;
+  return <button className="attachment-image-preview" type="button" aria-label={`${file.originalName} önizle`} onClick={()=>image.data&&onPreview({name:file.originalName,mimeType:file.mimeType,data:image.data})}><img src={url} alt={file.originalName}/></button>;
+}
 export function AttachmentLinks({attachments}:{attachments:Attachment[]}){
   const [error,setError]=useState(''),[pending,setPending]=useState(''),[preview,setPreview]=useState<PreviewFile | null>(null);
   async function open(file:Attachment){setPending(file.id);setError('');try{const response=await api.get(`/attachments/${file.id}`,{responseType:'blob'});setPreview({name:file.originalName,mimeType:file.mimeType,data:response.data});}catch{setError('Dosya açılamadı veya erişim yetkiniz kalmadı.');}finally{setPending('');}}
-  return <>{attachments?.length>0&&<div className="attachment-list">{attachments.map(file=><button key={file.id} type="button" title={file.originalName} disabled={pending===file.id} onClick={()=>void open(file)}><Download size={14}/><span>{file.originalName}</span><small>{Math.max(1,Math.round(file.size/1024))} KB</small></button>)}</div>}{preview&&<FilePreviewModal file={preview} onClose={()=>setPreview(null)}/>} {error&&<p className="error" role="alert">{error}</p>}</>;
+  return <>{attachments?.length>0&&<><div className="attachment-image-list">{attachments.filter(file=>file.mimeType.startsWith('image/')).map(file=><AttachmentThumbnail key={file.id} file={file} onPreview={setPreview}/>)}</div><div className="attachment-list">{attachments.map(file=><button key={file.id} type="button" title={file.originalName} disabled={pending===file.id} onClick={()=>void open(file)}><Download size={14}/><span>{file.originalName}</span><small>{Math.max(1,Math.round(file.size/1024))} KB</small></button>)}</div></>}{preview&&<FilePreviewModal file={preview} onClose={()=>setPreview(null)}/>} {error&&<p className="error" role="alert">{error}</p>}</>;
 }
 export function SavedReplyPicker({onSelect}:{onSelect:(body:string)=>void}){
   const [search,setSearch]=useState(''),[page,setPage]=useState(1);

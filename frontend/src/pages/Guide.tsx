@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
-  Activity, ArrowRight, Bell, BookOpen, CheckCircle2, ChevronRight, FileText, Inbox,
-  LayoutDashboard, Mail, MessageSquare, Phone, Settings, Tags,
+  Activity, ArrowRight, BarChart3, Bell, BookOpen, Building2, CheckCircle2, ChevronRight, ClipboardList, FileText, History, Inbox,
+  LayoutDashboard, MessageSquare, Phone, Settings, ShieldCheck, Tags,
   Timer, UserPlus, UserRound, UsersRound, X,
 } from "lucide-react";
 
@@ -76,7 +76,7 @@ const workScreens: GuideScreen[] = [
       },
     ],
     details: [
-      { title: "Görünüm sekmeleri", text: "Tümü, Mail, Bana atanan, Atanmamış ve etiket görünümleri arasında geçin. Kalem simgesiyle sekmeleri düzenleyin." },
+      { title: "Görünüm sekmeleri", text: "Tümü, Telefon talebi, Mail, SMS, WhatsApp, Bana atanan, Atanmamış ve etiket görünümleri arasında geçin. Kalem simgesiyle sekmeleri düzenleyin." },
       { title: "Arama ve filtreler", text: "Talep numarası, konu, müşteri veya personel arayın. Kayıt sayısını, durumu ve önceliği ayrıca seçin." },
       { title: "Talep tablosu", text: "Her satırda kanal, durum, öncelik, departman, atanan personel, açılış ve son güncelleme bilgisi vardır." },
       { title: "Yanıt süresi", text: "Yanıt bekleyen veya cevaplanmış talebin süre bilgisini aynı satırda izleyin." },
@@ -96,7 +96,7 @@ const workScreens: GuideScreen[] = [
         pins: [
           { detail: 1, labelX: 20, labelY: 19, targetX: 26, targetY: 27 },
           { detail: 2, labelX: 89, labelY: 19, targetX: 95, targetY: 27 },
-          { detail: 3, labelX: 42, labelY: 61, targetX: 49, targetY: 52 },
+          { detail: 3, labelX: 42, labelY: 53, targetX: 48, targetY: 40 },
           { detail: 4, labelX: 56, labelY: 31, targetX: 61, targetY: 41 },
           { detail: 5, labelX: 74, labelY: 31, targetX: 68, targetY: 40 },
         ],
@@ -138,7 +138,7 @@ const workScreens: GuideScreen[] = [
         label: "Mevcut kişiye talep",
         alt: "Seçilen mevcut müşteri için telefon talebi formu",
         pins: [
-          { detail: 3, labelX: 30, labelY: 22, targetX: 17, targetY: 31 },
+          { detail: 3, labelX: 30, labelY: 26, targetX: 23, targetY: 37 },
         ],
       },
       {
@@ -148,7 +148,7 @@ const workScreens: GuideScreen[] = [
         pins: [
           { detail: 4, labelX: 27, labelY: 49, targetX: 36, targetY: 58 },
           { detail: 5, labelX: 84, labelY: 49, targetX: 76, targetY: 58 },
-          { detail: 6, labelX: 64, labelY: 89, targetX: 54, targetY: 84 },
+          { detail: 6, labelX: 64, labelY: 94, targetX: 54, targetY: 90 },
         ],
       },
     ],
@@ -157,7 +157,7 @@ const workScreens: GuideScreen[] = [
       { title: "Yeni arayan ekle", text: "Aynı adla kayıt bulunsa bile Enter veya sağdaki + yeni kişi formunu açar; arama sonuçları gizlenir." },
       { title: "Kayıtlı kişiye talep aç", text: "Arama sonucundan kayıtlı kişiyi seçtiğinizde kişinin adı hazır gelir ve yalnızca Talep bilgileri formu gösterilir." },
       { title: "Yeni kişi bilgileri", text: "Yeni arayan için ad, telefon, e-posta, şirket ve isteğe bağlı kalıcı müşteri notunu doldurun." },
-      { title: "Talep bilgileri", text: "Proje, konu, açıklama, departman ve atanacak personeli seçin. Gerekli alanları tamamlayıp talebi oluşturun." },
+      { title: "Talep bilgileri", text: "Dönüş kanalını, projeyi, konuyu, açıklamayı, departmanı ve atanacak personeli seçin. Gerekli alanları tamamlayıp talebi oluşturun." },
       { title: "Konuşmaya geçiş", text: "Oluşturulan talep sizi doğrudan konuşma ekranına taşır." },
     ],
     next: "Talep açılınca konuşma ekranından yanıtı ve durumunu takip edin.",
@@ -171,12 +171,12 @@ const workScreens: GuideScreen[] = [
       label: "Konuşma ve talep yönetimi",
       alt: "Mesaj geçmişi, yanıt alanı ve talep bilgileri bulunan konuşma ekranı",
       pins: [
-        { detail: 1, labelX: 75, labelY: 12, targetX: 88, targetY: 18 },
-        { detail: 2, labelX: 38, labelY: 17, targetX: 30, targetY: 24 },
-        { detail: 3, labelX: 40, labelY: 38, targetX: 50, targetY: 48 },
-        { detail: 4, labelX: 60, labelY: 73, targetX: 50, targetY: 84 },
+        { detail: 1, labelX: 75, labelY: 11, targetX: 88, targetY: 17 },
+        { detail: 2, labelX: 38, labelY: 15, targetX: 30, targetY: 22 },
+        { detail: 3, labelX: 40, labelY: 28, targetX: 37, targetY: 37 },
+        { detail: 4, labelX: 60, labelY: 68, targetX: 50, targetY: 83 },
         { detail: 5, labelX: 80, labelY: 43, targetX: 91, targetY: 54 },
-        { detail: 6, labelX: 79, labelY: 70, targetX: 89, targetY: 78 },
+        { detail: 6, labelX: 79, labelY: 65, targetX: 89, targetY: 73 },
       ],
     }],
     details: [
@@ -204,9 +204,10 @@ const settingsScreens: SettingsScreen[] = [
     title: "Entegrasyonlar",
     text: "Sisteme mesaj getiren ve sistemden yanıt gönderen kanallar burada bağlanır.",
     details: [
-      "E-posta hesabının IMAP ve SMTP bağlantı bilgilerini girin.",
+      "Ayarlar → Entegrasyonlar sayfasında E-posta, SMS ve WhatsApp sekmeleri arasında geçin.",
+      "E-posta bölümünde giden posta için SMTP, gelen posta için IMAP bağlantı bilgilerini girin.",
       "Bağlantıyı test edin; çalışan ve sorunlu kanalları durum bilgisinden izleyin.",
-      "SMS ve WhatsApp kullanıma açıldığında ilgili hesapları aynı alandan yönetin.",
+      "SMS ve WhatsApp bağlantılarını etkinleştirin; erişim bilgilerini ve varsayılan departmanı ayarlayın.",
     ],
   },
   {
@@ -220,13 +221,13 @@ const settingsScreens: SettingsScreen[] = [
     ],
   },
   {
-    icon: Mail,
-    title: "E-posta bildirimleri",
-    text: "Müşteriye gönderilen otomatik e-postaların içeriğini ve görünümünü düzenleyin.",
+    icon: ShieldCheck,
+    title: "Roller",
+    text: "Ayarlar → Roller sayfasında personelin erişebileceği ekranları ve yapabileceği işlemleri belirleyin.",
     details: [
-      "Talep oluşturulduğunda gönderilecek konu ve mesaj metnini belirleyin.",
-      "Yeni yanıt ve durum değişikliği bildirimlerini ayrı ayrı düzenleyin.",
-      "Şablondaki değişkenleri koruyarak müşteri ve talep bilgilerinin otomatik gelmesini sağlayın.",
+      "Hazır bir şablondan başlayın veya ekibinize uygun yeni bir rol oluşturun.",
+      "Her ekran için görüntüleme, oluşturma, düzenleme ve silme gibi izinleri ayrı ayrı seçin.",
+      "Talep kapsamını kendisine atanan talepler, bağlı departmanlar veya tüm departmanlar olarak belirleyin; rolü personele atayın.",
     ],
   },
   {
@@ -271,12 +272,52 @@ const settingsScreens: SettingsScreen[] = [
   },
   {
     icon: BookOpen,
-    title: "Sistem rehberi",
-    text: "Günlük talep akışını ve yönetici ekranlarının ne işe yaradığını burada öğrenin.",
+    title: "Rehber",
+    text: "Ayarlar → Rehber sayfasında Proje Rehberi ve Sistem Rehberi sekmelerine tek yerden ulaşın.",
     details: [
-      "Üstteki bölüm beş ana çalışma ekranını gerçek görüntülerle anlatır.",
-      "Numaralı oklar, açıklamadaki adımın ekranda bulunduğu yeri gösterir.",
-      "Ayar ekranlarının güncel görüntüleri geldikçe bu bölüm ayrıca görselleştirilecektir.",
+      "Proje Rehberi sekmesinde projelere ait destek bilgilerini ve rehber dosyalarını inceleyin.",
+      "Sistem Rehberi sekmesinde günlük talep akışını güncel ekran görüntüleriyle öğrenin.",
+      "Numaralı oklarla açıklanan alanları bulun; görselleri tam boy açın ve farklı ekran örnekleri arasında geçin.",
+    ],
+  },
+  {
+    icon: Building2,
+    title: "Departmanlar",
+    text: "Personeller sayfasındaki Departmanlar bölümünden destek ekibinin çalışma birimlerini yönetin.",
+    details: [
+      "Yeni departman oluşturun, adını düzenleyin ve aktiflik durumunu belirleyin.",
+      "Personelleri ilgili departmanlara bağlayarak talepleri doğru ekibe yönlendirin.",
+      "Talep açarken veya mevcut talebi aktarırken departman seçimini kullanın.",
+    ],
+  },
+  {
+    icon: ClipboardList,
+    title: "Anketler",
+    text: "Ayarlar → Anketler sayfasında Anket & Oylama ekranını açın; ekipten geri bildirim toplayın.",
+    details: [
+      "Başlık ve soruları hazırlayın; hedef departmanı, katılımcıları ve anonim oylama seçeneğini belirleyin.",
+      "Duyuruyu bildirim, SMS veya e-posta ile iletin; seçilen kanalın entegrasyonunu kontrol edin.",
+      "Aktif ve tamamlanan anketleri ayrı listelerde takip edin; İstatistikler üzerinden katılımı ve yanıt dağılımlarını inceleyin.",
+    ],
+  },
+  {
+    icon: BarChart3,
+    title: "Raporlar",
+    text: "Ayarlar → Raporlar sayfasında destek taleplerinin ve ekibin performansını inceleyin.",
+    details: [
+      "Genel Rapor, Kişi Raporu ve Departman Raporu sekmeleriyle farklı kapsamları karşılaştırın.",
+      "Kişi raporunda çalışanı, departman raporunda ilgili departmanı seçin; trend ve süre dönemi için son 7, 30 veya 90 günü kullanın.",
+      "Talep durumlarını, öncelik dağılımını, tamamlanma oranını ve yanıt ile çözüm sürelerini takip edin.",
+    ],
+  },
+  {
+    icon: History,
+    title: "İşlem geçmişi",
+    text: "Sol menünün altındaki İşlem geçmişi aracından sistemde yapılan işlemleri ve işlemi yapan kişileri izleyin.",
+    details: [
+      "Her kayıtta tarih, kullanıcı, işlem ve açıklama bilgilerini inceleyin.",
+      "Kullanıcı, işlem veya açıklama üzerinden arayın; talebe bağlı kayıtlarda Görüşmeyi aç ile ilgili konuşmaya geçin.",
+      "İşlem geçmişini sil menüsünden son 24 saat, son 7 gün, son 30 gün veya tüm kayıtları seçebilirsiniz; bu işlem kalıcıdır.",
     ],
   },
 ];
@@ -284,7 +325,7 @@ const settingsScreens: SettingsScreen[] = [
 function AnnotatedShot({ shot, markerId, eager = false }: { shot: GuideShot; markerId: string; eager?: boolean }) {
   return (
     <div className="guide-annotated-shot">
-      <img src={`${shot.src}?v=20261007`} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
+      <img src={`${shot.src}?v=20261012`} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
       {!!shot.pins?.length && (
         <svg className="guide-arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -470,13 +511,13 @@ export function GuidePage() {
       </section>
       <div className="guide-screen-list">{workScreens.map((screen) => <ScreenGuide key={screen.id} screen={screen} />)}</div>
       <section className="guide-settings" id="settings">
-        <div className="guide-section-heading"><span className="guide-eyebrow">Yönetici alanı</span><h2>Ayarlar ekranları</h2><p>Bu bölüm destek işleminin günlük akışından ayrıdır. Yetkili kullanıcılar burada kanalları, süreleri ve ekip kayıtlarını yapılandırır.</p></div>
+        <div className="guide-section-heading"><span className="guide-eyebrow">Yönetim ve ekip araçları</span><h2>Ayarlar ve yönetim ekranları</h2><p>Ayarlar menüsündeki sayfaları ve ekip araçlarını burada tanıyın. Ekranların ve işlemlerin görünürlüğü hesabınıza verilen yetkilere bağlıdır.</p></div>
         <div className="guide-settings-flow">
           {[
             "Kanalları bağla",
             "Süre ve bildirimleri ayarla",
             "Personel ve projeleri tanımla",
-            "Aktiviteyi takip et",
+            "Anket, rapor ve geçmişi incele",
           ].map((step, index, items) => <span key={step}><b>{index + 1}</b>{step}{index < items.length - 1 && <ArrowRight size={22} />}</span>)}
         </div>
         <div className="guide-directory-grid">
