@@ -182,6 +182,35 @@
   overflow: auto;
   margin-inline: -24px;
 }
+.activity-log-scroll {
+  --log-scroll-thumb: #a8beb2;
+  scrollbar-width: thin;
+  scrollbar-color: var(--log-scroll-thumb) transparent;
+}
+.activity-log-scroll::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.activity-log-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+.activity-log-scroll::-webkit-scrollbar-track,
+.activity-log-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.activity-log-scroll::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--log-scroll-thumb);
+  background-clip: padding-box;
+}
+.activity-log-scroll::-webkit-scrollbar-thumb:hover {
+  background: #789889;
+  background-clip: padding-box;
+}
+html[data-theme="dark"] .activity-log-scroll {
+  --log-scroll-thumb: #587468;
+}
 .management-table {
   width: 100%;
   border-collapse: collapse;

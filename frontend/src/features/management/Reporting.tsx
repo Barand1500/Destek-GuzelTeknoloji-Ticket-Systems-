@@ -42,7 +42,7 @@ export function ActivityLogsPage() {
           empty={!list.data?.data.length}
         />
         {!!list.data?.data.length && (
-          <div className="management-table-wrap">
+          <div className="management-table-wrap activity-log-scroll">
             <table className="management-table">
               <thead>
                 <tr>
