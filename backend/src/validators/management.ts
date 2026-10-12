@@ -5,7 +5,7 @@ import { skillKey } from "../services/skill-matching.js";
 const skills = z.array(z.object({
   name: z.string().trim().min(1).max(80),
   category: z.string().trim().min(1).max(60),
-  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']),
+  level: z.string().trim().min(1).max(20),
 }).strict()).max(100).refine(items => new Set(items.map(item => skillKey(item.name))).size === items.length, 'Aynı yetenek veya dil tekrar eklenemez.');
 export const staffSuggestionsSchema = z.object({ text: z.string().trim().max(10000) }).strict();
 

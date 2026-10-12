@@ -1,4 +1,8 @@
 import { Router } from "express";
+import * as skillCatalog from '../services/skill-catalog.service.js';
+import { z } from 'zod';
+import { AppError } from '../utils/errors.js';
+import * as sharedFiles from '../services/shared-files.service.js';
 import { authorize } from "../middleware/auth.js";
 import * as service from "../services/management.service.js";
 import * as schema from "../validators/management.js";
@@ -10,6 +14,26 @@ import { currentPresence, staffPresence, updatePresenceSettings } from '../servi
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
 const staff = authorize("ADMIN", "SUPERVISOR", "AGENT");
+managementRouter.get('/skill-catalog',staff,async(req,res)=>res.json({success:true,data:await skillCatalog.skillCatalog(req.actor)}));
+managementRouter.post('/skill-catalog/:kind',staff,async(req,res)=>res.status(201).json({success:true,data:await skillCatalog.saveSkillDefinition(req.actor,skillCatalog.skillKind.parse(req.params.kind),skillCatalog.skillDefinitionInput.parse(req.body))}));
+managementRouter.patch('/skill-catalog/:kind/:id',staff,async(req,res)=>res.json({success:true,data:await skillCatalog.saveSkillDefinition(req.actor,skillCatalog.skillKind.parse(req.params.kind),skillCatalog.skillDefinitionInput.parse(req.body),idSchema.parse(req.params.id))}));
+managementRouter.delete('/skill-catalog/:id',staff,async(req,res)=>{await skillCatalog.deleteSkillDefinition(req.actor,idSchema.parse(req.params.id));res.json({success:true,data:null});});
+const sharedFileName = z.string().trim().min(1).max(180).refine(name => !/[\u0000-\u001f\u007f/\\]/.test(name), 'Geçerli bir ad girin.');
+const sharedFolderData = z.object({ name: sharedFileName, parent: z.uuid().nullable().default(null), icon: z.enum(['book','layers','camera','monitor','folder','code','database','globe','home','laptop','map','palette','shield','star','file']).default('folder'), color: z.enum(['orange','blue','green','red','purple','pink','cyan','slate']).default('purple') });
+managementRouter.get('/files', staff, async (req,res) => res.json({ success: true, data: await sharedFiles.sharedFiles(req.actor) }));
+managementRouter.post('/files/folders', staff, async (req,res) => res.status(201).json({ success: true, data: await sharedFiles.createSharedFolder(req.actor, sharedFolderData.parse(req.body)) }));
+managementRouter.post('/files/upload', staff, upload, async (req,res) => {
+  const parent = z.uuid().nullable().parse(req.body.parent || null);
+  if (!(req.files as Express.Multer.File[])?.length) throw new AppError(400, 'INVALID_FILE', 'Dosya seçin.');
+  res.status(201).json({ success: true, data: await withStoredUploads(req.files as Express.Multer.File[], files => sharedFiles.uploadSharedFiles(req.actor, parent, files)) });
+});
+managementRouter.patch('/files/:id', staff, async (req,res) => res.json({ success: true, data: await sharedFiles.updateSharedFile(req.actor, idSchema.parse(req.params.id), sharedFolderData.omit({parent:true}).parse(req.body)) }));
+managementRouter.delete('/files/:id', staff, async (req,res) => { await sharedFiles.deleteSharedFile(req.actor,idSchema.parse(req.params.id)); res.json({success:true,data:null}); });
+managementRouter.get('/files/:id/download', staff, async (req,res,next) => {
+  const file = await sharedFiles.sharedFileDownload(req.actor,idSchema.parse(req.params.id));
+  res.type(file.mimeType!);
+  res.download(path.join(uploadRoot,idSchema.parse(file.storageKey)),file.name,error=>{if(error&&!res.headersSent)next(error);});
+});
 managementRouter.post('/staff-suggestions', staff, async (req, res) => res.json({ success: true, data: await service.staffSuggestions(req.actor, schema.staffSuggestionsSchema.parse(req.body).text) }));
 managementRouter.get("/users", staff, async (req, res) => res.json({ success: true, ...await service.users(req.actor, schema.directoryQuery.parse(req.query)) }));
 managementRouter.get("/users/:id/assignment-impact", staff, async (req, res) => res.json({ success: true, data: await service.userAssignmentImpact(req.actor, idSchema.parse(req.params.id), schema.userAssignmentImpactQuery.parse(req.query)) }));

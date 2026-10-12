@@ -1,7 +1,10 @@
 import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID, randomInt } from 'node:crypto';
+import { randomUUID, randomInt, createHmac } from 'node:crypto';
+import { unlink, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { uploadRoot } from '../src/services/uploads.service.js';
 import { canonicalPhone, matchesPhone } from '../src/services/inbound-phone-matching.js';
 
 test('phone matching compares whole numbers across Turkish formats and extra contacts', () => {
@@ -17,7 +20,7 @@ test('phone matching compares whole numbers across Turkish formats and extra con
 
 test('WhatsApp reuses customers and tickets, switches on new requests, and handles concurrent delivery', async () => {
   const { db } = await import('../src/config/db.js');
-  const { persistInboundMessage } = await import('../src/services/integrations.service.js');
+  const { persistInboundMessage, receiveMetaWebhook } = await import('../src/services/integrations.service.js');
   const suffix = randomUUID();
   const phone = `0555${randomInt(1000000, 9999999)}`;
   const concurrentPhone = `199${randomInt(100000000, 999999999)}`;
@@ -44,6 +47,37 @@ test('WhatsApp reuses customers and tickets, switches on new requests, and handl
     const count = await db.conversationMessage.count({ where: { conversationId: first } });
     assert.equal(await persistInboundMessage(replay), first);
     assert.equal(await db.conversationMessage.count({ where: { conversationId: first } }), count);
+
+    const originalSettings = db.integrationSettings.findUnique;
+    const originalFetch = globalThis.fetch;
+    const secret = 'photo-webhook-test-secret';
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5xkAAAAASUVORK5CYII=', 'base64');
+    let fetches = 0;
+    try {
+      db.integrationSettings.findUnique = (async () => ({ whatsappEnabled: true, whatsappAppSecret: secret, whatsappAccessToken: 'test-token', whatsappPhoneNumberId: '456', whatsappDepartmentId: departmentId })) as typeof originalSettings;
+      globalThis.fetch = async () => {
+        fetches++;
+        return fetches % 2 === 1 ? Response.json({ url: 'https://lookaside.fbsbx.com/whatsapp_business/attachments/123', mime_type: 'image/png', file_size: png.length }) : new Response(png);
+      };
+      for (const caption of [undefined, 'Photo caption']) {
+        const externalId = randomUUID();
+        const payload = { entry: [{ changes: [{ value: { messages: [{ id: externalId, from: canonicalPhone(phone), type: 'image', image: { id: '123', caption } }] } }] }] };
+        const raw = Buffer.from(JSON.stringify(payload));
+        const signature = `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
+        assert.deepEqual(await receiveMetaWebhook(payload, signature, raw), [first]);
+        const photo = await db.conversationMessage.findFirstOrThrow({ where: { conversationId: first, body: caption ?? 'Fotoğraf' }, include: { attachments: true } });
+        assert.equal(photo.attachments.length, 1);
+        assert.equal(photo.attachments[0].mimeType, 'image/png');
+        assert.deepEqual(await readFile(path.join(uploadRoot, photo.attachments[0].storageKey)), png);
+        const beforeReplay = fetches;
+        assert.deepEqual(await receiveMetaWebhook(payload, signature, raw), [first]);
+        assert.equal(fetches, beforeReplay);
+        assert.equal(await db.conversationAttachment.count({ where: { messageId: photo.id } }), 1);
+      }
+    } finally {
+      db.integrationSettings.findUnique = originalSettings;
+      globalThis.fetch = originalFetch;
+    }
 
     await db.conversation.update({ where: { id: first }, data: { status: 'CLOSED', closedAt: new Date() } });
     assert.equal(await persistInboundMessage(input()), first);
@@ -75,7 +109,9 @@ test('WhatsApp reuses customers and tickets, switches on new requests, and handl
     const conversationIds = conversations.map(conversation => conversation.id);
     await db.notification.deleteMany({ where: { conversationId: { in: conversationIds } } });
     await db.activityLog.deleteMany({ where: { userId: { in: ids } } });
-    await db.externalMessage.deleteMany({ where: { provider: `test-whatsapp-${suffix}` } });
+    const files = await db.conversationAttachment.findMany({ where: { message: { conversationId: { in: conversationIds } } }, select: { storageKey: true } });
+    await Promise.allSettled(files.map(file => unlink(path.join(uploadRoot, file.storageKey))));
+    await db.externalMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
     await db.conversationMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
     await db.conversation.deleteMany({ where: { id: { in: conversationIds } } });
     await db.user.deleteMany({ where: { id: { in: ids } } });

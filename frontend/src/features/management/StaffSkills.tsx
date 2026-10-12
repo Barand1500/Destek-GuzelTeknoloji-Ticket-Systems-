@@ -1,176 +1,85 @@
 import { useState } from "react";
-import { Award, Plus, Search, X } from "lucide-react";
+import { Award, Plus, X } from "lucide-react";
 import { DropdownSelect } from "../../components/DropdownSelect";
+import { useSkillCatalog } from "./Skills";
+import { errorText } from "../../services/api";
 import type { StaffSkill } from "../../types";
 import "./staffSkills.css";
 
-export const skillLevels: Record<StaffSkill["level"], string> = {
+// Display labels for existing assignments only; these are not catalog options.
+export const skillLevels: Record<string, string> = {
   BEGINNER: "Başlangıç",
   INTERMEDIATE: "Orta",
   ADVANCED: "İleri",
   EXPERT: "Uzman",
 };
-const catalog: Record<string, string[]> = {
-  Frontend: [
-    "React",
-    "Vue.js",
-    "Angular",
-    "TypeScript",
-    "JavaScript",
-    "HTML",
-    "CSS",
-    "Tailwind CSS",
-    "Next.js",
-    "Svelte",
-    "jQuery",
-  ],
-  Backend: [
-    "Node.js",
-    "Express",
-    "NestJS",
-    ".NET",
-    "Django",
-    "Flask",
-    "Laravel",
-    "Spring Boot",
-    "PHP",
-    "Python",
-    "Java",
-    "C#",
-    "Go",
-    "Ruby",
-  ],
-  "Programlama Dilleri": [
-    "JavaScript",
-    "TypeScript",
-    "Python",
-    "Java",
-    "C#",
-    "C++",
-    "C",
-    "Go",
-    "Rust",
-    "PHP",
-    "Ruby",
-    "Swift",
-    "Kotlin",
-  ],
-  Veritabanı: [
-    "MySQL",
-    "PostgreSQL",
-    "MongoDB",
-    "Redis",
-    "SQL Server",
-    "SQLite",
-    "Oracle",
-  ],
-  DevOps: [
-    "Docker",
-    "Kubernetes",
-    "Linux",
-    "AWS",
-    "Azure",
-    "Git",
-    "CI/CD",
-    "Nginx",
-  ],
-  Mobil: ["React Native", "Flutter", "Swift", "Kotlin", "Android", "iOS"],
-  Tasarım: ["Figma", "UI/UX", "Photoshop", "Illustrator"],
-  Diller: [
-    "Türkçe",
-    "İngilizce",
-    "Almanca",
-    "Fransızca",
-    "İspanyolca",
-    "Arapça",
-    "Rusça",
-    "Çince",
-    "Japonca",
-    "İtalyanca",
-  ],
-};
-const key = (value: string) =>
-  value
-    .trim()
-    .toLocaleLowerCase("tr-TR")
-    .replace(/ı/g, "i")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ş/g, "s")
-    .replace(/\s+/g, " ");
-
 export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
+  const catalog = useSkillCatalog();
   const [skills, setSkills] = useState(initial);
-  const [category, setCategory] = useState("Frontend");
-  const [customCategory, setCustomCategory] = useState("");
-  const [level, setLevel] = useState<StaffSkill["level"]>("INTERMEDIATE");
-  const [search, setSearch] = useState("");
-  const [custom, setCustom] = useState("");
-  const selectedCategory =
-    category === "__custom" ? customCategory.trim() : category;
-  const [notice, setNotice] = useState("");
-  function add(name: string) {
-    const trimmed = name.trim();
-    if (!trimmed || !selectedCategory) {
-      setNotice("Yetenek adı ve kategori girin.");
+  const [categoryId, setCategoryId] = useState(""),
+    [skillId, setSkillId] = useState(""),
+    [level, setLevel] = useState("");
+  const categories = catalog.data?.categories ?? [],
+    levels = catalog.data?.levels ?? [];
+  const available = (catalog.data?.skills ?? []).filter(
+    (item) =>
+      item.categoryId === categoryId &&
+      !skills.some((skill) => skill.name === item.name),
+  );
+  function add() {
+    const selected = available.find((item) => item.id === skillId),
+      category = categories.find((item) => item.id === categoryId);
+    if (
+      !selected ||
+      !category ||
+      !levels.some((item) => item.name === level) ||
+      skills.length >= 100
+    )
       return;
-    }
-    if (skills.some((skill) => key(skill.name) === key(trimmed))) {
-      setNotice("Bu yetenek veya dil zaten eklendi.");
-      return;
-    }
-    if (skills.length >= 100) {
-      setNotice("En fazla 100 yetenek ve dil ekleyebilirsiniz.");
-      return;
-    }
     setSkills([
       ...skills,
-      { name: trimmed, category: selectedCategory, level },
+      { name: selected.name, category: category.name, level },
     ]);
-    setCustom("");
-    setNotice("");
+    setSkillId("");
   }
-  const categories = [
-    ...new Set([
-      ...Object.keys(catalog),
-      ...skills.map((skill) => skill.category),
-    ]),
-  ];
   return (
-    <section className="staff-skills" aria-label="Yetenekler ve diller">
+    <section className="staff-skills" aria-label="Personel yetenekleri">
       <input type="hidden" name="skills" value={JSON.stringify(skills)} />
       <div className="staff-skills-heading">
         <Award size={20} />
-        <strong>Yetenekler &amp; Diller</strong>
+        <strong>Yetenekler</strong>
         <small>{skills.length} yetenek</small>
       </div>
-      {skills.length > 0 && (
+      {!!skills.length && (
         <div className="staff-skill-tags">
           {skills.map((skill) => (
             <div className="staff-skill-tag" key={skill.name}>
               <span title={skill.category}>{skill.name}</span>
-              <select
-                aria-label={`${skill.name} seviyesi`}
+              <DropdownSelect
+                ariaLabel={`${skill.name} seviyesi`}
                 value={skill.level}
-                onChange={(event) =>
+                onChange={(level) =>
                   setSkills(
                     skills.map((item) =>
-                      item.name === skill.name
-                        ? {
-                            ...item,
-                            level: event.target.value as StaffSkill["level"],
-                          }
-                        : item,
+                      item.name === skill.name ? { ...item, level } : item,
                     ),
                   )
                 }
-              >
-                {Object.entries(skillLevels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  ...levels.map((item) => ({
+                    value: item.name,
+                    label: item.name,
+                  })),
+                  ...(!levels.some((item) => item.name === skill.level)
+                    ? [
+                        {
+                          value: skill.level,
+                          label: skillLevels[skill.level] ?? skill.level,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
               <button
                 type="button"
                 aria-label={`${skill.name} kaldır`}
@@ -188,87 +97,70 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
         <DropdownSelect
           label="Kategori"
           ariaLabel="Yetenek kategorisi"
-          value={category}
+          value={categoryId}
           onChange={(value) => {
-            setCategory(value);
-            setSearch("");
+            setCategoryId(value);
+            setSkillId("");
           }}
           options={[
-            ...categories.map((value) => ({ value, label: value })),
-            { value: "__custom", label: "Özel kategori ekle" },
+            { value: "", label: "Kategori seçin" },
+            ...categories.map((item) => ({ value: item.id, label: item.name })),
           ]}
         />
         <DropdownSelect
-          label="Seviye"
-          ariaLabel="Yetenek seviyesi"
-          value={level}
-          onChange={(value) => setLevel(value as StaffSkill["level"])}
-          options={Object.entries(skillLevels).map(([value, label]) => ({
-            value,
-            label,
-          }))}
+          label="Yetenek"
+          ariaLabel="Personel yeteneği"
+          value={skillId}
+          onChange={setSkillId}
+          options={[
+            {
+              value: "",
+              label: categoryId ? "Yetenek seçin" : "Önce kategori seçin",
+            },
+            ...available.map((item) => ({ value: item.id, label: item.name })),
+          ]}
         />
       </div>
-      {category === "__custom" && (
-        <input
-          aria-label="Özel kategori adı"
-          maxLength={60}
-          placeholder="Kategori adı…"
-          value={customCategory}
-          onChange={(event) => setCustomCategory(event.target.value)}
-        />
+      <DropdownSelect
+        label="Seviye"
+        ariaLabel="Yetenek seviyesi"
+        value={level}
+        onChange={setLevel}
+        options={[
+          { value: "", label: "Seviye seçin" },
+          ...levels.map((item) => ({ value: item.name, label: item.name })),
+        ]}
+      />
+      <button
+        type="button"
+        className="button secondary"
+        onClick={add}
+        disabled={
+          !skillId ||
+          !level ||
+          !levels.some((item) => item.name === level) ||
+          skills.length >= 100
+        }
+      >
+        <Plus size={14} />
+        Yetenek ekle
+      </button>
+      {catalog.isPending && (
+        <small className="muted">Yetenekler yükleniyor...</small>
       )}
-      <div className="staff-skills-search">
-        <Search size={16} />
-        <input
-          aria-label="Yetenek ve dil ara"
-          placeholder={`${selectedCategory || "Yetenekler"} içinde ara…`}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </div>
-      <div className="staff-skills-options">
-        {(catalog[category] ?? [])
-          .filter((name) => key(name).includes(key(search)))
-          .map((name) => (
-            <button
-              type="button"
-              key={name}
-              disabled={
-                skills.some((skill) => key(skill.name) === key(name)) ||
-                skills.length >= 100
-              }
-              onClick={() => add(name)}
-            >
-              <Plus size={14} />
-              {name}
-            </button>
-          ))}
-      </div>
-      <div className="staff-skills-custom">
-        <input
-          aria-label="Özel yetenek veya dil"
-          maxLength={80}
-          placeholder="Özel yetenek veya dil ekle…"
-          value={custom}
-          onChange={(event) => setCustom(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              add(custom);
-            }
-          }}
-        />
-        <button
-          type="button"
-          className="button secondary"
-          onClick={() => add(custom)}
-          disabled={!custom.trim() || !selectedCategory || skills.length >= 100}
-        >
-          Ekle
-        </button>
-      </div>
-      {notice && <small role="status">{notice}</small>}
+      {catalog.error && (
+        <p className="error" role="alert">
+          {errorText(catalog.error)}
+        </p>
+      )}
+      {!catalog.isPending &&
+        !catalog.error &&
+        (!categories.length || !levels.length) && (
+          <small className="muted">
+            Kategori, seviye ve yetenek tanımlarını Ayarlar → Yetenekler
+            sayfasından ekleyin.
+          </small>
+        )}
     </section>
   );
 }

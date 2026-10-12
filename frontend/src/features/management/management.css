@@ -30,7 +30,7 @@
 }
 .users-editor-panel .staff-skill-tags {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 .users-editor-panel .staff-skill-tag {
   min-width: 0;
@@ -4751,3 +4751,27 @@ html[data-theme="dark"] .presence-metrics > div {
 .users-password-field .password-toggle {
   right: 8px;
 }
+.project-guide-source-note {
+  margin: 0;
+  padding: 16px 40px;
+  border-bottom: 1px solid var(--ui-border);
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+@media (max-width: 600px) {
+  .project-guide-source-note { padding: 16px 24px; }
+}
+.skills-page .management-panel > h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.staff-skill-tag > .styled-dropdown {
+  min-width: 110px;
+  max-width: 170px;
+  width: 160px;
+  flex: 0 1 160px;
+}
+.staff-skill-tag { width: 100%; }
+.staff-skill-tag > span { flex: 1; }

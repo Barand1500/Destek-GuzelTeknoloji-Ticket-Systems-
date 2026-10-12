@@ -1,4 +1,5 @@
 export const permissionGroups = [
+  { id: 'skills', name: 'Yetenekler', actions: { view: 'Görüntüleme', create: 'Ekleme', update: 'Düzenleme', delete: 'Silme' } },
   { id: 'dashboard', name: 'Genel bakış', actions: { view: 'Görüntüleme' } },
   { id: 'conversations', name: 'Gelen kutusu ve talepler', actions: { view: 'Görüntüleme', create: 'Talep oluşturma', reply: 'Yanıt yazma', note: 'Dahili not ekleme', assign: 'Atama ve üzerine alma', transfer: 'Departmana aktarma', update: 'Durum, öncelik ve proje değiştirme', history: 'Konuşma geçmişi', delete: 'Silme' } },
   { id: 'customers', name: 'Müşteriler', actions: { view: 'Görüntüleme', create: 'Ekleme', update: 'Düzenleme', delete: 'Silme' } },

@@ -20,7 +20,7 @@ async function ready() {
 }
 async function shot(name) {
   await ready();
-  await page.screenshot({ path: path.join(output, `${name}.png`), animations: 'disabled' });
+  await page.screenshot({ path: path.join(output, `${name}.png`), animations: 'disabled', fullPage: name === 'konusma-detayi' });
   captured.push(name);
   console.log(`Captured ${name}`);
 }
@@ -35,7 +35,9 @@ try {
   await page.getByRole('button', { name: 'Giriş yap', exact: true }).click();
   await page.waitForURL('**/admin/dashboard');
   await shot('genel-bakis');
-  await visit('/admin/conversations', 'gelen-kutusu');
+  await page.goto('/admin/conversations');
+  await page.locator('a[href^="/admin/conversations/"]').first().waitFor();
+  await shot('gelen-kutusu');
   const conversationURL = await page.locator('a[href^="/admin/conversations/"]').first().getAttribute('href');
   await visit('/admin/customers', 'musteriler');
   await shot('musteriler-liste');
@@ -55,6 +57,11 @@ try {
   await shot('telefon-yeni-kisi');
   if (!conversationURL) throw new Error('A conversation is required to capture its detail screen.');
   await visit(conversationURL, 'konusma-detayi');
+  if (process.argv.includes('--publish')) {
+    for (const name of captured) {
+      await copyFile(path.join(output, `${name}.png`), path.resolve('frontend/public/guide', `${name}.png`));
+    }
+  }
   await page.goto('/admin/guide/system');
   await ready();
   const guideImages = page.locator('.guide-page img');
@@ -64,13 +71,19 @@ try {
     await img.evaluate(element => element.decode());
     if (!await img.evaluate(element => element.naturalWidth > 0)) throw new Error('A guide image failed to load.');
   }
+  for (const tabs of await page.locator('.guide-shot-tabs').all()) {
+    for (const tab of await tabs.getByRole('tab').all()) {
+      await tab.click();
+      const img = tabs.locator('..').locator('img');
+      await img.evaluate(element => element.decode());
+      if (!await img.evaluate(element => element.naturalWidth > 0)) throw new Error('A guide image variant failed to load.');
+    }
+    await tabs.getByRole('tab').first().click();
+  }
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: path.join(output, 'rehber-kontrol.png'), animations: 'disabled' });
   console.log('Guide images rendered successfully.');
   if (process.argv.includes('--publish')) {
-    for (const name of captured) {
-      await copyFile(path.join(output, `${name}.png`), path.resolve('frontend/public/guide', `${name}.png`));
-    }
     console.log('Guide images updated. Review the numbered annotations in Guide.tsx.');
   }
 } finally {

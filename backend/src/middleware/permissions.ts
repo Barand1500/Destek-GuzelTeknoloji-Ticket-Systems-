@@ -42,6 +42,9 @@ export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
     'saved-replies': ['savedReplies.view', 'conversations.reply'],
   };
   const segment = path.split('/')[1];
+  if(segment==='skill-catalog'){next();return;}
+  // Shared-file writes check own/all permissions against every affected item.
+  if (segment === 'files') { next(); return; }
   if (/^\/departments\/[^/]+\/agents$/.test(path)) { allow('conversations.assign'); next(); return; }
   if (path === '/surveys/directory') { allow('surveys.create'); next(); return; }
   if (/^\/surveys\/[^/]+\/responses$/.test(path)) { allow('surveys.view'); next(); return; }

@@ -879,7 +879,9 @@ export async function staffSuggestions(actor: Actor, text: string) {
       departments: { where: { department: accessible }, select: { department: { select: { id: true, name: true } } }, orderBy: { department: { name: 'asc' } } },
     },
   });
-  return rankStaff(text, staff).slice(0, 6).map(({ id, name, matches, departments }) => ({ id, name, matches, departments: departments.map(item => item.department) }));
+  const levels = await db.skillDefinition.findMany({where:{kind:'level'}});
+  const weights = Object.fromEntries(levels.map(level=>[level.name,level.rank]));
+  return rankStaff(text, staff, weights).slice(0, 6).map(({ id, name, matches, departments }) => ({ id, name, matches:matches.map(skill=>({...skill,levelScore:weights[skill.level]})), departments: departments.map(item => item.department) }));
 }
 export async function departmentAgents(
   actor: Actor,

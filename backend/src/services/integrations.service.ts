@@ -5,8 +5,10 @@ import { db } from "../config/db.js";
 import { AppError } from "../utils/errors.js";
 import { notifyConversation, publishChange } from "./events.service.js";
 import type { ConversationChannel } from "../generated/prisma/enums.js";
+import { withStoredUploads, discardStoredUploads, type StoredUpload } from './uploads.service.js';
+import { downloadWhatsappImage } from './whatsapp-media.service.js';
 
-type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null };
+type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null; attachments?: StoredUpload[] };
 type NetgsmResponse = { code?: string; description?: string; jobid?: string; msgheaders?: string[] };
 type MetaResponse = { id?: string; display_phone_number?: string; verified_name?: string; messages?: Array<{ id?: string }>; error?: { message?: string; code?: number } };
 const NETGSM_API = "https://api.netgsm.com.tr/sms/rest/v2";
@@ -87,9 +89,9 @@ export async function persistInboundMessage(input: InboundMessage) {
   // Keep matching and creation atomic, including simultaneous first messages.
   for (let attempt = 0; ; attempt++) {
     try {
-      const conversationId = await db.$transaction(async tx => {
+      const result = await db.$transaction(async tx => {
         const known = await tx.externalMessage.findUnique({ where: { provider_externalId: { provider: input.provider, externalId: input.externalId } } });
-        if (known) return known.conversationId;
+        if (known) return { conversationId: known.conversationId, attachmentsStored: false };
         const candidates = await tx.user.findMany({
           where: { role: "CUSTOMER", deletedAt: null, OR: [
             ...(email ? [{ email }, { extraEmails: { contains: email } }] : []),
@@ -126,7 +128,7 @@ export async function persistInboundMessage(input: InboundMessage) {
           if (!department) throw new AppError(400, "NO_DEPARTMENT", "Gelen mesaj için aktif varsayılan departman bulunamadı.");
           target = await tx.conversation.create({ data: { subject, searchSubject: subject.normalize("NFKC").toLocaleLowerCase("tr-TR"), channel: input.channel as ConversationChannel, customerId: customer.id, departmentId: department.id } });
         }
-        await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE" } });
+        await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE", attachments: { create: (input.attachments ?? []).map(file => ({ ...file, uploaderId: customer.id })) } } });
         await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id } });
         await tx.conversation.update({ where: { id: target.id }, data: {
           status: "OPEN", closedAt: null, resolvedAt: null,
@@ -135,10 +137,11 @@ export async function persistInboundMessage(input: InboundMessage) {
         await tx.activityLog.create({ data: { userId: customer.id, action: "conversation." + input.channel.toLowerCase() + "_received", entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId } } });
         const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
         await notifyConversation(tx, actor, { ...target, customer }, "MESSAGE_RECEIVED", "Yeni " + channelNames[input.channel] + " mesajı");
-        return target.id;
+        return { conversationId: target.id, attachmentsStored: true };
       }, { isolationLevel: "Serializable", timeout: 15_000 });
-      publishChange(conversationId);
-      return conversationId;
+      if (!result.attachmentsStored) await discardStoredUploads(input.attachments ?? []);
+      publishChange(result.conversationId);
+      return result.conversationId;
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (attempt >= 3 || (code !== "P2034" && code !== "P2002")) throw error;
@@ -173,9 +176,13 @@ export async function receiveMetaWebhook(payload: any, signature?: string, rawBo
   for (const entry of payload.entry ?? []) for (const change of entry.changes ?? []) {
     const value = change.value ?? {}; const contacts = new Map<string, string | undefined>((value.contacts ?? []).map((contact: any): [string, string | undefined] => [String(contact.wa_id), typeof contact.profile?.name === "string" ? contact.profile.name : undefined]));
     for (const message of value.messages ?? []) {
-      const text = message.text?.body ?? message.button?.text ?? message.interactive?.button_reply?.title;
-      if (!message.id || !message.from || !text) continue;
-      ids.push(await persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", sender: { phone: message.from, name: contacts.get(message.from) }, body: text, subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId }));
+      const image = message.type === 'image' && typeof message.image?.id === 'string' ? message.image : undefined;
+      const text = message.text?.body ?? message.button?.text ?? message.interactive?.button_reply?.title ?? image?.caption;
+      if (!message.id || !message.from || (!text && !image)) continue;
+      const known = await db.externalMessage.findUnique({ where: { provider_externalId: { provider: 'meta-whatsapp', externalId: message.id } } });
+      if (known) { ids.push(known.conversationId); continue; }
+      const files = image ? [await downloadWhatsappImage(image.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId)] : [];
+      ids.push(await withStoredUploads(files, attachments => persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", sender: { phone: message.from, name: contacts.get(message.from) }, body: text || 'Fotoğraf', subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId, attachments })));
     }
   }
   return ids;

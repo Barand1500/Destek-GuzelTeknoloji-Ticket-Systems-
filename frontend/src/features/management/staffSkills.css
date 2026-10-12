@@ -93,7 +93,7 @@
   color: inherit;
   font-size: 11px;
 }
-.staff-skill-tag button {
+.staff-skill-tag > button {
   border: 0;
   background: transparent;
   display: flex;

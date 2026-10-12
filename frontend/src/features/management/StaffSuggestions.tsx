@@ -129,9 +129,9 @@ export function SuggestedDescription({
                         {person.matches.map((skill, index) => (
                           <span className="staff-suggestion-skill" key={`${skill.name}-${index}`}>
                             <span className="staff-suggestion-skill-name">{skill.name}</span>
-                            <span>· {skillLevels[skill.level]}</span>
+                            <span>· {skillLevels[skill.level] ?? skill.level}</span>
                             <span className="staff-suggestion-stars" aria-hidden="true">
-                              ({skillStars[skill.level]})
+                              ({skillStars[skill.level] ?? '★'.repeat(Math.min(10,skill.levelScore??1))})
                             </span>
                           </span>
                         ))}

@@ -23,6 +23,7 @@ import { SurveysPage } from "./pages/Surveys";
 import { Realtime } from "./components/Realtime";
 import { RequireRole } from "./components/RequireRole";
 import { RolesPage } from './features/management/Roles';
+import { SkillsPage } from './features/management/Skills';
 import {
   conversationPath,
   inboxPath,
@@ -114,6 +115,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/agent/departments" element={<DepartmentsPage />} />
               <Route path="/agent/websites" element={<WebsitesPage />} />
               <Route path="/agent/reports" element={<ReportsPage />} />
+              <Route path="/agent/skills" element={<SkillsPage />} />
               <Route path="/agent/tags" element={<TagsPage />} />
               <Route path="/agent/integrations/:section" element={<IntegrationsHubPage />} />
               <Route path="/agent/response-time-rules" element={<ResponseTimeRulesPage />} />
@@ -171,6 +173,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/roles" element={<RolesPage />} />
+              <Route path="/admin/skills" element={<SkillsPage />} />
               <Route path="/admin/departments" element={<DepartmentsPage />} />
               <Route path="/admin/tags" element={<TagsPage />} />
               <Route path="/admin/websites" element={<WebsitesPage />} />

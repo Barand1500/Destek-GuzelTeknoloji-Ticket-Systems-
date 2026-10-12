@@ -55,7 +55,7 @@ const levels: Record<string, number> = {
 };
 export function rankStaff<
   T extends { id: string; name: string; skills: StaffSkill[] },
->(text: string, staff: T[]) {
+>(text: string, staff: T[], levelWeights: Record<string, number> = levels) {
   return staff
     .map((person) => {
       const matches = matchSkills(text, person.skills);
@@ -63,7 +63,7 @@ export function rankStaff<
         ...person,
         matches,
         score: matches.reduce(
-          (total, skill) => total + (levels[skill.level] ?? 0),
+          (total, skill) => total + (levelWeights[skill.level] ?? levels[skill.level] ?? 1),
           0,
         ),
       };

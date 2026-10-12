@@ -25,6 +25,24 @@ enum MessageType {
   INTERNAL_NOTE
   SYSTEM
 }
+model SharedFile {
+  id String @id @default(uuid())
+  name String @db.VarChar(180)
+  type String @db.VarChar(10)
+  parent String?
+  folder SharedFile? @relation("SharedFolders", fields: [parent], references: [id], onDelete: Restrict)
+  children SharedFile[] @relation("SharedFolders")
+  size Int?
+  mimeType String?
+  storageKey String? @unique
+  icon String? @db.VarChar(30)
+  color String? @db.VarChar(30)
+  uploaderId String
+  uploadedBy String
+  createdAt DateTime @default(now())
+  @@index([parent])
+}
+
 model User {
   id String @id @default(uuid())
   name String
@@ -72,6 +90,19 @@ model AccessRole {
   updatedAt DateTime @updatedAt
   users User[]
 }
+model SkillDefinition {
+  id String @id @default(uuid())
+  kind String @db.VarChar(10)
+  name String @db.VarChar(80)
+  normalizedKey String @db.VarChar(80)
+  categoryId String?
+  category SkillDefinition? @relation("SkillCategories", fields: [categoryId], references: [id], onDelete: Restrict)
+  children SkillDefinition[] @relation("SkillCategories")
+  rank Int @default(1)
+  @@unique([kind, normalizedKey])
+  @@index([categoryId])
+}
+
 model UserSkill {
   id String @id @default(uuid())
   userId String

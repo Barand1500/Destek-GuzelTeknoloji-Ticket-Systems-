@@ -52,7 +52,7 @@ export function smtpFailureReason(error: SmtpFailure): string {
   if (error.code === 'EACCES' || error.code === 'EPERM' || (error.syscall === 'connect' && (error.errno === -4092 || /\b(EACCES|EPERM)\b/.test(error.message ?? '')))) {
     return 'SMTP bağlantısına işletim sistemi veya çalıştırma ortamı izin vermedi (EACCES). Backend sürecinin dış ağ erişimini kontrol edin.';
   }
-  return `${error.code ?? 'SMTP_ERROR'}${error.errno !== undefined ? ` (${error.errno})` : ''}${error.command ? ` · ${error.command}` : ''}${error.responseCode ? ` · SMTP ${error.responseCode}` : ''}`;
+  return `${error.code ?? 'SMTP_ERROR'}${error.errno !== undefined ? ` (${error.errno})` : ''}${error.command ? ` · ${error.command}` : ''}${error.responseCode ? ` · SMTP ${error.responseCode}` : ''}${error.message ? ` · ${error.message}` : ''}`;
 }
 export async function deliverSupportEmail(to: string, subject: string, text: string, context: string, audit?: EmailAudit,
   send = sendSupportEmail,

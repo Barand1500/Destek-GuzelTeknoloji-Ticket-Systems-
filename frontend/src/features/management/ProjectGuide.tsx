@@ -16,6 +16,7 @@ import type { Page, Website } from "../../types";
 import { api } from "../../services/api";
 import { Heading, ListState } from "./shared";
 import { projectKnowledge, type KnowledgeTopic } from "./projectGuideKnowledge";
+import { additionalProjectGuides } from './additionalProjectGuides';
 
 type ProductArea = { title: string; description: string };
 type Integration = { title: string; description: string };
@@ -26,7 +27,7 @@ type SupportPlaybook = {
   collect: string[];
   outcome: string;
 };
-type SupportGuide = {
+export type SupportGuide = {
   sourceUrl: string;
   sourceLabel: string;
   productAreas: ProductArea[];
@@ -34,6 +35,7 @@ type SupportGuide = {
   architecture: string[];
   playbooks: SupportPlaybook[];
   knowledgeTopics: KnowledgeTopic[];
+  sourceNote?: string;
 };
 
 const guides: Record<"etic7" | "anypay", SupportGuide> = {
@@ -455,6 +457,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
 
 const guideFor = (name: string): SupportGuide | null => {
   const key = name.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9]/g, "");
+  if (additionalProjectGuides[key]) return additionalProjectGuides[key];
   return key === "etic7"
     ? guides.etic7
     : key === "anypay"
@@ -824,6 +827,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
           ))}
         </div>
       </section>
+      {guide.sourceNote && <p className="project-guide-source-note">{guide.sourceNote}</p>}
       {searching &&
         (matchingPlaybooks.length > 0 || knowledgeTopics.length > 0) && (
           <SearchMatches

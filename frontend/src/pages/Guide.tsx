@@ -200,6 +200,16 @@ type SettingsScreen = {
 
 const settingsScreens: SettingsScreen[] = [
   {
+    icon: UsersRound,
+    title: "Yetenekler",
+    text: "Ayarlar → Yetenekler sayfasında personel için seçilebilir kategori, seviye ve yetenek tanımlarını yönetin.",
+    details: [
+      "Kategoriler ve Seviyeler sekmelerinden kendi tanımlarınızı oluşturun; seviye sırasını belirleyin.",
+      "Yetenekler sekmesinde kategoriye bağlı yetenek ekleyin; personel formunda kategori, seviye ve yeteneği seçip ekleyin.",
+      "Ad değişiklikleri personel kayıtlarına da uygulanır; personelde kullanılan tanımlar silinmeden önce ilgili atamalar kaldırılmalıdır.",
+    ],
+  },
+  {
     icon: Settings,
     title: "Entegrasyonlar",
     text: "Sisteme mesaj getiren ve sistemden yanıt gönderen kanallar burada bağlanır.",

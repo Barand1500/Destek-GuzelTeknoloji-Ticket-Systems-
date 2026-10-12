@@ -68,7 +68,7 @@ test("ranks wider coverage before level and orders equally matched staff by leve
     ["all", "expert", "beginner"],
   );
 });
-test("validates multiple language levels and rejects duplicate skills and invalid levels", () => {
+test("accepts custom level names and rejects duplicate skills and invalid level lengths", () => {
   assert.equal(
     updateUserSchema.parse({
       skills: [skill("İngilizce", "ADVANCED"), skill("Almanca", "BEGINNER")],
@@ -81,7 +81,8 @@ test("validates multiple language levels and rejects duplicate skills and invali
     false,
   );
   assert.equal(
-    updateUserSchema.safeParse({ skills: [skill("React", "INVALID")] }).success,
-    false,
+    updateUserSchema.safeParse({ skills: [skill("React", "Senior")] }).success,
+    true,
   );
+  for (const level of ['', 'x'.repeat(21)]) assert.equal(updateUserSchema.safeParse({skills:[skill('React',level)]}).success,false);
 });
