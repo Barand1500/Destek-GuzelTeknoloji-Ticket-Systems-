@@ -64,7 +64,7 @@ const durationBetween = (from: string, to: string) => {
   return hours < 24 ? `${hours} sa${remainder ? ` ${remainder} dk` : ""}` : `${Math.floor(hours / 24)} gün`;
 };
 const responseTime = (startAt: string | null | undefined, responseAt: string | null | undefined, rules?: { responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string }) => {
-  if (!startAt || !responseAt) return { label: "Yanıt bekliyor", state: "waiting", color: rules?.responseLateColor ?? "#c2413c" };
+  if (!startAt || !responseAt) return { label: "Yanıt Bekliyor", state: "waiting", color: rules?.responseLateColor ?? "#c2413c" };
   const minutes = Math.max(0, Math.floor((new Date(responseAt).getTime() - new Date(startAt).getTime()) / 60000));
   const label = minutes < 1 ? "1 dk'dan kısa" : minutes < 60 ? `${minutes} dk` : (() => { const hours = Math.floor(minutes / 60); return hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`; })();
   const fast = !rules || (minutes >= rules.responseFastFromMinutes && minutes <= rules.responseFastToMinutes);
@@ -134,7 +134,7 @@ function MentionTextarea({ conversationId, value, onChange, selected, onSelected
     <textarea
       ref={textareaRef}
       className="internal-note-input"
-      aria-label="Dahili not"
+      aria-label="Dahili Not"
       aria-autocomplete="list"
       aria-controls={trigger ? "mention-suggestions" : undefined}
       aria-expanded={Boolean(trigger)}
@@ -155,14 +155,14 @@ function MentionTextarea({ conversationId, value, onChange, selected, onSelected
         }
         if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); if (!event.repeat) onSubmit(); }
       }}
-      title="@ ile personel etiketleyin · Enter ile gönderin · Shift+Enter ile yeni satır"
+      title="@ ile Personel Etiketleyin · Enter ile Gönderin · Shift+Enter ile Yeni Satır"
       placeholder={placeholder}
       disabled={disabled}
       required
       maxLength={10000}
       rows={3}
     />
-    {trigger && <div className="mention-suggestions" id="mention-suggestions" role="listbox" aria-label="Etiketlenebilecek personeller">
+    {trigger && <div className="mention-suggestions" id="mention-suggestions" role="listbox" aria-label="Etiketlenebilecek Personeller">
       <div className="mention-suggestions-heading"><AtSign size={14}/><span>{search ? `“${search}” için sonuçlar` : "Departmandaki kişiler"}</span><small>En fazla {search ? 8 : 6} kişi</small></div>
       {candidates.isPending && <p className="mention-state">Kişiler yükleniyor…</p>}
       {!candidates.isPending && options.map((candidate, index) => <button key={candidate.id} type="button" role="option" aria-selected={index === activeIndex} className={index === activeIndex ? "active" : ""} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(candidate)}>
@@ -187,7 +187,7 @@ export function TicketList() {
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
   const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon talebi", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", mine: "Bana atanan", unassigned: "Atanmamış" };
-  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "E-posta ile gelen talepler", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış talepler", today: "Bugün açılan talepler" };
+  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "E-Posta ile gelen talepler", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış Talepler", today: "Bugün açılan talepler" };
   const [tabLabels, setTabLabels] = useState(defaultTabLabels);
   const [tabOrder, setTabOrder] = useState(Object.keys(defaultTabLabels));
   const [tabEnabled, setTabEnabled] = useState<Record<string, boolean>>(Object.fromEntries(Object.keys(defaultTabLabels).map((key) => [key, true])));
@@ -290,19 +290,19 @@ export function TicketList() {
         <div>
           <span className="eyebrow">DESTEK TALEPLERİ</span>
           <h1>
-            {user?.role === "CUSTOMER" ? "Taleplerim" : params.get("customerId") && query.data?.data[0]?.customer?.name ? `${query.data.data[0].customer.name} adlı kişinin Gelen kutusu` : "Gelen kutusu"}
+            {user?.role === "CUSTOMER" ? "Taleplerim" : params.get("customerId") && query.data?.data[0]?.customer?.name ? `${query.data.data[0].customer.name} adlı kişinin Gelen Kutusu` : "Gelen Kutusu"}
             <span className="count">{query.data?.pagination.total ?? "—"}</span>
           </h1>
           <p>
             {user?.role === "CUSTOMER"
               ? "Taleplerinizin son durumunu takip edin, ekibimizle iletişimde kalın."
-              : "Yeni talepleri, bekleyen yanıtları ve çözüm sürecini tek ekranda yönetin."}
+              : "Yeni Talepleri, bekleyen yanıtları ve çözüm sürecini tek ekranda yönetin."}
           </p>
         </div>
         {user?.role === "CUSTOMER" && (
           <Link className="button primary" to={workspacePath(user!.role, "tickets/new")}>
             <Plus size={17} />
-            Yeni talep
+            Yeni Talep
           </Link>
         )}
       </div>
@@ -324,7 +324,7 @@ export function TicketList() {
             </button>
           ))}
           {user?.role !== "CUSTOMER" && (
-            <button type="button" className="tabs-edit-button" aria-label="Gelen kutusu görünümlerini düzenle" onClick={() => setTabsModalOpen(true)}>
+            <button type="button" className="tabs-edit-button" aria-label="Gelen Kutusu Görünümlerini Düzenle" onClick={() => setTabsModalOpen(true)}>
               <Pencil size={15} />
             </button>
           )}
@@ -339,7 +339,7 @@ export function TicketList() {
           >
             <Search size={18} />
             <input
-              aria-label="Taleplerde ara"
+              aria-label="Taleplerde Ara"
               placeholder="Talep no, konu, müşteri veya personel ara…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); filter("search", e.target.value); }}
@@ -349,7 +349,7 @@ export function TicketList() {
             <span>Kayıt sayısı</span>
             <DropdownSelect
               value={String(limit)}
-              ariaLabel="Kayıt sayısı"
+              ariaLabel="Kayıt Sayısı"
               onChange={(value) => {
                 setParams((current) => {
                   current.set("limit", value);
@@ -362,7 +362,7 @@ export function TicketList() {
           </div>
           {hasPermission(user, 'conversations.delete') && (
             <div className={`notification-delete inbox-delete${deleteMenuOpen ? " open" : ""}`}>
-              <button type="button" className="notification-delete-trigger" aria-label="Talepleri sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
+              <button type="button" className="notification-delete-trigger" aria-label="Talepleri Sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
                 <Trash2 size={16} aria-hidden="true" />
                 <ChevronDown size={15} aria-hidden="true" />
               </button>
@@ -377,8 +377,8 @@ export function TicketList() {
               )}
             </div>
           )}
-          <DropdownSelect ariaLabel="Duruma göre filtrele" value={status} onChange={(value) => filter("status", value)} options={[{ value: "", label: "Tüm durumlar" }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
-          <DropdownSelect ariaLabel="Önceliğe göre filtrele" value={params.get("priority") ?? ""} onChange={(value) => filter("priority", value)} options={[{ value: "", label: "Tüm öncelikler" }, ...Object.entries(priorities).map(([value, label]) => ({ value, label }))]} />
+          <DropdownSelect ariaLabel="Duruma Göre Filtrele" value={status} onChange={(value) => filter("status", value)} options={[{ value: "", label: "Tüm Durumlar" }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
+          <DropdownSelect ariaLabel="Önceliğe Göre Filtrele" value={params.get("priority") ?? ""} onChange={(value) => filter("priority", value)} options={[{ value: "", label: "Tüm Öncelikler" }, ...Object.entries(priorities).map(([value, label]) => ({ value, label }))]} />
         </div>
         {query.isPending ? (
           <div className="empty">Talepler yükleniyor…</div>
@@ -387,7 +387,7 @@ export function TicketList() {
         ) : query.data.data.length === 0 ? (
           <div className="empty">
             <Inbox size={36} />
-            <h2>Burada henüz talep yok</h2>
+            <h2>Burada Henüz Talep Yok</h2>
             <p>
               {user?.role === "CUSTOMER"
                 ? "Yeni bir destek talebi oluşturarak başlayabilirsiniz."
@@ -461,7 +461,7 @@ export function TicketList() {
           <div>
             <button
               className="icon-button"
-              aria-label="Önceki sayfa"
+              aria-label="Önceki Sayfa"
               disabled={page <= 1}
               onClick={() =>
                 setParams((p) => {
@@ -474,7 +474,7 @@ export function TicketList() {
             </button>
             <button
               className="icon-button"
-              aria-label="Sonraki sayfa"
+              aria-label="Sonraki Sayfa"
               disabled={!query.data || page >= query.data.pagination.totalPages}
               onClick={() =>
                 setParams((p) => {
@@ -496,8 +496,8 @@ export function TicketList() {
         <div className="confirm-backdrop" role="presentation">
           <section className="confirm-modal tabs-modal" role="dialog" aria-modal="true" aria-labelledby="tabs-modal-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="confirm-close" type="button" aria-label="Kapat" onClick={() => setTabsModalOpen(false)}><X size={18} /></button>
-            <h2 id="tabs-modal-title">Görünümleri düzenle</h2>
-            <p>Gelen kutusu sekmelerinin sırasını düzenleyin.</p>
+            <h2 id="tabs-modal-title">Görünümleri Düzenle</h2>
+            <p>Gelen Kutusu sekmelerinin sırasını düzenleyin.</p>
             <div className="tabs-modal-list">
               {tabOrder.map((key) => {
                 if (defaultTabLabels[key]) {
@@ -505,8 +505,8 @@ export function TicketList() {
                     <div className="tabs-modal-row" key={key}>
                       <strong>{tabLabels[key]}</strong>
                       <small>{filterDescriptions[key]}</small>
-                      <button type="button" disabled={tabOrder.indexOf(key) === 0} onClick={() => moveTab(key, -1)} aria-label="Yukari tasi">&#8593;</button>
-                      <button type="button" disabled={tabOrder.indexOf(key) === tabOrder.length - 1} onClick={() => moveTab(key, 1)} aria-label="Asagi tasi">&#8595;</button>
+                      <button type="button" disabled={tabOrder.indexOf(key) === 0} onClick={() => moveTab(key, -1)} aria-label="Yukari Tasi">&#8593;</button>
+                      <button type="button" disabled={tabOrder.indexOf(key) === tabOrder.length - 1} onClick={() => moveTab(key, 1)} aria-label="Asagi Tasi">&#8595;</button>
                     </div>
                   );
                 }
@@ -516,8 +516,8 @@ export function TicketList() {
                   <div className="tabs-modal-row tabs-modal-custom-row" key={tab.id}>
                     <strong>{tab.label}</strong>
                     <small>{tagsQuery.data?.data.find((tag) => tag.id === tab.tagId)?.name ?? "Etiket"}</small>
-                    <button type="button" disabled={tabOrder.indexOf(tab.id) === 0} onClick={() => moveTab(tab.id, -1)} aria-label="Yukari tasi">&#8593;</button>
-                    <button type="button" disabled={tabOrder.indexOf(tab.id) === tabOrder.length - 1} onClick={() => moveTab(tab.id, 1)} aria-label="Asagi tasi">&#8595;</button>
+                    <button type="button" disabled={tabOrder.indexOf(tab.id) === 0} onClick={() => moveTab(tab.id, -1)} aria-label="Yukari Tasi">&#8593;</button>
+                    <button type="button" disabled={tabOrder.indexOf(tab.id) === tabOrder.length - 1} onClick={() => moveTab(tab.id, 1)} aria-label="Asagi Tasi">&#8595;</button>
                   </div>
                 );
               })}
@@ -527,7 +527,7 @@ export function TicketList() {
       )}
       {deletePeriod && (
         <div className="confirm-backdrop" role="presentation">
-          <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Talep silme onayı" onMouseDown={(event) => event.stopPropagation()}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Talep Silme Onayı" onMouseDown={(event) => event.stopPropagation()}>
             <button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button>
             <h2>{deleteLabels[deletePeriod]}</h2>
             <p>Bu talepleri silmek istediğinize emin misiniz?</p>
@@ -567,7 +567,7 @@ export function NewTicket() {
   if (user?.role !== "CUSTOMER")
     return (
       <main className="page">
-        <p>Yeni talep oluşturmak için müşteri hesabı kullanın.</p>
+        <p>Yeni Talep oluşturmak için müşteri hesabı kullanın.</p>
       </main>
     );
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -582,12 +582,12 @@ export function NewTicket() {
     <main className="page">
       <Link className="back-link" to={inboxPath(user!.role)}>
         <ArrowLeft size={16} />
-        Taleplere dön
+        Taleplere Dön
       </Link>
       <div className="page-heading">
         <div>
           <span className="eyebrow">YANINIZDAYIZ</span>
-          <h1>Size nasıl yardımcı olabiliriz?</h1>
+          <h1>Size Nasıl Yardımcı Olabiliriz?</h1>
           <p>Konuyu bize anlatın, doğru ekibimiz sizinle iletişime geçsin.</p>
         </div>
       </div>
@@ -626,7 +626,7 @@ export function NewTicket() {
             className="button primary"
             disabled={mutation.isPending || !departments.data?.length}
           >
-            {mutation.isPending ? "Oluşturuluyor…" : "Talep oluştur"}
+            {mutation.isPending ? "Oluşturuluyor…" : "Talep Oluştur"}
             <ArrowRight size={16} />
           </button>
         </div>
@@ -732,7 +732,7 @@ export function TicketDetail() {
   if (ticket.isError)
     return (
       <main className="page">
-        <Link to={inboxPath(user!.role)}>Taleplere dön</Link>
+        <Link to={inboxPath(user!.role)}>Taleplere Dön</Link>
         <QueryError error={ticket.error} />
       </main>
     );
@@ -744,7 +744,7 @@ export function TicketDetail() {
     ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id), openConversationCount: agent.openConversationCount })),
   ];
   const websiteOptions = [
-    { value: "", label: "Proje seçilmedi" },
+    { value: "", label: "Proje Seçilmedi" },
     ...(t.website && !websites.data?.some((site) => site.id === t.website?.id) ? [{ value: t.website.id, label: t.website.name }] : []),
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
@@ -758,9 +758,9 @@ export function TicketDetail() {
       <div className="conversation-navigation">
       <Link className="back-link" to={inboxPath(user!.role)}>
         <ArrowLeft size={16} />
-        Gelen kutusuna dön
+        Gelen Kutusuna Dön
       </Link>
-      {user?.role !== "CUSTOMER" && <Link className="back-link" to={workspacePath(user!.role, "phone-support")} onClick={startNewRequest}><Plus size={16} />Yeni talep</Link>}
+      {user?.role !== "CUSTOMER" && <Link className="back-link" to={workspacePath(user!.role, "phone-support")} onClick={startNewRequest}><Plus size={16} />Yeni Talep</Link>}
       </div>
       <div className="page-heading">
         <div>
@@ -788,7 +788,7 @@ export function TicketDetail() {
           <div className="section-heading">
             <MessageSquare size={18} />
             Konuşma
-            <Link className="conversation-log-link" to={conversationLogPath(user!.role, t.id)} title="Konuşma logları" aria-label="Konuşma loglarını aç">
+            <Link className="conversation-log-link" to={conversationLogPath(user!.role, t.id)} title="Konuşma Logları" aria-label="Konuşma Loglarını Aç">
               <History size={15} />
               <span className="muted">{messages.data?.pagination.total ?? 0} mesaj</span>
             </Link>
@@ -826,7 +826,7 @@ export function TicketDetail() {
                     </span>
                   )}
                   <p>{message.body}</p>
-                  {message.type === "INTERNAL_NOTE" && message.mentions?.length ? <div className="message-mentions" aria-label="Etiketlenen personeller">{message.mentions.map(({user: mention}) => <span key={mention.id}><AtSign size={11}/>{mention.name}</span>)}</div> : null}
+                  {message.type === "INTERNAL_NOTE" && message.mentions?.length ? <div className="message-mentions" aria-label="Etiketlenen Personeller">{message.mentions.map(({user: mention}) => <span key={mention.id}><AtSign size={11}/>{mention.name}</span>)}</div> : null}
                   <AttachmentLinks attachments={message.attachments}/>
                 </div>
               </article>
@@ -835,11 +835,11 @@ export function TicketDetail() {
           </div>
           {(messages.data?.pagination.totalPages ?? 0) > 1 && (
             <div className="pagination">
-              <button aria-label="Önceki sayfa" title="Önceki sayfa" disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft size={14} /></button>
+              <button aria-label="Önceki Sayfa" title="Önceki Sayfa" disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft size={14} /></button>
               <span>Sayfa {page}</span>
               <button
-                aria-label="Sonraki sayfa"
-                title="Sonraki sayfa"
+                aria-label="Sonraki Sayfa"
+                title="Sonraki Sayfa"
                 disabled={page >= (messages.data?.pagination.totalPages ?? 1)}
                 onClick={() => setPage(page + 1)}
               >
@@ -862,7 +862,7 @@ export function TicketDetail() {
                 className={!internal ? "active" : ""}
                 onClick={() => setInternal(false)}
               >
-                Yanıt yaz
+                Yanıt Yaz
               </button>
               {user?.role !== "CUSTOMER" && (
                 <button
@@ -871,7 +871,7 @@ export function TicketDetail() {
                   onClick={() => setInternal(true)}
                 >
                   <LockKeyhole size={13} />
-                  Dahili not
+                  Dahili Not
                 </button>
               )}
               <span className="management-pill composer-channel-pill" aria-label={`Bu talep ${channels[t.channel]} kanalı tercih edilerek açıldı.`}>Bu talep {channels[t.channel]} kanalı tercih edilerek açıldı.</span>
@@ -886,7 +886,7 @@ export function TicketDetail() {
               placeholder={t.status === "CLOSED" ? "Bu talep kapatıldı." : "@ yazarak departmandan bir kişiyi etiketleyin…"}
               onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && canSubmitReply) { sending.current = true; reply.mutate(); } }}
             /> : <textarea
-              aria-label={internal ? "Dahili not" : "Yanıtınız"}
+              aria-label={internal ? "Dahili Not" : "Yanıtınız"}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={(e) => {
@@ -894,7 +894,7 @@ export function TicketDetail() {
                 e.preventDefault();
                 if (!e.repeat) e.currentTarget.form?.requestSubmit();
               }}
-              title="Enter ile gönder, Shift+Enter ile yeni satır"
+              title="Enter ile Gönder, Shift+Enter ile Yeni Satır"
               placeholder={
                 t.status === "CLOSED"
                   ? "Bu talep kapatıldı."
@@ -926,7 +926,7 @@ export function TicketDetail() {
           </form>
         </section>
         <aside className="ticket-properties">
-          <h2>Talep bilgileri</h2>
+          <h2>Talep Bilgileri</h2>
           {(canEditProject || t.website) && <div className="property-editor">
             {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</label>}
           </div>}
@@ -946,36 +946,36 @@ export function TicketDetail() {
           </div>
           <div className="ticket-assignee-property">
             {canAssignStaff ? (
-              <SearchableDropdown label="Atanan personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
+              <SearchableDropdown label="Atanan Personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
             ) : (
               <label>Atanan personel<span>{t.assignedAgent?.name ?? "Atanmamış"}</span></label>
             )}
           </div>
           {agents.isError && <QueryError error={agents.error} />}
-          {canTransferDepartments&&<DirectorySelect endpoint="/departments" label="Departmana aktar" value={t.department.id} current={t.department} params={{ accessible: "true" }} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
+          {canTransferDepartments&&<DirectorySelect endpoint="/departments" label="Departmana Aktar" value={t.department.id} current={t.department} params={{ accessible: "true" }} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending || !hasPermission(user, 'conversations.update')}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}
-          {agentNeedsClaim && <div><p className="muted">Bu görüşme departman kuyruğunda. Yanıtlamadan önce üzerinize alın.</p><button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize alınıyor…' : 'Üzerime ata'}</button>{claim.isError && <QueryError error={claim.error}/>}</div>}
+          {agentNeedsClaim && <div><p className="muted">Bu görüşme departman kuyruğunda. Yanıtlamadan önce üzerinize alın.</p><button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize Alınıyor…' : 'Üzerime Ata'}</button>{claim.isError && <QueryError error={claim.error}/>}</div>}
           <div className="ticket-actions">
           {user?.role !== "CUSTOMER" &&
             t.status !== "RESOLVED" &&
             t.status !== "CLOSED" && (
               <button
                 className="button secondary resolved-action"
-                aria-label="Çözüldü olarak işaretle"
-                title="Çözüldü olarak işaretle"
+                aria-label="Çözüldü Olarak İşaretle"
+                title="Çözüldü Olarak İşaretle"
                 disabled={update.isPending || !hasPermission(user, 'conversations.update')}
                 onClick={() => update.mutate({ status: "RESOLVED" })}
               >
-                <CheckCheck size={16} /> Çözüldü olarak işaretle
+                <CheckCheck size={16} /> Çözüldü Olarak İşaretle
               </button>
             )}
-          {hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi sil" title="Görüşmeyi sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
+          {hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi Sil" title="Görüşmeyi Sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
           </div>
         </aside>
       </div>
-      {hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
+      {hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi Sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
     </main>
   );
 }
@@ -998,18 +998,18 @@ export function ConversationLog() {
     if (entry.action === 'CUSTOMER_MESSAGE' || entry.action === 'INITIAL_MESSAGE') latestCustomerMessage = entry;
     if (entry.action === 'AGENT_REPLY' && latestCustomerMessage) responseDurations.set(entry.id, durationBetween(latestCustomerMessage.createdAt, entry.createdAt));
   }
-  const labels: Record<string, string> = { INITIAL_MESSAGE: 'Talep açıklaması kaydedildi', CUSTOMER_MESSAGE: 'Müşteri mesajı', AGENT_REPLY: 'Personel yanıtı', INTERNAL_NOTE: 'Dahili not', SYSTEM: 'Sistem değişikliği' };
-  const fields: Record<string, string> = { subject: 'Konu', number: 'Talep numarası', status: 'Durum', priority: 'Öncelik', assignedAgentId: 'Personel', departmentId: 'Departman', websiteId: 'Web sitesi', tagIds: 'Etiketler', reason: 'Neden', responseCode: 'Sunucu kodu', recipient: 'E-posta alıcısı', messageId: 'E-posta mesaj kimliği', smtpResponse: 'E-posta sunucusu yanıtı', accepted: 'Kabul edilen alıcı sayısı' };
+  const labels: Record<string, string> = { INITIAL_MESSAGE: 'Talep Oluşturıklaması kaydedildi', CUSTOMER_MESSAGE: 'Müşteri mesajı', AGENT_REPLY: 'Personel yanıtı', INTERNAL_NOTE: 'Dahili not', SYSTEM: 'Sistem değişikliği' };
+  const fields: Record<string, string> = { subject: 'Konu', number: 'Talep numarası', status: 'Durum', priority: 'Öncelik', assignedAgentId: 'Personel', departmentId: 'Departman', websiteId: 'Web sitesi', tagIds: 'Etiketler', reason: 'Neden', responseCode: 'Sunucu kodu', recipient: 'E-Posta alıcısı', messageId: 'E-Posta mesaj kimliği', smtpResponse: 'E-Posta sunucusu yanıtı', accepted: 'Kabul edilen alıcı sayısı' };
   return (
     <main className="page conversation-log-page">
       <Link className="back-link" to={user && id ? conversationPath(user.role, id) : roleHome(user?.role ?? "CUSTOMER")}>
         <ArrowLeft size={16} />
-        Konuşmaya dön
+        Konuşmaya Dön
       </Link>
       <div className="page-heading">
         <div>
           <span className="eyebrow">KONUŞMA LOGU</span>
-          <h1><History size={22} /> İşlem geçmişi</h1>
+          <h1><History size={22} /> İşlem Geçmişi</h1>
           <p>Mesajlar, dahili notlar ve talep değişiklikleri; işlemi yapan kişi ve tam zamanıyla. En yeni işlem en üsttedir.</p>
         </div>
       </div>
@@ -1018,8 +1018,8 @@ export function ConversationLog() {
         {logs.isError && <QueryError error={logs.error} />}
         {!logs.isPending && !logs.isError && entries.length === 0 && <p className="muted conversation-log-state">Bu konuşma için henüz log kaydı yok.</p>}
         {entries.length > 0 && <div className="conversation-log-table-wrap">
-          <table className="conversation-log-table" aria-label="Konuşma işlem geçmişi">
-            <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi yapan</th><th scope="col">Tarih / saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve dosyalar</th></tr></thead>
+          <table className="conversation-log-table" aria-label="Konuşma İşlem Geçmişi">
+            <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi Yapan</th><th scope="col">Tarih / Saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve Dosyalar</th></tr></thead>
             <tbody>{entries.map((entry) => <tr className={entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''} key={entry.id}>
               <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? activityActionLabel(entry.action)}</strong></div></td>
               <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{entry.author.email}</small>}</td>
@@ -1033,7 +1033,7 @@ export function ConversationLog() {
             </tr>)}</tbody>
           </table>
         </div>}
-        {logs.data && logs.data.pagination.totalPages > 1 && <nav className="pagination" aria-label="İşlem geçmişi sayfaları"><button className="button" disabled={page <= 1} onClick={() => setPage(value => value - 1)}>Önceki</button><span>{page} / {logs.data.pagination.totalPages} · {logs.data.pagination.total} kayıt</span><button className="button" disabled={page >= logs.data.pagination.totalPages} onClick={() => setPage(value => value + 1)}>Sonraki</button></nav>}
+        {logs.data && logs.data.pagination.totalPages > 1 && <nav className="pagination" aria-label="İşlem Geçmişi Sayfaları"><button className="button" disabled={page <= 1} onClick={() => setPage(value => value - 1)}>Önceki</button><span>{page} / {logs.data.pagination.totalPages} · {logs.data.pagination.total} kayıt</span><button className="button" disabled={page >= logs.data.pagination.totalPages} onClick={() => setPage(value => value + 1)}>Sonraki</button></nav>}
       </section>
     </main>
   );

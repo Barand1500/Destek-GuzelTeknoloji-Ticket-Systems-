@@ -82,8 +82,8 @@ const channelOptions = [
   },
   {
     id: "EMAIL" as const,
-    label: "E-posta",
-    description: "E-posta adresine gönder",
+    label: "E-Posta",
+    description: "E-Posta adresine gönder",
     icon: Mail,
   },
 ];
@@ -337,12 +337,12 @@ export function AnnouncementsModal({
           className="announcements-close"
           onClick={onClose}
           disabled={publish.isPending}
-          aria-label="Duyuruları kapat"
+          aria-label="Duyuruları Kapat"
         >
           <X size={21} />
         </button>
       </header>
-      <nav className="announcements-tabs" aria-label="Duyuru ekranları">
+      <nav className="announcements-tabs" aria-label="Duyuru Ekranları">
         {canPublish && (
           <button
             type="button"
@@ -354,7 +354,7 @@ export function AnnouncementsModal({
             }}
           >
             <Send size={16} />
-            Yeni duyuru
+            Yeni Duyuru
           </button>
         )}
         <button
@@ -366,7 +366,7 @@ export function AnnouncementsModal({
           }}
         >
           <History size={17} />
-          {canPublish ? "Duyuru geçmişi" : "Duyurularım"}
+          {canPublish ? "Duyuru Geçmişi" : "Duyurularım"}
         </button>
         {tab === "history" && (
           <>
@@ -378,7 +378,7 @@ export function AnnouncementsModal({
             </div>}
             <label className="announcement-history-search">
               <Search size={16} aria-hidden="true" />
-              <input type="search" aria-label="Geçmiş duyurularda ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
+              <input type="search" aria-label="Geçmiş Duyurularda Ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
             </label>
           </>
         )}
@@ -402,7 +402,7 @@ export function AnnouncementsModal({
             >
               <legend>
                 <FileText size={17} />
-                Duyuru içeriği
+                Duyuru İçeriği
               </legend>
               <label className="announcement-field">
                 <span className="announcement-field-label">
@@ -424,8 +424,8 @@ export function AnnouncementsModal({
                     to={`/${user.role === "ADMIN" ? "admin" : "agent"}/saved-replies?tab=templates`}
                     onClick={onClose}
                     className="announcement-template-edit"
-                    aria-label="Hazır şablonları düzenle"
-                    title="Hazır şablonları düzenle"
+                    aria-label="Hazır Şablonları Düzenle"
+                    title="Hazır Şablonları Düzenle"
                   ><Pencil size={15} aria-hidden="true" /></Link>
                 </span>
                 <small>Hızlı bir başlangıç yapın</small>
@@ -492,7 +492,7 @@ export function AnnouncementsModal({
                 <label className="announcement-field">
                   <span className="announcement-field-label">
                     <CalendarDays size={15} />
-                    Etkinlik / toplantı tarihi <small>İsteğe bağlı</small>
+                    Etkinlik / Toplantı Tarihi <small>İsteğe bağlı</small>
                   </span>
                   <input
                     type="datetime-local"
@@ -526,7 +526,7 @@ export function AnnouncementsModal({
                   type="file"
                   multiple
                   accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip"
-                  aria-label="Duyuruya dosya ekle"
+                  aria-label="Duyuruya Dosya Ekle"
                   onChange={(e) => {
                     if (e.target.files) addFiles(e.target.files);
                     e.target.value = "";
@@ -581,10 +581,10 @@ export function AnnouncementsModal({
                 <label className="announcement-field">
                   <span className="announcement-field-label">
                     <Building2 size={15} />
-                    Hedef departman
+                    Hedef Departman
                   </span>
                   <DropdownSelect
-                    ariaLabel="Hedef departman"
+                    ariaLabel="Hedef Departman"
                     value={departmentId}
                     onChange={(value) => {
                       setDepartmentId(value);
@@ -621,7 +621,7 @@ export function AnnouncementsModal({
                   }}
                 >
                   <Check size={16} />
-                  Seçili kişiler ({selected.length})
+                  Seçili Kişiler ({selected.length})
                 </button>
                 </div>
               </div>
@@ -631,7 +631,7 @@ export function AnnouncementsModal({
                     <Search size={16} />
                     <input
                       type="search"
-                      aria-label="Alıcı ara"
+                      aria-label="Alıcı Ara"
                       placeholder="Ad, e-posta veya telefon ile ara…"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -658,8 +658,8 @@ export function AnnouncementsModal({
                     >
                       {matches.length &&
                       matches.every((p) => selected.includes(p.id))
-                        ? "Seçimi kaldır"
-                        : "Görünenleri seç"}
+                        ? "Seçimi Kaldır"
+                        : "Görünenleri Seç"}
                     </button>
                   </div>
                   <div className="announcement-people">
@@ -710,7 +710,7 @@ export function AnnouncementsModal({
             >
               <legend>
                 <Send size={17} />
-                Gönderim kanalları
+                Gönderim Kanalları
               </legend>
               <p className="announcement-section-help">
                 Bir veya birden fazla kanal seçebilirsiniz.
@@ -801,7 +801,7 @@ export function AnnouncementsModal({
                 }
               >
                 <Send size={16} />
-                {publish.isPending ? "Yayınlanıyor…" : "Duyuruyu yayınla"}
+                {publish.isPending ? "Yayınlanıyor…" : "Duyuruyu Yayınla"}
               </button>
             </div>
           </footer>
@@ -829,7 +829,7 @@ export function AnnouncementsModal({
             !history.data?.data.length && (
               <div className="announcements-empty">
                 <Megaphone size={34} />
-                <h3>Henüz duyuru yok</h3>
+                <h3>Henüz Duyuru Yok</h3>
                 <p>
                   {canPublish
                     ? "İlk duyurunuzu hazırlayın, ekibinize tek yerden ulaşın."
@@ -841,7 +841,7 @@ export function AnnouncementsModal({
                     className="announcement-submit"
                     onClick={() => setTab("new")}
                   >
-                    Yeni duyuru oluştur
+                    Yeni Duyuru Oluştur
                   </button>
                 )}
               </div>
@@ -942,7 +942,7 @@ export function AnnouncementsModal({
                           );
                         })}
                     </div>
-                    {hasPermission(user, "announcements.delete") && <button type="button" className="button danger announcement-delete" disabled={removeAnnouncement.isPending} onClick={() => { removeAnnouncement.reset(); setDeletingAnnouncement(item); }}><Trash2 size={15}/>Duyuruyu sil</button>}
+                    {hasPermission(user, "announcements.delete") && <button type="button" className="button danger announcement-delete" disabled={removeAnnouncement.isPending} onClick={() => { removeAnnouncement.reset(); setDeletingAnnouncement(item); }}><Trash2 size={15}/>Duyuruyu Sil</button>}
                     {!!failed.length && (
                       <details className="announcement-failures">
                         <summary>
@@ -973,7 +973,7 @@ export function AnnouncementsModal({
             <div className="announcement-pagination">
               <button
                 type="button"
-                aria-label="Önceki duyurular"
+                aria-label="Önceki Duyurular"
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
               >
@@ -984,7 +984,7 @@ export function AnnouncementsModal({
               </span>
               <button
                 type="button"
-                aria-label="Sonraki duyurular"
+                aria-label="Sonraki Duyurular"
                 disabled={page >= history.data.pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
@@ -994,8 +994,8 @@ export function AnnouncementsModal({
           )}
         </div>
       )}
-      {deletingAnnouncement && <DeleteModal title="Duyuruyu sil" pending={removeAnnouncement.isPending} onClose={() => setDeletingAnnouncement(null)} onConfirm={() => removeAnnouncement.mutate(deletingAnnouncement.id, { onSuccess: () => setDeletingAnnouncement(null) })} error={<p className="error">{removeAnnouncement.error ? errorText(removeAnnouncement.error) : ""}</p>}><p><strong>{deletingAnnouncement.title}</strong> duyurusu silinecek.</p></DeleteModal>}
-      {deletePeriod && <DeleteModal title="Duyuruları sil" pending={removeAnnouncements.isPending} onClose={() => setDeletePeriod(null)} onConfirm={() => removeAnnouncements.mutate(deletePeriod)} error={<p className="error">{removeAnnouncements.error ? errorText(removeAnnouncements.error) : ""}</p>}><p>Seçilen tarih aralığındaki duyurular ve gönderim kayıtları silinecek.</p></DeleteModal>}
+      {deletingAnnouncement && <DeleteModal title="Duyuruyu Sil" pending={removeAnnouncement.isPending} onClose={() => setDeletingAnnouncement(null)} onConfirm={() => removeAnnouncement.mutate(deletingAnnouncement.id, { onSuccess: () => setDeletingAnnouncement(null) })} error={<p className="error">{removeAnnouncement.error ? errorText(removeAnnouncement.error) : ""}</p>}><p><strong>{deletingAnnouncement.title}</strong> duyurusu silinecek.</p></DeleteModal>}
+      {deletePeriod && <DeleteModal title="Duyuruları Sil" pending={removeAnnouncements.isPending} onClose={() => setDeletePeriod(null)} onConfirm={() => removeAnnouncements.mutate(deletePeriod)} error={<p className="error">{removeAnnouncements.error ? errorText(removeAnnouncements.error) : ""}</p>}><p>Seçilen tarih aralığındaki duyurular ve gönderim kayıtları silinecek.</p></DeleteModal>}
     </dialog>
   );
 }

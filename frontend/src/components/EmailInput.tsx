@@ -39,7 +39,7 @@ export function EmailInput({
         onBlur={() => window.setTimeout(() => setOpen(false), 120)}
       />
       {open && value.trim().length > 0 && suggestions.length > 0 && (
-        <span className="email-suggestions" role="listbox" aria-label="E-posta alan adı önerileri">
+        <span className="email-suggestions" role="listbox" aria-label="E-Posta Alan Adı Önerileri">
           {suggestions.map((suggestion) => (
             <button key={suggestion.domain} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setValue(multiple ? `${value.slice(0, value.lastIndexOf(",") + 1)}${value.includes(",") ? " " : ""}${suggestion.value}` : suggestion.value); setOpen(false); }}>
               {suggestion.value}

@@ -38,6 +38,20 @@ api.interceptors.response.use(
   },
 );
 export function errorText(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const failure = error.response?.data?.error;
+    if (failure?.code === "VALIDATION_ERROR" && failure.details?.fieldErrors) {
+      const labels: Record<string, string> = {
+        name: "Ad Soyad", email: "E-Posta", phone: "Telefon", password: "Şifre",
+        role: "Rol", accessRoleId: "Yetki Rolü", departmentIds: "Departman Üyelikleri",
+        skills: "Yetenekler", assignmentTransfers: "Talep Aktarımları",
+      };
+      const fields = Object.entries(failure.details.fieldErrors)
+        .filter(([, errors]) => Array.isArray(errors) && errors.length > 0)
+        .map(([field]) => labels[field] ?? field);
+      if (fields.length) return `${failure.message} Hatalı alanlar: ${fields.join(", ")}.`;
+    }
+  }
   return axios.isAxiosError(error)
     ? (error.response?.data?.error?.message ??
         "Sunucuya bağlanılamadı. Lütfen tekrar deneyin.")

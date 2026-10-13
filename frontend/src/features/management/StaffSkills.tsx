@@ -43,7 +43,7 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
     setSkillId("");
   }
   return (
-    <section className="staff-skills" aria-label="Personel yetenekleri">
+    <section className="staff-skills" aria-label="Personel Yetenekleri">
       <input type="hidden" name="skills" value={JSON.stringify(skills)} />
       <div className="staff-skills-heading">
         <Award size={20} />
@@ -96,26 +96,26 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
       <div className="staff-skills-controls">
         <DropdownSelect
           label="Kategori"
-          ariaLabel="Yetenek kategorisi"
+          ariaLabel="Yetenek Kategorisi"
           value={categoryId}
           onChange={(value) => {
             setCategoryId(value);
             setSkillId("");
           }}
           options={[
-            { value: "", label: "Kategori seçin" },
+            { value: "", label: "Kategori Seçin" },
             ...categories.map((item) => ({ value: item.id, label: item.name })),
           ]}
         />
         <DropdownSelect
           label="Yetenek"
-          ariaLabel="Personel yeteneği"
+          ariaLabel="Personel Yeteneği"
           value={skillId}
           onChange={setSkillId}
           options={[
             {
               value: "",
-              label: categoryId ? "Yetenek seçin" : "Önce kategori seçin",
+              label: categoryId ? "Yetenek Seçin" : "Önce Kategori Seçin",
             },
             ...available.map((item) => ({ value: item.id, label: item.name })),
           ]}
@@ -123,11 +123,11 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
       </div>
       <DropdownSelect
         label="Seviye"
-        ariaLabel="Yetenek seviyesi"
+        ariaLabel="Yetenek Seviyesi"
         value={level}
         onChange={setLevel}
         options={[
-          { value: "", label: "Seviye seçin" },
+          { value: "", label: "Seviye Seçin" },
           ...levels.map((item) => ({ value: item.name, label: item.name })),
         ]}
       />
@@ -143,7 +143,7 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
         }
       >
         <Plus size={14} />
-        Yetenek ekle
+        Yetenek Ekle
       </button>
       {catalog.isPending && (
         <small className="muted">Yetenekler yükleniyor...</small>

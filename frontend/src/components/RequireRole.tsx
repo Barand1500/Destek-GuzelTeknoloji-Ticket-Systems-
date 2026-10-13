@@ -10,10 +10,10 @@ export function RequireRole({ roles }: { roles: Role[] }) {
   if (roles.includes(user.role)) return <Outlet />;
   return (
     <main className="page">
-      <h1>Erişim yetkiniz yok</h1>
+      <h1>Erişim Yetkiniz Yok</h1>
       <p>Bu ekran hesabınıza açık değil.</p>
       <Link className="button primary" to={roleHome(user.role)}>
-        Çalışma alanına dön
+        Çalışma Alanına Dön
       </Link>
     </main>
   );

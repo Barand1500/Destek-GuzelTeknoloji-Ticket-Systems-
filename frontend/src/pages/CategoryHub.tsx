@@ -17,7 +17,7 @@ export function CategoryHubPage({ section = "categories" }: { section?: "categor
           <h1>Kategoriler</h1>
           <p>Görüşme kategorilerini ve personel yeteneklerini tek yerden yönetin.</p>
         </div>
-        <nav className="guide-hub-tabs" aria-label="Kategori bölümleri">
+        <nav className="guide-hub-tabs" aria-label="Kategori Bölümleri">
           {hasPermission(user, "tags.view") && (
             <NavLink to={workspacePath(user.role, "tags")} end>
               <Tags size={17} />

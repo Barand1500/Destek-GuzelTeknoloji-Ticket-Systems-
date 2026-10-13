@@ -26,13 +26,13 @@ export function ActivityLogsPage() {
   return (
     <main className="page">
       <Heading
-        title="İşlem geçmişi"
+        title="İşlem Geçmişi"
         description="Sistemdeki değişiklikleri ve işlemi yapan kullanıcıları inceleyin."
       />
       <section className="management-panel">
-        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem geçmişinde ara" placeholder="Kullanıcı, işlem veya açıklamada ara..." />
+        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem Geçmişinde Ara" placeholder="Kullanıcı, işlem veya açıklamada ara..." />
         <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
-          <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem geçmişini sil</span><ChevronDown size={15} /></button>
+          <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem Geçmişini sil</span><ChevronDown size={15} /></button>
           {deleteMenuOpen && <div className="notification-delete-menu" role="menu">{Object.entries(deleteLabels).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setDeletePeriod(period as "day" | "week" | "month" | "all"); setDeleteMenuOpen(false); }}>{label}</button>)}</div>}
         </div>
         </div>
@@ -68,7 +68,7 @@ export function ActivityLogsPage() {
                           className="button secondary"
                           to={conversationPath(user!.role, log.conversationId)}
                         >
-                          Görüşmeyi aç
+                          Görüşmeyi Aç
                         </Link>
                       )}
                     </td>
@@ -83,7 +83,7 @@ export function ActivityLogsPage() {
           onChange={list.setPage}
         />
       </section>
-      {deletePeriod && <div className="confirm-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-label="İşlem geçmişi silme onayı" onMouseDown={(event) => event.stopPropagation()}><button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button><h2>{deleteLabels[deletePeriod]}</h2><p>Seçilen işlem geçmişi kayıtları kalıcı olarak silinecek.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeletePeriod(null)}>Vazgeç</button><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></section></div>}
+      {deletePeriod && <div className="confirm-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-label="İşlem Geçmişi Silme Onayı" onMouseDown={(event) => event.stopPropagation()}><button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button><h2>{deleteLabels[deletePeriod]}</h2><p>Seçilen işlem geçmişi kayıtları kalıcı olarak silinecek.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeletePeriod(null)}>Vazgeç</button><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></section></div>}
     </main>
   );
 }

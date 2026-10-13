@@ -30,10 +30,15 @@
 }
 .users-editor-panel .staff-skill-tags {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .users-editor-panel .staff-skill-tag {
   min-width: 0;
+}
+.users-editor-panel .staff-skill-tag > .styled-dropdown {
+  min-width: 80px;
+  width: 100px;
+  flex: 0 1 100px;
 }
 .users-editor-panel .staff-skill-tag > span {
   flex: 1;
@@ -110,6 +115,22 @@
 }
 .customer-table-actions {
   min-width: max-content;
+  flex-wrap: nowrap;
+}
+.customer-list-table td:nth-child(2) {
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+.customer-list-table .customer-staff-note {
+  position: relative;
+  height: 1.5em;
+}
+.customer-list-table .customer-staff-note > span {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .customer-form-panel {
   margin-top: 32px;

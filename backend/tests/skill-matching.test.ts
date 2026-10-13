@@ -8,6 +8,13 @@ const skill = (name: string, level = "INTERMEDIATE") => ({
   level,
   category: "Test",
 });
+test("matches assigned skill categories without matching unrelated or empty categories", () => {
+  const assigned = { name: 'Qr okuma', category: 'Qr Menü', level: 'EXPERT' };
+  assert.deepEqual(matchSkills('QR MENU sorunu', [assigned]), [assigned]);
+  assert.equal(matchSkills('Qr menüsü', [assigned]).length, 0);
+  assert.equal(matchSkills('Başka sorun', [{ ...assigned, category: '' }]).length, 0);
+  assert.equal(rankStaff('Qr Menü', [{ id: 'agent', name: 'Personel', skills: [assigned] }])[0].id, 'agent');
+});
 test("matches multiple technologies and languages, including aliases and Turkish letters", () => {
   const skills = [
     skill("React"),

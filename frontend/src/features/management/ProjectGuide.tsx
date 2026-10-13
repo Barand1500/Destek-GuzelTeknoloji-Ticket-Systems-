@@ -44,37 +44,37 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
     sourceLabel: "ETIC7 ürün kataloğunu aç",
     productAreas: [
       {
-        title: "Ürün, kategori ve varyant",
+        title: "Ürün, Kategori ve Varyant",
         description:
           "Dinamik kategori ve ürün yönetimi ile ürün varyantları, çoklu dil ve para birimi akışları.",
       },
       {
-        title: "Stok, fiyat ve B2B kuralları",
+        title: "Stok, Fiyat ve B2B Kuralları",
         description:
           "Stok yönetimi, fiyatlandırma, çoklu para birimi, B2B bayi sistemi ve kullanıcıya özel fiyat gösterimi.",
       },
       {
-        title: "Sepet, sipariş ve iade",
+        title: "Sepet, Sipariş ve İade",
         description:
           "Sepet ve sipariş yönetimiyle birlikte kargo, iptal ve iade durum akışları.",
       },
       {
-        title: "Kampanya, kupon ve indirim",
+        title: "Kampanya, Kupon ve İndirim",
         description:
           "Kampanya, indirim ve kupon tanımları ile müşteri segmentlerine uygulanma kuralları.",
       },
       {
-        title: "Müşteri, bayi ve yetkilendirme",
+        title: "Müşteri, Bayi ve Yetkilendirme",
         description:
           "Kullanıcı yönetimi, rol bazlı yetki, müşteri yönetimi ve B2B bayi modeli.",
       },
       {
-        title: "Ödeme ve kargo entegrasyonları",
+        title: "Ödeme ve Kargo Entegrasyonları",
         description:
           "Banka, iyzico, PayTR ve Tosla ödeme altyapıları ile kargo firmalarının API bağlantıları.",
       },
       {
-        title: "ERP ve muhasebe entegrasyonları",
+        title: "ERP ve Muhasebe Entegrasyonları",
         description:
           "ERP ve muhasebe sistemleriyle ürün, stok, sipariş ve cari veri aktarımı.",
       },
@@ -84,7 +84,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Dinamik sitemap, SEO uyumlu URL, Analytics, Ads, Merchant Center, Meta Pixel ve Meta Shop bağlantıları.",
       },
       {
-        title: "Mobil uygulama ve PWA",
+        title: "Mobil Uygulama ve PWA",
         description:
           "Flutter tabanlı iOS/Android uygulama, PWA, push bildirim ve mobil sipariş akışları.",
       },
@@ -106,7 +106,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Google Analytics, Ads, Merchant Center ile Meta Shop ve olay verileri.",
       },
       {
-        title: "Kurumsal sistemler",
+        title: "Kurumsal Sistemler",
         description:
           "ERP ve muhasebe yazılımlarıyla ürün, stok, sipariş ve cari aktarımı.",
       },
@@ -125,7 +125,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
     ],
     playbooks: [
       {
-        title: "Ürün, kategori veya varyant görünmüyor",
+        title: "Ürün, Kategori veya Varyant Görünmüyor",
         summary:
           "Katalog kaydı, yayın durumu, dil/para birimi ve kullanıcı yetkisi birlikte kontrol edilir.",
         checks: [
@@ -142,7 +142,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Kayıt panelde doğru, vitrinde görünmüyorsa sorun çoğunlukla önbellek veya arama indeksidir. Redis önbelleğini yenileyin ve ürünün Elasticsearch indeksine girip girmediğini kontrol edin.",
       },
       {
-        title: "Stok veya fiyat bilgisi hatalı",
+        title: "Stok veya Fiyat Bilgisi Hatalı",
         summary:
           "Ürün kaydı ile ERP/muhasebe aktarımı, fiyat grubu ve önbellek sonucu karşılaştırılır.",
         checks: [
@@ -159,7 +159,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "ERP kaydı doğru, ETIC7 verisi farklıysa son senkron başarısız veya gecikmiş olabilir. İlgili ürün için API yanıtını kontrol edip senkronizasyonu güvenli biçimde yeniden çalıştırın.",
       },
       {
-        title: "Sepet, sipariş, iptal veya iade sorunu",
+        title: "Sepet, Sipariş, İptal veya İade Sorunu",
         summary:
           "Sepet toplamı, sipariş durum geçişi, kampanya ve kargo adımları uçtan uca izlenir.",
         checks: [
@@ -176,7 +176,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Siparişin takıldığı durumdan bir önceki başarılı olayı bulun. Ödeme başarılıysa siparişi yeniden tahsil etmeyin; kargo veya durum güncelleme kaydını sipariş numarasıyla tekrar kontrol edin.",
       },
       {
-        title: "Ödeme veya Sanal POS işlemi başarısız",
+        title: "Ödeme veya Sanal POS İşlemi Başarısız",
         summary:
           "Banka/PSP yanıtı, 3D akışı ve sipariş sonucu aynı işlem üzerinden eşleştirilir.",
         checks: [
@@ -193,7 +193,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Banka/PSP başarılı, sipariş beklemede ise dönüş bildirimi işlenmemiş olabilir. Banka/PSP başarısızsa hata kodundaki nedeni düzeltin. Durum belirsizken yeniden ödeme başlatmayın.",
       },
       {
-        title: "Kargo, takip veya teslimat durumu güncellenmiyor",
+        title: "Kargo, Takip veya Teslimat Durumu Güncellenmiyor",
         summary:
           "Sipariş-kargo eşleşmesi, takip numarası ve taşıyıcı API yanıtı kontrol edilir.",
         checks: [
@@ -210,7 +210,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Taşıyıcıda durum güncel, ETIC7'de eskiyse kargo durum bildirimi alınmamış olabilir. Takip numarasıyla son API cevabını kontrol edip durum sorgusunu yeniden çalıştırın.",
       },
       {
-        title: "Arama, SEO, Google veya Meta verisi eksik",
+        title: "Arama, SEO, Google veya Meta Verisi Eksik",
         summary:
           "Arama indeksi, sitemap/feed çıktısı ve ölçüm olayları ayrı ayrı doğrulanır.",
         checks: [
@@ -227,7 +227,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Ürün sayfası doğruysa arama için Elasticsearch indeksini, reklam kanalı için ilgili feed çıktısını yenileyin. Olay verisi eksikse tarayıcıdaki Analytics/Pixel isteğinin hata kodunu kontrol edin.",
       },
       {
-        title: "Mobil uygulama, PWA veya performans sorunu",
+        title: "Mobil Uygulama, PWA veya Performans Sorunu",
         summary:
           "Cihaz ve sürüm bilgisiyle ağ, önbellek ve servis davranışı ayrıştırılır.",
         checks: [
@@ -251,12 +251,12 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
     sourceLabel: "AnyPay ürün kataloğunu aç",
     productAreas: [
       {
-        title: "Merkezi ödeme orkestrasyonu",
+        title: "Merkezi Ödeme Orkestrasyonu",
         description:
           "Banka Sanal POS'ları ve ödeme kuruluşlarının tek API ve merkezi panel üzerinden yönetimi.",
       },
       {
-        title: "BIN kontrolü ve Smart Routing",
+        title: "BIN Kontrolü ve Smart Routing",
         description:
           "Kart tipine, bankaya, komisyona ve başarı oranına göre uygun POS yönlendirmesi.",
       },
@@ -266,27 +266,27 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Banka altyapısındaki kesintide işlemin alternatif POS üzerinden güvenli biçimde yeniden denenmesi.",
       },
       {
-        title: "Taksit ve komisyon yönetimi",
+        title: "Taksit ve Komisyon Yönetimi",
         description:
           "Müşteri grubu, şube veya kullanıcı bazında dinamik taksit ve komisyon setleri.",
       },
       {
-        title: "Bayi, alt bayi ve şube",
+        title: "Bayi, Alt Bayi ve Şube",
         description:
           "Ana firma, şube, bayi, alt bayi ve plasiyer için kademeli yetkilendirme ve tahsilat.",
       },
       {
-        title: "Ödeme linki ve dinamik QR",
+        title: "Ödeme Linki ve Dinamik QR",
         description:
           "Müşteriye özel, süreli ve tek kullanımlı ödeme linkleriyle dinamik QR kod üretimi.",
       },
       {
-        title: "Mobil tahsilat ve Soft POS",
+        title: "Mobil Tahsilat ve Soft POS",
         description:
           "Flutter mobil uygulamada QR tahsilat, biyometrik doğrulama, bildirim ve offline-first kuyruklama.",
       },
       {
-        title: "ERP, muhasebe ve mutabakat",
+        title: "ERP, Muhasebe ve Mutabakat",
         description:
           "Vega, Logo, Mikro, Nebim ve Dia veri aktarımı ile otomatik mutabakat.",
       },
@@ -303,17 +303,17 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Sanal POS'lar ile iyzico ve PayTR gibi ödeme kuruluşlarının API bağlantıları.",
       },
       {
-        title: "ERP ve muhasebe",
+        title: "ERP ve Muhasebe",
         description:
           "Vega, Logo, Mikro, Nebim, Dia ve Zirve ile API/Webservice veri akışı.",
       },
       {
-        title: "Web ve mobil",
+        title: "Web ve Mobil",
         description:
           "Merkezi AnyPay Web paneli ile Flutter tabanlı AnyPay App operasyonları.",
       },
       {
-        title: "Altyapı ve güvenlik",
+        title: "Altyapı ve Güvenlik",
         description:
           "İzole sunucu, yedeklilik, firewall, erişim kontrolü ve finansal veri güvenliği.",
       },
@@ -332,7 +332,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
     ],
     playbooks: [
       {
-        title: "Ödeme başarısız veya beklemede kaldı",
+        title: "Ödeme Başarısız veya Beklemede Kaldı",
         summary:
           "İşlem; 3D Secure, banka/PSP cevabı, Smart Routing ve Failover adımlarında izlenir.",
         checks: [
@@ -349,7 +349,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Banka/PSP başarılı, AnyPay beklemede ise callback işlenmemiş olabilir. Banka/PSP başarısızsa hata kodunu esas alın. Failover çalıştıysa ikinci POS sonucunu görmeden işlemi yeniden denemeyin.",
       },
       {
-        title: "BIN, taksit, komisyon veya routing hatalı",
+        title: "BIN, Taksit, Komisyon veya Routing Hatalı",
         summary:
           "Kart sınıfı ile müşteri/şube ödeme seti ve POS yönlendirme kuralı karşılaştırılır.",
         checks: [
@@ -366,7 +366,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "BIN doğru, taksit veya komisyon yanlışsa müşteri/şube ödeme seti önceliğini düzeltin. POS seçimi yanlışsa aktiflik, komisyon ve başarı oranı kurallarının sırasını kontrol edin.",
       },
       {
-        title: "Ödeme linki veya dinamik QR çalışmıyor",
+        title: "Ödeme Linki veya Dinamik QR Çalışmıyor",
         summary:
           "Link/QR geçerlilik süresi, tek kullanım durumu ve ödeme kaydı kontrol edilir.",
         checks: [
@@ -383,7 +383,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Süresi dolmuş veya kullanılmış link için yeni link üretin. Kayıt geçerli olduğu halde açılmıyorsa oluşturma cevabındaki URL ile yönlendirme cevabını karşılaştırın.",
       },
       {
-        title: "Bayi, alt bayi, şube veya yetki sorunu",
+        title: "Bayi, Alt Bayi, Şube veya Yetki Sorunu",
         summary:
           "Hiyerarşi, rol yetkisi, tahsilat kapsamı ve hak ediş bağlantısı birlikte doğrulanır.",
         checks: [
@@ -400,7 +400,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Kullanıcı doğru hiyerarşideyse eksik izin rol tanımındadır. Rolün tahsilat, rapor ve işlem görüntüleme izinlerini güncelleyip oturumu yenileyin.",
       },
       {
-        title: "ERP aktarımı veya mutabakat uyuşmuyor",
+        title: "ERP Aktarımı veya Mutabakat Uyuşmuyor",
         summary:
           "AnyPay işlemi, banka hareketi ve ERP/muhasebe kaydı aynı referansla eşleştirilir.",
         checks: [
@@ -417,7 +417,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "Ödeme ve banka hareketi aynı, ERP kaydı eksikse Webservice aktarımı başarısızdır. Belge numarası çakışmasını giderip yalnızca eksik kaydı yeniden gönderin.",
       },
       {
-        title: "Mobil tahsilat veya Soft POS sorunu",
+        title: "Mobil Tahsilat veya Soft POS Sorunu",
         summary:
           "Flutter uygulaması, biyometrik doğrulama, bağlantı ve offline-first kuyruğu kontrol edilir.",
         checks: [
@@ -434,7 +434,7 @@ const guides: Record<"etic7" | "anypay", SupportGuide> = {
           "İşlem çevrimdışı kuyruktaysa bağlantı geldikten sonra senkron durumunu kontrol edin; aynı tahsilatı tekrar oluşturmayın. Kuyruk boşsa API bağlantısı ve oturum süresini yenileyin.",
       },
       {
-        title: "Şüpheli işlem, güvenlik veya altyapı alarmı",
+        title: "Şüpheli İşlem, Güvenlik veya Altyapı Alarmı",
         summary:
           "Fraud sinyali, erişim kaydı ve servis sağlığı korunarak olay yönetimi başlatılır.",
         checks: [
@@ -594,7 +594,7 @@ function KnowledgeCenter({
       <SectionHeading
         icon={<BookOpen size={20} />}
         eyebrow="04 · BİLGİ MERKEZİ"
-        title="Konu bazlı kullanım ve destek rehberi"
+        title="Konu Bazlı Kullanım ve Destek Rehberi"
         description={
           query.trim()
             ? `Üstteki aramanızla eşleşen ${topics.length} konu gösteriliyor.`
@@ -623,7 +623,7 @@ function KnowledgeCenter({
               </summary>
               <div className="project-guide-knowledge-body">
                 <section>
-                  <h4>Bu konuda neler var?</h4>
+                  <h4>Bu Konuda Neler Var?</h4>
                   <ul>
                     {item.points.map((point) => (
                       <li key={point}>{point}</li>
@@ -631,7 +631,7 @@ function KnowledgeCenter({
                   </ul>
                 </section>
                 <section>
-                  <h4>Sorunu anlamak için gerekli bilgiler</h4>
+                  <h4>Sorunu Anlamak İçin Gerekli Bilgiler</h4>
                   <ul>
                     {item.required.map((required) => (
                       <li key={required}>{required}</li>
@@ -669,7 +669,7 @@ function SupportSection({ playbooks }: { playbooks: SupportPlaybook[] }) {
       <SectionHeading
         icon={<LifeBuoy size={20} />}
         eyebrow="01 · TEKNİK DESTEK"
-        title="Soruna göre çözüm adımları"
+        title="Soruna Göre Çözüm Adımları"
         description="PDF'de tanımlanan modül ve entegrasyonlara göre uygulanabilecek kontrolleri açın ve sonucu aynı ekranda değerlendirin."
       />
       <div className="project-guide-playbooks">
@@ -813,7 +813,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
         </div>
         <div
           className="project-guide-question-examples"
-          aria-label="Örnek sorular"
+          aria-label="Örnek Sorular"
         >
           <span>Örnek:</span>
           {guide.playbooks.slice(0, 3).map((playbook) => (
@@ -856,7 +856,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
           <SectionHeading
             icon={<Layers3 size={20} />}
             eyebrow="02 · ÜRÜN ALANLARI"
-            title="Destek verilebilecek ürün alanları"
+            title="Destek Verilebilecek Ürün Alanları"
             description="Proje belgesindeki modüller, sorunun hangi ürün alanıyla ilişkili olduğunu belirlemeyi kolaylaştırır."
           />
           <div className="project-guide-area-grid">
@@ -880,7 +880,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
           <SectionHeading
             icon={<CircleDot size={20} />}
             eyebrow="03 · ENTEGRASYON VE TEKNOLOJİ"
-            title="Teknik inceleme noktaları"
+            title="Teknik İnceleme Noktaları"
             description="Sorunun hangi dış servis veya altyapı bileşeninde araştırılacağını belirlemek için kullanın."
           />
           {guide.integrations.length > 0 && (
@@ -895,7 +895,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
           )}
           <div
             className="project-guide-tech-list"
-            aria-label="Teknoloji bileşenleri"
+            aria-label="Teknoloji Bileşenleri"
           >
             {guide.architecture.map((item) => (
               <span key={item}>{item}</span>
@@ -924,7 +924,7 @@ function GeneralSupport({ projectName }: { projectName: string }) {
         <SectionHeading
           icon={<BookOpen size={20} />}
           eyebrow="PROJE REHBERİ"
-          title="Bilgiler bekleniyor"
+          title="Bilgiler Bekleniyor"
           description={`${projectName} projesine ait kapsam ve teknik bilgiler ulaştığında proje rehberi bu alanda hazırlanacaktır.`}
         />
       </section>

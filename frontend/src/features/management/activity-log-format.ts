@@ -57,11 +57,11 @@ export const actionLabels: Record<string, string> = {
   "conversation.created": "Talep oluşturuldu",
   "conversation.claimed": "Talep üstlenildi",
   "conversation.deleted": "Talep silindi",
-  "conversation.email_received": "E-posta alındı",
+  "conversation.email_received": "E-Posta alındı",
   "conversation.replied": "Talebe yanıt verildi",
   "conversation.note_added": "Dahili not eklendi",
-  "conversation.email_sent": "E-posta gönderildi",
-  "conversation.email_failed": "E-posta gönderilemedi",
+  "conversation.email_sent": "E-Posta gönderildi",
+  "conversation.email_failed": "E-Posta gönderilemedi",
   "conversation.updated": "Talep bilgileri güncellendi",
   "customer.file_deleted": "Müşteri dosyası silindi",
   "integrations.updated": "Entegrasyon ayarları güncellendi",
@@ -84,17 +84,17 @@ export const actionLabels: Record<string, string> = {
   LOGOUT: "Oturum kapatıldı",
 };
 const fieldLabels: Record<string, string> = {
-  name: "Ad soyad", email: "E-posta", phone: "Telefon", company: "Şirket",
+  name: "Ad soyad", email: "E-Posta", phone: "Telefon", company: "Şirket",
   staffNote: "Personel notu", extraPhones: "Ek telefonlar", extraEmails: "Ek e-postalar",
   isActive: "Hesap durumu", role: "Kullanıcı rolü", accessRoleId: "Yetki rolü",
   departmentIds: "Departmanlar", departmentId: "Departman", assignedAgentId: "Atanan personel",
   status: "Durum", priority: "Öncelik", websiteId: "Proje", websiteUrl: "Proje adresi",
   subject: "Konu", title: "Başlık", body: "Metin", color: "Renk", sortOrder: "Sıralama",
   tagIds: "Etiketler", permissions: "İzinler", scope: "Yetki kapsamı", skills: "Yetenekler",
-  description: "Açıklama", smtpEnabled: "E-posta gönderimi", imapEnabled: "E-posta alımı",
+  description: "Açıklama", smtpEnabled: "E-Posta gönderimi", imapEnabled: "E-Posta alımı",
   smsEnabled: "SMS entegrasyonu", whatsappEnabled: "WhatsApp entegrasyonu",
 };
-const channelLabels: Record<string, string> = { NOTIFICATION: "Sistem bildirimi", EMAIL: "E-posta", SMS: "SMS", WHATSAPP: "WhatsApp" };
+const channelLabels: Record<string, string> = { NOTIFICATION: "Sistem bildirimi", EMAIL: "E-Posta", SMS: "SMS", WHATSAPP: "WhatsApp" };
 const sensitiveField = (field: string) => /password|token|secret/i.test(field);
 export function activityActionLabel(action: string, metadata?: ActivityLog["metadata"]): string {
   if (action === "conversation.channel_reply_failed") {
@@ -139,7 +139,7 @@ export function richDescriptionFor(log: ActivityLog) {
     metadata?.subject && `Konu: ${metadata.subject}`,
     metadata?.number && `Talep no: #TK-${String(metadata.number).padStart(5, "0")}`,
     metadata?.phone && `Telefon: ${metadata.phone}`,
-    metadata?.email && `E-posta: ${metadata.email}`,
+    metadata?.email && `E-Posta: ${metadata.email}`,
     metadata?.company && `Şirket: ${metadata.company}`,
     metadata?.recipientCount !== undefined && `Alıcı sayısı: ${metadata.recipientCount}`,
     metadata?.channels?.length && `Kanallar: ${metadata.channels.map(channel => channelLabels[channel] ?? "Diğer kanal").join(', ')}`,
@@ -155,9 +155,9 @@ export function richDescriptionFor(log: ActivityLog) {
   if (details) return details;
   if (log.action === "customer.file_deleted") return [metadata?.customerName && `Müşteri: ${metadata.customerName}`, metadata?.originalName && `Silinen dosya: ${metadata.originalName}`].filter(Boolean).join(" · ") || "Müşteri dosyası silindi.";
   if (log.action === "conversation.replied") return metadata?.attachmentCount ? `Yanıt ve ${metadata.attachmentCount} ek dosya gönderildi.` : "Talebe yanıt gönderildi.";
-  if (log.action === "conversation.email_sent") return metadata?.recipient ? `Alıcı: ${metadata.recipient}` : "E-posta gönderildi.";
+  if (log.action === "conversation.email_sent") return metadata?.recipient ? `Alıcı: ${metadata.recipient}` : "E-Posta gönderildi.";
   if (log.action === "conversation.email_received") return "Müşteriden e-posta alındı.";
-  if (log.action === "conversation.email_failed") return metadata?.reason ? `Gönderilemedi: ${metadata.reason}` : "E-posta gönderilemedi.";
+  if (log.action === "conversation.email_failed") return metadata?.reason ? `Gönderilemedi: ${metadata.reason}` : "E-Posta gönderilemedi.";
   return `${activityActionLabel(log.action)}.`;
 }
 

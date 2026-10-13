@@ -231,7 +231,7 @@ export async function createConversation(
     if (!(await tx.priorityOption.findFirst({ where: { code: input.priority, isActive: true } }))) throw new AppError(400, "INVALID_PRIORITY", "Öncelik seçeneği geçersiz.");
     if(input.tagIds && (new Set(input.tagIds).size!==input.tagIds.length || await tx.tag.count({where:{id:{in:input.tagIds}}})!==input.tagIds.length)) throw new AppError(400,'INVALID_TAG','Etiketler geçersiz.');
     const customerInitiatedMessage = actor.role === "CUSTOMER" || input.channel === "TICKET" || input.source === "PHONE_SUPPORT";
-    if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
+    if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
     const website = input.websiteId ? await tx.website.findFirst({ where: { id: input.websiteId, isActive: true } }) : null;
     if (input.websiteId && !website) throw new AppError(400, "INVALID_WEBSITE", "Geçerli bir web sitesi seçin.");
     const conversation = await tx.conversation.create({
@@ -308,7 +308,7 @@ export async function mentionCandidates(actor: Actor, id: string, search: string
   return db.user.findMany({
     where: {
       id: { not: actor.id },
-      OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+      OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
       isActive: true,
       deletedAt: null,
       departments: { some: { departmentId: conversation.departmentId } },
@@ -371,7 +371,7 @@ export async function addMessage(
       );
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
     const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
-      where: { id: { in: mentionUserIds, not: actor.id }, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
+      where: { id: { in: mentionUserIds, not: actor.id }, OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
       select: { id: true, name: true },
     }) : [];
     if (mentionedUsers.length !== mentionUserIds.length)
@@ -453,7 +453,7 @@ export async function updateConversation(
       const agent = await tx.user.findFirst({
         where: {
           id: input.assignedAgentId,
-          OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+          OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
           isActive:true,
           deletedAt: null,
           departments: { some: { departmentId: targetDepartment } },

@@ -20,13 +20,13 @@ export function ProjectGuideFileModal({ websiteId, projectName, canManage, onClo
     <section className="attachment-preview-modal project-guide-file-modal" role="dialog" aria-modal="true" aria-label={`${projectName} proje belgeleri`}>
       <header><strong>{projectName} - Proje belgeleri</strong><button type="button" onClick={onClose} aria-label="Kapat"><X size={18} /></button></header>
       {files.isPending ? <p className="project-guide-state">Belgeler yükleniyor…</p> : files.error ? <p className="error">Belgeler yüklenemedi.</p> : !files.data?.length ? <p className="project-guide-empty">Bu projeye henüz belge yüklenmemiş.</p> : <>
-        <div className="attachment-preview-content">{content.isPending ? <p className="project-guide-state">Belge açılıyor…</p> : content.error ? <p className="error">Belge açılamadı.</p> : url && activeFile?.mimeType.startsWith("image/") ? <img src={url} alt={activeFile.originalName} /> : url ? <iframe src={url} title={activeFile?.originalName ?? "Proje belgesi"} /> : null}</div>
-        <nav className="project-guide-modal-files" aria-label="Proje belgeleri">
+        <div className="attachment-preview-content">{content.isPending ? <p className="project-guide-state">Belge açılıyor…</p> : content.error ? <p className="error">Belge açılamadı.</p> : url && activeFile?.mimeType.startsWith("image/") ? <img src={url} alt={activeFile.originalName} /> : url ? <iframe src={url} title={activeFile?.originalName ?? "Proje Belgesi"} /> : null}</div>
+        <nav className="project-guide-modal-files" aria-label="Proje Belgeleri">
           {orderedFiles.map(file => <span key={file.id}>
             <button type="button" className={activeFile?.id === file.id ? "active" : ""} onClick={() => setActiveId(file.id)} aria-pressed={activeFile?.id === file.id}>
               {file.mimeType.startsWith("image/") ? <FileImage size={15} /> : <FileText size={15} />}<span>{file.originalName}</span>
             </button>
-            {canManage && <button type="button" className="project-guide-file-delete" aria-label={`${file.originalName} dosyasını sil`} disabled={remove.isPending} onClick={() => { if (window.confirm(`“${file.originalName}” dosyası silinsin mi?`)) remove.mutate(file.id); }}>Dosyayı sil</button>}
+            {canManage && <button type="button" className="project-guide-file-delete" aria-label={`${file.originalName} dosyasını sil`} disabled={remove.isPending} onClick={() => { if (window.confirm(`“${file.originalName}” dosyası silinsin mi?`)) remove.mutate(file.id); }}>Dosyayı Sil</button>}
           </span>)}
         </nav>
         {remove.error && <p className="error" role="alert">Dosya silinemedi. Lütfen tekrar deneyin.</p>}

@@ -62,7 +62,7 @@ export function DepartmentsPage() {
         title="Departmanlar"
         description="Erişiminiz olan departmanları görüntüleyin ve yetkiniz varsa yönetin."
       />
-      {hasPermission(user, "users.view") && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" onClick={() => user && navigate(workspacePath(user.role, "users"))}>Kullanıcılar</button><button type="button" className="active">Departmanlar</button></nav>}
+      {hasPermission(user, "users.view") && <nav className="catalog-tabs" aria-label="Personel Alanları"><button type="button" onClick={() => user && navigate(workspacePath(user.role, "users"))}>Kullanıcılar</button><button type="button" className="active">Departmanlar</button></nav>}
       <div className="management-grid">
         <section className="management-panel">
           <Search value={list.search} onChange={list.setSearch} limit={list.limit} onLimitChange={list.setLimit} />
@@ -132,10 +132,10 @@ export function DepartmentsPage() {
           />
         </section>
       {(editing ? canUpdate : canCreate) && <section className="management-panel">
-          <h2>{editing ? "Departmanı düzenle" : "Departman oluştur"}</h2>
+          <h2>{editing ? "Departmanı Düzenle" : "Departman Oluştur"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
-              <span className="field-label">Departman adı</span>
+              <span className="field-label">Departman Adı</span>
               <input
                 required
                 minLength={2}
@@ -157,7 +157,7 @@ export function DepartmentsPage() {
           </form>
         </section>}
       </div>
-      {deleteTarget && <DeleteModal title="Departmanı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> listeden silinecek. Mevcut görüşmeler ve ekip erişimi korunur.</p></DeleteModal>}
+      {deleteTarget && <DeleteModal title="Departmanı Sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> listeden silinecek. Mevcut görüşmeler ve ekip erişimi korunur.</p></DeleteModal>}
     </main>
   );
 }
@@ -219,7 +219,7 @@ export function TagsPage() {
         title="Kategoriler"
         description="Görüşmeleri konularına göre düzenleyin ve kolayca bulun."
       />
-      <nav className="catalog-tabs" aria-label="Görüşme alanları">
+      <nav className="catalog-tabs" aria-label="Görüşme Alanları">
         <button type="button" className={section === "tags" ? "active" : ""} onClick={() => selectSection("tags")}>Etiketler</button>
         <button type="button" className={section === "statuses" ? "active" : ""} onClick={() => selectSection("statuses")}>Durumlar</button>
         <button type="button" className={section === "priorities" ? "active" : ""} onClick={() => selectSection("priorities")}>Öncelikler</button>
@@ -238,8 +238,8 @@ export function TagsPage() {
               <table className="management-table">
                 <thead>
                   <tr>
-                    <th>Görünen ad</th>
-                    <th>Sistem kodu</th>
+                    <th>Görünen Ad</th>
+                    <th>Sistem Kodu</th>
                     {(canUpdate || canDelete) && <th>İşlemler</th>}
                   </tr>
                 </thead>
@@ -291,10 +291,10 @@ export function TagsPage() {
           />
         </section>
         {(editing || editingView ? canUpdate : canCreate) && <section className="management-panel">
-          <h2>{editing || editingView ? "Etiketi düzenle" : "Etiket oluştur"}</h2>
+          <h2>{editing || editingView ? "Etiketi Düzenle" : "Etiket Oluştur"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
-              <span className="field-label">Etiket adı</span>
+              <span className="field-label">Etiket Adı</span>
               <input
                 required
                 minLength={2}
@@ -304,7 +304,7 @@ export function TagsPage() {
               />
             </label>
             <label>
-              <span className="field-label">Sistem kodu</span>
+              <span className="field-label">Sistem Kodu</span>
               <input required readOnly={Boolean(editingView)} pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editingView?.code ?? editing?.code} placeholder="EMAIL" />
             </label>
             <ErrorMessage error={save.error} />
@@ -315,7 +315,7 @@ export function TagsPage() {
             />
           </form>
         </section>}
-        {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Etiket silme onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>Etiketi sil</h2><p><strong>{deleteTarget.name}</strong> etiketini silmek istediğinize emin misiniz? Görüşmelerdeki etiket bağlantıları da kaldırılır.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Etiketi sil"}</button></div></form></div>}
+        {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Etiket Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>Etiketi Sil</h2><p><strong>{deleteTarget.name}</strong> etiketini silmek istediğinize emin misiniz? Görüşmelerdeki etiket bağlantıları da kaldırılır.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Etiketi Sil"}</button></div></form></div>}
       </div> : <OptionSection kind={section === "statuses" ? "status" : "priority"} />}
     </main>
   );
@@ -353,8 +353,8 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
     {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>{title.slice(0, -1)}</th><th>Kod</th>{(canUpdate || canDelete) && <th>İşlemler</th>}</tr></thead><tbody>{list.data.data.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
       <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
-    {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
-    {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label={`${title.slice(0, -1)} silme onayı`} onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>{title.slice(0, -1)} sil</h2><p><strong>{deleteTarget.name}</strong> kaydını silmek istediğinize emin misiniz?</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></form></div>}
+    {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen Ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem Kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
+    {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label={`${title.slice(0, -1)} silme onayı`} onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>{title.slice(0, -1)} Sil</h2><p><strong>{deleteTarget.name}</strong> kaydını silmek istediğinize emin misiniz?</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></form></div>}
   </div>;
 }
 
@@ -397,24 +397,24 @@ export function WebsitesPage() {
     save.mutate({ id: editing?.id, name: String(form.get("name") ?? ""), url: String(form.get("url") ?? ""), files: guideFiles });
   }
   return <main className="page">
-    <Heading title="Projeler" description="Talep açarken seçilebilecek projeleri ve URL adreslerini yönetin." />
+    <Heading title="Projeler" description="Talep Oluşturarken seçilebilecek projeleri ve URL adreslerini yönetin." />
     <div className="management-grid">
       <section className="management-panel">
-        <Search value={list.search} onChange={list.setSearch} label="Proje ara" limit={list.limit} onLimitChange={list.setLimit} />
+        <Search value={list.search} onChange={list.setSearch} label="Proje Ara" limit={list.limit} onLimitChange={list.setLimit} />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th>{canUpdate && <th>Durum</th>}<th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} {...editableRowProps(() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); })} className={!site.isActive ? "inactive-record management-editable-row" : "management-editable-row"}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber dosyasını gör" : "Rehber dosyası yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table"><thead><tr><th>Ad</th><th>URL</th>{canUpdate && <th>Durum</th>}<th>İşlemler</th></tr></thead><tbody>{list.data.data.map((site) => <tr key={site.id} {...editableRowProps(() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); })} className={!site.isActive ? "inactive-record management-editable-row" : "management-editable-row"}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber Dosyasını Gör" : "Rehber Dosyası Yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
       </section>
       {(editing ? canUpdate : canCreate) && <section className="management-panel">
-        <h2>{editing ? "Projeyi düzenle" : "Proje ekle"}</h2>
+        <h2>{editing ? "Projeyi Düzenle" : "Proje Ekle"}</h2>
         <form key={version} className="management-form" onSubmit={submit}>
-          <label><span className="field-label">Proje adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
+          <label><span className="field-label">Proje Adı</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} /></label>
           <label><span className="field-label">URL</span><input name="url" type="url" required maxLength={500} placeholder="https://ornek.com" defaultValue={editing?.url} /></label>
           <div className="customer-form-upload">
           <label className="project-guide-upload-trigger">
-            <span className="field-label">Dosya ekle</span>
-            <input name="guideFiles" type="file" aria-label="Dosya seçin" aria-describedby="project-guide-size-hint" multiple disabled={save.isPending || !canAddGuideFiles} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => {
+            <span className="field-label">Dosya Ekle</span>
+            <input name="guideFiles" type="file" aria-label="Dosya Seçin" aria-describedby="project-guide-size-hint" multiple disabled={save.isPending || !canAddGuideFiles} accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => {
               const selected = Array.from(event.target.files ?? []);
               if (selected.some(file => file.size > 25 * 1024 * 1024)) {
                 setFileError("Dosya başına en fazla 25 MB yüklenebilir.");
@@ -431,7 +431,7 @@ export function WebsitesPage() {
         </form>
       </section>}
     </div>
-    {deleteTarget && <DeleteModal title="Projeyi sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> projesi ve bağlı rehber dosyaları silinecek.</p></DeleteModal>}
+    {deleteTarget && <DeleteModal title="Projeyi Sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate(deleteTarget.id, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleteTarget.name}</strong> projesi ve bağlı rehber dosyaları silinecek.</p></DeleteModal>}
     {previewProject && <ProjectGuideFileModal websiteId={previewProject.id} projectName={previewProject.name} canManage={canDeleteGuideFiles} onClose={() => setPreviewProject(null)} />}
   </main>;
 }
@@ -440,18 +440,18 @@ export function SavedRepliesPage() {
   const [params, setParams] = useSearchParams();
   const templates = params.get("tab") === "templates";
   return <main className="page">
-    <Heading title={templates ? "Hazır şablonlar" : "Hazır yanıtlar"} description={templates ? "Duyuru şablonlarını yönetin; eklediğiniz şablonları duyuru ekranında kullanın." : "Sık kullanılan yanıtları ekibinizle paylaşın; görüşme içinde seçip düzenleyerek gönderin."} />
-    <nav className="catalog-tabs saved-content-tabs" role="tablist" aria-label="Hazır içerikler" onKeyDown={event => {
+    <Heading title={templates ? "Hazır Şablonlar" : "Hazır Yanıtlar"} description={templates ? "Duyuru şablonlarını yönetin; eklediğiniz şablonları duyuru ekranında kullanın." : "Sık kullanılan yanıtları ekibinizle paylaşın; görüşme içinde seçip düzenleyerek gönderin."} />
+    <nav className="catalog-tabs saved-content-tabs" role="tablist" aria-label="Hazır İçerikler" onKeyDown={event => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
       const next = event.key === "Home" ? false : event.key === "End" ? true : !templates;
       setParams({ tab: next ? "templates" : "replies" });
       event.currentTarget.querySelectorAll<HTMLButtonElement>("button")[next ? 1 : 0]?.focus();
     }}>
-      <button type="button" role="tab" tabIndex={templates ? -1 : 0} aria-selected={!templates} aria-controls="saved-content-panel" className={!templates ? "active" : ""} onClick={() => setParams({ tab: "replies" })}>Hazır yanıtlar</button>
-      <button type="button" role="tab" tabIndex={templates ? 0 : -1} aria-selected={templates} aria-controls="saved-content-panel" className={templates ? "active" : ""} onClick={() => setParams({ tab: "templates" })}>Hazır şablonlar</button>
+      <button type="button" role="tab" tabIndex={templates ? -1 : 0} aria-selected={!templates} aria-controls="saved-content-panel" className={!templates ? "active" : ""} onClick={() => setParams({ tab: "replies" })}>Hazır Yanıtlar</button>
+      <button type="button" role="tab" tabIndex={templates ? 0 : -1} aria-selected={templates} aria-controls="saved-content-panel" className={templates ? "active" : ""} onClick={() => setParams({ tab: "templates" })}>Hazır Şablonlar</button>
     </nav>
-    <div id="saved-content-panel" role="tabpanel" aria-label={templates ? "Hazır şablonlar" : "Hazır yanıtlar"}>{templates ? <AnnouncementTemplates /> : <SavedRepliesContent />}</div>
+    <div id="saved-content-panel" role="tabpanel" aria-label={templates ? "Hazır Şablonlar" : "Hazır Yanıtlar"}>{templates ? <AnnouncementTemplates /> : <SavedRepliesContent />}</div>
   </main>;
 }
 
@@ -486,8 +486,8 @@ function SavedRepliesContent() {
             empty={!list.data?.data.length}
           />
           {!!list.data?.data.length && <div className="management-table-wrap saved-content-table-wrap">
-            <table className="management-table saved-content-table" aria-label="Hazır yanıtlar">
-              <thead><tr><th>Yanıt başlığı</th><th>Yanıt metni</th><th>Ekleyen</th><th>İşlemler</th></tr></thead>
+            <table className="management-table saved-content-table" aria-label="Hazır Yanıtlar">
+              <thead><tr><th>Yanıt Başlığı</th><th>Yanıt Metni</th><th>Ekleyen</th><th>İşlemler</th></tr></thead>
               <tbody>{list.data.data.map((reply) => {
                 const canEdit = user?.role === "ADMIN" || user?.id === reply.authorId;
                 return <tr key={reply.id} {...editableRowProps(() => { setEditing(reply); setVersion((v) => v + 1); save.reset(); })}>
@@ -508,7 +508,7 @@ function SavedRepliesContent() {
           />
         </section>
         <section className="management-panel">
-          <h2>{editing ? "Yanıtı düzenle" : "Hazır yanıt oluştur"}</h2>
+          <h2>{editing ? "Yanıtı Düzenle" : "Hazır Yanıt Oluştur"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
               <span className="field-label">Başlık</span>
@@ -521,7 +521,7 @@ function SavedRepliesContent() {
               />
             </label>
             <label>
-              <span className="field-label">Yanıt metni</span>
+              <span className="field-label">Yanıt Metni</span>
               <textarea
                 className="saved-reply-body"
                 name="body"
@@ -540,7 +540,7 @@ function SavedRepliesContent() {
           </form>
         </section>
       </div>
-      {deleting && <DeleteModal title="Hazır yanıtı sil" pending={remove.isPending} onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting.id, { onSuccess: () => { if (editing?.id === deleting.id) reset(); setDeleting(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleting.title}</strong> hazır yanıtı silinecek.</p></DeleteModal>}
+      {deleting && <DeleteModal title="Hazır Yanıtı Sil" pending={remove.isPending} onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting.id, { onSuccess: () => { if (editing?.id === deleting.id) reset(); setDeleting(null); } })} error={<ErrorMessage error={remove.error} />}><p><strong>{deleting.title}</strong> hazır yanıtı silinecek.</p></DeleteModal>}
     </>
   );
 }

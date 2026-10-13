@@ -507,7 +507,7 @@ export function ReportsPage() {
         </button>
       </Heading>
       <div className="report-tab-row">
-        <div className="report-tabs" role="tablist" aria-label="Rapor türü">
+        <div className="report-tabs" role="tablist" aria-label="Rapor Türü">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -544,14 +544,14 @@ export function ReportsPage() {
         </div>
         <div className="report-period-control">
           <DropdownSelect
-            label="Trend ve süre dönemi"
-            ariaLabel="Trend ve süre dönemi"
+            label="Trend ve Süre Dönemi"
+            ariaLabel="Trend ve Süre Dönemi"
             value={String(days)}
             onChange={(value) => setDays(Number(value))}
             options={[
-              { value: "7", label: "Son 7 gün" },
-              { value: "30", label: "Son 30 gün" },
-              { value: "90", label: "Son 90 gün" },
+              { value: "7", label: "Son 7 Gün" },
+              { value: "30", label: "Son 30 Gün" },
+              { value: "90", label: "Son 90 Gün" },
             ]}
           />
         </div>
@@ -560,11 +560,11 @@ export function ReportsPage() {
         {tab === "person" && (
           <DropdownSelect
             label="Çalışan Seçin"
-            ariaLabel="Çalışan seçin"
+            ariaLabel="Çalışan Seçin"
             value={personId}
             onChange={setPersonId}
             options={[
-              { value: "", label: "— Çalışan seçin —" },
+              { value: "", label: "— Çalışan Seçin —" },
               ...(base.data?.staff ?? []).map((person) => ({
                 value: person.id,
                 label: person.name,
@@ -575,7 +575,7 @@ export function ReportsPage() {
         {tab === "department" && (
           <DropdownSelect
             label="Departman"
-            ariaLabel="Departman seçin"
+            ariaLabel="Departman Seçin"
             value={departmentId}
             onChange={setDepartmentId}
             options={[
@@ -607,7 +607,7 @@ export function ReportsPage() {
               if (needsFilter) void filtered.refetch();
             }}
           >
-            Tekrar dene
+            Tekrar Dene
           </button>
         )}
         {tab === "person" && !personId && !base.isPending && !base.isError && (
@@ -631,7 +631,7 @@ export function ReportsPage() {
                   </span>
                   <div>
                     <h2>{selected.name}</h2>
-                    <p>{selected.email || "E-posta kayıtlı değil"}</p>
+                    <p>{selected.email || "E-Posta kayıtlı değil"}</p>
                     <small>
                       {base.data?.departments
                         .filter((department) =>
@@ -827,16 +827,16 @@ export function ReportsPage() {
               )}
               {tab !== "general" && <Details data={data} />}
               {tab === "general" && (
-                <Panel title="Ekip performansı">
+                <Panel title="Ekip Performansı">
                   <div className="management-table-wrap">
                     <table className="management-table">
                       <thead>
                         <tr>
                           <th>Çalışan</th>
-                          <th>Atanan talep</th>
+                          <th>Atanan Talep</th>
                           <th>Tamamlanan</th>
                           <th>Tamamlanma</th>
-                          <th>Ortalama ilk yanıt</th>
+                          <th>Ortalama İlk Yanıt</th>
                         </tr>
                       </thead>
                       <tbody>

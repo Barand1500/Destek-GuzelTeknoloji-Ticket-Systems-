@@ -107,7 +107,7 @@ export function SkillsPage() {
         title="Yetenekler"
         description="Personel formunda seçilecek yetenekleri, kategorileri ve seviyeleri yönetin."
       />
-      <nav className="catalog-tabs" aria-label="Yetenek yönetimi bölümleri">
+      <nav className="catalog-tabs" aria-label="Yetenek Yönetimi Bölümleri">
         {(["category", "skill", "level"] as const).map((tab) => (
           <button
             key={tab}
@@ -148,7 +148,7 @@ export function SkillsPage() {
                         ? "Kategori"
                         : kind === "level"
                           ? "Sıra"
-                          : "Yetenek sayısı"}
+                          : "Yetenek Sayısı"}
                     </th>
                     <th>İşlemler</th>
                   </tr>
@@ -210,21 +210,21 @@ export function SkillsPage() {
             <h2>
               <Award size={18} />{" "}
               {editing
-                ? "Tanımı düzenle"
+                ? "Tanımı Düzenle"
                 : kind === "skill"
-                  ? "Yetenek ekle"
+                  ? "Yetenek Ekle"
                   : kind === "category"
-                    ? "Kategori ekle"
-                    : "Seviye ekle"}
+                    ? "Kategori Ekle"
+                    : "Seviye Ekle"}
             </h2>
             <form className="management-form" onSubmit={submit}>
               <label>
                 <span className="field-label">
                   {kind === "skill"
-                    ? "Yetenek adı"
+                    ? "Yetenek Adı"
                     : kind === "category"
-                      ? "Kategori adı"
-                      : "Seviye adı"}
+                      ? "Kategori Adı"
+                      : "Seviye Adı"}
                 </span>
                 <input
                   name="name"
@@ -239,11 +239,11 @@ export function SkillsPage() {
               {kind === "skill" && (
                 <DropdownSelect
                   label="Kategori"
-                  ariaLabel="Yetenek kategorisi"
+                  ariaLabel="Yetenek Kategorisi"
                   value={categoryId}
                   onChange={setCategoryId}
                   options={[
-                    { value: "", label: "Kategori seçin" },
+                    { value: "", label: "Kategori Seçin" },
                     ...(catalog.data?.categories ?? []).map((item) => ({
                       value: item.id,
                       label: item.name,
@@ -254,8 +254,8 @@ export function SkillsPage() {
               {kind === "level" && (
                 <>
                   <DropdownSelect
-                    label="Seviye sırası"
-                    ariaLabel="Seviye sırası"
+                    label="Seviye Sırası"
+                    ariaLabel="Seviye Sırası"
                     value={rank}
                     onChange={setRank}
                     options={Array.from({ length: 10 }, (_, index) => ({
@@ -315,7 +315,7 @@ export function SkillsPage() {
       </div>
       {deleteTarget && (
         <DeleteModal
-          title="Tanımı sil"
+          title="Tanımı Sil"
           pending={remove.isPending}
           onClose={() => setDeleteTarget(null)}
           onConfirm={() => remove.mutate(deleteTarget.id)}

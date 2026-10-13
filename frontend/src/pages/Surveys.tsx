@@ -119,7 +119,7 @@ export function SurveysPage() {
       <header className="surveys-heading">
         <div>
           <span className="eyebrow">EKİP DENEYİMİ</span>
-          <h1>Anket & Oylama</h1>
+          <h1>Anket ve Oylama</h1>
           <p>
             {active.length} aktif anket · {completed.length} tamamlanmış
           </p>
@@ -130,7 +130,7 @@ export function SurveysPage() {
             onClick={() => setScreen("create")}
           >
             <Plus size={17} />
-            Anket oluştur
+            Anket Oluştur
           </button>
         )}
       </header>
@@ -271,8 +271,8 @@ function Card({
               {survey.active && canUpdate && (
                 <button
                   className="close-icon"
-                  title="Anketi kapat"
-                  aria-label="Anketi kapat"
+                  title="Anketi Kapat"
+                  aria-label="Anketi Kapat"
                   onClick={close}
                 >
                   <Lock size={17} />
@@ -280,8 +280,8 @@ function Card({
               )}
               {canDelete && <button
                 className="danger-icon"
-                title="Anketi sil"
-                aria-label="Anketi sil"
+                title="Anketi Sil"
+                aria-label="Anketi Sil"
                 onClick={remove}
               >
                 <Trash2 size={17} />
@@ -310,7 +310,7 @@ function Card({
               Yanıtlandı
             </>
           ) : (
-            "Oy kullan"
+            "Oy Kullan"
           )}
         </button>
       )}
@@ -443,7 +443,7 @@ function CreateSurveyPage({
       <header className="surveys-heading">
         <div>
           <span className="eyebrow">EKİP DENEYİMİ</span>
-          <h1>Anket & Oylama</h1>
+          <h1>Anket ve Oylama</h1>
           <p>Yeni anket hazırlayın ve personellerle paylaşın.</p>
         </div>
       </header>
@@ -501,14 +501,14 @@ function CreateSurveyPage({
               <label className="survey-floating-field">
                 <span>Hedef departman</span>
                 <DropdownSelect
-                  ariaLabel="Hedef departman"
+                  ariaLabel="Hedef Departman"
                   value={departmentId}
                   onChange={(value) => {
                     setDepartmentId(value);
                     setSelectedOverride(null);
                   }}
                   options={[
-                    { value: "", label: "Tüm departmanlar" },
+                    { value: "", label: "Tüm Departmanlar" },
                     ...(directory.data?.departments.map((department) => ({
                       value: department.id,
                       label: department.name,
@@ -517,11 +517,11 @@ function CreateSurveyPage({
                 />
               </label>
               <MultiDropdownSelect
-                label="Seçilen kişiler"
-                ariaLabel="Gönderilecek kişileri seçin"
+                label="Seçilen Kişiler"
+                ariaLabel="Gönderilecek Kişileri Seçin"
                 emptyLabel="Seçin"
                 className="survey-recipient-select"
-                selectionLabel="Seçilen kişiler"
+                selectionLabel="Seçilen Kişiler"
                 showVisibleToggle
                 value={selected}
                 onChange={setSelectedOverride}
@@ -555,7 +555,7 @@ function CreateSurveyPage({
               }
             >
               <Plus size={17} />
-              Soru ekle
+              Soru Ekle
             </button>
           </section>
           <ChannelSelector
@@ -576,7 +576,7 @@ function CreateSurveyPage({
             className="button primary"
             disabled={create.isPending || !channels.length}
           >
-            {create.isPending ? "Yayınlanıyor…" : "Anketi yayınla"}
+            {create.isPending ? "Yayınlanıyor…" : "Anketi Yayınla"}
           </button>
         </footer>
       </form>
@@ -614,8 +614,8 @@ function ChannelSelector({
     },
     {
       id: "EMAIL",
-      label: "E-posta",
-      description: "E-posta adresine gönder",
+      label: "E-Posta",
+      description: "E-Posta adresine gönder",
       icon: Mail,
       available: !!directory?.emailEnabled,
     },
@@ -624,7 +624,7 @@ function ChannelSelector({
     <section className="survey-channel-section">
       <h3>
         <Send size={17} />
-        Gönderim kanalları
+        Gönderim Kanalları
       </h3>
       <p className="survey-channel-help">
         Bir veya birden fazla kanal seçebilirsiniz.
@@ -727,7 +727,7 @@ function QuestionEditor({
             const source = previousQuestions.find(item => item.id === value);
             update({ condition: source ? { questionId: source.id, option: conditionOptions(source)[0] ?? "" } : null });
           }}
-          options={[{ value: "", label: "Koşulsuz (her zaman göster)" }, ...conditionSources.map(item => ({ value: item.id, label: `Soru ${previousQuestions.indexOf(item) + 1}: ${item.text || "Soru metni"} cevabına bağlı` }))]}
+          options={[{ value: "", label: "Koşulsuz (Her Zaman Göster)" }, ...conditionSources.map(item => ({ value: item.id, label: `Soru ${previousQuestions.indexOf(item) + 1}: ${item.text || "Soru metni"} cevabına bağlı` }))]}
         />
         {source && <>
           <span className="survey-condition-arrow">→</span>
@@ -772,7 +772,7 @@ function QuestionEditor({
             }
           >
             <Plus size={14} />
-            Seçenek ekle
+            Seçenek Ekle
           </button>
         </div>
       )}
@@ -806,7 +806,7 @@ function StatisticsModal({
               tarafından
             </p>
           </div>
-          <button className="standard-modal-close" onClick={close} aria-label="İstatistikleri kapat">
+          <button className="standard-modal-close" onClick={close} aria-label="İstatistikleri Kapat">
             <X size={20} />
           </button>
         </header>
@@ -962,7 +962,7 @@ function AnswerModal({
       <div className="survey-answer-modal" role="dialog" aria-modal="true" aria-label={survey.title}>
         <header>
           <h2>{survey.title}</h2>
-          <button className="icon-button" onClick={close} aria-label="Anketi kapat">
+          <button className="icon-button" onClick={close} aria-label="Anketi Kapat">
             <X size={20} />
           </button>
         </header>

@@ -2264,7 +2264,7 @@ html[data-theme="dark"] .notification-conversation-link:hover {
 .topbar-actions .notification-trigger { order: 2; }
 .topbar-actions .theme-toggle { order: 3; }
 .topbar-actions .topbar-profile-link { order: 4; }
-.topbar-actions > button[aria-label="Çıkış yap"] { order: 5; }
+.topbar-actions > .logout-button { order: 5; }
 .topbar-icon-link,
 .topbar-profile-link {
   color: var(--ui-text-secondary);
@@ -7329,3 +7329,25 @@ html[data-theme="dark"] .notifications-page .notification-toolbar {
     width: calc(100% - 14px);
   }
 }
+
+/* Sidebar overflow uses the same themed scrollbar as our dropdowns. */
+.sidebar {
+  --sidebar-scroll-thumb: #a8beb2;
+  --sidebar-scroll-hover: #789889;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-scroll-thumb) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 7px; height: 7px; }
+.sidebar::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--sidebar-scroll-thumb);
+  background-clip: padding-box;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-scroll-hover);
+  background-clip: padding-box;
+}
+html[data-theme="dark"] .sidebar { --sidebar-scroll-thumb: #587468; }

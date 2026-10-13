@@ -32,14 +32,14 @@ export function matchSkills(text: string, skills: StaffSkill[]) {
   const normalized = skillKey(text);
   return skills.filter((skill) => {
     const name = skillKey(skill.name);
-    const variants = new Set([name, ...(aliases[name] ?? [])]);
+    const variants = new Set([name, skillKey(skill.category), ...(aliases[name] ?? [])]);
     for (const [canonical, alternatives] of Object.entries(aliases)) {
       if (alternatives.includes(name)) {
         variants.add(canonical);
         alternatives.forEach((value) => variants.add(value));
       }
     }
-    return [...variants].some((value) =>
+    return [...variants].filter(Boolean).some((value) =>
       new RegExp(
         `(?<![a-z0-9_+#])${escapeRegex(value)}(?![a-z0-9_+#])`,
         "u",

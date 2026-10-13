@@ -1243,7 +1243,7 @@ html[data-theme="dark"] .survey-channel-warning {
 }
 .survey-channels:has(label:nth-child(3).selected)::after {
   grid-column: 1/-1;
-  content: "E-posta, anket başlığını ve anket bağlantısını içerir.";
+  content: "E-Posta, anket başlığını ve anket bağlantısını içerir.";
   padding: 10px 12px;
   border-radius: 8px;
   background: #eef7f3;

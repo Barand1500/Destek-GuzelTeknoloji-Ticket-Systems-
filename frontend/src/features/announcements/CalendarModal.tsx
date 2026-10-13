@@ -69,7 +69,7 @@ export function CalendarPage() {
         title="Takvim"
         description="Duyuruları ve özel günleri takvim üzerinden takip edin."
       />
-      <section className="calendar-modal" aria-label="Duyuru takvimi">
+      <section className="calendar-modal" aria-label="Duyuru Takvimi">
         <header>
           <div>
             <CalendarDays size={20} />
@@ -89,14 +89,14 @@ export function CalendarPage() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              aria-label="Önceki ay"
+              aria-label="Önceki Ay"
             >
               <ChevronLeft size={17} />
             </button>
             <button
               type="button"
               onClick={() => navigate(1)}
-              aria-label="Sonraki ay"
+              aria-label="Sonraki Ay"
             >
               <ChevronRight size={17} />
             </button>

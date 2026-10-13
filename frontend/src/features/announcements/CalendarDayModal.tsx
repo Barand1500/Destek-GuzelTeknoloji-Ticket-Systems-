@@ -12,8 +12,8 @@ export function CalendarDayModal({ date, announcements, onClose }: { date: Date;
   useEffect(() => { const node = dialog.current; node?.showModal(); return () => node?.close(); }, []);
   return <dialog ref={dialog} className="announcements-modal calendar-day-modal" aria-labelledby="calendar-day-title" onCancel={event => { event.preventDefault(); onClose(); }}>
     <header className="announcements-header">
-      <div><h2 id="calendar-day-title">Günün detayları</h2><p>{date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })} · {announcements.length} duyuru</p></div>
-      <button type="button" className="announcements-close" aria-label="Günün detaylarını kapat" onClick={onClose}><X size={21} /></button>
+      <div><h2 id="calendar-day-title">Günün Detayları</h2><p>{date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })} · {announcements.length} duyuru</p></div>
+      <button type="button" className="announcements-close" aria-label="Günün Detaylarını Kapat" onClick={onClose}><X size={21} /></button>
     </header>
     <div className="announcements-scroll calendar-day-announcements">
       {!announcements.length && <p className="announcement-muted">Bu tarihte duyuru yok.</p>}

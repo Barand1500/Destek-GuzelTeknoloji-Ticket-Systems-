@@ -112,7 +112,7 @@ export function AuthPage() {
         <div className="brand"><img src="/images/brand-mark.png" alt="" /> destek<span className="brand-dot">.</span></div>
         <div>
           <span className="eyebrow">DAHA İYİ BİR DESTEK DENEYİMİ</span>
-          <h1>Her talep,<br />bir çözümün<br />başlangıcı.</h1>
+          <h1>Her Talep,<br />Bir Çözümün<br />Başlangıcı.</h1>
           <p>Sorularınız, konuşmalarınız ve çözümleriniz.<br />Hepsi tek bir yerde.</p>
         </div>
         <div className="auth-support-photo" aria-hidden="true">
@@ -124,13 +124,13 @@ export function AuthPage() {
         <div className="auth-slider">
         {resetEmail !== null ? <PasswordResetForm email={resetEmail} onBack={() => setResetEmail(null)} onSaved={() => { setResetEmail(null); setSaved(true); }} /> :
         <form ref={formRef} className="auth-form auth-slide-back" onSubmit={submit}>
-          <h2>Tekrar hoş geldiniz</h2>
-          <label><span className="field-label">E-posta adresi</span><EmailInput name="email" defaultValue={loginEmail} required /></label>
-          <button type="button" className="auth-forgot" onClick={forgotPassword}>Şifremi unuttum?</button>
-          <label><span className="field-label">Şifre</span><span className="password-field"><input name="password" required type={showPassword ? "text" : "password"} minLength={1} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+          <h2>Tekrar Hoş Geldiniz</h2>
+          <label><span className="field-label">E-Posta Adresi</span><EmailInput name="email" defaultValue={loginEmail} required /></label>
+          <button type="button" className="auth-forgot" onClick={forgotPassword}>Şifremi Unuttum?</button>
+          <label><span className="field-label">Şifre</span><span className="password-field"><input name="password" required type={showPassword ? "text" : "password"} minLength={1} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
           {saved && <p className="auth-notice" role="status">Şifreniz yenilendi. Yeni şifrenizle giriş yapabilirsiniz.</p>}
           {error && <p className="error" role="alert">{error}</p>}
-          <button className="button primary" disabled={pending}>{pending ? "Lütfen bekleyin…" : "Giriş yap"}<ArrowRight size={17} /></button>
+          <button className="button primary" disabled={pending}>{pending ? "Lütfen Bekleyin…" : "Giriş Yap"}<ArrowRight size={17} /></button>
         </form>}
         </div>
       </section>

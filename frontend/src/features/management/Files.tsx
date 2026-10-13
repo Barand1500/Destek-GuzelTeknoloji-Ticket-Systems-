@@ -220,7 +220,7 @@ export function FilesPage() {
         <form
           ref={editor}
           className="files-folder-form"
-          aria-label={editingItem ? "Dosya veya klasör düzenle" : "Yeni klasör"}
+          aria-label={editingItem ? "Dosya veya Klasör Düzenle" : "Yeni Klasör"}
           onSubmit={(event) => {
             event.preventDefault();
             void saveItem();
@@ -232,7 +232,7 @@ export function FilesPage() {
             autoFocus
             required
             aria-label={
-              editingItem?.type === "file" ? "Dosya adı" : "Klasör adı"
+              editingItem?.type === "file" ? "Dosya Adı" : "Klasör Adı"
             }
             placeholder={
               editingItem?.type === "file" ? "Dosya adı..." : "Klasör adı..."
@@ -319,14 +319,14 @@ export function FilesPage() {
           <button
             className={list ? "" : "active"}
             onClick={() => setList(false)}
-            aria-label="Izgara görünümü"
+            aria-label="Izgara Görünümü"
           >
             <Layers size={16} />
           </button>
           <button
             className={list ? "active" : ""}
             onClick={() => setList(true)}
-            aria-label="Liste görünümü"
+            aria-label="Liste Görünümü"
           >
             <List size={16} />
           </button>

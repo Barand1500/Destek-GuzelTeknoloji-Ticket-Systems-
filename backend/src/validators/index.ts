@@ -2,7 +2,7 @@ import { z } from "zod";
 export const idSchema = z.uuid();
 const password = z
   .string()
-  .min(10)
+  .min(5)
   .max(72)
   .refine(
     (v) => Buffer.byteLength(v, "utf8") <= 72,

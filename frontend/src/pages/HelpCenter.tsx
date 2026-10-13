@@ -26,16 +26,16 @@ export function HelpCenter() {
       <section className="auth-story">
         <Link className="brand" to="/">
           <img src="/images/brand-mark.png" alt="" />
-          destek<span className="brand-dot">.</span>
+          Destek<span className="brand-dot">.</span>
         </Link>
         <div>
           <span className="eyebrow">
             DESTEK MERKEZİ
           </span>
           <h1>
-            Size nasıl
+            Size Nasıl
             <br />
-            yardımcı olabiliriz?
+            Yardımcı Olabiliriz?
           </h1>
           <p>
             Sorularınızı destek ekibimize iletin.
@@ -51,7 +51,7 @@ export function HelpCenter() {
         <div className="auth-form">
           <MessageSquare size={32} aria-hidden="true" />
           <span className="eyebrow">HELP CENTER</span>
-          <h2>Birlikte çözüme ulaşalım</h2>
+          <h2>Birlikte Çözüme Ulaşalım</h2>
           <p>
             Hesabınızla destek talebi oluşturabilir, dosya paylaşabilir ve
             geçmiş konuşmalarınıza ulaşabilirsiniz.
@@ -68,23 +68,23 @@ export function HelpCenter() {
                     : roleHome(user.role)
                 }
               >
-                {user.role === "CUSTOMER" ? "Destek al" : "Çalışma alanına git"}
+                {user.role === "CUSTOMER" ? "Destek Al" : "Çalışma Alanına Git"}
                 <ArrowRight size={17} />
               </Link>
               {user.role === "CUSTOMER" && (
                 <Link className="button" to={roleHome(user.role)}>
-                  Müşteri portalına git
+                  Müşteri Portalına Git
                 </Link>
               )}
             </>
           ) : (
             <>
               <Link className="button primary" to="/auth">
-                Destek almak için giriş yap
+                Destek Almak İçin Giriş Yap
                 <ArrowRight size={17} />
               </Link>
               <Link className="button" to="/register">
-                Yeni hesap oluştur
+                Yeni Hesap Oluştur
               </Link>
             </>
           )}
@@ -92,7 +92,7 @@ export function HelpCenter() {
             <p className="error" role="alert">
               Destek bilgileri yüklenemedi.{" "}
               <button type="button" onClick={() => void settings.refetch()}>
-                Tekrar dene
+                Tekrar Dene
               </button>
             </p>
           )}

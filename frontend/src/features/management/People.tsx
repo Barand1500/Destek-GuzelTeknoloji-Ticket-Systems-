@@ -76,7 +76,7 @@ function CustomerFileRow({ customerId, file, onDelete }: { customerId: string; f
   useEffect(() => { if (!preview.data) return; const url = URL.createObjectURL(preview.data); setPreviewUrl(url); return () => URL.revokeObjectURL(url); }, [preview.data]);
   const triggerDownload = (blob: Blob) => { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.originalName; link.style.display = 'none'; document.body.appendChild(link); link.click(); window.setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 1000); };
   const download = () => { if (preview.data) { triggerDownload(preview.data); return; } void (async () => { const response = await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' }); triggerDownload(response.data); })(); };
-  return <div className="customer-file-row"><div className="customer-file-main">{isImage && previewUrl ? <img className="customer-file-preview" src={previewUrl} alt="" /> : <span className="customer-file-placeholder">{isImage ? 'IMG' : 'FILE'}</span>}<div><button className="customer-file-name" type="button" onClick={download}>{file.originalName}</button><small>{file.mimeType} · {formatFileSize(file.size)}</small><button className="customer-file-delete" type="button" onClick={onDelete}>Dosyayı sil</button></div></div></div>;
+  return <div className="customer-file-row"><div className="customer-file-main">{isImage && previewUrl ? <img className="customer-file-preview" src={previewUrl} alt="" /> : <span className="customer-file-placeholder">{isImage ? 'IMG' : 'FILE'}</span>}<div><button className="customer-file-name" type="button" onClick={download}>{file.originalName}</button><small>{file.mimeType} · {formatFileSize(file.size)}</small><button className="customer-file-delete" type="button" onClick={onDelete}>Dosyayı Sil</button></div></div></div>;
 }
 type ManagedDepartment = Department & { isActive: boolean };
 const phoneDigits = (value: string) => value.replace(/\D/g, "");
@@ -144,16 +144,16 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
   const canAssignStaff = hasPermission(user, 'conversations.assign');
   const [suggestedAgent, setSuggestedAgent] = useState<{ id: string; name: string; departmentId: string; departmentName: string } | null>(null);
   const websites = useQuery({ queryKey: ["websites", "phone-request"], queryFn: async () => (await api.get<Page<Website>>("/websites", { params: { limit: 100 } })).data });
-  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId) && canAssignStaff, refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; presence: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
+  const agents = useQuery({ queryKey: ["department-agents", departmentId], enabled: Boolean(departmentId) && canAssignStaff, refetchInterval: 30_000, queryFn: async () => (await api.get<Page<{ id: string; name: string; displayName?: string; presence: "ONLINE" | "IDLE" | "OFFLINE"; openConversationCount: number }>>(`/departments/${departmentId}/agents`, { params: { limit: 100 } })).data });
   return <>
-    {customer && <label className="phone-request-selected"><span className="field-label">Seçilen kişi</span><input readOnly value={customer.name} /></label>}
+    {customer && <label className="phone-request-selected"><span className="field-label">Seçilen Kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
-      <div className="phone-request-channel"><DropdownSelect label="Dönüş kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Dönüş kanalını seçin" options={availableChannels.map(value => ({ value, label: value === "EMAIL" ? "E-posta" : value === "SMS" ? "SMS" : "WhatsApp" }))} />{channelStatus && <small className="muted">{channelStatus}</small>}</div>
-      <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje seçin" options={[{ value: "", label: "Proje seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
+      <div className="phone-request-channel"><DropdownSelect label="Dönüş Kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Dönüş Kanalını Seçin" options={availableChannels.map(value => ({ value, label: value === "EMAIL" ? "E-Posta" : value === "SMS" ? "SMS" : "WhatsApp" }))} />{channelStatus && <small className="muted">{channelStatus}</small>}</div>
+      <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje Seçin" options={[{ value: "", label: "Proje Seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} /></label>
       {canAssignStaff && <SuggestedDescription departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />}
       <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} current={suggestedAgent?.departmentId === departmentId ? { id: departmentId, name: suggestedAgent.departmentName } : undefined} onChange={(value) => { setDepartmentId(value); setAssignedAgentId(""); }} params={{ accessible: "true" }} /></div>
-      {canAssignStaff ? <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan personeli seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div> : <div className="phone-request-assignee"><span className="field-label">Atama</span><span>Departman kuyruğuna gönderilecek</span></div>}
+      {canAssignStaff ? <div className="phone-request-assignee"><input type="hidden" name="assignedAgentId" value={assignedAgentId} /><DropdownSelect label="Atanan Personel" value={assignedAgentId} onChange={setAssignedAgentId} ariaLabel="Atanan Personeli Seçin" options={[{ value: "", label: departmentId ? "Atanmamış" : "Önce departman seçin" }, ...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.displayName ?? agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div> : <div className="phone-request-assignee"><span className="field-label">Atama</span><span>Departman kuyruğuna gönderilecek</span></div>}
     </div>
   </>;
 }
@@ -336,16 +336,16 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
   return (
     <main className="page">
       <Heading
-        title={defaultRole === "AGENT" ? "Destek uzmanları" : defaultRole === "SUPERVISOR" ? "Departman sorumluları" : "Personeller"}
+        title={defaultRole === "AGENT" ? "Destek Uzmanları" : defaultRole === "SUPERVISOR" ? "Departman Sorumluları" : "Personeller"}
         description="Ekibinizin rollerini ve departman erişimlerini yönetin."
       />
-      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel alanları"><button type="button" className="active">Kullanıcılar</button>{hasPermission(user, "departments.view") && <button type="button" onClick={() => user && navigate(workspacePath(user.role, "departments"))}>Departmanlar</button>}</nav>}
+      {!defaultRole && <nav className="catalog-tabs" aria-label="Personel Alanları"><button type="button" className="active">Kullanıcılar</button>{hasPermission(user, "departments.view") && <button type="button" onClick={() => user && navigate(workspacePath(user.role, "departments"))}>Departmanlar</button>}</nav>}
       <div className="management-grid users-management-grid">
         <section className="management-panel">
           <Search
             value={list.search}
             onChange={list.setSearch}
-            label="Genel personel araması"
+            label="Genel Personel Araması"
             limit={list.limit}
             onLimitChange={list.setLimit}
           />
@@ -362,7 +362,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 <thead>
                   <tr>
                     <th>Kullanıcı</th>
-                    <th>Rol ve departman</th>
+                    <th>Rol ve Departman</th>
                     {canUpdateUsers && <th>Durum</th>}
                     {(canUpdateUsers || canDeleteUsers) && <th>İşlemler</th>}
                   </tr>
@@ -425,10 +425,10 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
           />
         </section>
         {(editing ? canUpdateUsers : canCreateUsers) && <section className="management-panel users-editor-panel">
-          <h2>{editing ? "Kullanıcıyı düzenle" : "Kullanıcı oluştur"}</h2>
+          <h2>{editing ? "Kullanıcıyı Düzenle" : "Kullanıcı Oluştur"}</h2>
           <form key={formVersion} className="management-form" onSubmit={submit}>
             <label>
-              <span className="field-label">Ad soyad</span>
+              <span className="field-label">Ad Soyad</span>
               <input
                 name="name"
                 required
@@ -457,7 +457,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
               />
             </label>
             <label>
-              <span className="field-label">E-posta</span>
+              <span className="field-label">E-Posta</span>
               <input
                 name="email"
                 type="email"
@@ -469,22 +469,22 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             </div>
             {!editing && (
               <label className="users-password-field">
-                <span className="field-label">İlk şifre</span>
+                <span className="field-label">İlk Şifre</span>
                 <input
                   name="password"
                   type={showInitialPassword ? "text" : "password"}
                   required
-                  minLength={10}
+                  minLength={5}
                   maxLength={72}
                   autoComplete="new-password"
                 />
-                <button type="button" className="password-toggle" aria-label={showInitialPassword ? "Şifreyi gizle" : "Şifreyi göster"} aria-pressed={showInitialPassword} onClick={() => setShowInitialPassword(visible => !visible)}>{showInitialPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
+                <button type="button" className="password-toggle" aria-label={showInitialPassword ? "Şifreyi Gizle" : "Şifreyi Göster"} aria-pressed={showInitialPassword} onClick={() => setShowInitialPassword(visible => !visible)}>{showInitialPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
               </label>
             )}
             <div className={`users-form-row${role === "CUSTOMER" ? " single" : ""}`}>
             <DropdownSelect
               label="Rol"
-              ariaLabel="Kullanıcı rolü"
+              ariaLabel="Kullanıcı Rolü"
               value={accessRoleId ?? role}
               onChange={(value) => { const custom = roleOptions.data?.find(item => item.id === value); setAccessRoleId(custom?.id ?? null); setRole(custom ? 'ADMIN' : value as Role); }}
               options={user?.accessRole ? [{ value: user.accessRole.id, label: user.accessRole.name }] : [...Object.entries(roles).filter(([value]) => (value !== 'ADMIN' || canCreateSystemAdmin) && (value !== 'SUPERVISOR' || canCreateSupervisor)).map(([value, label]) => ({ value, label })), ...(roleOptions.data ?? []).map(item => ({ value: item.id, label: item.name }))]}
@@ -492,12 +492,12 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             {role !== "CUSTOMER" && (
               <div className="users-department-control">
                 <MultiDropdownSelect
-                  label="Departman üyelikleri"
-                  ariaLabel="Departman üyelikleri"
+                  label="Departman Üyelikleri"
+                  ariaLabel="Departman Üyelikleri"
                   value={selectedDepartmentIds}
                   onChange={setSelectedDepartmentIds}
                   options={(departments.data ?? []).map((department) => ({ value: department.id, label: `${department.name}${department.isActive ? "" : " (Pasif)"}` }))}
-                  emptyLabel={departments.isPending ? "Yükleniyor…" : "Departman seçin"}
+                  emptyLabel={departments.isPending ? "Yükleniyor…" : "Departman Seçin"}
                   selectionLabel={`${selectedDepartmentIds.length} departman seçili`}
                 />
                 <ErrorMessage error={departments.error} />
@@ -518,18 +518,18 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
           </form>
         </section>}
       </div>
-      {deleteTarget && !assignmentModalOpen && <DeleteModal title="Kullanıcıyı sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate({ id: deleteTarget.id }, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error ?? prepareDelete.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Geçmiş görüşmeler korunur.</p></DeleteModal>}
+      {deleteTarget && !assignmentModalOpen && <DeleteModal title="Kullanıcıyı Sil" pending={remove.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => remove.mutate({ id: deleteTarget.id }, { onSuccess: () => { if (editing?.id === deleteTarget.id) reset(); setDeleteTarget(null); } })} error={<ErrorMessage error={remove.error ?? prepareDelete.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Geçmiş görüşmeler korunur.</p></DeleteModal>}
       {assignmentModalOpen && (editing || deleteTarget) && <div className="confirm-backdrop assignment-transfer-backdrop" role="presentation">
         <section className="confirm-modal assignment-transfer-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-transfer-title">
-          <button type="button" className="confirm-close" aria-label="Pencereyi kapat" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }}><X size={20} /></button>
-          <header className="assignment-transfer-header"><h2 id="assignment-transfer-title">{assignmentAction === "delete" ? "Personeli silmeden önce talepleri aktar" : "Açık talepleri aktar"}</h2><p><strong>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}</strong> {assignmentAction === "delete" ? "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. Aktarım bitince personel silinir." : "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. İşlem bitince değişiklik kaydedilir."}</p></header>
+          <button type="button" className="confirm-close" aria-label="Pencereyi Kapat" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }}><X size={20} /></button>
+          <header className="assignment-transfer-header"><h2 id="assignment-transfer-title">{assignmentAction === "delete" ? "Personeli Silmeden Önce Talepleri Aktar" : "Açık Talepleri Aktar"}</h2><p><strong>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}</strong> {assignmentAction === "delete" ? "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. Aktarım bitince personel silinir." : "kişisinin açık taleplerini gruplara ayırıp departmanlara, isteğe bağlı personele aktarın. İşlem bitince değişiklik kaydedilir."}</p></header>
           <div className="assignment-transfer-content">
             <section className="assignment-transfer-list-section">
-              <div className="assignment-transfer-section-heading"><div><h3>Aktarılacak talepler</h3><span>{remainingAssignments.length} henüz gruplandırılmadı / {assignmentImpact.length} toplam</span></div><button type="button" className="button secondary" onClick={() => setSelectedAssignmentIds(remainingAssignments.map((conversation) => conversation.id))} disabled={!remainingAssignments.length}>Kalanların tümünü seç</button></div>
-              {remainingAssignments.length ? <div className="assignment-transfer-table-wrap"><table className="management-table assignment-transfer-table"><thead><tr><th aria-label="Seçim" /><th>Talep</th><th>Mevcut departman</th><th>Atanan personel</th></tr></thead><tbody>{remainingAssignments.map((conversation) => <tr key={conversation.id}><td><input type="checkbox" aria-label={`${conversation.number} numaralı talebi seç`} checked={selectedAssignmentIds.includes(conversation.id)} onChange={(event) => setSelectedAssignmentIds((current) => event.target.checked ? [...current, conversation.id] : current.filter((id) => id !== conversation.id))} /></td><td><strong>#{conversation.number} · {conversation.subject}</strong><small>{conversation.customer.name} · {conversation.status}</small></td><td>{conversation.department.name}</td><td>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}<small>Bu kullanıcı</small></td></tr>)}</tbody></table></div> : <p className="assignment-transfer-empty">Tüm açık talepler aktarım gruplarına eklendi.</p>}
-              {!!transferGroups.length && <div className="assignment-transfer-groups"><h3>Aktarım grupları</h3>{transferGroups.map((group, index) => <article className="assignment-transfer-group" key={`${group.departmentId}-${index}`}><div><strong>Grup {index + 1} · {group.conversationIds.length} talep</strong><span>{group.departmentName} → {group.assignedAgentName ?? "Atanmamış (departman kuyruğu)"}</span><small>{group.conversationIds.map((id) => `#${assignmentImpact.find((conversation) => conversation.id === id)?.number ?? id}`).join(", ")}</small></div><button type="button" className="icon-button danger-icon" aria-label={`Grup ${index + 1} kaldır`} title="Grubu kaldır" onClick={() => { setTransferGroups((current) => current.filter((_, groupIndex) => groupIndex !== index)); setSelectedAssignmentIds((current) => [...current, ...group.conversationIds]); }}><Trash2 size={15} /></button></article>)}</div>}
+              <div className="assignment-transfer-section-heading"><div><h3>Aktarılacak Talepler</h3><span>{remainingAssignments.length} henüz gruplandırılmadı / {assignmentImpact.length} toplam</span></div><button type="button" className="button secondary" onClick={() => setSelectedAssignmentIds(remainingAssignments.map((conversation) => conversation.id))} disabled={!remainingAssignments.length}>Kalanların Tümünü Seç</button></div>
+              {remainingAssignments.length ? <div className="assignment-transfer-table-wrap"><table className="management-table assignment-transfer-table"><thead><tr><th aria-label="Seçim" /><th>Talep</th><th>Mevcut Departman</th><th>Atanan Personel</th></tr></thead><tbody>{remainingAssignments.map((conversation) => <tr key={conversation.id}><td><input type="checkbox" aria-label={`${conversation.number} numaralı talebi seç`} checked={selectedAssignmentIds.includes(conversation.id)} onChange={(event) => setSelectedAssignmentIds((current) => event.target.checked ? [...current, conversation.id] : current.filter((id) => id !== conversation.id))} /></td><td><strong>#{conversation.number} · {conversation.subject}</strong><small>{conversation.customer.name} · {conversation.status}</small></td><td>{conversation.department.name}</td><td>{(assignmentAction === "delete" ? deleteTarget : editing)!.name}<small>Bu kullanıcı</small></td></tr>)}</tbody></table></div> : <p className="assignment-transfer-empty">Tüm açık talepler aktarım gruplarına eklendi.</p>}
+              {!!transferGroups.length && <div className="assignment-transfer-groups"><h3>Aktarım Grupları</h3>{transferGroups.map((group, index) => <article className="assignment-transfer-group" key={`${group.departmentId}-${index}`}><div><strong>Grup {index + 1} · {group.conversationIds.length} talep</strong><span>{group.departmentName} → {group.assignedAgentName ?? "Atanmamış (departman kuyruğu)"}</span><small>{group.conversationIds.map((id) => `#${assignmentImpact.find((conversation) => conversation.id === id)?.number ?? id}`).join(", ")}</small></div><button type="button" className="icon-button danger-icon" aria-label={`Grup ${index + 1} kaldır`} title="Grubu Kaldır" onClick={() => { setTransferGroups((current) => current.filter((_, groupIndex) => groupIndex !== index)); setSelectedAssignmentIds((current) => [...current, ...group.conversationIds]); }}><Trash2 size={15} /></button></article>)}</div>}
             </section>
-            <aside className="assignment-transfer-builder"><h3>Seçilenleri aktarım grubuna ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan personel" ariaLabel="Aktarım hedefi personeli" value={transferAgentId} onChange={setTransferAgentId} options={canAssignStaff ? [{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))] : [{ value: "", label: "Atama izniniz yok" }]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım grubuna ekle</button></aside>
+            <aside className="assignment-transfer-builder"><h3>Seçilenleri Aktarım Grubuna Ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef Departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan Personel" ariaLabel="Aktarım Hedefi Personeli" value={transferAgentId} onChange={setTransferAgentId} options={canAssignStaff ? [{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))] : [{ value: "", label: "Atama İzniniz Yok" }]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım Grubuna Ekle</button></aside>
           </div>
           <footer className="assignment-transfer-footer"><ErrorMessage error={checkAssignmentImpact.error ?? save.error ?? remove.error} /><div className="confirm-actions"><button type="button" className="button secondary" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }} disabled={save.isPending || remove.isPending}>Vazgeç</button><button type="button" className="button primary" onClick={applyTransferGroups} disabled={save.isPending || remove.isPending || remainingAssignments.length > 0 || !transferGroups.length || (transferGroupsNeedDepartmentPermission && !canTransferDepartments) || (!canAssignStaff && transferGroups.some((group) => group.assignedAgentId !== editing?.id))}>{save.isPending || remove.isPending ? "İşleniyor…" : <><Check size={16} /> {assignmentAction === "delete" ? "Aktarımları uygula ve kullanıcıyı sil" : "Aktarımları uygula ve kullanıcıyı kaydet"}</>}</button></div></footer>
         </section>
@@ -599,21 +599,21 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" disabled={Boolean(mergeTarget)} onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button>}</div>
+        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, Telefon veya E-Posta ile Ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" disabled={Boolean(mergeTarget)} onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"} title={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni Müşteri Ekle">+</button>}</div>
         <ListState
           loading={list.isPending}
           error={list.error}
           empty={!list.data?.data.length}
         />
-        {mergeTarget && <div className="customer-merge-selection-bar"><span>Ana kayıt: <strong>{mergeTarget.name}</strong>. Birleştirilecek müşterileri soldaki kutulardan seçin.</span><button type="button" className="button primary" disabled={selectedCustomerIds.length < 2 || mergeCustomers.isPending} onClick={() => mergeCustomers.mutate()}>{mergeCustomers.isPending ? 'Birleştiriliyor...' : 'Seçilenleri birleştir'}</button><button type="button" className="button secondary" disabled={mergeCustomers.isPending} onClick={() => { setMergeTarget(null); setSelectedCustomerIds([]); mergeCustomers.reset(); }}>Vazgeç</button>{mergeCustomers.error && <ErrorMessage error={mergeCustomers.error}/>}</div>}
+        {mergeTarget && <div className="customer-merge-selection-bar"><span>Ana kayıt: <strong>{mergeTarget.name}</strong>. Birleştirilecek müşterileri soldaki kutulardan seçin.</span><button type="button" className="button primary" disabled={selectedCustomerIds.length < 2 || mergeCustomers.isPending} onClick={() => mergeCustomers.mutate()}>{mergeCustomers.isPending ? 'Birleştiriliyor...' : 'Seçilenleri Birleştir'}</button><button type="button" className="button secondary" disabled={mergeCustomers.isPending} onClick={() => { setMergeTarget(null); setSelectedCustomerIds([]); mergeCustomers.reset(); }}>Vazgeç</button>{mergeCustomers.error && <ErrorMessage error={mergeCustomers.error}/>}</div>}
         {!!list.data?.data.length && (
           <div className="management-table-wrap">
-            <table className="management-table">
+            <table className="management-table customer-list-table">
               <thead>
                 <tr>
                   <th>{bulkSelectionMode || mergeTarget ? "Seç" : "Müşteri"}</th>
                   <th>İletişim</th>
-                  <th>Hesap durumu</th>
+                  <th>Hesap Durumu</th>
                   <th>Görüşmeler</th>
                 </tr>
               </thead>
@@ -635,7 +635,7 @@ export function CustomersPage() {
                       {(bulkSelectionMode || mergeTarget) && <input type="checkbox" disabled={mergeCustomers.isPending || mergeTarget?.id === customer.id || (Boolean(mergeTarget) && selectedCustomerIds.length >= 51 && !selectedCustomerIds.includes(customer.id))} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>
                     </td>
-                    <td>{customer.phone ?? "Telefon yok"}<small>{customer.email ?? "E-posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</td>
+                    <td>{customer.phone ?? "Telefon yok"}<small>{customer.email ?? "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
@@ -643,12 +643,12 @@ export function CustomersPage() {
                         className="button secondary"
                         to={`${inboxPath(user!.role)}?customerId=${encodeURIComponent(customer.id)}`}
                       >
-                        Görüşmeleri aç
+                        Görüşmeleri Aç
                       </Link>}
-                      {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>}
+                      {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep Aç</Link>}
                       {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
-                      {canUpdateCustomers && canDeleteCustomers && <button className="icon-button" type="button" disabled={Boolean(mergeTarget) || bulkRemove.isPending} aria-label={`${customer.name} müşterilerini birleştir`} title="Mükerrer müşterileri birleştir" onClick={() => { setMergeTarget(customer); setSelectedCustomerIds([customer.id]); setBulkSelectionMode(false); mergeCustomers.reset(); }}><Plus size={15} aria-hidden="true"/></button>}
-                      <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları gör' : 'Dosya yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
+                      {canUpdateCustomers && canDeleteCustomers && <button className="icon-button" type="button" disabled={Boolean(mergeTarget) || bulkRemove.isPending} aria-label={`${customer.name} müşterilerini birleştir`} title="Mükerrer Müşterileri Birleştir" onClick={() => { setMergeTarget(customer); setSelectedCustomerIds([customer.id]); setBulkSelectionMode(false); mergeCustomers.reset(); }}><Plus size={15} aria-hidden="true"/></button>}
+                      <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları Gör' : 'Dosya Yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
                       {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
                     </td>
@@ -666,26 +666,26 @@ export function CustomersPage() {
       </section>
       {deleteTarget && (
         <div className="confirm-backdrop" role="presentation">
-          <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Müşteri silme onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}>
+          <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}>
             <button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button>
-            <h2>Müşteriyi sil</h2>
+            <h2>Müşteriyi Sil</h2>
             <p><strong>{deleteTarget.name}</strong> adlı müşteriyi silmek istediğinize emin misiniz?</p>
-            <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Müşteriyi sil"}</button></div>
+            <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Müşteriyi Sil"}</button></div>
           </form>
         </div>
       )}
       {bulkDeleteConfirm && <div className="confirm-backdrop" role="presentation">
-        <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Toplu müşteri silme onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); bulkRemove.mutate(selectedCustomerIds); }}>
+        <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Toplu Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); bulkRemove.mutate(selectedCustomerIds); }}>
           <button className="confirm-close" type="button" onClick={() => setBulkDeleteConfirm(false)} aria-label="Kapat">×</button>
-          <h2>Müşterileri sil</h2>
+          <h2>Müşterileri Sil</h2>
           <p>Seçilen <strong>{selectedCustomerIds.length}</strong> müşteriyi silmek istediğinize emin misiniz?</p>
-          <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setBulkDeleteConfirm(false)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri sil"}</button></div>
+          <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setBulkDeleteConfirm(false)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri Sil"}</button></div>
         </form>
       </div>}
       {customerModalOpen && <div className="confirm-backdrop customer-form-backdrop" role="presentation">
       <section ref={customerFormRef} className="confirm-modal customer-form-panel" role="dialog" aria-modal="true" aria-labelledby="customer-form-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="customer-form-heading">
-          <h2 id="customer-form-title">{editing ? "Müşteri bilgilerini düzenle" : "Yeni arayan müşteri"}</h2>
+          <h2 id="customer-form-title">{editing ? "Müşteri Bilgilerini Düzenle" : "Yeni Arayan Müşteri"}</h2>
           <button className="customer-form-close" type="button" onClick={() => setCustomerModalOpen(false)} aria-label="Kapat" title="Kapat"><X size={18} /></button>
         </div>
         <form key={formVersion} className="management-form" onSubmit={event => {
@@ -700,15 +700,15 @@ export function CustomersPage() {
           save.mutate({ id: editing?.id, data });
         }}>
           <div className="customer-form-body">
-          <label><span className="field-label">Ad soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
+          <label><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
           <label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
-          <label><span className="field-label">Ek telefonlar</span><input name="extraPhones" placeholder="Virgülle ayırabilirsiniz" defaultValue={editing?.extraPhones ?? ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.split(",").map((phone) => formatPhone(phone.trim())).filter(Boolean).join(", "); }} /></label>
-          <label><span className="field-label">E-posta</span> <EmailInput name="email" defaultValue={editing?.email ?? ""} /></label>
-          <label><span className="field-label">Ek e-posta adresleri</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>
+          <label><span className="field-label">Ek Telefonlar</span><input name="extraPhones" placeholder="Virgülle ayırabilirsiniz" defaultValue={editing?.extraPhones ?? ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.split(",").map((phone) => formatPhone(phone.trim())).filter(Boolean).join(", "); }} /></label>
+          <label><span className="field-label">E-Posta</span> <EmailInput name="email" defaultValue={editing?.email ?? ""} /></label>
+          <label><span className="field-label">Ek E-Posta Adresleri</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>
           <label><span className="field-label">Şirket</span> <input name="company" maxLength={120} defaultValue={editing?.company ?? ""}/></label>
-          <label><span className="field-label">Müşteri notu</span> <textarea name="staffNote" maxLength={2000} rows={4} defaultValue={editing?.staffNote ?? ""} placeholder="Örn. Arama nedeni, tercih ettiği dönüş saati veya personel için önemli bilgi"/></label>
+          <label><span className="field-label">Müşteri Notu</span> <textarea name="staffNote" maxLength={2000} rows={4} defaultValue={editing?.staffNote ?? ""} placeholder="Örn. Arama nedeni, tercih ettiği dönüş saati veya personel için önemli bilgi"/></label>
           <div className="customer-form-upload">
-            <label><span className="field-label">Dosya ekle</span><input type="file" name="customerFiles" multiple disabled={save.isPending} onChange={(event) => { setCustomerFiles(Array.from(event.currentTarget.files ?? [])); event.currentTarget.value = ""; }} /></label>
+            <label><span className="field-label">Dosya Ekle</span><input type="file" name="customerFiles" multiple disabled={save.isPending} onChange={(event) => { setCustomerFiles(Array.from(event.currentTarget.files ?? [])); event.currentTarget.value = ""; }} /></label>
             <ComposerFiles files={customerFiles} setFiles={setCustomerFiles} disabled={save.isPending} />
           </div>
           <ErrorMessage error={save.error}/>
@@ -828,7 +828,7 @@ export function PhoneSupportPage() {
       return;
     }
     if (channel === "EMAIL" && !String(values.get("email") ?? "").trim()) {
-      setChannelFormError("E-posta kanalını kullanmak için yeni müşterinin e-posta adresini girin veya başka kanal seçin.");
+      setChannelFormError("E-Posta kanalını kullanmak için yeni müşterinin e-posta adresini girin veya başka kanal seçin.");
       return;
     }
     if ((channel === "SMS" || channel === "WHATSAPP") && !String(values.get("phone") ?? "").trim()) {
@@ -854,7 +854,7 @@ export function PhoneSupportPage() {
       return;
     }
     if (channel === "EMAIL" && !activeCustomer?.email) {
-      setChannelFormError("E-posta kanalını kullanmak için müşterinin e-posta adresi gerekli.");
+      setChannelFormError("E-Posta kanalını kullanmak için müşterinin e-posta adresi gerekli.");
       return;
     }
     if ((channel === "SMS" || channel === "WHATSAPP") && !activeCustomer?.phone) {
@@ -869,51 +869,51 @@ export function PhoneSupportPage() {
   }
   return (
     <main className="page">
-      <Heading title={activeCustomer ? `${activeCustomer.name} için Telefon desteği aç` : "Telefon desteği için talep aç"} description={activeCustomer ? "Bu kişi için talep bilgilerini doldurun ve destek kuyruğuna gönderin." : "Arayan kişiyi bulun, seçin ve görüşmeyi doğrudan destek kuyruğuna gönderin."} />
-      {activeCustomer && <button type="button" className="button secondary phone-support-back" onClick={returnToSearch}>← Aramaya geri dön</button>}
+      <Heading title={activeCustomer ? `${activeCustomer.name} için Telefon desteği aç` : "Telefon Desteği İçin Talep Aç"} description={activeCustomer ? "Bu kişi için talep bilgilerini doldurun ve destek kuyruğuna gönderin." : "Arayan kişiyi bulun, seçin ve görüşmeyi doğrudan destek kuyruğuna gönderin."} />
+      {activeCustomer && <button type="button" className="button secondary phone-support-back" onClick={returnToSearch}>← Aramaya Geri Dön</button>}
       <div className="management-grid phone-support-grid">
         <section className="management-panel phone-support-search-panel">
           <label className="phone-support-search">
             Telefon, e-posta veya ad ile ara
             <span>
               <input type="search" value={search} onChange={(event) => searchCustomers(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); searchCustomers(event.currentTarget.value); setEnterCreateRequested(false); setShowCreate(true); } }} placeholder="Arayanın telefonu, e-postası veya adı" autoFocus />
-              <button type="button" className="button primary phone-support-add" onClick={() => setShowCreate(true)} aria-label="Yeni kişi ekle" title="Yeni kişi ekle">+</button>
+              <button type="button" className="button primary phone-support-add" onClick={() => setShowCreate(true)} aria-label="Yeni Kişi Ekle" title="Yeni Kişi Ekle">+</button>
             </span>
           </label>
           {!hasSearched && <p className="management-empty phone-support-empty">Arayan kişinin bilgilerini yazmaya başlayın.</p>}
           {hasSearched && <ListState loading={customers.isPending} error={customers.error} empty={false} />}
-          {displayResults.map((customer) => <button className={`customer-choice ${customerId === customer.id ? "selected" : ""}`} type="button" key={customer.id} onClick={() => selectCustomer(customer)}><strong>{customer.name}</strong><span>{customer.phone ?? "Telefon yok"} · {customer.email ?? "E-posta yok"}</span>{customer.company && <small>{customer.company}</small>}{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</button>)}
+          {displayResults.map((customer) => <button className={`customer-choice ${customerId === customer.id ? "selected" : ""}`} type="button" key={customer.id} onClick={() => selectCustomer(customer)}><strong>{customer.name}</strong><span>{customer.phone ?? "Telefon yok"} · {customer.email ?? "E-Posta yok"}</span>{customer.company && <small>{customer.company}</small>}{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</button>)}
           {noResults && <p className="phone-support-no-result">Eşleşen kişi bulunamadı. Sağdaki <strong>+</strong> düğmesiyle arayanı ekleyin.</p>}
           {hasSearched && <Pagination pagination={customers.data?.pagination} onChange={setPhonePage} />}
-          {showCreate && <form className="management-form phone-support-create" onSubmit={submitCustomer}><h2>Yeni arayan kişi</h2><label><span className="field-label">Ad soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label><label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={isPhoneSearch(search) ? formatPhone(search) : ""} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} onKeyDown={focusNextField} /></label><label><span className="field-label">E-posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label><label><span className="field-label">Şirket</span><input name="company" maxLength={120} /></label><label><span className="field-label">Müşteri notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label><div className="phone-support-ticket-fields"><h2>Talep bilgileri</h2><label><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} params={{ accessible: "true" }} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label></div><ErrorMessage error={createCustomer.error ?? createConversation.error} /><div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve talebi oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div></form>}
+          {showCreate && <form className="management-form phone-support-create" onSubmit={submitCustomer}><h2>Yeni Arayan Kişi</h2><label><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label><label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={isPhoneSearch(search) ? formatPhone(search) : ""} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} onKeyDown={focusNextField} /></label><label><span className="field-label">E-Posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label><label><span className="field-label">Şirket</span><input name="company" maxLength={120} /></label><label><span className="field-label">Müşteri Notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label><div className="phone-support-ticket-fields"><h2>Talep Bilgileri</h2><label><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} params={{ accessible: "true" }} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label></div><ErrorMessage error={createCustomer.error ?? createConversation.error} /><div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve Talebi Oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div></form>}
           {showCreate && <form className="management-form phone-support-create phone-support-create-v2" onSubmit={submitCustomer}>
             <section className="phone-caller-fields">
-              <h2>Yeni arayan kişi</h2>
-              <label className="phone-caller-name"><span className="field-label">Ad soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label>
+              <h2>Yeni Arayan Kişi</h2>
+              <label className="phone-caller-name"><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label>
               <label className="phone-caller-phone"><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={isPhoneSearch(search) ? formatPhone(search) : ""} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} onKeyDown={focusNextField} /></label>
-              <label className="phone-caller-email"><span className="field-label">E-posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label>
+              <label className="phone-caller-email"><span className="field-label">E-Posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label>
               <label className="phone-caller-company"><span className="field-label">Şirket</span><input name="company" maxLength={120} /></label>
-              <label className="phone-caller-note"><span className="field-label">Müşteri notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label>
+              <label className="phone-caller-note"><span className="field-label">Müşteri Notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label>
             </section>
             <section className="phone-new-request-fields">
-              <h2>Talep bilgileri</h2>
+              <h2>Talep Bilgileri</h2>
               <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} />
             </section>
             {channelFormError && <p className="error">{channelFormError}</p>}
             <ErrorMessage error={createCustomer.error ?? createConversation.error} />
-            <div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId || !channelAvailable}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve talebi oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div>
+            <div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId || !channelAvailable}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve Talebi Oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div>
           </form>}
         </section>
         {activeCustomer && <section className="management-panel phone-support-action-panel">
-          {!activeCustomer ? <div className="phone-support-next"><h2>Talep oluştur</h2><p>Arama sonucundan bir kişi seçtiğinizde talep bilgileri burada açılır.</p></div> : <><form className="management-form" onSubmit={submitConversation}><label><span className="field-label">Seçilen kişi</span><input readOnly value={activeCustomer.name} /></label><label><span className="field-label">Konu</span> <input name="subject" required minLength={5} maxLength={200} autoFocus /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span> <textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label><ErrorMessage error={createConversation.error} /><button className="button primary" disabled={createConversation.isPending || !departmentId}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi oluştur ve gönder"}</button></form></>}
+          {!activeCustomer ? <div className="phone-support-next"><h2>Talep Oluştur</h2><p>Arama sonucundan bir kişi seçtiğinizde talep bilgileri burada açılır.</p></div> : <><form className="management-form" onSubmit={submitConversation}><label><span className="field-label">Seçilen Kişi</span><input readOnly value={activeCustomer.name} /></label><label><span className="field-label">Konu</span> <input name="subject" required minLength={5} maxLength={200} autoFocus /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span> <textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label><ErrorMessage error={createConversation.error} /><button className="button primary" disabled={createConversation.isPending || !departmentId}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi Oluştur ve Gönder"}</button></form></>}
         </section>}
         {activeCustomer && <section className="management-panel phone-support-action-panel phone-support-action-panel-v2">
           <form className="management-form phone-support-request-form" onSubmit={submitConversation}>
-            <h2>Talep bilgileri</h2>
+            <h2>Talep Bilgileri</h2>
           <PhoneRequestFields departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
             <ErrorMessage error={createConversation.error} />
             {channelFormError && <p className="error">{channelFormError}</p>}
-            <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi oluştur ve gönder"}</button></div>
+            <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? "Oluşturuluyor…" : "Talebi Oluştur ve Gönder"}</button></div>
           </form>
         </section>}
       </div>

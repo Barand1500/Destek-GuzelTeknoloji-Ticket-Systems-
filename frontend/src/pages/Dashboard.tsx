@@ -52,22 +52,22 @@ export function Dashboard() {
           <p>Taleplerinizi, bekleyen işleri ve ekip durumunu tek ekranda izleyin.</p>
         </div>
         <Link className="button primary" to={inboxPath(user!.role)}>
-          Taleplere git
+          Talepleri Görüntüleyin
           <ArrowRight size={16} />
         </Link>
       </div>
       {query.isError ? <QueryError error={query.error} /> : <>
         <div className="stat-grid">
           {[
-            { label: "Toplam talep", value: query.data?.total, icon: Inbox, to: inboxPath(user!.role), permission: 'conversations.view' },
-            { label: "Açık talepler", value: query.data?.statuses.OPEN, icon: CircleDot, to: `${inboxPath(user!.role)}?status=OPEN`, permission: 'conversations.view' },
-            { label: "Bekleyen talepler", value: query.data?.statuses.PENDING, icon: Clock3, to: `${inboxPath(user!.role)}?status=PENDING`, permission: 'conversations.view' },
-            { label: "Çözülen talepler", value: query.data?.statuses.RESOLVED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=RESOLVED`, permission: 'conversations.view' },
-            { label: "Bugün açılanlar", value: query.data?.conversationsToday, icon: Inbox, to: `${inboxPath(user!.role)}?view=today`, permission: 'conversations.view' },
-            { label: "Kapalı talepler", value: query.data?.statuses.CLOSED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=CLOSED`, permission: 'conversations.view' },
+            { label: "Toplam Talep", value: query.data?.total, icon: Inbox, to: inboxPath(user!.role), permission: 'conversations.view' },
+            { label: "Açık Talepler", value: query.data?.statuses.OPEN, icon: CircleDot, to: `${inboxPath(user!.role)}?status=OPEN`, permission: 'conversations.view' },
+            { label: "Bekleyen Talepler", value: query.data?.statuses.PENDING, icon: Clock3, to: `${inboxPath(user!.role)}?status=PENDING`, permission: 'conversations.view' },
+            { label: "Çözülen Talepler", value: query.data?.statuses.RESOLVED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=RESOLVED`, permission: 'conversations.view' },
+            { label: "Bugün Açılan Talepler", value: query.data?.conversationsToday, icon: Inbox, to: `${inboxPath(user!.role)}?view=today`, permission: 'conversations.view' },
+            { label: "Kapalı Talepler", value: query.data?.statuses.CLOSED, icon: CheckCheck, to: `${inboxPath(user!.role)}?status=CLOSED`, permission: 'conversations.view' },
             ...(user?.role === "CUSTOMER" ? [] : [
-              { label: "Atanmamış talepler", value: query.data?.unassigned, icon: CircleDot, to: `${inboxPath(user!.role)}?view=unassigned`, permission: 'conversations.view' },
-              { label: "Aktif personel", value: query.data?.activeAgents, icon: CircleDot, to: workspacePath(user!.role, 'staff-presence'), permission: 'presence.view' },
+              { label: "Atanmamış Talepler", value: query.data?.unassigned, icon: CircleDot, to: `${inboxPath(user!.role)}?view=unassigned`, permission: 'conversations.view' },
+              { label: "Aktif Personel", value: query.data?.activeAgents, icon: CircleDot, to: workspacePath(user!.role, 'staff-presence'), permission: 'presence.view' },
             ]),
           ].map((stat) => {
             const content = <>
@@ -83,13 +83,13 @@ export function Dashboard() {
         <section className="dashboard-card status-chart-card">
           <div>
             <span className="eyebrow">TALEP DURUMLARI</span>
-            <h2>Her adımda kontrol sizde.</h2>
+            <h2>Her Adımda Kontrol Sizde.</h2>
             <p>Açılıştan çözüme kadar tüm taleplerinizi takip edin.</p>
           </div>
           <div className="status-chart-wrap">
-            <div className="status-pie" style={{ background: `conic-gradient(${slices.join(", ")})` }} aria-label="Talep durumları pasta grafiği">
+            <div className="status-pie" style={{ background: `conic-gradient(${slices.join(", ")})` }} aria-label="Talep Durumları Pasta Grafiği">
               <strong>{query.isPending ? "—" : query.data?.total ?? 0}</strong>
-              <span>Toplam talep</span>
+              <span>Toplam Talep</span>
             </div>
             <div className="status-chart-legend">
               {statusEntries.map((entry) => <Link key={entry.key} to={`${inboxPath(user!.role)}?status=${entry.key}`}>

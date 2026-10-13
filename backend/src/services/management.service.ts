@@ -565,7 +565,7 @@ export async function userAssignmentImpact(
   const effectiveDepartmentIds = permissionScope(actor) === 'DEPARTMENT'
     ? [...new Set([...target.departmentIds, ...current.departments.map((department) => department.departmentId).filter((departmentId) => !actor.departmentIds.includes(departmentId))])]
     : target.departmentIds;
-  const isEligibleStaff = !target.forDeletion && target.isActive && (Boolean(target.accessRoleId) || ["AGENT", "SUPERVISOR"].includes(target.role));
+  const isEligibleStaff = !target.forDeletion && target.isActive && (Boolean(target.accessRoleId) || ["ADMIN", "AGENT", "SUPERVISOR"].includes(target.role));
   const assigned = await db.conversation.findMany({
     where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
     select: {
@@ -634,7 +634,7 @@ export async function updateUser(
       (await tx.user.count({ where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null } })) <= 1
     )
       throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici kaldırılamaz.");
-    const canRemainAssigned = active && (Boolean(accessRoleId) || ["AGENT", "SUPERVISOR"].includes(role));
+    const canRemainAssigned = active && (Boolean(accessRoleId) || ["ADMIN", "AGENT", "SUPERVISOR"].includes(role));
     const assignedConversations = await tx.conversation.findMany({
       where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
       select: { id: true, number: true, departmentId: true, assignedAgentId: true },
@@ -675,7 +675,7 @@ export async function updateUser(
             id: transfer.assignedAgentId,
             isActive: true,
             deletedAt: null,
-            OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+            OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
             departments: { some: { departmentId: transfer.departmentId } },
           },
           select: { id: true },
@@ -827,7 +827,7 @@ export async function deleteUser(actor: Actor, id: string, input: z.infer<typeof
       if (!can(actor, "conversations.assign")) throw new AppError(403, "FORBIDDEN", "Personel silmeden \u00f6nce talepleri yeniden atamak i\u00e7in personel atama izni gerekir.");
       if (group.assignedAgentId) {
         const recipient = await tx.user.findFirst({
-          where: { id: group.assignedAgentId, isActive: true, deletedAt: null, OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], departments: { some: { departmentId: group.departmentId } } },
+          where: { id: group.assignedAgentId, isActive: true, deletedAt: null, OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], departments: { some: { departmentId: group.departmentId } } },
           select: { id: true },
         });
         if (!recipient) throw new AppError(400, "INVALID_ASSIGNEE", "Se\u00e7ilen personel hedef departmanda aktif de\u011fil.");
@@ -871,17 +871,17 @@ export async function staffSuggestions(actor: Actor, text: string) {
   const accessible = { isActive: true, deletedAt: null, ...(permissionScope(actor) === 'ALL' ? {} : { id: { in: actor.departmentIds } }) };
   const staff = await db.user.findMany({
     where: {
-      OR: [{ role: { in: ['AGENT', 'SUPERVISOR'] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null,
+      OR: [{ role: { in: ['ADMIN', 'AGENT', 'SUPERVISOR'] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null,
       skills: { some: {} }, departments: { some: { department: accessible } },
     },
     select: {
-      id: true, name: true, skills: { select: { name: true, category: true, level: true } },
+      id: true, name: true, role: true, accessRoleId: true, skills: { select: { name: true, category: true, level: true } },
       departments: { where: { department: accessible }, select: { department: { select: { id: true, name: true } } }, orderBy: { department: { name: 'asc' } } },
     },
   });
   const levels = await db.skillDefinition.findMany({where:{kind:'level'}});
   const weights = Object.fromEntries(levels.map(level=>[level.name,level.rank]));
-  return rankStaff(text, staff, weights).slice(0, 6).map(({ id, name, matches, departments }) => ({ id, name, matches:matches.map(skill=>({...skill,levelScore:weights[skill.level]})), departments: departments.map(item => item.department) }));
+  return rankStaff(text, staff, weights).slice(0, 6).map(({ id, name, role, accessRoleId, matches, departments }) => ({ id, name, displayName: role === 'ADMIN' && !accessRoleId ? `${name} (Yönetici)` : name, matches:matches.map(skill=>({...skill,levelScore:weights[skill.level]})), departments: departments.map(item => item.department) }));
 }
 export async function departmentAgents(
   actor: Actor,
@@ -897,7 +897,7 @@ export async function departmentAgents(
       "Bu departmanın personelini görüntüleme yetkiniz yok.",
     );
   const where: Prisma.UserWhereInput = {
-    OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+    OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
     isActive: true,
     deletedAt: null,
     departments: { some: { departmentId } },
@@ -909,6 +909,8 @@ export async function departmentAgents(
       select: {
         id: true,
         name: true,
+        role: true,
+        accessRoleId: true,
         _count: {
           select: {
             assignedConversations: {
@@ -923,7 +925,7 @@ export async function departmentAgents(
     db.user.count({ where }),
   ]);
   return {
-    data: data.map(({ _count, ...agent }) => ({ ...agent, openConversationCount: _count.assignedConversations })),
+    data: data.map(({ _count, role, accessRoleId, ...agent }) => ({ ...agent, displayName: role === 'ADMIN' && !accessRoleId ? `${agent.name} (Yönetici)` : agent.name, openConversationCount: _count.assignedConversations })),
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }
@@ -2029,7 +2031,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
     Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - ((q.days ?? 30) - 1)),
   );
   const agentWhere: Prisma.UserWhereInput = {
-    OR: [{ role: { in: ["AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
+    OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }],
     deletedAt: null,
     ...(permissionScope(actor) === "DEPARTMENT"
       ? { departments: { some: { departmentId: { in: actor.departmentIds } } } }

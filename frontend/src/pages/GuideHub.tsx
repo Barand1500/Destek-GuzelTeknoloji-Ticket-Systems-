@@ -24,7 +24,7 @@ export function GuideHubPage() {
             Proje bilgilerine ve sistem kullanım adımlarına tek yerden ulaşın.
           </p>
         </div>
-        <nav className="guide-hub-tabs" aria-label="Rehber bölümleri">
+        <nav className="guide-hub-tabs" aria-label="Rehber Bölümleri">
           <NavLink
             to={workspacePath(user.role, "guide/projects")}
             aria-current={active === "projects" ? "page" : undefined}

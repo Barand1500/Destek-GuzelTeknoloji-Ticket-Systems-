@@ -6,6 +6,7 @@ import { skillLevels } from "./StaffSkills";
 type Suggestion = {
   id: string;
   name: string;
+  displayName?: string;
   matches: StaffSkill[];
   departments: Department[];
 };
@@ -77,7 +78,7 @@ export function SuggestedDescription({
           required
           maxLength={10000}
           rows={4}
-          placeholder="Örn. React ekranında hata var; İngilizce destek gerekiyor…"
+          placeholder="Açıklama yazınız"
           value={text}
           onChange={(event) => setText(event.target.value)}
         />
@@ -114,20 +115,21 @@ export function SuggestedDescription({
                       onClick={() =>
                         onSelect({
                           id: person.id,
-                          name: person.name,
+                          name: person.displayName ?? person.name,
                           departmentId: department.id,
                           departmentName: department.name,
                         })
                       }
                     >
                       <strong>
-                        {person.name}
+                        {person.displayName ?? person.name}
                         {selected ? " ✓" : ""}
                       </strong>
                       <small>{department.name}</small>
                       <span className="staff-suggestion-skills">
                         {person.matches.map((skill, index) => (
                           <span className="staff-suggestion-skill" key={`${skill.name}-${index}`}>
+                            {skill.category && <span className="staff-suggestion-skill-category">{skill.category} /</span>}
                             <span className="staff-suggestion-skill-name">{skill.name}</span>
                             <span>· {skillLevels[skill.level] ?? skill.level}</span>
                             <span className="staff-suggestion-stars" aria-hidden="true">

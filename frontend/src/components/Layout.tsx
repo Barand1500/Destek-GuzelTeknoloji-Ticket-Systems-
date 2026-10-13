@@ -39,25 +39,25 @@ import { api } from "../services/api";
 import { AnnouncementsModal } from "../features/announcements/AnnouncementsModal";
 import { WorkScreenOutlet, WorkSessionProvider, useWorkSession } from "./WorkSession";
 const quickIconByLabel: Record<string, string> = {
-  "Genel bakış": "dashboard",
-  "Personel aktivitesi": "activity",
-  "Gelen kutusu": "inbox",
+  "Genel Bakış": "dashboard",
+  "Personel Etkinliği": "activity",
+  "Gelen Kutusu": "inbox",
   Taleplerim: "inbox",
   Müşteriler: "users",
   Personeller: "users",
   Roller: "users",
-  "Yeni talep": "plus",
-  "Talep aç": "plus",
+  "Yeni Talep": "plus",
+  "Talep Oluştur": "plus",
   Dosyalar: "folder",
   Entegrasyonlar: "settings",
-  "Yanıt süreleri": "timer",
+  "Yanıt Süreleri": "timer",
   Kategoriler: "tags",
   Projeler: "tags",
   Rehber: "book",
   Anketler: "clipboard",
   Raporlar: "chart",
   "Hazır yanıtlar": "file",
-  "İşlem geçmişi": "history",
+  "İşlem Geçmişi": "history",
   Takvim: "calendar",
 };
 const quickIcons: Record<string, LucideIcon> = {
@@ -217,9 +217,9 @@ function WorkspaceLayout() {
   if (!user) return <Navigate to="/auth" replace />;
   const path = (suffix: string) => workspacePath(user.role, suffix);
   const searchItems = [
-    { label: "Genel bakış", group: "Sayfalar", to: path("dashboard") },
+    { label: "Genel Bakış", group: "Sayfalar", to: path("dashboard") },
     {
-      label: user.role === "CUSTOMER" ? "Taleplerim" : "Gelen kutusu",
+      label: user.role === "CUSTOMER" ? "Taleplerim" : "Gelen Kutusu",
       group: "Sayfalar",
       to: inboxPath(user.role),
     },
@@ -228,7 +228,7 @@ function WorkspaceLayout() {
           { label: "Müşteriler", group: "Sayfalar", to: path("customers") },
           { label: "Personeller", group: "Sayfalar", to: path("users") },
           {
-            label: "Talep aç",
+            label: "Talep Oluştur",
             group: "Sayfalar",
             to: path("phone-support"),
           },
@@ -239,9 +239,9 @@ function WorkspaceLayout() {
           { label: "Raporlar", group: "Yönetim", to: path("reports") },
           { label: "Yetenekler", group: "Kategoriler", to: path("tags/skills") },
           { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations/channels") },
-          { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
-          { label: "Personel aktivitesi", group: "Yönetim", to: path("staff-presence") },
-          { label: "İşlem geçmişi", group: "Yönetim", to: path("activity-logs") },
+          { label: "Yanıt Süreleri", group: "Yönetim", to: path("response-time-rules") },
+          { label: "Personel Etkinliği", group: "Yönetim", to: path("staff-presence") },
+          { label: "İşlem Geçmişi", group: "Yönetim", to: path("activity-logs") },
           ...(user.role !== "ADMIN"
             ? [
                 {
@@ -261,12 +261,12 @@ function WorkspaceLayout() {
             to: path("integrations/channels"),
           },
           {
-            label: "Yanıt süreleri",
+            label: "Yanıt Süreleri",
             group: "Yönetim",
             to: path("response-time-rules"),
           },
           {
-            label: "Personel aktivitesi",
+            label: "Personel Etkinliği",
             group: "Yönetim",
             to: path("staff-presence"),
           },
@@ -325,22 +325,22 @@ function WorkspaceLayout() {
         >
           <NavLink to={path("dashboard")}>
             <LayoutDashboard size={19} />
-            Genel bakış
+            Genel Bakış
           </NavLink>
           {user.role !== "CUSTOMER" && (
             <NavLink to={path("staff-presence")}>
               <Activity size={19} />
-              Personel aktivitesi
+              Personel Etkinliği
             </NavLink>
           )}
           <NavLink to={inboxPath(user.role)} end>
             <Inbox size={19} />
-            {user.role === "CUSTOMER" ? "Taleplerim" : "Gelen kutusu"}
+            {user.role === "CUSTOMER" ? "Taleplerim" : "Gelen Kutusu"}
           </NavLink>
           {user.role === "CUSTOMER" && (
             <NavLink to={path("tickets/new")}>
               <Plus size={19} />
-              Yeni talep
+              Yeni Talep
             </NavLink>
           )}
           {user.role !== "CUSTOMER" && (
@@ -355,7 +355,7 @@ function WorkspaceLayout() {
               </NavLink>
               <NavLink to={path("phone-support")} onClick={startNewRequest}>
                 <Plus size={19} />
-                Talep aç
+                Talep Oluştur
               </NavLink>
             </>
           )}
@@ -387,7 +387,7 @@ function WorkspaceLayout() {
                   </NavLink>
                   <NavLink to={path("response-time-rules")}>
                     <Timer size={16} />
-                    Yanıt süreleri
+                    Yanıt Süreleri
                   </NavLink>
                   <NavLink to={path(hasPermission(user, "tags.view") ? "tags" : "tags/skills")}>
                     <Tags size={16} />
@@ -416,20 +416,20 @@ function WorkspaceLayout() {
         </nav>
         <div className="sidebar-bottom">
           {user.role !== "CUSTOMER" && (
-            <div className="sidebar-tools" aria-label="Personel araçları">
+            <div className="sidebar-tools" aria-label="Personel Araçları">
               <NavLink
                 to={path("saved-replies")}
                 className="sidebar-tool"
-                aria-label="Hazır yanıtlar"
-                title="Hazır yanıtlar"
+                aria-label="Hazır Yanıtlar"
+                title="Hazır Yanıtlar"
               >
                 <FileText size={17} />
               </NavLink>
               <NavLink
                 to={path("activity-logs")}
                 className="sidebar-tool"
-                aria-label="İşlem geçmişi"
-                title="İşlem geçmişi"
+                aria-label="İşlem Geçmişi"
+                title="İşlem Geçmişi"
               >
                 <History size={17} />
               </NavLink>
@@ -463,7 +463,7 @@ function WorkspaceLayout() {
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
               placeholder="Ara…"
-              aria-label="Genel arama"
+              aria-label="Genel Arama"
             />
             {globalSearch && (
               <div className="global-search-results">
@@ -472,7 +472,7 @@ function WorkspaceLayout() {
                     key={`${item.group}-${item.to}`}
                     to={item.to}
                     onClick={() => {
-                      if (item.label === "Talep aç") startNewRequest();
+                      if (item.label === "Talep Oluştur") startNewRequest();
                       setGlobalSearch("");
                     }}
                   >
@@ -506,7 +506,7 @@ function WorkspaceLayout() {
               </div>
             )}
           </div>
-          <div className="quick-actions" aria-label="Hızlı erişim">
+          <div className="quick-actions" aria-label="Hızlı Erişim">
             {quickSlots.map((slot, index) =>
               slot ? (
                 <NavLink
@@ -528,7 +528,7 @@ function WorkspaceLayout() {
                   key={index}
                   className="quick-action quick-slot"
                   type="button"
-                  title="Sol menüden sürükleyip buraya bırak"
+                  title="Sol Menüden Sürükleyip Buraya Bırak"
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => {
                     event.preventDefault();
@@ -573,9 +573,9 @@ function WorkspaceLayout() {
                 setTheme((current) => (current === "dark" ? "light" : "dark"))
               }
               aria-label={
-                theme === "dark" ? "Gündüz moduna geç" : "Gece moduna geç"
+                theme === "dark" ? "Gündüz Moduna Geç" : "Gece Moduna Geç"
               }
-              title={theme === "dark" ? "Gündüz modu" : "Gece modu"}
+              title={theme === "dark" ? "Gündüz Modu" : "Gece Modu"}
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -614,8 +614,8 @@ function WorkspaceLayout() {
                           clearNotifications.isPending ||
                           !notifications.data?.data.length
                         }
-                        aria-label="Tümünü okundu işaretle"
-                        title="Tümünü okundu işaretle"
+                        aria-label="Tümünü Okundu Olarak İşaretle"
+                        title="Tümünü Okundu Olarak İşaretle"
                       >
                         <CheckCheck size={15} />
                       </button>
@@ -623,7 +623,7 @@ function WorkspaceLayout() {
                         type="button"
                         className="notification-close"
                         onClick={() => setNotificationsOpen(false)}
-                        aria-label="Bildirimleri kapat"
+                        aria-label="Bildirimleri Kapat"
                       >
                         <X size={17} />
                       </button>
@@ -684,7 +684,7 @@ function WorkspaceLayout() {
                       to={path("notifications")}
                       onClick={() => setNotificationsOpen(false)}
                     >
-                      Bildirimlere git
+                      Bildirimlere Git
                     </NavLink>
                   </div>
                 </div>
@@ -701,10 +701,10 @@ function WorkspaceLayout() {
               <UserRound size={16} />
             </NavLink>
             <button
-              className="topbar-icon-link"
+              className="topbar-icon-link logout-button"
               type="button"
-              title="Çıkış yap"
-              aria-label="Çıkış yap"
+              title="Çıkış Yap"
+              aria-label="Çıkış Yap"
               onClick={() => logout().catch((e) => setError(errorText(e)))}
             >
               <LogOut size={17} />

@@ -9,8 +9,8 @@ function presencePage(pathname:string){
   if(/\/conversations\/[^/]+$/.test(pathname)||/\/tickets\/[^/]+$/.test(pathname))return 'Talep üzerinde çalışıyor';
   if(pathname.includes('/phone-support'))return 'Telefon desteği';
   if(pathname.includes('/customers'))return 'Müşteriler';
-  if(pathname.includes('/inbox')||pathname.includes('/conversations'))return 'Gelen kutusu';
-  if(pathname.includes('/dashboard'))return 'Genel bakış';
+  if(pathname.includes('/inbox')||pathname.includes('/conversations'))return 'Gelen Kutusu';
+  if(pathname.includes('/dashboard'))return 'Genel Bakış';
   if(pathname.includes('/staff-presence'))return 'Canlı takip';
   if(pathname.includes('/settings')||pathname.includes('/integrations'))return 'Ayarlar';
   return 'Uygulamada';

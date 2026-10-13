@@ -64,8 +64,8 @@ export function AnnouncementTemplates() {
             empty={!visible.length}
           />
           {!!visible.length && <div className="management-table-wrap saved-content-table-wrap">
-            <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır şablonlar">
-              <thead><tr><th>Şablon adı</th><th>Duyuru başlığı</th><th>İçerik</th><th>İşlemler</th></tr></thead>
+            <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır Şablonlar">
+              <thead><tr><th>Şablon Adı</th><th>Duyuru Başlığı</th><th>İçerik</th><th>İşlemler</th></tr></thead>
               <tbody>{visible.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}>
                 <td><strong>{item.label}</strong></td>
                 <td>{item.title}</td>
@@ -80,10 +80,10 @@ export function AnnouncementTemplates() {
           <Pagination pagination={list.data?.pagination} onChange={list.setPage} />
         </section>
         <section className="management-panel">
-          <h2>{editing ? "Şablonu düzenle" : "Yeni şablon ekle"}</h2>
+          <h2>{editing ? "Şablonu Düzenle" : "Yeni Şablon Ekle"}</h2>
           <form key={version} className="management-form" onSubmit={submit}>
             <label>
-              <span className="field-label">Şablon adı</span>
+              <span className="field-label">Şablon Adı</span>
               <input
                 name="label"
                 defaultValue={editing?.label}
@@ -94,7 +94,7 @@ export function AnnouncementTemplates() {
               />
             </label>
             <label>
-              <span className="field-label">Duyuru başlığı</span>
+              <span className="field-label">Duyuru Başlığı</span>
               <input
                 name="title"
                 defaultValue={editing?.title}
@@ -104,11 +104,11 @@ export function AnnouncementTemplates() {
               />
             </label>
             <label>
-              <span className="field-label">Duyuru içeriği</span>
+              <span className="field-label">Duyuru İçeriği</span>
               <textarea
                 className="announcement-template-body"
                 name="body"
-                aria-label="Duyuru içeriği"
+                aria-label="Duyuru İçeriği"
                 aria-describedby="announcement-template-name-hint"
                 defaultValue={editing?.body}
                 required
@@ -125,14 +125,14 @@ export function AnnouncementTemplates() {
             <FormActions
               pending={save.isPending}
               onCancel={editing ? reset : undefined}
-              submitLabel={editing ? "Değişiklikleri kaydet" : "Şablon ekle"}
+              submitLabel={editing ? "Değişiklikleri Kaydet" : "Şablon Ekle"}
             />
           </form>
         </section>
       </div>
       {deleting && (
         <DeleteModal
-          title="Hazır şablonu sil"
+          title="Hazır Şablonu Sil"
           pending={remove.isPending}
           onClose={() => setDeleting(null)}
           onConfirm={() =>
