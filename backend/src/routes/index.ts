@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { authenticate, authorize } from "../middleware/auth.js";
 import * as auth from "../services/auth.service.js";
+import * as passwordReset from "../services/password-reset.service.js";
 import * as conversations from "../services/conversations.service.js";
 import {
   createConversationSchema,
@@ -82,6 +83,24 @@ router.post("/auth/register", async (req, res) =>
 router.post("/auth/login", async (req, res) =>
   sendSession(res, await auth.login(loginSchema.parse(req.body))),
 );
+const resetEmail = z.string().trim().toLowerCase().pipe(z.email());
+const resetLimiter = rateLimit({ windowMs: 10 * 60_000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false,
+  message: { success: false, error: { code: "RATE_LIMITED", message: "Çok fazla deneme. Lütfen daha sonra tekrar deneyin." } } });
+router.post("/auth/forgot-password", resetLimiter, async (req, res) => {
+  const { email } = z.object({ email: resetEmail }).strict().parse(req.body);
+  await passwordReset.requestPasswordReset(email);
+  res.json({ success: true, data: { message: "E-posta bir giriş hesabına aitse doğrulama kodu gönderildi." } });
+});
+router.post("/auth/verify-reset-code", resetLimiter, async (req, res) => {
+  const { email, code } = z.object({ email: resetEmail, code: z.string().regex(/^\d{6}$/) }).strict().parse(req.body);
+  const resetToken = await passwordReset.verifyPasswordReset(email, code);
+  res.json({ success: true, data: { resetToken } });
+});
+router.post("/auth/reset-password", resetLimiter, async (req, res) => {
+  const { resetToken, password } = z.object({ resetToken: z.string().min(40).max(100), password: registerSchema.shape.password }).strict().parse(req.body);
+  await passwordReset.completePasswordReset(resetToken, password);
+  res.clearCookie("refreshToken", { ...cookieOptions, maxAge: undefined }).json({ success: true, data: null });
+});
 router.post("/auth/refresh", async (req, res) => {
   const token = z.string().min(1).safeParse(req.cookies?.refreshToken);
   if (!token.success)

@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   type ReactNode,
   type FormEvent,
 } from "react";
@@ -14,6 +15,7 @@ import type { User } from "../../types";
 import { roleHome } from "../../router/paths";
 import { permissionHome } from './permissions';
 import { EmailInput } from "../../components/EmailInput";
+import { PasswordResetForm } from "./PasswordResetForm";
 type AuthState = {
   user: User | null;
   loading: boolean;
@@ -79,6 +81,15 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  function forgotPassword() {
+    const input = formRef.current?.elements.namedItem("email") as HTMLInputElement | null;
+    if (!input?.reportValidity()) return;
+    setError(""); setSaved(false); setLoginEmail(input.value); setResetEmail(input.value.trim().toLowerCase());
+  }
   if (loading) return <div className="loading-screen">Oturum kontrol ediliyor…</div>;
   if (user) return <Navigate to={permissionHome(user) ?? roleHome(user.role)} replace />;
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -110,13 +121,18 @@ export function AuthPage() {
         <div className="auth-caption"><ShieldCheck size={18} /> Ekibinizle güvenli ve düzenli iletişim.</div>
       </section>
       <section className="auth-form-wrap">
-        <form className="auth-form" onSubmit={submit}>
+        <div className="auth-slider">
+        {resetEmail !== null ? <PasswordResetForm email={resetEmail} onBack={() => setResetEmail(null)} onSaved={() => { setResetEmail(null); setSaved(true); }} /> :
+        <form ref={formRef} className="auth-form auth-slide-back" onSubmit={submit}>
           <h2>Tekrar hoş geldiniz</h2>
-          <label><span className="field-label">E-posta adresi</span><EmailInput name="email" required /></label>
+          <label><span className="field-label">E-posta adresi</span><EmailInput name="email" defaultValue={loginEmail} required /></label>
+          <button type="button" className="auth-forgot" onClick={forgotPassword}>Şifremi unuttum?</button>
           <label><span className="field-label">Şifre</span><span className="password-field"><input name="password" required type={showPassword ? "text" : "password"} minLength={1} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+          {saved && <p className="auth-notice" role="status">Şifreniz yenilendi. Yeni şifrenizle giriş yapabilirsiniz.</p>}
           {error && <p className="error" role="alert">{error}</p>}
           <button className="button primary" disabled={pending}>{pending ? "Lütfen bekleyin…" : "Giriş yap"}<ArrowRight size={17} /></button>
-        </form>
+        </form>}
+        </div>
       </section>
     </main>
   );

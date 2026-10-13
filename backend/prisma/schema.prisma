@@ -69,6 +69,7 @@ model User {
   assignedConversations Conversation[] @relation("AssignedConversations")
   messages ConversationMessage[]
   sessions Session[]
+  passwordResets PasswordReset[]
   logs ActivityLog[]
   notifications Notification[]
   savedReplies SavedReply[]
@@ -111,6 +112,16 @@ model UserSkill {
   category String @db.VarChar(60)
   level String @db.VarChar(20)
   @@unique([userId, name])
+}
+model PasswordReset {
+  id String @id @default(uuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash String
+  tokenHash String? @unique
+  attempts Int @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 model Session {
   id String @id @default(uuid())

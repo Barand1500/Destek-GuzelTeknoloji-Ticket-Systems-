@@ -875,6 +875,45 @@ html[data-theme="dark"] .internal-note-input::placeholder {
   flex-direction: column;
   gap: 22px;
 }
+.auth-slider {
+  width: 100%;
+  max-width: 365px;
+  overflow: hidden;
+  padding: 6px;
+  box-sizing: content-box;
+}
+.auth-forgot, .auth-back {
+  border: 0;
+  background: transparent;
+  color: var(--ui-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+}
+.auth-forgot {
+  align-self: flex-end;
+  color: #167766;
+  margin-top: -10px;
+}
+.auth-form > .auth-forgot:has(+ label) {
+  transform: translateY(4px);
+}
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+}
+.auth-forgot:disabled, .auth-back:disabled { opacity: .55; cursor: default; }
+.auth-form .auth-notice { margin: 0; font-size: 13px; line-height: 1.6; }
+.auth-slide-forward { animation: auth-slide-forward 300ms ease-out; }
+.auth-slide-back { animation: auth-slide-back 300ms ease-out; }
+@keyframes auth-slide-forward { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes auth-slide-back { from { opacity: 0; transform: translateX(-100%); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-slide-forward, .auth-slide-back { animation: none; }
+}
 .auth-form .eyebrow {
   margin-bottom: -12px;
 }
