@@ -39,6 +39,7 @@ import {
 
 import { inboxPath } from "../../router/paths";
 import { StaffSkills } from './StaffSkills';
+
 import { SuggestedDescription } from './StaffSuggestions';
 import type { StaffSkill } from '../../types';
 type ManagedUser = User & {
@@ -554,6 +555,11 @@ export function CustomersPage() {
   const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<ManagedUser | null>(null);
+  const mergeCustomers = useMutation({
+    mutationFn: () => api.post(`/customers/${mergeTarget!.id}/merge`, { sourceIds: selectedCustomerIds.filter(id => id !== mergeTarget!.id) }),
+    onSuccess: async () => { await queryClient.invalidateQueries(); setMergeTarget(null); setSelectedCustomerIds([]); },
+  });
   const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
   usePageScrollLock(customerModalOpen || Boolean(filesCustomer));
@@ -593,18 +599,19 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button>}</div>
+        <div className="customer-search-row"><Search value={list.search} onChange={list.setSearch} label="Ad, telefon veya e-posta ile ara" placeholder="" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" disabled={Boolean(mergeTarget)} onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"} title={bulkSelectionMode ? "Seçilen müşterileri sil" : "Toplu sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni müşteri ekle">+</button>}</div>
         <ListState
           loading={list.isPending}
           error={list.error}
           empty={!list.data?.data.length}
         />
+        {mergeTarget && <div className="customer-merge-selection-bar"><span>Ana kayıt: <strong>{mergeTarget.name}</strong>. Birleştirilecek müşterileri soldaki kutulardan seçin.</span><button type="button" className="button primary" disabled={selectedCustomerIds.length < 2 || mergeCustomers.isPending} onClick={() => mergeCustomers.mutate()}>{mergeCustomers.isPending ? 'Birleştiriliyor...' : 'Seçilenleri birleştir'}</button><button type="button" className="button secondary" disabled={mergeCustomers.isPending} onClick={() => { setMergeTarget(null); setSelectedCustomerIds([]); mergeCustomers.reset(); }}>Vazgeç</button>{mergeCustomers.error && <ErrorMessage error={mergeCustomers.error}/>}</div>}
         {!!list.data?.data.length && (
           <div className="management-table-wrap">
             <table className="management-table">
               <thead>
                 <tr>
-                  <th>{bulkSelectionMode ? "Seç" : "Müşteri"}</th>
+                  <th>{bulkSelectionMode || mergeTarget ? "Seç" : "Müşteri"}</th>
                   <th>İletişim</th>
                   <th>Hesap durumu</th>
                   <th>Görüşmeler</th>
@@ -612,9 +619,20 @@ export function CustomersPage() {
               </thead>
               <tbody>
                 {list.data.data.map((customer) => (
-                  <tr key={customer.id} {...editableRowProps(() => { if (canUpdateCustomers) edit(customer); })} className={!customer.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
-                    <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
-                      {bulkSelectionMode && <input type="checkbox" checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
+                  <tr key={customer.id} {...editableRowProps(() => {
+                    if (bulkSelectionMode || mergeTarget) {
+                      if (mergeCustomers.isPending || bulkRemove.isPending || mergeTarget?.id === customer.id) return;
+                      setSelectedCustomerIds(current => current.includes(customer.id)
+                        ? current.filter(id => id !== customer.id)
+                        : mergeTarget && current.length >= 51 ? current : [...current, customer.id]);
+                    } else if (canUpdateCustomers) edit(customer);
+                  })} onKeyDown={event => {
+                    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                    event.preventDefault();
+                    event.currentTarget.click();
+                  }} className={!customer.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
+                    <td className={bulkSelectionMode || mergeTarget ? "customer-select-cell" : undefined}>
+                      {(bulkSelectionMode || mergeTarget) && <input type="checkbox" disabled={mergeCustomers.isPending || mergeTarget?.id === customer.id || (Boolean(mergeTarget) && selectedCustomerIds.length >= 51 && !selectedCustomerIds.includes(customer.id))} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>
                     </td>
                     <td>{customer.phone ?? "Telefon yok"}<small>{customer.email ?? "E-posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</td>
@@ -629,6 +647,7 @@ export function CustomersPage() {
                       </Link>}
                       {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep aç</Link>}
                       {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
+                      {canUpdateCustomers && canDeleteCustomers && <button className="icon-button" type="button" disabled={Boolean(mergeTarget) || bulkRemove.isPending} aria-label={`${customer.name} müşterilerini birleştir`} title="Mükerrer müşterileri birleştir" onClick={() => { setMergeTarget(customer); setSelectedCustomerIds([customer.id]); setBulkSelectionMode(false); mergeCustomers.reset(); }}><Plus size={15} aria-hidden="true"/></button>}
                       <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları gör' : 'Dosya yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><Eye size={15} aria-hidden="true" /></button>
                       {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
@@ -672,7 +691,11 @@ export function CustomersPage() {
         <form key={formVersion} className="management-form" onSubmit={event => {
           const values = formValues(event);
           const data = new FormData();
-          for (const name of ['name', 'phone', 'email', 'company', 'staffNote', 'extraPhones', 'extraEmails']) { const value = values.get(name); if (typeof value === 'string' && value) data.append(name, value); }
+          for (const name of ['name', 'phone', 'email', 'company', 'staffNote', 'extraPhones', 'extraEmails']) {
+            const value = values.get(name);
+            // Empty fields must reach PATCH so existing values can be cleared.
+            if (typeof value === 'string' && (editing || value.trim())) data.append(name, value.trim());
+          }
           for (const file of customerFiles) if (file.size) data.append('files', file);
           save.mutate({ id: editing?.id, data });
         }}>

@@ -9,10 +9,12 @@ export function ProjectGuideFileModal({ websiteId, projectName, canManage, onClo
   const client = useQueryClient();
   const files = useQuery({ queryKey: ["/websites", websiteId, "guide-files"], queryFn: async () => (await api.get<{ data: GuideFile[] }>(`/websites/${websiteId}/guide-files`)).data.data });
   const [activeId, setActiveId] = useState("");
-  const activeFile = files.data?.find(file => file.id === activeId) ?? files.data?.[0];
+  const orderedFiles = [...(files.data ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id.localeCompare(a.id));
+  const activeFile = orderedFiles.find(file => file.id === activeId) ?? orderedFiles[0];
   const content = useQuery({ queryKey: ["project-guide-modal-file", websiteId, activeFile?.id], queryFn: async () => (await api.get(`/websites/${websiteId}/guide-files/${activeFile!.id}/view`, { responseType: "blob" })).data as Blob, enabled: Boolean(activeFile), gcTime: 0 });
-  const [url, setUrl] = useState("");
-  useEffect(() => { if (!content.data) return; const next = URL.createObjectURL(content.data); setUrl(next); return () => URL.revokeObjectURL(next); }, [content.data]);
+  const [preview, setPreview] = useState<{ fileId: string; url: string } | null>(null);
+  const url = preview?.fileId === activeFile?.id ? preview?.url : undefined;
+  useEffect(() => { if (!content.data || !activeFile) return; const next = URL.createObjectURL(content.data); setPreview({ fileId: activeFile.id, url: next }); return () => URL.revokeObjectURL(next); }, [content.data, activeFile?.id]);
   const remove = useMutation({ mutationFn: (fileId: string) => api.delete(`/websites/${websiteId}/guide-files/${fileId}`), onSuccess: async () => { setActiveId(""); await Promise.all([client.invalidateQueries({ queryKey: ["/websites", websiteId, "guide-files"] }), client.invalidateQueries({ queryKey: ["/websites"] })]); } });
   return createPortal(<div className="attachment-preview-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="attachment-preview-modal project-guide-file-modal" role="dialog" aria-modal="true" aria-label={`${projectName} proje belgeleri`}>
@@ -20,7 +22,7 @@ export function ProjectGuideFileModal({ websiteId, projectName, canManage, onClo
       {files.isPending ? <p className="project-guide-state">Belgeler yükleniyor…</p> : files.error ? <p className="error">Belgeler yüklenemedi.</p> : !files.data?.length ? <p className="project-guide-empty">Bu projeye henüz belge yüklenmemiş.</p> : <>
         <div className="attachment-preview-content">{content.isPending ? <p className="project-guide-state">Belge açılıyor…</p> : content.error ? <p className="error">Belge açılamadı.</p> : url && activeFile?.mimeType.startsWith("image/") ? <img src={url} alt={activeFile.originalName} /> : url ? <iframe src={url} title={activeFile?.originalName ?? "Proje belgesi"} /> : null}</div>
         <nav className="project-guide-modal-files" aria-label="Proje belgeleri">
-          {files.data.map(file => <span key={file.id}>
+          {orderedFiles.map(file => <span key={file.id}>
             <button type="button" className={activeFile?.id === file.id ? "active" : ""} onClick={() => setActiveId(file.id)} aria-pressed={activeFile?.id === file.id}>
               {file.mimeType.startsWith("image/") ? <FileImage size={15} /> : <FileText size={15} />}<span>{file.originalName}</span>
             </button>

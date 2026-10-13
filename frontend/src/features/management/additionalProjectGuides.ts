@@ -6,7 +6,6 @@ function guide(project: string, document: string, sections: Section[], playbooks
   return {
     sourceUrl: `/guide/projects/${project}.pdf`,
     sourceLabel: 'Kaynak sistem tanıtımı PDF’sini aç',
-    sourceNote: `${document} belgesi esas alınmıştır (12 Ekim 2026). Destek kontrol adımları belge kapsamından hazırlanan önerilerdir; canlı ortamda yapılan bir testin sonucu değildir.`,
     productAreas: sections.map(section => ({ title: section.title, description: section.summary })),
     playbooks, integrations, architecture: [],
     knowledgeTopics: sections.map((section, index) => ({

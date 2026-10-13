@@ -6,7 +6,7 @@ export function hasPermission(user: User | null, key: string) {
 }
 export function screenPermission(path: string): string | null {
   const suffix = path.replace(/^\/(admin|agent|customer)\/?/, '').split('/');
-  if(suffix[0]==='skills') return 'skills.view';
+  if(suffix[0]==='skills' || (suffix[0]==='tags' && suffix[1]==='skills')) return 'skills.view';
   const mapping: Record<string,string> = { dashboard: 'dashboard', conversations: 'conversations', inbox: 'conversations', tickets: 'conversations', 'phone-support': 'conversations', customers: 'customers', users: 'users', departments: 'departments', files: 'files', reports: 'reports', roles: 'roles', integrations: 'integrations', settings: 'integrations', 'response-time-rules': 'response', 'staff-presence': 'presence', tags: 'tags', websites: 'websites', guide: 'guide', 'project-guide': 'guide', surveys: 'surveys', calendar: 'announcements', 'saved-replies': 'savedReplies', 'activity-logs': 'logs' };
   if (suffix[0] === 'roles') return 'roles.view';
   if (suffix[0] === 'notification-settings') return 'integrations.view';

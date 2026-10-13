@@ -157,7 +157,7 @@ export function StaffSkills({ initial = [] }: { initial?: StaffSkill[] }) {
         !catalog.error &&
         (!categories.length || !levels.length) && (
           <small className="muted">
-            Kategori, seviye ve yetenek tanımlarını Ayarlar → Yetenekler
+            Kategori, seviye ve yetenek tanımlarını Ayarlar → Kategoriler → Yetenekler
             sayfasından ekleyin.
           </small>
         )}

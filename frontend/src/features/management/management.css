@@ -4775,3 +4775,13 @@ html[data-theme="dark"] .presence-metrics > div {
 }
 .staff-skill-tag { width: 100%; }
 .staff-skill-tag > span { flex: 1; }
+.customer-merge-selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+.customer-merge-selection-bar > span { flex: 1; min-width: 220px; }

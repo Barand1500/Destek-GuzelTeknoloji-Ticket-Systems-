@@ -14,6 +14,7 @@ export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
     next(); return;
   }
   if (path.startsWith('/roles')) throw new AppError(403, 'FORBIDDEN', 'Rolleri yalnızca sistem yöneticisi yönetebilir.');
+  if(/^\/customers\/[^/]+\/merge$/.test(path)){allow('customers.update');allow('customers.delete');next();return;}
   if (path.startsWith('/dashboard')) { allow('dashboard.view'); next(); return; }
   if (path.startsWith('/reports')) { allow('reports.view'); next(); return; }
   if (/^\/(conversations|attachments)(\/|$)/.test(path)) {

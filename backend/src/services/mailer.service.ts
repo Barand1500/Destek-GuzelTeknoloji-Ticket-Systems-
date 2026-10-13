@@ -20,6 +20,8 @@ async function transportForSettings() {
   host, port,
   secure,
   requireTLS: useTls && port !== 465,
+  // Temporary SMTP test: accept the mail server's self-signed certificate.
+  tls: { rejectUnauthorized: false },
   dnsTimeout: 10_000,
   connectionTimeout: 10_000,
   greetingTimeout: 10_000,

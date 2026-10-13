@@ -237,7 +237,7 @@ function WorkspaceLayout() {
           { label: "Projeler", group: "Yönetim", to: path("websites") },
           { label: "Kategoriler", group: "Yönetim", to: path("tags") },
           { label: "Raporlar", group: "Yönetim", to: path("reports") },
-          { label: "Yetenekler", group: "Yönetim", to: path("skills") },
+          { label: "Yetenekler", group: "Kategoriler", to: path("tags/skills") },
           { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations/channels") },
           { label: "Yanıt süreleri", group: "Yönetim", to: path("response-time-rules") },
           { label: "Personel aktivitesi", group: "Yönetim", to: path("staff-presence") },
@@ -381,7 +381,6 @@ function WorkspaceLayout() {
               {settingsOpen && (
                 <div className="settings-nav-links" id="admin-settings-nav">
                   {user.role === "ADMIN" && !user.accessRole && <NavLink to={path('roles')}><Users size={16}/>Roller</NavLink>}
-                  <NavLink to={path('skills')}><Users size={16}/>Yetenekler</NavLink>
                   <NavLink to={path("integrations/channels")}>
                     <Settings size={16} />
                     Entegrasyonlar
@@ -390,7 +389,7 @@ function WorkspaceLayout() {
                     <Timer size={16} />
                     Yanıt süreleri
                   </NavLink>
-                  <NavLink to={path("tags")}>
+                  <NavLink to={path(hasPermission(user, "tags.view") ? "tags" : "tags/skills")}>
                     <Tags size={16} />
                     Kategoriler
                   </NavLink>

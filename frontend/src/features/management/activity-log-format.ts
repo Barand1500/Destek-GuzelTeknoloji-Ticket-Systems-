@@ -48,6 +48,7 @@ export const actionLabels: Record<string, string> = {
   "customer.created": "Müşteri oluşturuldu",
   "customer.updated": "Müşteri bilgileri güncellendi",
   "customer.deleted": "Müşteri silindi",
+  "customer.merged": "Müşteriler birleştirildi",
   "department.updated": "Departman güncellendi",
   "department.archived": "Departman silindi",
   "website.created": "Proje oluşturuldu",

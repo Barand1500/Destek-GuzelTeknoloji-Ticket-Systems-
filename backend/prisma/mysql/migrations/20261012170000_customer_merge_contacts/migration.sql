@@ -1,0 +1,4 @@
+ALTER TABLE `User`
+  MODIFY `staffNote` TEXT NULL,
+  MODIFY `extraPhones` VARCHAR(500) NULL,
+  MODIFY `extraEmails` VARCHAR(500) NULL;

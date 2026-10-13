@@ -108,7 +108,7 @@ export function SkillsPage() {
         description="Personel formunda seçilecek yetenekleri, kategorileri ve seviyeleri yönetin."
       />
       <nav className="catalog-tabs" aria-label="Yetenek yönetimi bölümleri">
-        {(["skill", "category", "level"] as const).map((tab) => (
+        {(["category", "skill", "level"] as const).map((tab) => (
           <button
             key={tab}
             type="button"

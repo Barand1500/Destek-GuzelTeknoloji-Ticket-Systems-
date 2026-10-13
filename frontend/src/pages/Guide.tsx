@@ -202,7 +202,7 @@ const settingsScreens: SettingsScreen[] = [
   {
     icon: UsersRound,
     title: "Yetenekler",
-    text: "Ayarlar → Yetenekler sayfasında personel için seçilebilir kategori, seviye ve yetenek tanımlarını yönetin.",
+    text: "Ayarlar → Kategoriler → Yetenekler sayfasında personel için seçilebilir kategori, seviye ve yetenek tanımlarını yönetin.",
     details: [
       "Kategoriler ve Seviyeler sekmelerinden kendi tanımlarınızı oluşturun; seviye sırasını belirleyin.",
       "Yetenekler sekmesinde kategoriye bağlı yetenek ekleyin; personel formunda kategori, seviye ve yeteneği seçip ekleyin.",

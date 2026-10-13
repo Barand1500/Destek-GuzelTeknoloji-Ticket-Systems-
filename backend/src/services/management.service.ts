@@ -1560,6 +1560,7 @@ export async function activityLogs(
     "customer.created": "Müşteri oluşturuldu",
     "customer.updated": "Müşteri güncellendi",
     "customer.deleted": "Müşteri silindi",
+    "customer.merged": "Müşteriler birleştirildi",
     "user.created": "Kullanıcı oluşturuldu",
     "user.updated": "Kullanıcı güncellendi",
     "user.deleted": "Kullanıcı silindi",
@@ -1873,6 +1874,8 @@ export async function testIntegration(
           port: settings.smtpPort,
           secure: useTls && settings.smtpPort === 465,
           requireTLS: useTls && settings.smtpPort !== 465,
+          // Match the temporary certificate bypass used for SMTP delivery.
+          tls: { rejectUnauthorized: false },
           ...(settings.smtpUser
             ? { auth: { user: settings.smtpUser, pass: settings.smtpPassword } }
             : {}),

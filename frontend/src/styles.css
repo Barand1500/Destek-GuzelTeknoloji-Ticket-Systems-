@@ -137,6 +137,7 @@ html[data-theme="dark"] .integrations-hub-tabs a[aria-current="page"] {
 .guide-hub-content > .page {
   padding-top: 26px;
 }
+.category-hub .guide-hub-content > .page > .page-heading,
 .guide-hub-content .project-guide-page > .page-heading,
 .guide-hub-content .guide-page > .guide-page-heading {
   display: none;

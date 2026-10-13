@@ -52,9 +52,9 @@ model User {
   // Only accounts that can sign in receive a unique login identity.
   loginEmail String? @unique
   company String?
-  staffNote String?
-  extraPhones String?
-  extraEmails String?
+  staffNote String? @db.Text
+  extraPhones String? @db.VarChar(500)
+  extraEmails String? @db.VarChar(500)
   deletedAt DateTime?
   passwordHash String
   role Role @default(CUSTOMER)
