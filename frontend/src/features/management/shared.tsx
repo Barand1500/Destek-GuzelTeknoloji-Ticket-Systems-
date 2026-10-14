@@ -126,6 +126,7 @@ export function Search({
   placeholder = "Ad veya metin yazın…",
   limit,
   onLimitChange,
+  afterSearch,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -133,6 +134,7 @@ export function Search({
   placeholder?: string;
   limit?: number;
   onLimitChange?: (limit: number) => void;
+  afterSearch?: ReactNode;
 }) {
   const field = (
     <label className="management-search">
@@ -146,7 +148,7 @@ export function Search({
     </label>
   );
   return onLimitChange ? <div className="management-list-toolbar">
-    {field}
+    {afterSearch ? <div className="management-search-tools">{field}{afterSearch}</div> : field}
     <div className="management-page-size">
       <span>Kayıt sayısı</span>
       <DropdownSelect ariaLabel="Kayıt Sayısı" value={String(limit ?? 15)} onChange={value => onLimitChange(Number(value))} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} />

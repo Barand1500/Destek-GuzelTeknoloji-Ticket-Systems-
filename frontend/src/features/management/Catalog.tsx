@@ -171,7 +171,13 @@ export function TagsPage() {
   const section = params.get("section") === "statuses" || params.get("section") === "priorities" ? params.get("section") : "tags";
   const [editing, setEditing] = useState<Tag | null>(null);
   const [editingView, setEditingView] = useState<{ id: string; name: string; code: string } | null>(null);
-  const [viewLabels, setViewLabels] = useState<Record<string, string>>({});
+  const [viewLabels, setViewLabels] = useState<Record<string, string>>(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(`helpdesk-inbox-tabs-${user?.id}`) ?? '{}');
+      const codes: Record<string, string> = { all: 'ALL', ticket: 'TICKET', mail: 'EMAIL', sms: 'SMS', whatsapp: 'WHATSAPP', mine: 'MINE', unassigned: 'UNASSIGNED' };
+      return Object.fromEntries(Object.entries(saved.labels ?? {}).filter(([key, value]) => codes[key] && typeof value === 'string').map(([key, value]) => [codes[key], value as string]));
+    } catch { return {}; }
+  });
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null);
   const [version, setVersion] = useState(0);
   function reset() {
@@ -183,7 +189,7 @@ export function TagsPage() {
   const remove = useDelete("/tags", ["tags", "tickets", "conversations"]);
   const inboxViews = [
     { id: "view-all", name: "Tümü", code: "ALL", color: "#7c9b91", href: "/admin/conversations?view=all&category=ALL" },
-    { id: "view-ticket", name: "Telefon talebi", code: "TICKET", color: "#7c9b91", href: "/admin/conversations?view=all&category=TICKET" },
+    { id: "view-ticket", name: "Telefon", code: "TICKET", color: "#7c9b91", href: "/admin/conversations?view=all&category=TICKET" },
     { id: "view-mail", name: "Mail", code: "EMAIL", color: "#7c9b91", href: "/admin/conversations?view=all&category=EMAIL" },
     { id: "view-sms", name: "SMS", code: "SMS", color: "#7c9b91", href: "/admin/conversations?view=all&category=SMS" },
     { id: "view-whatsapp", name: "WhatsApp", code: "WHATSAPP", color: "#7c9b91", href: "/admin/conversations?view=all&category=WHATSAPP" },

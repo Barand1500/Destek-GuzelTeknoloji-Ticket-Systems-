@@ -17,10 +17,12 @@ const skillStars: Record<StaffSkill["level"], string> = {
   EXPERT: "★★★★",
 };
 export function SuggestedDescription({
+  subject = "",
   departmentId,
   assignedAgentId,
   onSelect,
 }: {
+  subject?: string;
   departmentId: string;
   assignedAgentId: string;
   onSelect: (person: {
@@ -31,7 +33,7 @@ export function SuggestedDescription({
   }) => void;
 }) {
   const [text, setText] = useState("");
-  const searchText = text.trim();
+  const searchText = [subject.trim(), text.trim()].filter(Boolean).join("\n");
   const descriptionId = useId();
   const [result, setResult] = useState<{
     text: string;

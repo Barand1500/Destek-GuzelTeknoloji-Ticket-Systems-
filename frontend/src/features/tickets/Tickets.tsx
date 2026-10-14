@@ -1,3 +1,4 @@
+import { EditableCustomerSummary } from "./EditableCustomerSummary";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useWorkSession } from "../../components/WorkSession";
 import { activityActionLabel, activityValueLabel } from "../management/activity-log-format";
@@ -174,6 +175,11 @@ function MentionTextarea({ conversationId, value, onChange, selected, onSelected
   </div>;
 }
 export function TicketList() {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -186,8 +192,8 @@ export function TicketList() {
   const limit = [10, 15, 20, 50].includes(requestedLimit) ? requestedLimit : 15;
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
-  const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon talebi", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", mine: "Bana atanan", unassigned: "Atanmamış" };
-  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "E-Posta ile gelen talepler", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış Talepler", today: "Bugün açılan talepler" };
+  const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", mine: "Bana atanan", unassigned: "Atanmamış" };
+  const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "Gelen ve giden E-Posta görüşmeleri", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış Talepler", today: "Bugün açılan talepler" };
   const [tabLabels, setTabLabels] = useState(defaultTabLabels);
   const [tabOrder, setTabOrder] = useState(Object.keys(defaultTabLabels));
   const [tabEnabled, setTabEnabled] = useState<Record<string, boolean>>(Object.fromEntries(Object.keys(defaultTabLabels).map((key) => [key, true])));
@@ -395,7 +401,7 @@ export function TicketList() {
             </p>
           </div>
         ) : (
-          <div className="table-scroll">
+          <div className="table-scroll inbox-table-scroll">
             <table>
               <thead>
                 <tr>
@@ -415,13 +421,13 @@ export function TicketList() {
                   <tr key={ticket.id} className="inbox-ticket-row">
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`#TK-${String(ticket.number).padStart(5, "0")} ${ticket.subject}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <Link
-                        className="ticket-title"
+                        className="ticket-title" title={ticket.subject}
                         to={conversationPath(user!.role, ticket.id)}
                       >
                         <small>
                           #TK-{String(ticket.number).padStart(5, "0")}
                         </small>
-                        {ticket.subject}
+                        <span className="inbox-subject-text">{ticket.subject}</span>
                       </Link>
                       <span className="customer-name">
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
@@ -444,9 +450,9 @@ export function TicketList() {
                         <span className="muted">Atanmamış</span>
                       )}
                     </td>
-                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}</td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}<small className="inbox-elapsed-time">{now - new Date(ticket.createdAt).getTime() < 60_000 ? "Az önce" : `${durationBetween(ticket.createdAt, new Date(now).toISOString())} geçti`}</small></td>
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
-                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}</td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}<small className="inbox-elapsed-time">{now - new Date(ticket.updatedAt).getTime() < 60_000 ? "Az önce" : `${durationBetween(ticket.updatedAt, new Date(now).toISOString())} geçti`}</small></td>
                   </tr>
                 ))}
               </tbody>
@@ -776,12 +782,7 @@ export function TicketDetail() {
       </div>
       <section className="ticket-customer-summary">
         <span className="ticket-number">#TK-{String(t.number).padStart(5, "0")}</span>
-        <strong>{t.customer.name}</strong>
-        {t.customer.phone && <span>{t.customer.phone}</span>}
-        {t.customer.email && <span>{t.customer.email}</span>}
-        {t.customer.company && <span>{t.customer.company}</span>}
-        {t.customer.extraPhones && <span>Ek tel: {t.customer.extraPhones}</span>}
-        {t.customer.extraEmails && <span>Ek e-posta: {t.customer.extraEmails}</span>}
+        <EditableCustomerSummary key={t.customer.id} customer={t.customer} canEdit={hasPermission(user, "customers.update")} />
       </section>
       <div className="detail-grid">
         <section className="conversation">

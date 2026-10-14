@@ -1,11 +1,11 @@
-﻿import 'dotenv/config';
+import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 process.env.NODE_ENV='test';
 const {db}=await import('../src/config/db.js');
 const {departmentAgents}=await import('../src/services/management.service.js');
-const {createConversation,updateConversation}=await import('../src/services/conversations.service.js');
+const {createConversation,updateConversation,listConversations}=await import('../src/services/conversations.service.js');
 test('agents and managers can assign active department managers',async()=>{
  const suffix=randomUUID();const users:string[]=[];const departments:string[]=[];const conversations:string[]=[];
  try {
@@ -22,6 +22,13 @@ test('agents and managers can assign active department managers',async()=>{
  await updateConversation(actor(manager),c.id,{assignedAgentId:other.id});
  assert.equal((await db.conversation.findUniqueOrThrow({where:{id:c.id}})).assignedAgentId,other.id);
  await assert.rejects(updateConversation(actor(manager),c.id,{assignedAgentId:foreign.id}),/departmanda/);
+ const email=await db.conversation.create({data:{customerId:customer.id,departmentId:d.id,channel:'EMAIL',source:'PHONE_SUPPORT',subject:'Outgoing email filter test',searchSubject:'outgoing email filter test'}});conversations.push(email.id);
+ const phoneList=await listConversations(actor(manager),{page:1,limit:100,view:'all',category:'TICKET'});
+ assert.ok(phoneList.data.some(item=>item.id===c.id));
+ assert.ok(!phoneList.data.some(item=>item.id===email.id));
+ const mailList=await listConversations(actor(manager),{page:1,limit:100,view:'all',category:'EMAIL'});
+ assert.ok(mailList.data.some(item=>item.id===email.id));
+ assert.ok(!mailList.data.some(item=>item.id===c.id));
  } finally {
  await db.activityLog.deleteMany({where:{userId:{in:users}}});
  await db.conversationMessage.deleteMany({where:{conversationId:{in:conversations}}});

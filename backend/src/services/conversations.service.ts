@@ -91,9 +91,9 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   };
   const categoryFilter: Prisma.ConversationWhereInput[] = q.category
     ? q.category === "EMAIL"
-      ? [{ channel: "EMAIL", source: { not: "PHONE_SUPPORT" } }]
+      ? [{ channel: "EMAIL" }]
       : q.category === "TICKET"
-        ? [{ OR: [{ channel: "TICKET" }, { channel: "EMAIL", source: "PHONE_SUPPORT" }] }]
+        ? [{ channel: "TICKET" }]
       : q.category === "SMS" || q.category === "WHATSAPP"
         ? [{ channel: q.category === "SMS" ? "SMS" : "WHATSAPP" }]
       : q.category === "MINE"
@@ -258,7 +258,7 @@ export async function createConversation(
     return conversation;
   });
   publishChange(result.id);
-  if (result.customer.email && (input.source !== "PHONE_SUPPORT" || input.channel === "EMAIL")) {
+  if (result.customer.email && input.channel === "EMAIL") {
     const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
     const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
     const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT";
@@ -404,7 +404,7 @@ export async function addMessage(
     const conversation = await db.conversation.findUnique({
       where: { id }, include: { customer: { select: { name: true, email: true, phone: true } } },
     });
-    if (conversation?.channel !== "SMS" && conversation?.channel !== "WHATSAPP" && conversation?.customer.email) {
+    if (conversation?.channel === "EMAIL" && conversation?.customer.email) {
       const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
       const replace = (value: string) => value.replaceAll("{name}", conversation.customer.name).replaceAll("{subject}", conversation.subject).replaceAll("{number}", String(conversation.number)).replaceAll("{reply}", result.body);
       queueSupportEmail(conversation.customer.email, replace(template.ticketReplySubject), `${replace(template.ticketReplyBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });

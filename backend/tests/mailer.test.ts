@@ -43,7 +43,7 @@ test('temporary failures stop after three attempts', async () => {
   assert.equal(calls, 3);
 });
 
-test('ticket creation and staff replies reach the mail transport; internal notes do not', async t => {
+test('email creation and replies send mail; internal notes and phone conversations do not', async t => {
   const { db } = await import('../src/config/db.js');
   const { env } = await import('../src/config/env.js');
   const nodemailer = (await import('nodemailer')).default;
@@ -51,7 +51,7 @@ test('ticket creation and staff replies reach the mail transport; internal notes
   const sent: Array<{ from: string; replyTo: string; to: string; subject: string; text: string }> = [];
   const audits: any[] = [];
   const customer = { id: 'customer', name: 'Test customer', email: 'customer@example.test' };
-  const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', channel: 'TICKET', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
+  const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', channel: 'EMAIL', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
   const actor = { id: 'admin', name: 'Test admin', email: 'admin@example.test', role: 'ADMIN' as const, departmentIds: [], sessionId: 'test' };
   const log = async ({ data }: any) => { audits.push(data); return data; };
   const tx = {
@@ -82,14 +82,14 @@ test('ticket creation and staff replies reach the mail transport; internal notes
   env.NODE_ENV = 'development'; // Exercise the real queue, with all network and DB calls mocked.
   const flush = () => new Promise<void>(resolve => setImmediate(resolve));
   try {
-    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'Initial request', priority: 'NORMAL', channel: 'TICKET' });
+    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'Initial request', priority: 'NORMAL', channel: 'EMAIL' });
     await flush();
     assert.equal(sent.length, 1);
     assert.equal(sent[0].to, customer.email);
     assert.equal(sent[0].from, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
     assert.equal(sent[0].replyTo, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
     assert.doesNotMatch(sent[0].replyTo, /\+(?:t-|ticket-)/i);
-    assert.match(sent[0].subject, /#42/);
+    assert.equal(sent[0].subject, conversation.subject);
     await addMessage(actor, conversation.id, { body: 'Public answer', type: 'AGENT_REPLY' });
     await flush();
     assert.equal(sent.length, 2);
@@ -100,6 +100,12 @@ test('ticket creation and staff replies reach the mail transport; internal notes
     await flush();
     assert.equal(sent.length, 2);
     assert.equal(audits.filter(item => item.action === 'conversation.email_sent').length, 2);
+    conversation.channel = 'TICKET';
+    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'Phone call note', priority: 'NORMAL', channel: 'TICKET', source: 'PHONE_SUPPORT' });
+    await flush();
+    await addMessage(actor, conversation.id, { body: 'Phone follow-up note', type: 'AGENT_REPLY' });
+    await flush();
+    assert.equal(sent.length, 2, 'Phone creation and replies must not send email');
   } finally {
     await flush();
     env.NODE_ENV = previous;

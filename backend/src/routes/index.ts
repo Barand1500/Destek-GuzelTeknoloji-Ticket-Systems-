@@ -1,3 +1,4 @@
+import { permissionScope } from "../services/permissions.js";
 import { Router, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -142,13 +143,16 @@ router.post('/webhooks/whatsapp', async (req, res) => {
   }
 });
 router.use(authenticate);
-router.get('/communication-channels', async (_req, res) => {
-  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { smsEnabled: true, whatsappEnabled: true, smtpEnabled: true, smtpHost: true, smtpFromAddress: true, smtpUser: true, smtpPassword: true } });
+router.get('/communication-channels', async (req, res) => {
+  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { imapDepartmentId: true, smsEnabled: true, whatsappEnabled: true, smtpEnabled: true, smtpHost: true, smtpFromAddress: true, smtpUser: true, smtpPassword: true } });
   const hasStoredSmtpConfig = Boolean(settings && (settings.smtpHost || settings.smtpFromAddress || settings.smtpUser || settings.smtpPassword));
   const emailEnabled = (hasStoredSmtpConfig ? Boolean(settings?.smtpEnabled) : true)
     && Boolean(settings?.smtpHost || env.SMTP_HOST)
     && Boolean(settings?.smtpFromAddress || env.SMTP_FROM);
-  res.json({ success: true, data: { EMAIL: emailEnabled, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
+  const defaultDepartment = settings?.imapDepartmentId && req.actor.role !== 'CUSTOMER'
+    && (permissionScope(req.actor) === 'ALL' || req.actor.departmentIds.includes(settings.imapDepartmentId))
+    ? await db.department.findFirst({ where: { id: settings.imapDepartmentId, isActive: true, deletedAt: null }, select: { id: true, name: true } }) : null;
+  res.json({ success: true, data: { defaultDepartment, EMAIL: emailEnabled, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
 });
 // Keep saved links and API clients working while Conversation is the canonical resource.
 router.use((req, _res, next) => {

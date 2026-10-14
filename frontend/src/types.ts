@@ -10,7 +10,7 @@ export type Status = string;
 export type Priority = string;
 export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIVE_CHAT";
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
-export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon talebi",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",LIVE_CHAT:"Canlı sohbet"};
+export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
   channel: ConversationChannel;
   source?: string;

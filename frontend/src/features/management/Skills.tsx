@@ -36,7 +36,7 @@ export function SkillsPage() {
   const { user } = useAuth();
   const catalog = useSkillCatalog();
   const client = useQueryClient();
-  const [kind, setKind] = useState<SkillDefinition["kind"]>("skill");
+  const [kind, setKind] = useState<SkillDefinition["kind"]>("category");
   const [editing, setEditing] = useState<SkillDefinition | null>(null);
   const [name, setName] = useState(""),
     [categoryId, setCategoryId] = useState(""),

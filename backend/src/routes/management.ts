@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { mergeCustomers, mergeCustomersInput } from '../services/customer-merge.service.js';
+import { mergeCustomers, mergeCustomersInput, duplicateCustomers, duplicateCustomersQuery } from '../services/customer-merge.service.js';
 import * as skillCatalog from '../services/skill-catalog.service.js';
 import { z } from 'zod';
 import { AppError } from '../utils/errors.js';
@@ -15,6 +15,7 @@ import { currentPresence, staffPresence, updatePresenceSettings } from '../servi
 export const managementRouter = Router();
 const admin = authorize("ADMIN");
 const staff = authorize("ADMIN", "SUPERVISOR", "AGENT");
+managementRouter.get('/customers/duplicates',staff,async(req,res)=>res.json({success:true,data:await duplicateCustomers(req.actor,duplicateCustomersQuery.parse(req.query))}));
 managementRouter.post('/customers/:id/merge',staff,async(req,res)=>res.json({success:true,data:await mergeCustomers(req.actor,idSchema.parse(req.params.id),mergeCustomersInput.parse(req.body))}));
 managementRouter.get('/skill-catalog',staff,async(req,res)=>res.json({success:true,data:await skillCatalog.skillCatalog(req.actor)}));
 managementRouter.post('/skill-catalog/:kind',staff,async(req,res)=>res.status(201).json({success:true,data:await skillCatalog.saveSkillDefinition(req.actor,skillCatalog.skillKind.parse(req.params.kind),skillCatalog.skillDefinitionInput.parse(req.body))}));

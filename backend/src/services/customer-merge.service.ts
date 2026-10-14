@@ -18,6 +18,39 @@ const split = (value: string | null) =>
     .split(/[,;\n]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+export const duplicateCustomersQuery = z.object({
+  field: z.enum(['name', 'email', 'company', 'phone']),
+  search: z.string().trim().max(100).default(''),
+}).strict();
+type DuplicateCustomer = { id: string; name: string; email: string | null; phone: string | null; company: string | null; extraEmails: string | null; extraPhones: string | null };
+const identityKey = (value: string) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR');
+export function groupDuplicateCustomers(customers: DuplicateCustomer[], field: 'name' | 'email' | 'company' | 'phone', search = '') {
+  const groups = new Map<string, { key: string; value: string; customers: DuplicateCustomer[] }>();
+  for (const customer of customers) {
+    const values = field === 'email' ? [customer.email, ...split(customer.extraEmails)] : field === 'phone' ? [customer.phone, ...split(customer.extraPhones)] : [customer[field]];
+    for (const value of values) {
+      if (!value) continue;
+      const key = field === 'phone' ? canonicalPhone(value) : field === 'email' ? value.trim().toLowerCase() : identityKey(value);
+      if (!key) continue;
+      const group = groups.get(key) ?? { key, value: value.trim(), customers: [] };
+      if (!group.customers.some(item => item.id === customer.id)) group.customers.push(customer);
+      groups.set(key, group);
+    }
+  }
+  const needle = field === 'phone' ? search.replace(/\D/g, '') : field === 'email' ? search.toLowerCase() : identityKey(search);
+  return [...groups.values()].filter(group => group.customers.length > 1 && (!needle || group.key.includes(needle))).sort((a, b) => a.value.localeCompare(b.value, 'tr'));
+}
+export async function duplicateCustomers(actor: Actor, input: z.infer<typeof duplicateCustomersQuery>) {
+  if (actor.role === 'CUSTOMER' || !can(actor, 'customers.update') || !can(actor, 'customers.delete'))
+    throw new AppError(403, 'FORBIDDEN', 'Müşteri birleştirme için düzenleme ve silme yetkisi gerekir.');
+  const scope = permissionScope(actor);
+  const customers = await db.user.findMany({
+    where: { role: 'CUSTOMER', deletedAt: null, ...(scope === 'ALL' ? {} : { customerConversations: { none: scope === 'OWN' ? { OR: [{ assignedAgentId: null }, { assignedAgentId: { not: actor.id } }] } : { departmentId: { notIn: actor.departmentIds } } } }) },
+    select: { id: true, name: true, email: true, phone: true, company: true, extraEmails: true, extraPhones: true },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+  });
+  return groupDuplicateCustomers(customers, input.field, input.search);
+}
 function unique(values: string[], key: (value: string) => string) {
   const seen = new Set<string>();
   return values.filter((value) => {
