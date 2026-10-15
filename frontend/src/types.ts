@@ -12,6 +12,7 @@ export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIV
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
 export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
+  replyChannels?: Array<"TICKET" | "EMAIL" | "SMS" | "WHATSAPP"> | null;
   channel: ConversationChannel;
   source?: string;
   customerId: string;

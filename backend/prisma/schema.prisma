@@ -157,6 +157,7 @@ model Conversation {
   websiteId String?
   website Website? @relation(fields: [websiteId], references: [id], onDelete: SetNull)
   channel ConversationChannel @default(TICKET)
+  replyChannels Json?
   source String @default("TICKET")
   searchSubject String
   customerId String

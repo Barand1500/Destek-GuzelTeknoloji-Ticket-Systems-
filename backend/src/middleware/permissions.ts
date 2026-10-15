@@ -25,7 +25,7 @@ export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
       else if (path.endsWith('/assign-to-me')) allow('conversations.assign');
       else if (req.method === 'POST') allow('conversations.create');
       else {
-        for (const key of Object.keys(req.body ?? {})) allow(key === 'assignedAgentId' ? 'conversations.assign' : key === 'departmentId' ? 'conversations.transfer' : 'conversations.update');
+        for (const key of Object.keys(req.body ?? {})) allow(key === 'replyChannels' ? 'conversations.reply' : key === 'assignedAgentId' ? 'conversations.assign' : key === 'departmentId' ? 'conversations.transfer' : 'conversations.update');
       }
     } else if (path.endsWith('/history')) allow('conversations.history');
     next(); return;

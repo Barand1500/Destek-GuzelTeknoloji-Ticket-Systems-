@@ -1,3 +1,4 @@
+import { customerListOrder } from "./customer-sorting.js";
 import bcrypt from "bcrypt";
 import { randomBytes } from "node:crypto";
 import { unlink } from "node:fs/promises";
@@ -214,7 +215,7 @@ export async function users(
         await db.user.findMany({
           where,
           select: { ...person, customerFiles: { select: { id: true } } },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          orderBy: customerListOrder(q.nameSort),
           ...paging(q),
         })
       ).map(({ customerFiles, ...customer }) => ({

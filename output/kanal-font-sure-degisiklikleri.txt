@@ -1,0 +1,13 @@
+﻿backend/prisma/schema.prisma
+backend/prisma/mysql/migrations/20261014190000_conversation_reply_channels/migration.sql
+backend/src/validators/index.ts
+backend/src/middleware/permissions.ts
+backend/src/services/conversations.service.ts
+backend/src/services/reply-channels.ts
+frontend/src/components/DropdownSelect.tsx
+frontend/src/features/tickets/EditableCustomerSummary.tsx
+frontend/src/features/tickets/ReplyChannelSelector.tsx
+frontend/src/features/tickets/Tickets.tsx
+frontend/src/types.ts
+frontend/src/styles.css
+frontend/src/utils/elapsed-duration.ts

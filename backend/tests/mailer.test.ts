@@ -50,16 +50,19 @@ test('email creation and replies send mail; internal notes and phone conversatio
   const { createConversation, addMessage } = await import('../src/services/conversations.service.js');
   const sent: Array<{ from: string; replyTo: string; to: string; subject: string; text: string }> = [];
   const audits: any[] = [];
-  const customer = { id: 'customer', name: 'Test customer', email: 'customer@example.test' };
-  const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', channel: 'EMAIL', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
+  const createdData: any[] = [];
+  const customer = { id: 'customer', name: 'Test customer', email: 'customer@example.test', phone: '905321112233' };
+  const integration = { smtpEnabled: true, smtpHost: 'smtp.example.test', smtpPort: 587, smtpSecure: true, smtpFromAddress: 'guzelteknoloji50@gmail.com', smtpFromName: 'Güzel Teknoloji Destek', smtpUser: 'test', smtpPassword: 'fake', whatsappEnabled: true, whatsappPhoneNumberId: 'test-number', whatsappAccessToken: 'fake-token' };
+  const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', replyChannels: null as string[] | null, channel: 'EMAIL', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
   const actor = { id: 'admin', name: 'Test admin', email: 'admin@example.test', role: 'ADMIN' as const, departmentIds: [], sessionId: 'test' };
   const log = async ({ data }: any) => { audits.push(data); return data; };
   const tx = {
     priorityOption: { findFirst: async () => ({ code: 'NORMAL' }) },
-    conversation: { create: async () => conversation, updateMany: async () => ({ count: 1 }), findUniqueOrThrow: async () => conversation },
+    conversation: { create: async ({ data }: any) => { createdData.push(data); return conversation; }, updateMany: async () => ({ count: 1 }), findUniqueOrThrow: async () => conversation },
     conversationMessage: { create: async ({ data }: any) => ({ id: 'message', createdAt: new Date(), ...data }) },
     activityLog: { create: log },
-    user: { findMany: async () => [] },
+    user: { findMany: async () => [], findUniqueOrThrow: async () => customer },
+    integrationSettings: { findUnique: async () => integration },
     notification: { createMany: async () => ({ count: 1 }) },
   };
   // Prisma's proxy methods have no function-valued property descriptor, so
@@ -76,7 +79,7 @@ test('email creation and replies send mail; internal notes and phone conversatio
   stub(db.user, 'findFirst', async () => customer);
   stub(db.conversation, 'findUnique', async () => conversation);
   stub(db.activityLog, 'create', log);
-  stub(db.integrationSettings, 'findUnique', async () => ({ smtpEnabled: true, smtpHost: 'smtp.example.test', smtpPort: 587, smtpSecure: true, smtpFromAddress: 'guzelteknoloji50@gmail.com', smtpFromName: 'Güzel Teknoloji Destek', smtpUser: 'test', smtpPassword: 'fake' }));
+  stub(db.integrationSettings, 'findUnique', async () => integration);
   t.mock.method(nodemailer, 'createTransport', () => ({ sendMail: async (mail: any) => { sent.push(mail); return { accepted: [mail.to], rejected: [], response: '250 OK', messageId: '<test@example.test>' }; } }));
   const previous = env.NODE_ENV;
   env.NODE_ENV = 'development'; // Exercise the real queue, with all network and DB calls mocked.
@@ -106,6 +109,33 @@ test('email creation and replies send mail; internal notes and phone conversatio
     await addMessage(actor, conversation.id, { body: 'Phone follow-up note', type: 'AGENT_REPLY' });
     await flush();
     assert.equal(sent.length, 2, 'Phone creation and replies must not send email');
+    const whatsappBodies: any[] = [];
+    t.mock.method(globalThis, 'fetch', async (_url: unknown, init: RequestInit) => {
+      whatsappBodies.push(JSON.parse(String(init.body)));
+      return new Response(JSON.stringify({ messages: [{ id: 'test-wa-message' }] }), { status: 200 });
+    });
+    conversation.replyChannels = ['EMAIL', 'WHATSAPP'];
+    await addMessage(actor, conversation.id, { body: 'Send to both channels', type: 'AGENT_REPLY' });
+    await flush(); await flush();
+    assert.equal(sent.length, 3);
+    assert.equal(whatsappBodies.length, 1);
+    assert.equal(whatsappBodies[0].text.body, 'Send to both channels');
+    await addMessage(actor, conversation.id, { body: 'Keep internal', type: 'INTERNAL_NOTE' });
+    await flush();
+    assert.equal(sent.length, 3);
+    assert.equal(whatsappBodies.length, 1);
+    integration.whatsappEnabled = false;
+    await assert.rejects(addMessage(actor, conversation.id, { body: 'Disabled channel', type: 'AGENT_REPLY' }), /etkin değil/);
+    assert.equal(sent.length, 3);
+    integration.whatsappEnabled = true;
+    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'First multi-channel message', priority: 'NORMAL', channel: 'TICKET', source: 'PHONE_SUPPORT', replyChannels: ['TICKET', 'EMAIL', 'WHATSAPP'] });
+    await flush(); await flush();
+    assert.equal(sent.length, 4);
+    assert.equal(sent[3].text, 'First multi-channel message');
+    assert.equal(whatsappBodies.length, 2);
+    assert.equal(whatsappBodies[1].text.body, 'First multi-channel message');
+    assert.deepEqual(createdData.at(-1).replyChannels, ['TICKET', 'EMAIL', 'WHATSAPP']);
+    assert.equal(createdData.at(-1).channel, 'EMAIL');
   } finally {
     await flush();
     env.NODE_ENV = previous;

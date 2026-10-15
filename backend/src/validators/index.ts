@@ -29,6 +29,8 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 export const listSchema = paginationSchema.extend({
+  sortBy: z.enum(['subject', 'department', 'assignedAgent']).optional(),
+  sortDirection: z.enum(['asc', 'desc']).optional(),
   search: z.string().trim().max(100).optional(),
   status: statusSchema.optional(),
   priority: prioritySchema.optional(),
@@ -56,6 +58,7 @@ export const createConversationSchema = z
 export const createStaffConversationSchema = createConversationSchema.extend({
   customerId: idSchema,
   source: z.enum(["PHONE_SUPPORT"]).optional(),
+  replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP'])).min(1).max(4).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
 }).strict();
 export const messageSchema = z
   .object({
@@ -77,6 +80,7 @@ export const updateConversationSchema = z
     departmentId: idSchema.optional(),
     websiteId: idSchema.nullable().optional(),
     tagIds: z.array(idSchema).max(20).optional(),
+    replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP'])).min(1).max(4).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0);

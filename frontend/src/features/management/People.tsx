@@ -2,7 +2,7 @@ import { CustomerMergeModal } from "./CustomerMergeModal";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Eye, EyeOff, FileText, Pencil, Plus, UserRoundPlus, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, FileText, Pencil, Plus, UserRoundPlus, RotateCcw, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
@@ -140,7 +140,7 @@ function LocationFields({ city = "", district = "", idPrefix }: { city?: string 
 type Website = { id: string; name: string; url: string; isActive: boolean };
 type OutgoingChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP";
 type CommunicationChannels = Record<Exclude<OutgoingChannel, "TICKET">, boolean> & { defaultDepartment?: Department | null };
-function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, channel, setChannel, availableChannels, channelStatus, customer, defaultDepartment }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; channel: OutgoingChannel; setChannel: (value: OutgoingChannel) => void; availableChannels: OutgoingChannel[]; channelStatus: string; customer?: ManagedUser | null; defaultDepartment?: Department }) {
+function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsiteId, assignedAgentId, setAssignedAgentId, channel, setChannel, availableChannels, channelStatus, customer, defaultDepartment }: { departmentId: string; setDepartmentId: (value: string) => void; websiteId: string; setWebsiteId: (value: string) => void; assignedAgentId: string; setAssignedAgentId: (value: string) => void; channel: OutgoingChannel[]; setChannel: (value: OutgoingChannel[]) => void; availableChannels: OutgoingChannel[]; channelStatus: string; customer?: ManagedUser | null; defaultDepartment?: Department }) {
   const { user } = useAuth();
   const canAssignStaff = hasPermission(user, 'conversations.assign');
   const [subject, setSubject] = useState("");
@@ -150,7 +150,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
   return <>
     {customer && <label className="phone-request-selected"><span className="field-label">Seçilen Kişi</span><input readOnly value={customer.name} /></label>}
     <div className="phone-request-grid">
-      <div className="phone-request-channel"><DropdownSelect label="Dönüş Kanalı" value={channel} onChange={value => setChannel(value as OutgoingChannel)} ariaLabel="Dönüş Kanalını Seçin" options={availableChannels.map(value => ({ value, label: value === "TICKET" ? "Telefon" : value === "EMAIL" ? "E-Posta" : value === "SMS" ? "SMS" : "WhatsApp" }))} />{channelStatus && <small className="muted">{channelStatus}</small>}</div>
+      <div className="phone-request-channel"><MultiDropdownSelect label="Dönüş Kanalı" value={channel} selectionLabel={channel.map(value => value === "TICKET" ? "Telefon" : value === "EMAIL" ? "E-Posta" : value === "SMS" ? "SMS" : "WhatsApp").join(", ")} emptyLabel="Kanal Seçin" onChange={value => setChannel(value as OutgoingChannel[])} ariaLabel="Dönüş Kanalını Seçin" options={availableChannels.map(value => ({ value, label: value === "TICKET" ? "Telefon" : value === "EMAIL" ? "E-Posta" : value === "SMS" ? "SMS" : "WhatsApp" }))} />{channelStatus && <small className="muted">{channelStatus}</small>}</div>
       <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje Seçin" options={[{ value: "", label: "Proje Seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} autoFocus={Boolean(customer)} value={subject} onChange={event => setSubject(event.target.value)} /></label>
       {canAssignStaff && <SuggestedDescription subject={subject} departmentId={departmentId} assignedAgentId={assignedAgentId} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentId(person.id); }} />}
@@ -548,7 +548,8 @@ export function CustomersPage() {
   const canViewConversations = hasPermission(user, 'conversations.view');
   const canCreateConversations = hasPermission(user, 'conversations.create');
   const queryClient = useQueryClient();
-  const list = useList<ManagedUser>("/customers");
+  const [customerSort, setCustomerSort] = useState<"asc" | "desc" | null>(null);
+  const list = useList<ManagedUser>("/customers", customerSort ? { nameSort: customerSort } : {});
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerFiles, setCustomerFiles] = useState<File[]>([]);
@@ -608,10 +609,10 @@ export function CustomersPage() {
             <table className="management-table customer-list-table">
               <thead>
                 <tr>
-                  <th>{bulkSelectionMode ? "Seç" : "Müşteri"}</th>
+                  <th aria-sort={customerSort === 'asc' ? 'ascending' : customerSort === 'desc' ? 'descending' : 'none'}>{bulkSelectionMode ? 'Seç' : <button className="customer-sort-button" type="button" title={customerSort === 'asc' ? 'Z → A sırala' : customerSort === 'desc' ? 'Varsayılan sıralamaya dön' : 'A → Z sırala'} onClick={() => { setCustomerSort(current => current === null ? 'asc' : current === 'asc' ? 'desc' : null); list.setPage(1); }}>Müşteri<span aria-hidden="true">{customerSort === 'asc' ? '↑' : customerSort === 'desc' ? '↓' : '↕'}</span></button>}</th>
                   <th>İletişim</th>
                   <th>Hesap Durumu</th>
-                  <th>Görüşmeler</th>
+                  <th><div className="customer-table-heading-actions"><span>Görüşmeler</span><button className="customer-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setCustomerSort(null); list.setPage(1); void queryClient.invalidateQueries({ queryKey: ["/customers"] }); }}><RotateCcw size={15}/></button></div></th>
                 </tr>
               </thead>
               <tbody>
@@ -745,7 +746,8 @@ export function PhoneSupportPage() {
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [websiteId, setWebsiteId] = useState("");
   const [assignedAgentId, setAssignedAgentId] = useState("");
-  const [channel, setChannel] = useState<OutgoingChannel>("TICKET");
+  const [selectedChannels, setSelectedChannels] = useState<OutgoingChannel[]>(["TICKET"]);
+  const channel = selectedChannels.find(value => value !== "TICKET") ?? "TICKET";
   const [channelFormError, setChannelFormError] = useState("");
   const communicationChannels = useQuery({ queryKey: ["communication-channels"], queryFn: async () => (await api.get<{ data: CommunicationChannels }>("/communication-channels")).data.data });
   const defaultDepartmentApplied = useRef(false);
@@ -757,14 +759,14 @@ export function PhoneSupportPage() {
   }, [communicationChannels.data]);
   const channelOrder: OutgoingChannel[] = ["TICKET", "EMAIL", "SMS", "WHATSAPP"];
   const availableChannels = channelOrder.filter((value) => value === "TICKET" || communicationChannels.data?.[value]);
-  const channelAvailable = channel === "TICKET" || Boolean(communicationChannels.data?.[channel]);
+  const channelAvailable = selectedChannels.length > 0 && selectedChannels.every(value => value === "TICKET" || Boolean(communicationChannels.data?.[value]));
   const channelStatus = communicationChannels.isPending ? "Dönüş kanalları yükleniyor…" : communicationChannels.isError ? "Dönüş kanalları yüklenemedi." : availableChannels.length === 0 ? "Etkin dönüş kanalı yok." : "";
-  const handleChannelChange = (value: OutgoingChannel) => { setChannel(value); setChannelFormError(""); };
+  const handleChannelChange = (value: OutgoingChannel[]) => { setSelectedChannels(value); setChannelFormError(""); };
   useEffect(() => {
-    if (channel === "TICKET" || !communicationChannels.data || communicationChannels.data[channel]) return;
-    const fallback = channelOrder.find((value) => value === "TICKET" || communicationChannels.data?.[value]);
-    if (fallback) setChannel(fallback);
-  }, [communicationChannels.data, channel]);
+    if (!communicationChannels.data) return;
+    const active = selectedChannels.filter(value => value === 'TICKET' || communicationChannels.data?.[value]);
+    if (active.length !== selectedChannels.length) setSelectedChannels(active.length ? active : ['TICKET']);
+  }, [communicationChannels.data, selectedChannels]);
   const initialCustomer = useQuery({
     queryKey: ["/customers", initialCustomerId],
     queryFn: async () => (await api.get<{ data: ManagedUser }>(`/customers/${initialCustomerId}`)).data.data,
@@ -831,11 +833,11 @@ export function PhoneSupportPage() {
       setChannelFormError("Etkin bir dönüş kanalı seçin.");
       return;
     }
-    if (channel === "EMAIL" && !String(values.get("email") ?? "").trim()) {
+    if (selectedChannels.includes("EMAIL") && !String(values.get("email") ?? "").trim()) {
       setChannelFormError("E-Posta kanalını kullanmak için yeni müşterinin e-posta adresini girin veya başka kanal seçin.");
       return;
     }
-    if ((channel === "SMS" || channel === "WHATSAPP") && !String(values.get("phone") ?? "").trim()) {
+    if ((selectedChannels.includes("SMS") || selectedChannels.includes("WHATSAPP")) && !String(values.get("phone") ?? "").trim()) {
       setChannelFormError("Seçilen dönüş kanalı için müşterinin telefon numarası gerekli.");
       return;
     }
@@ -845,7 +847,7 @@ export function PhoneSupportPage() {
       { onSuccess: (result) => {
         const customer = (result as { data: { data: ManagedUser } }).data.data;
         createConversation.mutate(
-          { data: { customerId: customer.id, departmentId, channel, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
+          { data: { customerId: customer.id, departmentId, channel, replyChannels: selectedChannels, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
           { onSuccess: (conversationResult) => openCreatedConversation((conversationResult as { data: { data: Conversation } }).data.data.id) },
         );
       } },
@@ -857,17 +859,17 @@ export function PhoneSupportPage() {
       setChannelFormError("Etkin bir dönüş kanalı seçin.");
       return;
     }
-    if (channel === "EMAIL" && !activeCustomer?.email) {
+    if (selectedChannels.includes("EMAIL") && !activeCustomer?.email) {
       setChannelFormError("E-Posta kanalını kullanmak için müşterinin e-posta adresi gerekli.");
       return;
     }
-    if ((channel === "SMS" || channel === "WHATSAPP") && !activeCustomer?.phone) {
+    if ((selectedChannels.includes("SMS") || selectedChannels.includes("WHATSAPP")) && !activeCustomer?.phone) {
       setChannelFormError("Seçilen dönüş kanalı için müşterinin telefon numarası gerekli.");
       return;
     }
     setChannelFormError("");
     createConversation.mutate(
-      { data: { customerId, departmentId, channel, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
+      { data: { customerId, departmentId, channel, replyChannels: selectedChannels, source: "PHONE_SUPPORT", subject: values.get("subject"), message: values.get("message"), priority: "NORMAL", websiteId: values.get("websiteId") || undefined, assignedAgentId: values.get("assignedAgentId") || undefined, tagIds } },
       { onSuccess: (result) => openCreatedConversation((result as { data: { data: Conversation } }).data.data.id) },
     );
   }
@@ -901,7 +903,7 @@ export function PhoneSupportPage() {
             </section>
             <section className="phone-new-request-fields">
               <h2>Talep Bilgileri</h2>
-              <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} />
+              <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={selectedChannels} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} />
             </section>
             {channelFormError && <p className="error">{channelFormError}</p>}
             <ErrorMessage error={createCustomer.error ?? createConversation.error} />
@@ -914,7 +916,7 @@ export function PhoneSupportPage() {
         {activeCustomer && <section className="management-panel phone-support-action-panel phone-support-action-panel-v2">
           <form className="management-form phone-support-request-form" onSubmit={submitConversation}>
             <h2>Talep Bilgileri</h2>
-          <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={channel} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
+          <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentId={assignedAgentId} setAssignedAgentId={setAssignedAgentId} channel={selectedChannels} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
             <ErrorMessage error={createConversation.error} />
             {channelFormError && <p className="error">{channelFormError}</p>}
             <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? "Oluşturuluyor…" : channel === "TICKET" ? "Talebi Kaydet" : "Talebi Oluştur ve Gönder"}</button></div>

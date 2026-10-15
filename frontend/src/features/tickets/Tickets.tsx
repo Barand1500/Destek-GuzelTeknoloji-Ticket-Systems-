@@ -1,3 +1,5 @@
+import { elapsedDuration } from "../../utils/elapsed-duration";
+import { ReplyChannelSelector } from "./ReplyChannelSelector";
 import { EditableCustomerSummary } from "./EditableCustomerSummary";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useWorkSession } from "../../components/WorkSession";
@@ -10,6 +12,7 @@ import {
 } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  RotateCcw,
   ArrowLeft,
   ArrowRight,
   AtSign,
@@ -231,6 +234,23 @@ export function TicketList() {
   function moveTab(key: string, direction: -1 | 1) {
     setTabOrder((current) => { const index = current.indexOf(key); const target = index + direction; if (index < 0 || target < 0 || target >= current.length) return current; const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; window.localStorage.setItem(`helpdesk-inbox-tabs-${user?.id}`, JSON.stringify({ labels: tabLabels, custom: customTabs, order: next, enabled: tabEnabled })); return next; });
   }
+  type SortColumn = 'subject' | 'department' | 'assignedAgent';
+  const sortBy = params.get('sortBy');
+  const sortDirection = params.get('sortDirection') ?? 'asc';
+  function toggleSort(column: SortColumn) {
+    setParams(current => {
+      const next = new URLSearchParams(current);
+      if (current.get('sortBy') !== column) { next.set('sortBy', column); next.set('sortDirection', 'asc'); }
+      else if ((current.get('sortDirection') ?? 'asc') === 'asc') next.set('sortDirection', 'desc');
+      else { next.delete('sortBy'); next.delete('sortDirection'); }
+      next.delete('page');
+      return next;
+    });
+  }
+  function sortHeader(column: SortColumn, label: string) {
+    const active = sortBy === column;
+    return <th aria-sort={active ? sortDirection === 'desc' ? 'descending' : 'ascending' : 'none'}><button className="inbox-sort-button" type="button" onClick={() => toggleSort(column)} title={active ? sortDirection === 'asc' ? 'Z → A sırala' : 'Varsayılan sıralamaya dön' : 'A → Z sırala'}>{label}<span aria-hidden="true">{active ? sortDirection === 'asc' ? '↑' : '↓' : '↕'}</span></button></th>;
+  }
   const query = useQuery({
     queryKey: ["conversations", params.toString()],
     queryFn: async () =>
@@ -405,15 +425,16 @@ export function TicketList() {
             <table>
               <thead>
                 <tr>
-                  <th>TALEP</th>
+                  {sortHeader('subject', 'TALEP')}
                   <th>KANAL</th>
                   <th>DURUM</th>
                   <th>ÖNCELİK</th>
-                  <th>DEPARTMAN</th>
-                  <th>ATANAN</th>
+                  {sortHeader('department', 'DEPARTMAN')}
+                  {sortHeader('assignedAgent', 'ATANAN')}
                   <th>AÇILIŞ</th>
                   <th>YANIT SÜRESİ</th>
                   <th>SON GÜNCELLEME</th>
+                  <th className="inbox-sort-reset-cell"><button className="inbox-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setParams(current => { const next = new URLSearchParams(current); next.delete('sortBy'); next.delete('sortDirection'); next.delete('page'); return next; }); void query.refetch(); }}><RotateCcw size={15}/></button></th>
                 </tr>
               </thead>
               <tbody>
@@ -450,9 +471,10 @@ export function TicketList() {
                         <span className="muted">Atanmamış</span>
                       )}
                     </td>
-                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}<small className="inbox-elapsed-time">{now - new Date(ticket.createdAt).getTime() < 60_000 ? "Az önce" : `${durationBetween(ticket.createdAt, new Date(now).toISOString())} geçti`}</small></td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
-                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}<small className="inbox-elapsed-time">{now - new Date(ticket.updatedAt).getTime() < 60_000 ? "Az önce" : `${durationBetween(ticket.updatedAt, new Date(now).toISOString())} geçti`}</small></td>
+                    <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
+                    <td className="inbox-sort-reset-cell" aria-hidden="true" />
                   </tr>
                 ))}
               </tbody>
@@ -875,7 +897,7 @@ export function TicketDetail() {
                   Dahili Not
                 </button>
               )}
-              <span className="management-pill composer-channel-pill" aria-label={`Bu talep ${channels[t.channel]} kanalı tercih edilerek açıldı.`}>Bu talep {channels[t.channel]} kanalı tercih edilerek açıldı.</span>
+              <ReplyChannelSelector key={t.id} conversation={t} editable={hasPermission(user, "conversations.reply") && !internal} />
             </div>
             {internal ? <MentionTextarea
               conversationId={t.id}
@@ -931,6 +953,7 @@ export function TicketDetail() {
           {(canEditProject || t.website) && <div className="property-editor">
             {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</label>}
           </div>}
+          <div className="ticket-status-priority-row" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, order: 2, gridColumn: "1 / -1" }}>
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
               <Badge status={t.status} />
@@ -944,6 +967,7 @@ export function TicketDetail() {
             ) : (
               <SearchableDropdown label="Öncelik" name="priority" disabled={!hasPermission(user, 'conversations.update')} value={t.priority} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=priorities")} onChange={(value) => { if (priorityOptions.some((option) => option.value === value)) update.mutate({ priority: value }); }} options={priorityOptions} />
             )}
+          </div>
           </div>
           <div className="ticket-assignee-property">
             {canAssignStaff ? (

@@ -20,8 +20,8 @@ export function DropdownSelect({ label, value, options, onChange, ariaLabel }: {
   </div>;
 }
 
-export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel, emptyLabel = "Etiket seçin", selectionSuffix = "etiket", className = "", selectionLabel = "Seçili kişiler", showVisibleToggle = false }: { label?: string; value: string[]; options: Array<{ value: string; label: string }>; onChange: (value: string[]) => void; ariaLabel: string; emptyLabel?: string; selectionSuffix?: string; className?: string; selectionLabel?: string; showVisibleToggle?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel, emptyLabel = "Etiket seçin", selectionSuffix = "etiket", className = "", selectionLabel = "Seçili kişiler", showVisibleToggle = false, defaultOpen = false }: { label?: string; value: string[]; options: Array<{ value: string; label: string }>; onChange: (value: string[]) => void; ariaLabel: string; emptyLabel?: string; selectionSuffix?: string; className?: string; selectionLabel?: string; showVisibleToggle?: boolean; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [search, setSearch] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {

@@ -21,6 +21,7 @@ const departments = z
   .max(100)
   .refine((v) => new Set(v).size === v.length, "Departmanlar tekrarlanamaz.");
 export const directoryQuery = paginationSchema.extend({
+  nameSort: z.enum(['asc', 'desc']).optional(),
   search,
   id: idSchema.optional(),
   role: role.optional(),

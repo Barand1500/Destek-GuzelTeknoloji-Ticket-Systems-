@@ -4890,3 +4890,22 @@ html[data-theme="dark"] .customer-merge-modal, html[data-theme="dark"] .customer
   min-width: 0;
   margin-bottom: 0;
 }
+
+.customer-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.customer-sort-button > span { font-size: 12px; opacity: 0.6; }
+.customer-table-heading-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.customer-sort-reset { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 4px; border-radius: 5px; background: transparent; color: var(--ui-text-secondary); cursor: pointer; }
+.customer-sort-reset:hover { background: #e2f1e7; }
+html[data-theme="dark"] .customer-sort-reset:hover { background: #304b3f; }

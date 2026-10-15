@@ -1,3 +1,5 @@
+import { conversationListOrder } from "./conversation-sorting.js";
+import { selectedReplyChannels, validateReplyChannels, type ReplyChannel } from "./reply-channels.js";
 import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Actor } from "../types/express.js";
@@ -129,7 +131,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
       const data = await tx.conversation.findMany({
         where,
         include: conversationInclude,
-        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        orderBy: conversationListOrder(q.sortBy, q.sortDirection),
         skip: (q.page - 1) * q.limit,
         take: q.limit,
       });
@@ -196,9 +198,12 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
 }
 export async function createConversation(
   actor: Actor,
-  input: z.infer<typeof createConversationSchema> & { customerId?: string; source?: "PHONE_SUPPORT" },
+  input: z.infer<typeof createConversationSchema> & { customerId?: string; source?: "PHONE_SUPPORT"; replyChannels?: ReplyChannel[] },
   files:StoredUpload[] = [],
 ) {
+  const creationChannels = selectedReplyChannels(input.replyChannels, input.channel);
+  if (actor.role === 'CUSTOMER' && input.replyChannels !== undefined) throw new AppError(403, 'FORBIDDEN', 'Dönüş kanallarını yalnızca personel seçebilir.');
+  if (input.replyChannels) input = { ...input, channel: creationChannels.find(channel => channel !== 'TICKET') ?? 'TICKET' };
   if (actor.role === "CUSTOMER" && input.customerId)
     throw new AppError(403, "FORBIDDEN", "Müşteri hesabıyla yalnızca kendi adınıza talep açabilirsiniz.");
   if (actor.role !== "CUSTOMER" && !input.customerId)
@@ -208,6 +213,12 @@ export async function createConversation(
   if (!(await db.department.findFirst({ where: { id: input.departmentId,isActive:true } })))
     throw new AppError(400, "INVALID_DEPARTMENT", "Departman bulunamadı.");
   const customerId=input.customerId??actor.id;
+  if (input.replyChannels) {
+    const recipient = await db.user.findFirst({ where: { id: customerId, role: 'CUSTOMER', isActive: true, deletedAt: null }, select: { email: true, phone: true } });
+    if (!recipient) throw new AppError(400, 'CUSTOMER_REQUIRED', 'Aktif bir müşteri seçin.');
+    const settings = await db.integrationSettings.findUnique({ where: { id: 'default' } });
+    validateReplyChannels(creationChannels, recipient, settings);
+  }
   if (actor.role === "CUSTOMER" && input.channel !== "TICKET")
     throw new AppError(403, "FORBIDDEN", "Müşteri talepleri yalnızca destek talebi kanalıyla açılabilir.");
   if (actor.role !== "CUSTOMER" && input.channel === "EMAIL") {
@@ -241,6 +252,7 @@ export async function createConversation(
         websiteId: website?.id,
         assignedAgentId: input.assignedAgentId,
         channel: input.channel,
+        ...(input.replyChannels ? { replyChannels: input.replyChannels } : {}),
         source: actor.role !== "CUSTOMER" && input.source === "PHONE_SUPPORT" ? "PHONE_SUPPORT" : "TICKET",
         searchSubject: normalizeSearch(input.subject),
         departmentId: input.departmentId,
@@ -258,15 +270,15 @@ export async function createConversation(
     return conversation;
   });
   publishChange(result.id);
-  if (result.customer.email && input.channel === "EMAIL") {
+  if (result.customer.email && creationChannels.includes("EMAIL")) {
     const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
     const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
-    const selectedEmailMessage = actor.role !== "CUSTOMER" && input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT";
+    const selectedEmailMessage = actor.role !== "CUSTOMER" && (Boolean(input.replyChannels) || (input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT"));
     queueSupportEmail(result.customer.email, selectedEmailMessage ? result.subject : replace(template.ticketCreatedSubject), selectedEmailMessage ? input.message : `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, selectedEmailMessage ? "Talep kanal mesajı" : "Talep oluşturma", { conversationId: result.id, userId: actor.id });
   }
-  if (actor.role !== "CUSTOMER" && (input.channel === "SMS" || input.channel === "WHATSAPP")) {
-    void sendChannelReply(input.channel, result.customer, input.message).catch(async error => {
-      await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: result.id, metadata: { channel: input.channel, reason: error instanceof Error ? error.message : String(error) } } });
+  if (actor.role !== "CUSTOMER") for (const channel of creationChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
+    void sendChannelReply(channel, result.customer, input.message).catch(async error => {
+      await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: result.id, metadata: { channel, reason: error instanceof Error ? error.message : String(error) } } });
     });
   }
   return result;
@@ -350,6 +362,7 @@ export async function addMessage(
   if (actor.accessRole && !can(actor, internal ? 'conversations.note' : 'conversations.reply'))
     throw new AppError(403, 'FORBIDDEN', 'Bu mesaj türü için yetkiniz yok.');
   const mentionUserIds = input.mentionUserIds ?? [];
+  let deliveryChannels: ReplyChannel[] = [];
   if (mentionUserIds.length && !internal)
     throw new AppError(400, "INVALID_MENTIONS", "Personel yalnızca dahili notlarda etiketlenebilir.");
   if ((actor.role === 'CUSTOMER' && type !== 'CUSTOMER_MESSAGE') || (actor.role !== 'CUSTOMER' && type === 'CUSTOMER_MESSAGE'))
@@ -370,6 +383,14 @@ export async function addMessage(
         "Talep kapalı veya erişilemiyor.",
       );
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
+    if (type === 'AGENT_REPLY') {
+      deliveryChannels = selectedReplyChannels(conversation.replyChannels, conversation.channel);
+      if (conversation.replyChannels != null) {
+        const recipient = await tx.user.findUniqueOrThrow({ where: { id: conversation.customerId }, select: { email: true, phone: true } });
+        const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
+        validateReplyChannels(deliveryChannels, recipient, settings);
+      }
+    }
     const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
       where: { id: { in: mentionUserIds, not: actor.id }, OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: conversation.departmentId } } },
       select: { id: true, name: true },
@@ -404,7 +425,7 @@ export async function addMessage(
     const conversation = await db.conversation.findUnique({
       where: { id }, include: { customer: { select: { name: true, email: true, phone: true } } },
     });
-    if (conversation?.channel === "EMAIL" && conversation?.customer.email) {
+    if (deliveryChannels.includes("EMAIL") && conversation?.customer.email) {
       const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
       const replace = (value: string) => value.replaceAll("{name}", conversation.customer.name).replaceAll("{subject}", conversation.subject).replaceAll("{number}", String(conversation.number)).replaceAll("{reply}", result.body);
       queueSupportEmail(conversation.customer.email, replace(template.ticketReplySubject), `${replace(template.ticketReplyBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });
@@ -412,9 +433,16 @@ export async function addMessage(
   }
   if (type === 'AGENT_REPLY') {
     const channelConversation = await db.conversation.findUnique({ where: { id }, include: { customer: { select: { email: true, phone: true } } } });
-    if (channelConversation && (channelConversation.channel === "SMS" || channelConversation.channel === "WHATSAPP")) void sendChannelReply(channelConversation.channel, channelConversation.customer, result.body).catch(async error => {
-      await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: id, metadata: { channel: channelConversation.channel, reason: error instanceof Error ? error.message : String(error) } } });
-    });
+    if (channelConversation) for (const channel of deliveryChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
+      void sendChannelReply(channel, channelConversation.customer, result.body).then(async () => {
+        await db.activityLog.create({ data: { userId: actor.id, action: 'conversation.channel_reply_sent', entityId: id, metadata: { channel, messageId: result.id } } });
+        publishChange(id);
+      }).catch(async error => {
+        await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: id, metadata: { channel, reason: error instanceof Error ? error.message : String(error) } } });
+        publishChange(id);
+      });
+    }
+
   }
   return result;
 }
@@ -425,6 +453,7 @@ export async function updateConversation(
 ) {
   if (actor.role === "CUSTOMER")
     throw new AppError(403, "FORBIDDEN", "Bu işlem için yetkiniz yok.");
+  if (input.replyChannels !== undefined && !can(actor, 'conversations.reply')) throw new AppError(403, 'FORBIDDEN', 'Yanıt kanallarını değiştirme yetkiniz yok.');
   if ((input.assignedAgentId !== undefined && !can(actor, 'conversations.assign')) || (input.departmentId !== undefined && !can(actor, 'conversations.transfer')) || (input.departmentId !== undefined && permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)))
     throw new AppError(
       403,
@@ -467,6 +496,11 @@ export async function updateConversation(
         );
     }
     if(input.tagIds && (new Set(input.tagIds).size!==input.tagIds.length || await tx.tag.count({where:{id:{in:input.tagIds}}})!==input.tagIds.length))throw new AppError(400,'INVALID_TAG','Etiketler geçersiz.');
+    if (input.replyChannels) {
+      const recipient = await tx.user.findUniqueOrThrow({ where: { id: conversation.customerId }, select: { email: true, phone: true } });
+      const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
+      validateReplyChannels(input.replyChannels, recipient, settings);
+    }
     const {tagIds,...changes}=input;
     const updated = await tx.conversation.update({
       where: { id },
