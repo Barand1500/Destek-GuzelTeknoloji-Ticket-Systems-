@@ -1,3 +1,4 @@
+import { formatPhone } from "../../utils/phone";
 import { useEffect, useState, type FormEvent } from "react";
 import { Activity, ChevronDown, Eye, EyeOff, Mail, MessageCircle, MessageSquare, Search, Timer, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -411,7 +412,7 @@ export function ProfilePage() {
             </label>
             <label>
               <span className="field-label">Telefon Numarası</span>
-              <input name="phone" type="tel" maxLength={30} defaultValue={profile.data.phone ?? ""} autoComplete="tel" placeholder="Telefon numaranızı girin" />
+              <input name="phone" type="tel" maxLength={30} defaultValue={formatPhone(profile.data.phone ?? "")} onInput={event => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} autoComplete="tel" placeholder="Telefon numaranızı girin" />
             </label>
             </section>
             <section className="profile-security" aria-labelledby="profile-security-title">

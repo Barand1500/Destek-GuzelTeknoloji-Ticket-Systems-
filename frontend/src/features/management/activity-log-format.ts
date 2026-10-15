@@ -8,9 +8,16 @@ export type ActivityLog = {
   user?: { id: string; name: string; email: string } | null;
   actor?: { name: string; email: string } | null;
   conversationId?: string | null;
-  metadata?: { name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; details?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number; recipientCount?: number; channels?: string[]; channel?: string; senderEmail?: string } | null;
+  metadata?: { providerMessageId?: string; providerTimestamp?: string; name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; details?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number; recipientCount?: number; channels?: string[]; channel?: string; senderEmail?: string } | null;
 };
 export const actionLabels: Record<string, string> = {
+  "conversation.channel_reply_requested": "Kanal gönderimi başlatıldı",
+  "conversation.channel_reply_sent": "Kanal gönderimi sağlayıcı tarafından kabul edildi",
+  "conversation.whatsapp_sent": "WhatsApp mesajı gönderildi",
+  "conversation.whatsapp_delivered": "WhatsApp mesajı teslim edildi",
+  "conversation.whatsapp_read": "WhatsApp mesajı okundu",
+  "conversation.whatsapp_failed": "WhatsApp mesajı teslim edilemedi",
+  "conversation.whatsapp_deleted": "WhatsApp mesajı silindi",
   "profile.updated": "Profil bilgileri güncellendi",
   "survey.created": "Anket oluşturuldu",
   "survey.closed": "Anket kapatıldı",
@@ -97,6 +104,10 @@ const fieldLabels: Record<string, string> = {
 const channelLabels: Record<string, string> = { NOTIFICATION: "Sistem bildirimi", EMAIL: "E-Posta", SMS: "SMS", WHATSAPP: "WhatsApp" };
 const sensitiveField = (field: string) => /password|token|secret/i.test(field);
 export function activityActionLabel(action: string, metadata?: ActivityLog["metadata"]): string {
+  if (action === "conversation.channel_reply_sent") {
+    if (metadata?.channel === "WHATSAPP") return "WhatsApp gönderimi Meta tarafından kabul edildi";
+    if (metadata?.channel === "SMS") return "SMS gönderimi Netgsm tarafından kabul edildi";
+  }
   if (action === "conversation.channel_reply_failed") {
     if (metadata?.channel === "SMS") return "SMS gönderilemedi";
     if (metadata?.channel === "WHATSAPP") return "WhatsApp mesajı gönderilemedi";
@@ -122,17 +133,24 @@ export function activityValueLabel(value: unknown): string {
 }
 export function richDescriptionFor(log: ActivityLog) {
   const metadata = log.metadata;
-  if (log.action === "conversation.channel_reply_failed") {
+  if (log.action === "conversation.channel_reply_failed" || log.action === "conversation.whatsapp_failed") {
     const channel = metadata?.channel === "SMS" ? "SMS" : metadata?.channel === "WHATSAPP" ? "WhatsApp" : "Kanal mesajı";
     const provider = metadata?.channel === "SMS" ? "Netgsm" : metadata?.channel === "WHATSAPP" ? "Meta/WhatsApp" : "mesaj sağlayıcısı";
     const context = [
       metadata?.subject && `Konu: ${metadata.subject}`,
       metadata?.number && `Talep no: #TK-${String(metadata.number).padStart(5, "0")}`,
+      metadata?.recipient && `Alıcı: ${metadata.recipient}`,
+      metadata?.providerMessageId && `Sağlayıcı mesaj no: ${metadata.providerMessageId}`,
+      metadata?.providerTimestamp && `WhatsApp bildirim zamanı: ${new Date(metadata.providerTimestamp).toLocaleString('tr-TR')}`,
     ].filter(Boolean).join(" · ");
     const reason = metadata?.reason?.trim();
-    return [`${channel} gönderimi başarısız oldu.`, reason && `${provider} yanıtı: ${reason}`, context].filter(Boolean).join(" ");
+    return [log.action === "conversation.whatsapp_failed" ? "WhatsApp mesajı alıcıya teslim edilemedi." : `${channel} gönderimi başarısız oldu.`, reason ? `${provider} yanıtı: ${reason}` : "Sağlayıcı hata açıklaması bildirmedi.", context].filter(Boolean).join(" ");
   }
   const details = [
+    log.action === "conversation.channel_reply_sent" && "Gönderim isteği sağlayıcı tarafından kabul edildi. Alıcıya teslim edildiği henüz doğrulanmadı.",
+    log.action.startsWith('conversation.whatsapp_') && log.action !== 'conversation.whatsapp_received' && activityActionLabel(log.action),
+    metadata?.providerMessageId && `Sağlayıcı mesaj no: ${metadata.providerMessageId}`,
+    metadata?.providerTimestamp && `WhatsApp bildirim zamanı: ${new Date(metadata.providerTimestamp).toLocaleString('tr-TR')}`,
     metadata?.details?.join(" · "),
     metadata?.name && `Ad: ${metadata.name}`,
     metadata?.title && `Başlık: ${metadata.title}`,

@@ -8,7 +8,7 @@ import { can, permissionScope } from './permissions.js';
 import type { StoredUpload } from './uploads.service.js';
 import { notifyConversation, publishChange } from './events.service.js';
 import { queueSupportEmail } from './mailer.service.js';
-import { sendChannelReply } from './integrations.service.js';
+import { sendConversationChannelReply } from './integrations.service.js';
 import { onlineStaffCount } from './presence.service.js';
 import type { z } from "zod";
 import type {
@@ -277,9 +277,8 @@ export async function createConversation(
     queueSupportEmail(result.customer.email, selectedEmailMessage ? result.subject : replace(template.ticketCreatedSubject), selectedEmailMessage ? input.message : `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, selectedEmailMessage ? "Talep kanal mesajı" : "Talep oluşturma", { conversationId: result.id, userId: actor.id });
   }
   if (actor.role !== "CUSTOMER") for (const channel of creationChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
-    void sendChannelReply(channel, result.customer, input.message).catch(async error => {
-      await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: result.id, metadata: { channel, reason: error instanceof Error ? error.message : String(error) } } });
-    });
+    void sendConversationChannelReply(channel, result.customer, input.message, { conversationId: result.id, userId: actor.id })
+      .catch(() => console.error('[Kanal gönderimi] Gönderim günlüğü kaydedilemedi', { conversationId: result.id, channel }));
   }
   return result;
 }
@@ -434,13 +433,8 @@ export async function addMessage(
   if (type === 'AGENT_REPLY') {
     const channelConversation = await db.conversation.findUnique({ where: { id }, include: { customer: { select: { email: true, phone: true } } } });
     if (channelConversation) for (const channel of deliveryChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
-      void sendChannelReply(channel, channelConversation.customer, result.body).then(async () => {
-        await db.activityLog.create({ data: { userId: actor.id, action: 'conversation.channel_reply_sent', entityId: id, metadata: { channel, messageId: result.id } } });
-        publishChange(id);
-      }).catch(async error => {
-        await db.activityLog.create({ data: { userId: actor.id, action: "conversation.channel_reply_failed", entityId: id, metadata: { channel, reason: error instanceof Error ? error.message : String(error) } } });
-        publishChange(id);
-      });
+      void sendConversationChannelReply(channel, channelConversation.customer, result.body, { conversationId: id, userId: actor.id, messageId: result.id })
+        .catch(() => console.error('[Kanal gönderimi] Gönderim günlüğü kaydedilemedi', { conversationId: id, channel }));
     }
 
   }

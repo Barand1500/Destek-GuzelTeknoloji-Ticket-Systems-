@@ -9,7 +9,7 @@ test('roles, statuses and channels have readable values', () => {
   assert.equal(activityValueLabel('WHATSAPP'), 'WhatsApp');
   assert.equal(activityActionLabel('conversation.channel_reply_failed', { channel: 'SMS' }), 'SMS gönderilemedi');
   assert.equal(activityActionLabel('conversation.channel_reply_failed', { channel: 'WHATSAPP' }), 'WhatsApp mesajı gönderilemedi');
-  assert.equal(activityValueLabel(['EMAIL', 'SMS']), 'E-posta, SMS');
+  assert.equal(activityValueLabel(['EMAIL', 'SMS']), 'E-Posta, SMS');
 });
 test('channel send failures explain which provider failed and preserve the provider reason', () => {
   const sms = richDescriptionFor({ ...base, action: 'conversation.channel_reply_failed', metadata: {
@@ -31,11 +31,24 @@ test('technical action codes render in Turkish, including old logs', () => {
 });
 test('survey descriptions show recipient counts and readable channels', () => {
   const text = richDescriptionFor({ ...base, action: 'survey.created', metadata: { recipientCount: 2, channels: ['NOTIFICATION', 'EMAIL'] } });
-  assert.equal(text, 'Alıcı sayısı: 2 · Kanallar: Sistem bildirimi, E-posta');
+  assert.equal(text, 'Alıcı sayısı: 2 · Kanallar: Sistem bildirimi, E-Posta');
 });
 test('changed fields are translated and credentials are excluded', () => {
   const text = richDescriptionFor({ ...base, action: 'profile.updated', metadata: {
     fields: ['name', 'phone', 'password'], changes: { isActive: { from: false, to: true }, password: { from: 'secret-one', to: 'secret-two' } },
   } });
   assert.equal(text, 'Güncellenen alanlar: Ad soyad, Telefon · Hesap durumu: Devre dışı → Etkin');
+});
+
+test('WhatsApp logs distinguish provider acceptance from delivery and show delivery error codes', () => {
+  assert.equal(activityActionLabel('conversation.channel_reply_sent', { channel: 'WHATSAPP' }), 'WhatsApp gönderimi Meta tarafından kabul edildi');
+  assert.equal(activityActionLabel('conversation.whatsapp_delivered'), 'WhatsApp mesajı teslim edildi');
+  assert.equal(activityActionLabel('conversation.whatsapp_read'), 'WhatsApp mesajı okundu');
+  const accepted = richDescriptionFor({ ...base, action: 'conversation.channel_reply_sent', metadata: { channel: 'WHATSAPP', providerMessageId: 'wamid.test', recipient: '905551234567' } });
+  assert.match(accepted, /henüz doğrulanmadı/);
+  assert.match(accepted, /wamid.test/);
+  const failed = richDescriptionFor({ ...base, action: 'conversation.whatsapp_failed', metadata: { channel: 'WHATSAPP', reason: 'Kod: 131047 · Use template', number: 12 } });
+  assert.match(failed, /teslim edilemedi.*131047.*Use template.*TK-00012/);
+  const delivered = richDescriptionFor({ ...base, action: 'conversation.whatsapp_delivered', metadata: { channel: 'WHATSAPP', providerMessageId: 'wamid.test', number: 12 } });
+  assert.match(delivered, /teslim edildi.*wamid.test.*TK-00012/);
 });

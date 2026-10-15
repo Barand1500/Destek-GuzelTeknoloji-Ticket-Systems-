@@ -1,3 +1,4 @@
+import { formatPhone } from "../../utils/phone";
 import { CustomerMergeModal } from "./CustomerMergeModal";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,15 +84,7 @@ type ManagedDepartment = Department & { isActive: boolean };
 const phoneDigits = (value: string) => value.replace(/\D/g, "");
 const isPhoneSearch = (value: string) => Boolean(value.trim()) && /^[+\d\s()-]+$/.test(value);
 const isEmailSearch = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-const formatPhone = (value: string) => {
-  let digits = phoneDigits(value);
-  if (digits.startsWith("90") && digits.length > 2) digits = `0${digits.slice(2)}`;
-  else if (digits && digits[0] !== "0") digits = `0${digits}`;
-  digits = digits.slice(0, 11);
-  if (digits.length <= 4) return digits;
-  const groups = [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 9), digits.slice(9, 11)].filter(Boolean);
-  return groups.join(" ");
-};
+
 const placeKey = (value: string) => value.toLocaleLowerCase("tr-TR").replace(/ı/g, "i").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ç/g, "c").replace(/ö/g, "o").replace(/ü/g, "u");
 
 const turkeyCities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"];
@@ -797,7 +790,7 @@ export function PhoneSupportPage() {
   }, [enterCreateRequested, noResults]);
   useEffect(() => {
     if (showCreate) window.setTimeout(() => {
-      const field = isPhoneSearch(search) || isEmailSearch(search) ? "name" : "phone";
+      const field = !search.trim() || isPhoneSearch(search) || isEmailSearch(search) ? "name" : "phone";
       const candidates = Array.from(document.querySelectorAll<HTMLInputElement>(`.phone-support-create input[name='${field}']`));
       candidates.find((input) => input.offsetParent !== null)?.focus();
     }, 0);

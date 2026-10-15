@@ -33,7 +33,7 @@ function providerMessage(prefix: string, response: Response, data: NetgsmRespons
   const netgsm = data as NetgsmResponse;
   const detail = meta.error?.message ?? netgsm.description;
   const code = meta.error?.code ?? netgsm.code;
-  return `${prefix}${detail ? `: ${detail}` : code ? ` (kod: ${code})` : ` (HTTP ${response.status})`}`;
+  return `${prefix}${detail ? `: ${detail}` : ""}${code ? ` (kod: ${code})` : ` (HTTP ${response.status})`}`;
 }
 
 async function responseJson<T>(response: Response): Promise<T> {
@@ -175,6 +175,7 @@ export async function receiveMetaWebhook(payload: any, signature?: string, rawBo
   const ids: string[] = [];
   for (const entry of payload.entry ?? []) for (const change of entry.changes ?? []) {
     const value = change.value ?? {}; const contacts = new Map<string, string | undefined>((value.contacts ?? []).map((contact: any): [string, string | undefined] => [String(contact.wa_id), typeof contact.profile?.name === "string" ? contact.profile.name : undefined]));
+    for (const status of value.statuses ?? []) await recordWhatsappStatus(status);
     for (const message of value.messages ?? []) {
       const image = message.type === 'image' && typeof message.image?.id === 'string' ? message.image : undefined;
       const text = message.text?.body ?? message.button?.text ?? message.interactive?.button_reply?.title ?? image?.caption;
@@ -187,11 +188,11 @@ export async function receiveMetaWebhook(payload: any, signature?: string, rawBo
   }
   return ids;
 }
-export async function sendChannelReply(channel: ConversationChannel, recipient: { email?: string | null; phone?: string | null }, text: string) {
+export async function sendChannelReply(channel: ConversationChannel, recipient: { email?: string | null; phone?: string | null }, text: string, callbackId?: string) {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
   if (channel === "SMS") {
     if (!settings?.smsEnabled || !recipient.phone) throw new Error("SMS gönderim ayarı veya alıcı telefonu eksik.");
-    await sendNetgsm(settings, recipient.phone, text);
+    return await sendNetgsm(settings, recipient.phone, text);
   }
   if (channel === "WHATSAPP") {
     if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !recipient.phone) throw new Error("WhatsApp gönderim ayarı veya alıcı telefonu eksik.");
@@ -200,10 +201,66 @@ export async function sendChannelReply(channel: ConversationChannel, recipient: 
     const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, type: "text", text: { preview_url: false, body: text } }),
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, type: "text", text: { preview_url: false, body: text }, ...(callbackId ? { biz_opaque_callback_data: callbackId } : {}) }),
       signal: AbortSignal.timeout(15_000),
     });
     const data = await responseJson<MetaResponse>(response);
     if (!response.ok || !data.messages?.[0]?.id) throw new Error(providerMessage("WhatsApp mesajı gönderilemedi", response, data));
+    return data.messages[0].id;
   }
+}
+
+// Create correlation before the HTTP request: a webhook may arrive before its response.
+export async function sendConversationChannelReply(channel: "SMS" | "WHATSAPP", recipient: { phone?: string | null }, text: string, context: { conversationId: string; userId: string; messageId?: string }) {
+  const metadata = { channel, recipient: recipient.phone ?? "", ...(context.messageId ? { messageId: context.messageId } : {}) };
+  const log = await db.activityLog.create({ data: { userId: context.userId, entityId: context.conversationId, action: "conversation.channel_reply_requested", metadata } });
+  let providerMessageId: string | undefined;
+  try {
+    providerMessageId = await sendChannelReply(channel, recipient, text, log.id);
+  } catch (error) {
+    await db.activityLog.update({ where: { id: log.id }, data: { action: "conversation.channel_reply_failed", metadata: { ...metadata, reason: error instanceof Error ? error.message : String(error) } } });
+    publishChange(context.conversationId);
+    return;
+  }
+  await db.activityLog.update({ where: { id: log.id }, data: { action: "conversation.channel_reply_sent", metadata: { ...metadata, ...(providerMessageId ? { providerMessageId } : {}) } } });
+  publishChange(context.conversationId);
+}
+
+async function recordWhatsappStatus(status: any) {
+  if (typeof status.id !== "string" || !["sent", "delivered", "read", "failed", "deleted"].includes(status.status)) return;
+  const source = await db.activityLog.findFirst({ where: {
+    action: { in: ["conversation.channel_reply_requested", "conversation.channel_reply_sent", "conversation.channel_reply_failed"] },
+    AND: [{ metadata: { path: "$.channel", equals: "WHATSAPP" } }, { OR: [
+      ...(typeof status.biz_opaque_callback_data === "string" ? [{ id: status.biz_opaque_callback_data }] : []),
+      { metadata: { path: "$.providerMessageId", equals: status.id } },
+    ] }],
+  } });
+  if (!source) {
+    console.warn("[WhatsApp webhook] Eşleştirilemeyen teslimat bildirimi", { providerMessageId: status.id, status: status.status, errorCodes: (status.errors ?? []).map((error: any) => error.code) });
+    return;
+  }
+  const errors = (Array.isArray(status.errors) ? status.errors : []).map((error: any) => ({
+    code: String(error.code ?? "UNKNOWN"),
+    title: String(error.title ?? ""),
+    message: String(error.message ?? ""),
+    details: String(error.error_data?.details ?? ""),
+  }));
+  const reason = errors.map((error: typeof errors[number]) => [`Kod: ${error.code}`, error.title, error.message, error.details].filter(Boolean).join(" · ")).join("; ");
+  const timestamp = Number(status.timestamp);
+  const providerTimestamp = Number.isFinite(timestamp) && timestamp > 0 && timestamp < 8.64e12 ? new Date(timestamp * 1000).toISOString() : undefined;
+  try {
+    await db.$transaction(async tx => {
+      // The unique provider/externalId key makes webhook retries idempotent.
+      await tx.externalMessage.create({ data: { provider: "meta-whatsapp-status", externalId: `${status.id}:${status.status}`, channel: "WHATSAPP", conversationId: source.entityId } });
+      await tx.activityLog.create({ data: { userId: source.userId, entityId: source.entityId, action: `conversation.whatsapp_${status.status}`, metadata: {
+        channel: "WHATSAPP", providerMessageId: status.id, status: status.status,
+        recipient: typeof status.recipient_id === "string" ? status.recipient_id : "",
+        ...(providerTimestamp ? { providerTimestamp } : {}), ...(reason ? { reason, errors } : {}),
+      } } });
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002") return;
+    throw error;
+  }
+  publishChange(source.entityId);
 }

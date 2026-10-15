@@ -1547,6 +1547,14 @@ export async function activityLogs(
       })).map((conversation) => conversation.id)
     : [];
   const searchableActionLabels: Record<string, string> = {
+    "conversation.channel_reply_requested": "WhatsApp SMS kanal gönderimi başlatıldı",
+    "conversation.channel_reply_sent": "WhatsApp SMS gönderimi sağlayıcı Meta Netgsm tarafından kabul edildi",
+    "conversation.channel_reply_failed": "WhatsApp SMS mesajı gönderilemedi",
+    "conversation.whatsapp_sent": "WhatsApp mesajı gönderildi",
+    "conversation.whatsapp_delivered": "WhatsApp mesajı teslim edildi",
+    "conversation.whatsapp_read": "WhatsApp mesajı okundu",
+    "conversation.whatsapp_failed": "WhatsApp mesajı teslim edilemedi",
+    "conversation.whatsapp_deleted": "WhatsApp mesajı silindi",
     "website.created": "Proje oluşturuldu",
     "website.updated": "Proje güncellendi",
     "website.deleted": "Proje silindi",
@@ -1582,7 +1590,7 @@ export async function activityLogs(
     : [];
   const searchableMetadataFields = [
     "name", "title", "subject", "code", "phone", "email", "company",
-    "originalName", "recipient", "reason", "senderEmail", "channel",
+    "originalName", "recipient", "reason", "senderEmail", "channel", "providerMessageId",
   ];
   const where: Prisma.ActivityLogWhereInput = {
     userId: q.userId,

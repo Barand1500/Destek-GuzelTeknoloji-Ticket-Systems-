@@ -55,7 +55,7 @@ test('email creation and replies send mail; internal notes and phone conversatio
   const integration = { smtpEnabled: true, smtpHost: 'smtp.example.test', smtpPort: 587, smtpSecure: true, smtpFromAddress: 'guzelteknoloji50@gmail.com', smtpFromName: 'Güzel Teknoloji Destek', smtpUser: 'test', smtpPassword: 'fake', whatsappEnabled: true, whatsappPhoneNumberId: 'test-number', whatsappAccessToken: 'fake-token' };
   const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', replyChannels: null as string[] | null, channel: 'EMAIL', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
   const actor = { id: 'admin', name: 'Test admin', email: 'admin@example.test', role: 'ADMIN' as const, departmentIds: [], sessionId: 'test' };
-  const log = async ({ data }: any) => { audits.push(data); return data; };
+  const log = async ({ data }: any) => { const row = { id: `log-${audits.length}`, ...data }; audits.push(row); return row; };
   const tx = {
     priorityOption: { findFirst: async () => ({ code: 'NORMAL' }) },
     conversation: { create: async ({ data }: any) => { createdData.push(data); return conversation; }, updateMany: async () => ({ count: 1 }), findUniqueOrThrow: async () => conversation },
@@ -79,6 +79,7 @@ test('email creation and replies send mail; internal notes and phone conversatio
   stub(db.user, 'findFirst', async () => customer);
   stub(db.conversation, 'findUnique', async () => conversation);
   stub(db.activityLog, 'create', log);
+  stub(db.activityLog, 'update', async ({ where, data }: any) => Object.assign(audits.find(row => row.id === where.id), data));
   stub(db.integrationSettings, 'findUnique', async () => integration);
   t.mock.method(nodemailer, 'createTransport', () => ({ sendMail: async (mail: any) => { sent.push(mail); return { accepted: [mail.to], rejected: [], response: '250 OK', messageId: '<test@example.test>' }; } }));
   const previous = env.NODE_ENV;
