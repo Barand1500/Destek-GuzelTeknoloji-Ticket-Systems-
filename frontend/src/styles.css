@@ -7509,3 +7509,28 @@ html[data-theme="dark"] .composer-channel-popover { background: #223c32; border-
 .inbox-sort-reset { display: inline-flex; align-items: center; justify-content: center; padding: 4px; border: 0; border-radius: 5px; background: transparent; color: var(--ui-text-secondary); cursor: pointer; }
 .inbox-sort-reset:hover { background: #e2f1e7; }
 html[data-theme="dark"] .inbox-sort-reset:hover { background: #304b3f; }
+/* Keep notification cells and their actions inside the same table/hover area. */
+.notifications-page .management-table-wrap.notification-table-wrap {
+  margin-inline: 0;
+  width: 100%;
+  max-width: 100%;
+}
+.notifications-page .notification-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;
+}
+.notifications-page .notification-table th,
+.notifications-page .notification-table td {
+  padding-inline: 16px;
+}
+.notifications-page .notification-table :is(th, td):nth-child(1) { width: 18%; }
+.notifications-page .notification-table :is(th, td):nth-child(2) { width: auto; }
+.notifications-page .notification-table :is(th, td):nth-child(n+3) { width: 1%; }
+.notifications-page .notification-table td:nth-child(-n+2) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.notifications-page .notification-table td:nth-child(2) { min-width: 160px; }
+.notifications-page .notification-table .notification-conversation-actions { min-width: 170px; }

@@ -1,3 +1,4 @@
+import { SortableTableHead } from "../../components/TableSorting";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Trash2 } from "lucide-react";
@@ -44,14 +45,7 @@ export function ActivityLogsPage() {
         {!!list.data?.data.length && (
           <div className="management-table-wrap activity-log-scroll">
             <table className="management-table">
-              <thead>
-                <tr>
-                  <th>Tarih</th>
-                  <th>Kullanıcı</th>
-                  <th>İşlem</th>
-                  <th>Açıklama</th>
-                </tr>
-              </thead>
+<SortableTableHead sorting={list} columns={[{label:'Tarih',field:'createdAt',date:true},{label:'Kullanıcı',field:'user'},{label:'İşlem',field:'action'},{label:'Açıklama',field:'description'}]} />
               <tbody>
                 {list.data.data.map((log) => (
                   <tr key={log.id}>

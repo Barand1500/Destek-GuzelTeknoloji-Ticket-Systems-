@@ -1,3 +1,4 @@
+import { SortableTableHead, sortTableRows, useTableSort } from "../../components/TableSorting";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award, Pencil, Plus, Trash2 } from "lucide-react";
@@ -35,6 +36,7 @@ const labels = {
 export function SkillsPage() {
   const { user } = useAuth();
   const catalog = useSkillCatalog();
+  const sorting = useTableSort();
   const client = useQueryClient();
   const [kind, setKind] = useState<SkillDefinition["kind"]>("category");
   const [editing, setEditing] = useState<SkillDefinition | null>(null);
@@ -81,11 +83,12 @@ export function SkillsPage() {
       : kind === "category"
         ? catalog.data?.categories
         : catalog.data?.levels) ?? [];
-  const visible = items.filter((item) =>
+  const filtered = items.filter((item) =>
     item.name
       .toLocaleLowerCase("tr-TR")
       .includes(search.toLocaleLowerCase("tr-TR")),
   );
+  const visible = sortTableRows(filtered, sorting.sort, (item, field) => field === 'name' ? item.name : kind === 'skill' ? catalog.data?.categories.find(category => category.id === item.categoryId)?.name ?? '' : kind === 'level' ? item.rank : catalog.data?.skills.filter(skill => skill.categoryId === item.id).length ?? 0);
   const edit = (item: SkillDefinition) => {
     setEditing(item);
     setName(item.name);
@@ -115,6 +118,7 @@ export function SkillsPage() {
             className={kind === tab ? "active" : ""}
             onClick={() => {
               setKind(tab);
+              sorting.resetSort();
               setSearch("");
               reset();
               save.reset();
@@ -140,19 +144,7 @@ export function SkillsPage() {
           {!!visible.length && (
             <div className="management-table-wrap">
               <table className="management-table">
-                <thead>
-                  <tr>
-                    <th>Ad</th>
-                    <th>
-                      {kind === "skill"
-                        ? "Kategori"
-                        : kind === "level"
-                          ? "Sıra"
-                          : "Yetenek Sayısı"}
-                    </th>
-                    <th>İşlemler</th>
-                  </tr>
-                </thead>
+<SortableTableHead sorting={sorting} columns={[{label:'Ad',field:'name'},{label:kind==='skill'?'Kategori':kind==='level'?'Sıra':'Yetenek Sayısı',field:'detail'},{label:'İşlemler'}]} />
                 <tbody>
                   {visible.map((item) => (
                     <tr key={item.id}>

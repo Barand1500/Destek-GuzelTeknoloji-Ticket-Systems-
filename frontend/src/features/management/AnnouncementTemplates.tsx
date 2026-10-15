@@ -1,3 +1,4 @@
+import { SortableTableHead } from "../../components/TableSorting";
 import { useEffect, useState, type FormEvent } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import "./savedContent.css";
@@ -65,7 +66,7 @@ export function AnnouncementTemplates() {
           />
           {!!visible.length && <div className="management-table-wrap saved-content-table-wrap">
             <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır Şablonlar">
-              <thead><tr><th>Şablon Adı</th><th>Duyuru Başlığı</th><th>İçerik</th><th>İşlemler</th></tr></thead>
+              <SortableTableHead sorting={list} columns={[{label:'Şablon Adı',field:'label'},{label:'Duyuru Başlığı',field:'title'},{label:'İçerik',field:'body'},{label:'İşlemler'}]} />
               <tbody>{visible.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}>
                 <td><strong>{item.label}</strong></td>
                 <td>{item.title}</td>

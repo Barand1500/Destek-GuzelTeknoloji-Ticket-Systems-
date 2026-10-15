@@ -1,3 +1,4 @@
+import { SortableTableHead } from "../../components/TableSorting";
 import { formatPhone } from "../../utils/phone";
 import { useEffect, useState, type FormEvent } from "react";
 import { Activity, ChevronDown, Eye, EyeOff, Mail, MessageCircle, MessageSquare, Search, Timer, Trash2 } from "lucide-react";
@@ -105,9 +106,9 @@ export function NotificationsPage() {
           Yalnızca okunmamış bildirimler
         </label>
         <ErrorMessage error={read.error} />
-        {!!list.data?.data.length && <div className="management-table-wrap notification-table-wrap">
+        {!!list.data?.data.length && <div className="management-table-wrap notification-table-wrap activity-log-scroll">
           <table className="management-table notification-table" aria-label="Bildirimler">
-            <thead><tr><th>Bildirim</th><th>Mesaj</th><th>Tarih</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <SortableTableHead sorting={list} columns={[{label:'Bildirim',field:'title'},{label:'Mesaj',field:'message'},{label:'Tarih',field:'createdAt',date:true},{label:'Durum'},{label:'İşlem'}]} />
             <tbody>{list.data.data.map((notification) => <tr key={notification.id}>
               <td><strong>{notification.title}</strong></td>
               <td>{notification.message}</td>

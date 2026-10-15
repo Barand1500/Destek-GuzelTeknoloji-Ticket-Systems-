@@ -1,3 +1,5 @@
+import { SortableTableHead } from "../../components/TableSorting";
+import { contactChannels } from "../../utils/contact-channels";
 import { formatPhone } from "../../utils/phone";
 import { CustomerMergeModal } from "./CustomerMergeModal";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
@@ -352,27 +354,26 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             empty={!list.data?.data.length}
           />
           {!!list.data?.data.length && (
-            <div className="management-table-wrap">
-              <table className="management-table">
-                <thead>
-                  <tr>
-                    <th>Kullanıcı</th>
-                    <th>Rol ve Departman</th>
-                    {canUpdateUsers && <th>Durum</th>}
-                    {(canUpdateUsers || canDeleteUsers) && <th>İşlemler</th>}
-                  </tr>
-                </thead>
+            <div className="management-table-wrap users-table-wrap">
+              <table className="management-table users-table">
+                <colgroup>
+                  <col className="users-column-name" />
+                  <col />
+                  {canUpdateUsers && <col className="users-column-status" />}
+                  {(canUpdateUsers || canDeleteUsers) && <col className="users-column-actions" />}
+                </colgroup>
+<SortableTableHead sorting={list} columns={[{label:'Kullanıcı',field:'name'},{label:'Rol ve Departman',field:'roleDepartments'},...(canUpdateUsers?[{label:'Durum'}]:[]),...((canUpdateUsers||canDeleteUsers)?[{label:'İşlemler'}]:[])]} />
                 <tbody>
                   {list.data.data.map((person) => (
                     <tr key={person.id} {...editableRowProps(() => { if (canUpdateUsers && hasPermission(user, 'users.update') && !(user?.accessRole && person.accessRoleId !== user.accessRole.id)) edit(person); })} className={!person.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                       <td>
-                        <strong>{person.name}</strong>
-                        <small>{person.email}</small>
+                        <strong className="users-cell-text" title={person.name}>{person.name}</strong>
+                        <small className="users-cell-text" title={person.email ?? undefined}>{person.email}</small>
                         {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
                       <td>
-                        {person.accessRole?.name ?? roles[person.role]}
-                        <small>
+                        <span className="users-cell-text" title={person.accessRole?.name ?? roles[person.role]}>{person.accessRole?.name ?? roles[person.role]}</span>
+                        <small className="users-cell-text" title={person.departments.map(d => d.department.name).join(', ') || 'Departman yok'}>
                           {person.departments
                             .map((d) => d.department.name)
                             .join(", ") || "Departman yok"}
@@ -734,6 +735,7 @@ export function PhoneSupportPage() {
   const [customerId, setCustomerId] = useState(initialCustomerId);
   const [phonePage, setPhonePage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
+  const [newContact, setNewContact] = useState({ phone: "", email: "" });
   const [enterCreateRequested, setEnterCreateRequested] = useState(false);
   const [departmentId, setDepartmentId] = useState("");
   const [tagIds, setTagIds] = useState<string[]>([]);
@@ -750,16 +752,6 @@ export function PhoneSupportPage() {
     const department = communicationChannels.data.defaultDepartment;
     if (department) setDepartmentId(current => current || department.id);
   }, [communicationChannels.data]);
-  const channelOrder: OutgoingChannel[] = ["TICKET", "EMAIL", "SMS", "WHATSAPP"];
-  const availableChannels = channelOrder.filter((value) => value === "TICKET" || communicationChannels.data?.[value]);
-  const channelAvailable = selectedChannels.length > 0 && selectedChannels.every(value => value === "TICKET" || Boolean(communicationChannels.data?.[value]));
-  const channelStatus = communicationChannels.isPending ? "Dönüş kanalları yükleniyor…" : communicationChannels.isError ? "Dönüş kanalları yüklenemedi." : availableChannels.length === 0 ? "Etkin dönüş kanalı yok." : "";
-  const handleChannelChange = (value: OutgoingChannel[]) => { setSelectedChannels(value); setChannelFormError(""); };
-  useEffect(() => {
-    if (!communicationChannels.data) return;
-    const active = selectedChannels.filter(value => value === 'TICKET' || communicationChannels.data?.[value]);
-    if (active.length !== selectedChannels.length) setSelectedChannels(active.length ? active : ['TICKET']);
-  }, [communicationChannels.data, selectedChannels]);
   const initialCustomer = useQuery({
     queryKey: ["/customers", initialCustomerId],
     queryFn: async () => (await api.get<{ data: ManagedUser }>(`/customers/${initialCustomerId}`)).data.data,
@@ -781,6 +773,22 @@ export function PhoneSupportPage() {
   const results = customers.data?.data ?? [];
   const displayResults = hasSearched && !showCreate ? results : [];
   const activeCustomer = selected ?? (!hasSearched ? initialCustomer.data : null) ?? displayResults.find(customer => customer.id === customerId) ?? null;
+  const contact: { phone?: string | null; email?: string | null } = showCreate ? newContact : activeCustomer ?? {};
+  const availableChannels = contactChannels(contact, communicationChannels.data);
+  const channelAvailable = selectedChannels.length > 0 && selectedChannels.every(value => availableChannels.includes(value));
+  const channelStatus = communicationChannels.isPending ? "Dönüş kanalları yükleniyor…" : communicationChannels.isError ? "Dönüş kanalları yüklenemedi." : availableChannels.length === 0 ? "Kanal seçmek için telefon veya E-Posta ekleyin." : "";
+  const handleChannelChange = (value: OutgoingChannel[]) => { setSelectedChannels(value); setChannelFormError(""); };
+  useEffect(() => {
+    const available = contactChannels({ phone: contact.phone, email: contact.email }, communicationChannels.data);
+    setSelectedChannels(current => {
+      const active = current.filter(value => available.includes(value));
+      const next = active.length ? active : available.slice(0, 1);
+      return next.length !== current.length || next.some((value, index) => value !== current[index]) ? next : current;
+    });
+  }, [contact.phone, contact.email, communicationChannels.data]);
+  useEffect(() => {
+    if (showCreate) setNewContact({ phone: isPhoneSearch(search) ? formatPhone(search) : "", email: isEmailSearch(search) ? search.trim().toLowerCase() : "" });
+  }, [showCreate, search]);
   const noResults = hasSearched && deferredSearch === search && !customers.isPending && !customers.isError && !displayResults.length;
   useEffect(() => {
     if (enterCreateRequested && noResults) {
@@ -885,7 +893,7 @@ export function PhoneSupportPage() {
           {noResults && <p className="phone-support-no-result">Eşleşen kişi bulunamadı. Sağdaki <strong>+</strong> düğmesiyle arayanı ekleyin.</p>}
           {hasSearched && <Pagination pagination={customers.data?.pagination} onChange={setPhonePage} />}
           {showCreate && <form className="management-form phone-support-create" onSubmit={submitCustomer}><h2>Yeni Arayan Kişi</h2><label><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label><label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={isPhoneSearch(search) ? formatPhone(search) : ""} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} onKeyDown={focusNextField} /></label><label><span className="field-label">E-Posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label><label><span className="field-label">Şirket</span><input name="company" maxLength={120} /></label><label><span className="field-label">Müşteri Notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label><div className="phone-support-ticket-fields"><h2>Talep Bilgileri</h2><label><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} params={{ accessible: "true" }} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label></div><ErrorMessage error={createCustomer.error ?? createConversation.error} /><div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve Talebi Oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div></form>}
-          {showCreate && <form className="management-form phone-support-create phone-support-create-v2" onSubmit={submitCustomer}>
+          {showCreate && <form className="management-form phone-support-create phone-support-create-v2" onInput={event => { const values = new FormData(event.currentTarget); setNewContact({ phone: String(values.get("phone") ?? ""), email: String(values.get("email") ?? "") }); }} onSubmit={submitCustomer}>
             <section className="phone-caller-fields">
               <h2>Yeni Arayan Kişi</h2>
               <label className="phone-caller-name"><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label>

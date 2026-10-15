@@ -7,6 +7,7 @@ import "./management.css";
 import { useAuth } from '../auth/Auth';
 import { hasPermission, screenPermission } from '../auth/permissions';
 import { useLocation } from 'react-router-dom';
+import { useTableSort, sortTableRows } from '../../components/TableSorting';
 
 export const formatDate = (value: string) =>
   new Date(value).toLocaleString("tr-TR");
@@ -56,20 +57,35 @@ export function ErrorMessage({ error }: { error: unknown }) {
 export function useList<T>(
   path: string,
   extra: Record<string, string | boolean | number> = {},
-  leadingRecords = 0,
+  leading: number | T[] = 0,
 ) {
   const [page, setPage] = useState(1);
+  const client = useQueryClient();
+  const sorting = useTableSort(() => setPage(1));
+  const sortParams = sorting.sort ?? {};
+  const localRecords = Array.isArray(leading) ? leading : undefined;
+  const leadingRecords = Array.isArray(leading) ? leading.length : leading;
   const [limit, setLimit] = useState(15);
   const [search, setSearch] = useState("");
   const deferredSearch = useDebouncedValue(search);
   const query = useQuery({
-    queryKey: [path, page, limit, deferredSearch, extra, leadingRecords],
+    queryKey: [path, page, limit, deferredSearch, extra, leadingRecords, localRecords, sorting.sort],
     queryFn: async () => {
+      if (localRecords) {
+        const params = { search: deferredSearch, ...extra, ...sortParams, limit: 50 };
+        const first = (await api.get<Page<T>>(path, { params: { ...params, page: 1 } })).data;
+        const rest = await Promise.all(Array.from({ length: Math.max(0, first.pagination.totalPages - 1) }, (_, index) =>
+          api.get<Page<T>>(path, { params: { ...params, page: index + 2 } }).then(result => result.data.data)));
+        const local = localRecords.filter(item => Object.values(item as object).some(value => typeof value === 'string' && value.toLocaleLowerCase('tr-TR').includes(deferredSearch.toLocaleLowerCase('tr-TR'))));
+        const merged = [...local, ...first.data, ...rest.flat()];
+        const sorted = sortTableRows(merged, sorting.sort, (item, field) => String((item as Record<string, unknown>)[field] ?? ''));
+        return { ...first, data: sorted.slice((page - 1) * limit, page * limit), pagination: { page, limit, total: sorted.length, totalPages: Math.ceil(sorted.length / limit) } };
+      }
       const offset = Math.max(0, (page - 1) * limit - leadingRecords);
       const serverPage = leadingRecords ? Math.floor(offset / limit) + 1 : page;
       const result = (
         await api.get<Page<T>>(path, {
-          params: { page: serverPage, limit, search: deferredSearch, ...extra },
+          params: { page: serverPage, limit, search: deferredSearch, ...extra, ...sortParams },
         })
       ).data;
       if (leadingRecords) {
@@ -77,7 +93,7 @@ export function useList<T>(
         const count = page === 1 ? Math.max(0, limit - leadingRecords) : limit;
         let records = result.data;
         if (skip + count > limit && serverPage < result.pagination.totalPages) {
-          const next = (await api.get<Page<T>>(path, { params: { page: serverPage + 1, limit, search: deferredSearch, ...extra } })).data;
+          const next = (await api.get<Page<T>>(path, { params: { page: serverPage + 1, limit, search: deferredSearch, ...extra, ...sortParams } })).data;
           records = [...records, ...next.data];
         }
         const total = result.pagination.total + leadingRecords;
@@ -96,6 +112,8 @@ export function useList<T>(
   }, [query.data, query.isPlaceholderData, query.isFetching, page]);
   return {
     ...query,
+    ...sorting,
+    resetSort: () => { sorting.resetSort(); void client.invalidateQueries({ queryKey: [path] }); },
     page,
     setPage,
     limit,

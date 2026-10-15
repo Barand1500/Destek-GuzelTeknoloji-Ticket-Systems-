@@ -203,33 +203,33 @@
   overflow: auto;
   margin-inline: -24px;
 }
-.activity-log-scroll {
+:is(.management-table-wrap, .activity-log-scroll) {
   --log-scroll-thumb: #a8beb2;
   scrollbar-width: thin;
   scrollbar-color: var(--log-scroll-thumb) transparent;
 }
-.activity-log-scroll::-webkit-scrollbar {
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
-.activity-log-scroll::-webkit-scrollbar-button {
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar-button {
   display: none;
 }
-.activity-log-scroll::-webkit-scrollbar-track,
-.activity-log-scroll::-webkit-scrollbar-corner {
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar-track,
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar-corner {
   background: transparent;
 }
-.activity-log-scroll::-webkit-scrollbar-thumb {
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar-thumb {
   border: 1px solid transparent;
   border-radius: 8px;
   background: var(--log-scroll-thumb);
   background-clip: padding-box;
 }
-.activity-log-scroll::-webkit-scrollbar-thumb:hover {
+:is(.management-table-wrap, .activity-log-scroll)::-webkit-scrollbar-thumb:hover {
   background: #789889;
   background-clip: padding-box;
 }
-html[data-theme="dark"] .activity-log-scroll {
+html[data-theme="dark"] :is(.management-table-wrap, .activity-log-scroll) {
   --log-scroll-thumb: #587468;
 }
 .management-table {
@@ -237,6 +237,45 @@ html[data-theme="dark"] .activity-log-scroll {
   border-collapse: collapse;
   text-align: left;
 }
+.management-sort-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.management-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.management-sort-button > span[aria-hidden] { opacity: .65; }
+.management-sort-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.management-sort-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin-left: auto;
+  border: 1px solid var(--ui-border, #dce3df);
+  border-radius: 7px;
+  color: var(--ui-text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+.management-sort-button:hover, .management-sort-reset:hover { color: var(--ui-text-primary); }
+.management-sort-button:focus-visible, .management-sort-reset:focus-visible { outline: 2px solid #218675; outline-offset: 3px; }
 .management-table th {
   font-size: 11px;
   text-transform: uppercase;
@@ -4909,3 +4948,30 @@ html[data-theme="dark"] .customer-merge-modal, html[data-theme="dark"] .customer
 .customer-sort-reset { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 4px; border-radius: 5px; background: transparent; color: var(--ui-text-secondary); cursor: pointer; }
 .customer-sort-reset:hover { background: #e2f1e7; }
 html[data-theme="dark"] .customer-sort-reset:hover { background: #304b3f; }
+/* Staff columns fit their panel; long values are readable through their title. */
+.users-management-grid .users-table-wrap { overflow-x: hidden; }
+.users-management-grid .users-table { width: 100%; min-width: 0; table-layout: fixed; }
+.users-table .users-column-name { width: 30%; }
+.users-table .users-column-status { width: 104px; }
+.users-table .users-column-actions { width: 116px; }
+.users-management-grid .users-table :is(th, td) { padding-inline: 12px; min-width: 0; }
+.users-table .users-cell-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.users-table .management-sort-heading { min-width: 0; gap: 6px; }
+.users-table .management-sort-heading > span { overflow: hidden; text-overflow: ellipsis; }
+.users-table .management-sort-button { min-width: 0; max-width: 100%; gap: 5px; }
+.users-table .management-sort-button > span[aria-hidden] { flex-shrink: 0; }
+.users-table .status-toggle { flex-wrap: wrap; gap: 5px; }
+.users-table .management-actions { flex-wrap: nowrap; gap: 6px; }
+@media (max-width: 650px) {
+  .users-table .users-column-status { width: 72px; }
+  .users-table .users-column-actions { width: 84px; }
+  .users-management-grid .users-table :is(th, td) { padding-inline: 8px; }
+  .users-table .management-actions { gap: 4px; }
+  .users-table .management-actions .icon-button { width: 32px; min-width: 32px; height: 32px; }
+}

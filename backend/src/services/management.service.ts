@@ -1,3 +1,5 @@
+import { managementOrder, sortManagementRows } from './management-sorting.js';
+import { activityActionLabel, richDescriptionFor, type ActivityLog } from '../utils/activity-log-format.js';
 import { customerListOrder } from "./customer-sorting.js";
 import bcrypt from "bcrypt";
 import { randomBytes } from "node:crypto";
@@ -225,12 +227,17 @@ export async function users(
     : await db.user.findMany({
         where,
         select: person,
-        orderBy: [{ name: "asc" }, { id: "asc" }],
-        ...paging(q),
+        orderBy: managementOrder<Prisma.UserOrderByWithRelationInput>(q, {name:direction=>({name:direction}),isActive:direction=>({isActive:direction})},[{name:'asc'},{id:'asc'}]),
+        ...(q.sortBy === 'roleDepartments' ? {} : paging(q)),
       });
-  const data = !customersOnly && permissionScope(actor) !== 'ALL'
+  const visible = !customersOnly && permissionScope(actor) !== 'ALL'
     ? result.map((member) => ({ ...member, departments: member.departments.filter((department) => actor.departmentIds.includes(department.departmentId)) }))
     : result;
+  const labels: Record<string,string> = { ADMIN: "Yönetici", SUPERVISOR: "Departman sorumlusu", AGENT: "Destek Uzmanı", CUSTOMER: "Müşteri" };
+  const sorted = !customersOnly && q.sortBy === 'roleDepartments' ? sortManagementRows(visible, q, {
+    roleDepartments: member => [member.accessRole?.name ?? labels[member.role], member.departments.map(item => item.department.name).join(', ') || 'Departman yok'].join(' '),
+  }) : visible;
+  const data = !customersOnly && q.sortBy === 'roleDepartments' ? sorted.slice((q.page - 1) * q.limit, q.page * q.limit) : sorted;
   const total = await db.user.count({ where });
   return {
     data,
@@ -855,7 +862,7 @@ export async function tags(q: z.infer<typeof schema.searchQuery>) {
   const [data, total] = await db.$transaction([
     db.tag.findMany({
       where,
-      orderBy: [{ name: "asc" }, { id: "asc" }],
+      orderBy: managementOrder<Prisma.TagOrderByWithRelationInput>(q, { name: direction => ({name:direction}), code: direction => ({code:direction}) }, [{name:"asc"},{id:"asc"}]),
       ...paging(q),
     }),
     db.tag.count({ where }),
@@ -972,7 +979,7 @@ export async function statusOptions(q: z.infer<typeof schema.searchQuery>) {
       }
     : {};
   const [data, total] = await db.$transaction([
-    db.statusOption.findMany({ where, orderBy: { name: "asc" }, ...paging(q) }),
+    db.statusOption.findMany({ where, orderBy: managementOrder<Prisma.StatusOptionOrderByWithRelationInput>(q, { name: direction => ({name:direction}), code: direction => ({code:direction}) }, [{name:"asc"},{id:"asc"}]), ...paging(q) }),
     db.statusOption.count({ where }),
   ]);
   return {
@@ -992,7 +999,7 @@ export async function priorityOptions(q: z.infer<typeof schema.searchQuery>) {
   const [data, total] = await db.$transaction([
     db.priorityOption.findMany({
       where,
-      orderBy: { name: "asc" },
+      orderBy: managementOrder<Prisma.PriorityOptionOrderByWithRelationInput>(q, { name: direction => ({name:direction}), code: direction => ({code:direction}) }, [{name:"asc"},{id:"asc"}]),
       ...paging(q),
     }),
     db.priorityOption.count({ where }),
@@ -1108,7 +1115,7 @@ export async function websites(q: z.infer<typeof schema.searchQuery>) {
     db.website.findMany({
       where,
       include: { _count: { select: { guideFiles: true } } },
-      orderBy: [{ name: "asc" }, { id: "asc" }],
+      orderBy: managementOrder<Prisma.WebsiteOrderByWithRelationInput>(q, { name: direction => ({name:direction}), url: direction => ({url:direction}), isActive: direction => ({isActive:direction}) }, [{name:"asc"},{id:"asc"}]),
       ...paging(q),
     }),
     db.website.count({ where }),
@@ -1320,7 +1327,7 @@ export async function savedReplies(
     db.savedReply.findMany({
       where,
       include: { author: { select: { id: true, name: true } } },
-      orderBy: [{ title: "asc" }, { id: "asc" }],
+      orderBy: managementOrder<Prisma.SavedReplyOrderByWithRelationInput>(q, { title: direction => ({title:direction}), body: direction => ({body:direction}), author: direction => ({author:{name:direction}}) }, [{title:"asc"},{id:"asc"}]),
       ...paging(q),
     }),
     db.savedReply.count({ where }),
@@ -1347,7 +1354,7 @@ export async function announcementTemplates(
   const [data, total] = await db.$transaction([
     db.announcementTemplate.findMany({
       where,
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+      orderBy: managementOrder<Prisma.AnnouncementTemplateOrderByWithRelationInput>(q, { label: direction => ({label:direction}), title: direction => ({title:direction}), body: direction => ({body:direction}) }, [{sortOrder:"asc"},{createdAt:"asc"},{id:"asc"}]),
       ...paging(q),
     }),
     db.announcementTemplate.count({ where }),
@@ -1469,7 +1476,7 @@ export async function notifications(
   const [data, total, unreadCount] = await db.$transaction([
     db.notification.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: managementOrder<Prisma.NotificationOrderByWithRelationInput>(q, { title: direction => ({title:direction}), message: direction => ({message:direction}), createdAt: direction => ({createdAt:direction}), isRead: direction => ({isRead:direction}) }, [{createdAt:"desc"},{id:"desc"}]),
       ...paging(q),
     }),
     db.notification.count({ where }),
@@ -1608,12 +1615,13 @@ export async function activityLogs(
         }
       : {}),
   };
+  const computedSort = Boolean(q.sortDirection && (q.sortBy === 'action' || q.sortBy === 'description'));
   const [rawData, total] = await db.$transaction([
     db.activityLog.findMany({
       where,
       include: { user: { select: { id: true, name: true, email: true } } },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      ...paging(q),
+      orderBy: managementOrder<Prisma.ActivityLogOrderByWithRelationInput>(q,{createdAt:direction=>({createdAt:direction}),user:direction=>({user:{name:direction}})},[{createdAt:'desc'},{id:'desc'}]),
+      ...(computedSort ? {} : paging(q)),
     }),
     db.activityLog.count({ where }),
   ]);
@@ -1690,8 +1698,12 @@ export async function activityLogs(
       },
     };
   });
+  const sorted = computedSort ? sortManagementRows(data, q, {
+    action: log => activityActionLabel(log.action, log.metadata as ActivityLog['metadata']),
+    description: log => richDescriptionFor(log as unknown as ActivityLog),
+  }).slice((q.page - 1) * q.limit, q.page * q.limit) : data;
   return {
-    data,
+    data: sorted,
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }

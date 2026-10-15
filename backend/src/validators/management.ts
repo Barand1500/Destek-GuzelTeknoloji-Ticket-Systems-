@@ -16,18 +16,23 @@ const queryBoolean = z
   .transform((v) => v === "true")
   .optional();
 const nonempty = (v: object) => Object.keys(v).length > 0;
+const sorting = {
+  sortBy: z.enum(['name', 'code', 'roleDepartments', 'url', 'title', 'label', 'body', 'author', 'createdAt', 'user', 'action', 'description', 'message', 'isRead', 'isActive']).optional(),
+  sortDirection: z.enum(['asc', 'desc']).optional(),
+};
 const departments = z
   .array(idSchema)
   .max(100)
   .refine((v) => new Set(v).size === v.length, "Departmanlar tekrarlanamaz.");
 export const directoryQuery = paginationSchema.extend({
+  ...sorting,
   nameSort: z.enum(['asc', 'desc']).optional(),
   search,
   id: idSchema.optional(),
   role: role.optional(),
   isActive: queryBoolean,
 });
-export const searchQuery = paginationSchema.extend({ search });
+export const searchQuery = paginationSchema.extend({ search, ...sorting });
 export const reportQuery = paginationSchema.extend({
   agentId: idSchema.optional(),
   departmentId: idSchema.optional(),
@@ -178,6 +183,7 @@ export const updateSavedReplySchema = savedReplySchema
   .partial()
   .refine(nonempty);
 export const notificationQuery = paginationSchema.extend({
+  ...sorting,
   isRead: queryBoolean,
   search,
 });
@@ -188,6 +194,7 @@ export const notificationVisibleDeleteSchema = z.object({
   ids: z.array(idSchema).min(1).max(100),
 });
 export const activityQuery = paginationSchema.extend({
+  ...sorting,
   search,
   action: z.string().trim().max(100).optional(),
   userId: idSchema.optional(),

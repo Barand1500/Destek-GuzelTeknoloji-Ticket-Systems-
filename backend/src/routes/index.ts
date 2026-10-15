@@ -1,3 +1,6 @@
+import { searchQuery } from '../validators/management.js';
+import { managementOrder } from '../services/management-sorting.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { permissionScope } from "../services/permissions.js";
 import { Router, type Response } from "express";
 import rateLimit from "express-rate-limit";
@@ -171,14 +174,15 @@ router.get("/auth/me", (req, res) => {
   res.json({ success: true, data: user });
 });
 router.get('/departments',async(req,res)=>{
-  const {page,limit}=paginationSchema.parse(req.query);
+  const query=searchQuery.parse(req.query);
+  const {page,limit}=query;
   const includeInactive=z.enum(['true','false']).optional().parse(req.query.includeInactive)==='true';
   if(includeInactive&&req.actor.role!=='ADMIN')throw new AppError(403,'FORBIDDEN','Yetkiniz yok.');
   const accessibleOnly=z.enum(['true','false']).optional().parse(req.query.accessible)==='true';
   const search=z.string().max(100).optional().parse(req.query.search);
   const scope = req.actor.accessRole?.scope ?? req.actor.roleScope ?? (req.actor.role === 'ADMIN' ? 'ALL' : 'DEPARTMENT');
   const where={deletedAt:null,...(includeInactive?{}:{isActive:true}),...(accessibleOnly&&scope!=='ALL' ? {id:{in:req.actor.departmentIds}} : {}),...(search?{name:{contains:search}}:{})};
-  const data=await db.department.findMany({where,orderBy:{name:'asc'},skip:(page-1)*limit,take:limit});
+  const data=await db.department.findMany({where,orderBy:managementOrder<Prisma.DepartmentOrderByWithRelationInput>(query,{name:direction=>({name:direction}),isActive:direction=>({isActive:direction})},[{name:'asc'},{id:'asc'}]),skip:(page-1)*limit,take:limit});
   const total=await db.department.count({where});
   res.json({success:true,data,pagination:{page,limit,total,totalPages:Math.ceil(total/limit)}});
 });
