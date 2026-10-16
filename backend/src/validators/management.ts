@@ -1,3 +1,4 @@
+import { emailSchema, extraEmailsSchema } from "../utils/email.js";
 import { z } from "zod";
 import { idSchema, paginationSchema, registerSchema } from "./index.js";
 import { skillKey } from "../services/skill-matching.js";
@@ -54,20 +55,20 @@ export const createCustomerSchema = z
     email: z.preprocess(
       (value) =>
         typeof value === "string" && !value.trim() ? undefined : value,
-      z.string().trim().toLowerCase().pipe(z.email()).optional(),
+      emailSchema.optional(),
     ),
     phone: z.string().trim().min(7).max(30),
     company: z.string().trim().min(2).max(120).optional(),
     staffNote: z.string().trim().min(1).max(2000).optional(),
     extraPhones: z.string().trim().max(500).optional(),
-    extraEmails: z.string().trim().max(500).optional(),
+    extraEmails: extraEmailsSchema.optional(),
   })
   .strict();
 export const updateCustomerSchema = z
   .object({
     name: z.string().trim().min(2).max(100).optional(),
     email: z
-      .union([z.literal(""), z.string().trim().toLowerCase().pipe(z.email())])
+      .union([z.literal(""), emailSchema])
       .transform((value) => value || null)
       .optional(),
     phone: z.string().trim().min(7).max(30).optional(),
@@ -81,7 +82,7 @@ export const updateCustomerSchema = z
       .optional(),
     isActive: z.boolean().optional(),
     extraPhones: z.string().trim().max(500).nullable().optional(),
-    extraEmails: z.string().trim().max(500).nullable().optional(),
+    extraEmails: extraEmailsSchema.nullable().optional(),
   })
   .strict()
   .refine(nonempty);
@@ -235,7 +236,7 @@ export const integrationSettingsSchema = z
     smtpPassword: integrationText,
     smtpFromAddress: z.union([
       z.literal(""),
-      z.string().trim().toLowerCase().pipe(z.email()),
+      emailSchema,
     ]),
     smtpFromName: integrationText,
     imapEnabled: z.boolean(),

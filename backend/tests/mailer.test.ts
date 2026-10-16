@@ -79,6 +79,7 @@ test('email creation and replies send mail; internal notes and phone conversatio
   stub(db.user, 'findFirst', async () => customer);
   stub(db.conversation, 'findUnique', async () => conversation);
   stub(db.activityLog, 'create', log);
+  stub(db.externalMessage, 'upsert', async ({ create }: any) => create);
   stub(db.activityLog, 'update', async ({ where, data }: any) => Object.assign(audits.find(row => row.id === where.id), data));
   stub(db.integrationSettings, 'findUnique', async () => integration);
   t.mock.method(nodemailer, 'createTransport', () => ({ sendMail: async (mail: any) => { sent.push(mail); return { accepted: [mail.to], rejected: [], response: '250 OK', messageId: '<test@example.test>' }; } }));
@@ -137,6 +138,20 @@ test('email creation and replies send mail; internal notes and phone conversatio
     assert.equal(whatsappBodies[1].text.body, 'First multi-channel message');
     assert.deepEqual(createdData.at(-1).replyChannels, ['TICKET', 'EMAIL', 'WHATSAPP']);
     assert.equal(createdData.at(-1).channel, 'EMAIL');
+    conversation.channel = 'WHATSAPP';
+    conversation.replyChannels = ['EMAIL'];
+    await addMessage(actor, conversation.id, { body: 'Converted to email only', type: 'AGENT_REPLY' });
+    await flush(); await flush();
+    assert.equal(sent.length, 5);
+    assert.ok(sent[4].text.includes('Converted to email only'));
+    assert.equal(whatsappBodies.length, 2, 'original WhatsApp channel must not trigger a send after selecting email only');
+    conversation.channel = 'EMAIL';
+    conversation.replyChannels = ['WHATSAPP'];
+    await addMessage(actor, conversation.id, { body: 'Converted to WhatsApp only', type: 'AGENT_REPLY' });
+    await flush(); await flush();
+    assert.equal(sent.length, 5, 'original email channel must not trigger a send after selecting WhatsApp only');
+    assert.equal(whatsappBodies.length, 3);
+    assert.equal(whatsappBodies[2].text.body, 'Converted to WhatsApp only');
   } finally {
     await flush();
     env.NODE_ENV = previous;

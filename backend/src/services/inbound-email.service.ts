@@ -1,3 +1,4 @@
+import { canonicalEmail } from '../utils/email.js';
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { ImapFlow } from "imapflow";
@@ -8,13 +9,20 @@ import { notifyConversation, publishChange } from "./events.service.js";
 import type { Actor } from "../types/express.js";
 import { matchesSender, selectEmailCustomer } from './inbound-email-matching.js';
 import { hasTicketReplyTag, replyAddressTicket } from './email-reply-address.js';
+import { conversationChannelFilter } from './reply-channels.js';
 
 let running = false;
 let timer: NodeJS.Timeout | undefined;
 let lastStoredPollAt = 0;
 
-export function inboundReplyText(value: string) {
-  const text = value
+const htmlReplyQuote = /<(?:div|section|table|blockquote)\b[^>]*(?:\b(?:class|id)\s*=\s*["'][^"']*\b(?:gmail_quote(?:_container)?|gmail_attr|moz-cite-prefix|yandex_quoted|mail-quote-collapse|divRplyFwdMsg)\b[^"']*["']|\btype\s*=\s*["']cite["'])[^>]*>/i;
+const emailDate = /\b\d{1,2}\s+(?:oca|şub|sub|mar|nis|may|haz|tem|ağu|agu|eyl|eki|kas|ara|jan|feb|apr|jun|jul|aug|sep|oct|nov|dec)[a-zçğıöşü]*(?:\s+\d{4})?\b/i;
+const mobileSignature = /^(?:(?:Mobil\s+)?Yandex\s+Mail(?:['’]den)?\s+gönderildi|Sent from (?:my (?:iPhone|iPad|Android)|Yandex(?:\.Mail| Mail)(?: for (?:iOS|Android))?))\.?$/i;
+
+export function inboundReplyText(value: string, hasHtmlQuote = false) {
+  const source = value;
+  const embeddedQuote = source.search(htmlReplyQuote);
+  const text = (embeddedQuote >= 0 ? source.slice(0, embeddedQuote) : source)
     .replace(/<hr\b[^>]*>/gi, "\n")
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/p\s*>/gi, "\n")
@@ -25,22 +33,51 @@ export function inboundReplyText(value: string) {
   const lines = text.split("\n");
   // Gmail adds one of these lines before the quoted original message. Do not
   // store that original message as a second customer reply in the ticket.
-  const quoteStart = lines.findIndex((line) => {
+  const quoteStart = lines.findIndex((line, index) => {
     const normalized = line.trim();
+    const following = lines.slice(index, index + 4).map(value => value.trim()).join(' ');
+    const quoteEvidence = hasHtmlQuote || embeddedQuote >= 0 || lines.slice(index + 1, index + 5).some(value => value.trim().startsWith('>'));
+    // Some plain-text alternatives contain only the support sender and short date;
+    // neither the HTML quote marker nor “wrote” survives. Match only a trailing
+    // support header after a blank line, never an ordinary date in the message.
+    const shortSupportHeader = index > 0 && !lines[index - 1].trim()
+      && lines.slice(index + 1).every(value => !value.trim())
+      && /\s[-–—]\s.*\bdestek departmanı\s*,\s*\d/i.test(normalized)
+      && Boolean(normalized.match(emailDate)?.[0] && normalized.endsWith(normalized.match(emailDate)![0]));
     return normalized.startsWith(">")
+      || shortSupportHeader
       || /(?:şunu yazdı|wrote):\s*$/i.test(normalized)
       // Gmail can omit the trailing “şunu yazdı” portion when it creates its
       // plain-text alternative, leaving only this localized date header.
       || /\d{1,2}\s+\S+\s+\d{4}.*\btarihinde\b/i.test(normalized)
+      || [1, 2, 3, 4].some(count => /^On\s+.+\bwrote:\s*$/i.test(lines.slice(index, index + count).map(value => value.trim()).join(' ')))
+      || (emailDate.test(normalized) && (/(?:şunu yazdı|wrote|tarihinde)/i.test(following) || (quoteEvidence && /,|@|<|>/.test(normalized))))
       || /^(?:-{2,}\s*)?(?:original message|forwarded message)/i.test(normalized);
   });
-  return lines
-    .slice(0, quoteStart >= 0 ? quoteStart : undefined)
+  const reply = lines.slice(0, quoteStart >= 0 ? quoteStart : undefined);
+  // Strip only a standalone client footer at the end, not the same words in prose.
+  while (reply.length && !reply.at(-1)!.trim()) reply.pop();
+  while (reply.length && mobileSignature.test(reply.at(-1)!.trim())) {
+    reply.pop();
+    while (reply.length && !reply.at(-1)!.trim()) reply.pop();
+  }
+  return reply
     .join("\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
     .slice(0, 10_000);
+}
+
+export async function parsedEmailReplyText(parsed: { text?: string; html?: string | false }) {
+  const html = typeof parsed.html === 'string' ? parsed.html : '';
+  const quote = html.search(htmlReplyQuote);
+  if (quote >= 0) {
+    // Keep the structural quote boundary, then let mailparser decode HTML/entities.
+    const reply = await simpleParser(Buffer.from(`Content-Type: text/html; charset=utf-8\r\n\r\n${html.slice(0, quote)}`, 'utf8'));
+    return inboundReplyText(reply.text || '', true);
+  }
+  return inboundReplyText(parsed.text || html);
 }
 
 type WebsiteSupportRequest = { name: string; email: string; subject: string; body: string };
@@ -88,9 +125,9 @@ export async function persistInboundEmail(input: {
   const known = await db.incomingEmail.findFirst({ where: { OR: [{ mailbox: input.mailbox, uid: input.uid }, ...(input.messageId ? [{ messageId: input.messageId }] : [])] } });
   if (known) return known.conversationId;
 
-  const email = input.from.address.trim().toLowerCase();
+  const email = canonicalEmail(input.from.address);
   const matchingCustomers = (await db.user.findMany({ where: { role: "CUSTOMER", deletedAt: null, OR: [{ email }, { extraEmails: { contains: email } }] }, orderBy: { createdAt: "asc" } })).filter(customer => matchesSender(customer, email));
-  const senderScope = { customerId: { in: matchingCustomers.map(customer => customer.id) }, deletedAt: null, status: { not: 'CLOSED' } };
+  const senderScope = { customerId: { in: matchingCustomers.map(customer => customer.id) }, deletedAt: null, status: { not: 'CLOSED' }, AND: [conversationChannelFilter('EMAIL')] };
 
   const ticketNumber = replyAddressTicket(input.recipients ?? [], env.JWT_ACCESS_SECRET) ?? /#(?:TK-)?0*(\d{1,10})\b|\[(?:TK-)?0*(\d{1,10})\]/i.exec(input.subject)?.slice(1).find(Boolean);
   let conversation = ticketNumber
@@ -112,7 +149,7 @@ export async function persistInboundEmail(input: {
   // Never override an explicit (possibly foreign) ticket/reference with a guess.
   if (!conversation && customer && !ticketNumber && !references.length && !hasTicketReplyTag(input.recipients ?? [])) {
     const active = await db.conversation.findMany({
-      where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, messages: { some: { type: 'AGENT_REPLY' } } },
+      where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, AND: [conversationChannelFilter('EMAIL')], messages: { some: { type: 'AGENT_REPLY' } } },
       take: 2,
       include: { messages: { where: { type: 'AGENT_REPLY' }, select: { id: true }, take: 1 } },
     });
@@ -190,7 +227,7 @@ export async function syncInboundEmail() {
         if (!message || !message.source || !message.uid) continue;
         const parsed = await simpleParser(message.source);
         const sender = parsed.from?.value.find((value) => value.address)?.address;
-        const body = inboundReplyText(parsed.text || parsed.html || "");
+        const body = await parsedEmailReplyText(parsed);
         if (!sender || !body) continue;
         const emailSubject = parsed.subject || '';
         const websiteRequest = parseTahsilatSupportRequest(emailSubject, body);

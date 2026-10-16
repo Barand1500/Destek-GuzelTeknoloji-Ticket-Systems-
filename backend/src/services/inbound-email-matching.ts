@@ -1,5 +1,6 @@
+import { canonicalEmail } from '../utils/email.js';
 type EmailContact = { name: string; email: string | null; extraEmails: string | null };
-const normalize = (value: string) => value.trim().toLowerCase();
+const normalize = (value: string) => canonicalEmail(value);
 
 export function matchesSender(contact: EmailContact, address: string) {
   const email = normalize(address);

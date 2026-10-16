@@ -1,3 +1,4 @@
+import { emailSchema } from "../utils/email.js";
 import { z } from "zod";
 export const idSchema = z.uuid();
 const password = z
@@ -10,7 +11,7 @@ const password = z
   );
 export const loginSchema = z
   .object({
-    email: z.string().trim().toLowerCase().pipe(z.email()),
+    email: emailSchema,
     password: z.string().min(1).max(200),
   })
   .strict();

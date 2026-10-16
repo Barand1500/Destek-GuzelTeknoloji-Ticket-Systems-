@@ -1,3 +1,4 @@
+import { displayEmail } from "../utils/email";
 import { useMemo, useState } from "react";
 
 const domains = ["@gmail.com", "@hotmail.com", "@outlook.com", "@yahoo.com", "@icloud.com"];
@@ -15,7 +16,7 @@ export function EmailInput({
   autoComplete?: string;
   multiple?: boolean;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const [value, setValue] = useState(displayEmail(defaultValue));
   const [open, setOpen] = useState(false);
   const suggestions = useMemo(() => {
     const current = multiple ? value.split(",").pop()?.trim() ?? "" : value;
@@ -31,7 +32,8 @@ export function EmailInput({
       <input
         name={name}
         required={required}
-        type={multiple ? "text" : "email"}
+        type="text"
+        inputMode="email"
         autoComplete={autoComplete}
         value={value}
         onChange={(event) => setValue(event.target.value)}

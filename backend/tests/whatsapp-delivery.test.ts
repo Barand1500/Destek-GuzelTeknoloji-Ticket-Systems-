@@ -18,6 +18,8 @@ test('WhatsApp acceptance, signed delivery statuses and asynchronous failures ar
   };
   stub(db.integrationSettings, 'findUnique', async () => ({ whatsappEnabled: true, whatsappAppSecret: 'app-secret', whatsappPhoneNumberId: 'number-id', whatsappAccessToken: 'private-token' }));
   stub(db.activityLog, 'create', createLog);
+  const outgoing: any[] = [];
+  stub(db.externalMessage, 'upsert', async ({ create }: any) => { outgoing.push(create); return create; });
   stub(db.activityLog, 'update', async ({ where, data }: any) => Object.assign(logs.find(row => row.id === where.id), data));
   stub(db.activityLog, 'findFirst', async ({ where }: any) => logs.find(row => where.action.in.includes(row.action) && row.metadata.channel === 'WHATSAPP' && where.AND[1].OR.some((condition: any) => condition.id === row.id || condition.metadata?.equals === row.metadata.providerMessageId)) ?? null);
   stub(db, '$transaction', async (callback: any) => callback({
@@ -37,6 +39,9 @@ test('WhatsApp acceptance, signed delivery statuses and asynchronous failures ar
   await sendConversationChannelReply('WHATSAPP', { phone: '05551234567' }, 'Test', { conversationId: 'ticket', userId: 'agent', messageId: 'message' });
   assert.equal(logs[0].action, 'conversation.channel_reply_sent');
   assert.equal(logs[0].metadata.providerMessageId, 'wamid.test');
+  assert.equal(outgoing[0].conversationId, 'ticket');
+  assert.equal(outgoing[0].provider, 'meta-whatsapp-outbound:905551234567');
+  assert.equal(outgoing[0].externalId, 'wamid.test');
   assert.equal(logs.some(row => row.action === 'conversation.whatsapp_delivered'), false);
   const webhook = async (status: any, valid = true) => {
     const payload = { entry: [{ changes: [{ value: { statuses: [status] } }] }] };

@@ -44,6 +44,17 @@ test('channel categories, explicit filters and search follow current selections 
     assert.deepEqual(await matches({ category: 'TICKET' }), new Set([changed.id]));
     assert.equal((await matches({ category: 'EMAIL' })).has(changed.id), false);
     assert.equal((await listConversations({ ...actor, role: 'CUSTOMER' }, { ...query, category: 'EMAIL' })).pagination.total, 0);
+    // Reproduce an originally-email request moved to WhatsApp after creation.
+    await db.conversation.update({ where: { id: empty.id }, data: { replyChannels: ['WHATSAPP'] } });
+    assert.equal((await matches({ category: 'EMAIL' })).has(empty.id), false);
+    assert.equal((await matches({ channel: 'EMAIL' })).has(empty.id), false);
+    assert.equal((await matches({ category: 'WHATSAPP' })).has(empty.id), true);
+    assert.equal((await matches({ channel: 'WHATSAPP' })).has(empty.id), true);
+    const moved = (await listConversations(actor, { ...query, category: 'WHATSAPP' })).data.find(item => item.id === empty.id)!;
+    assert.deepEqual(conversationChannels(moved), ['WHATSAPP']);
+    await db.conversation.update({ where: { id: empty.id }, data: { replyChannels: ['EMAIL', 'WHATSAPP'] } });
+    assert.equal((await matches({ category: 'EMAIL' })).has(empty.id), true);
+    assert.equal((await matches({ category: 'WHATSAPP' })).has(empty.id), true);
   } finally {
     await db.conversation.deleteMany({ where: { id: { in: ids } } });
     if (customerId) await db.user.delete({ where: { id: customerId } });

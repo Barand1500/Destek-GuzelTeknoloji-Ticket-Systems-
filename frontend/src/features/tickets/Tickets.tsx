@@ -1,3 +1,4 @@
+import { displayEmail } from "../../utils/email";
 import { elapsedDuration } from "../../utils/elapsed-duration";
 import { conversationChannels } from '../../utils/conversation-channels';
 import { ReplyChannelSelector } from "./ReplyChannelSelector";
@@ -1047,7 +1048,7 @@ export function ConversationLog() {
             <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi Yapan</th><th scope="col">Tarih / Saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve Dosyalar</th></tr></thead>
             <tbody>{entries.map((entry) => <tr className={entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''} key={entry.id}>
               <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? activityActionLabel(entry.action)}</strong></div></td>
-              <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{entry.author.email}</small>}</td>
+              <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{displayEmail(entry.author.email)}</small>}</td>
               <td><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></td>
               <td>
                 {labels[entry.action] && <p>{entry.body}</p>}

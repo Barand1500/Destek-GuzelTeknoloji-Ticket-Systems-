@@ -1,3 +1,4 @@
+import { displayEmail } from "../../utils/email";
 import { SortableTableHead } from "../../components/TableSorting";
 import { contactChannels } from "../../utils/contact-channels";
 import { formatPhone } from "../../utils/phone";
@@ -368,7 +369,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                     <tr key={person.id} {...editableRowProps(() => { if (canUpdateUsers && hasPermission(user, 'users.update') && !(user?.accessRole && person.accessRoleId !== user.accessRole.id)) edit(person); })} className={!person.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                       <td>
                         <strong className="users-cell-text" title={person.name}>{person.name}</strong>
-                        <small className="users-cell-text" title={person.email ?? undefined}>{person.email}</small>
+                        <small className="users-cell-text" title={displayEmail(person.email) || undefined}>{displayEmail(person.email)}</small>
                         {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
                       <td>
@@ -458,7 +459,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 name="email"
                 type="email"
                 required
-                defaultValue={editing?.email ?? ""}
+                defaultValue={displayEmail(editing?.email)}
                 autoComplete="off"
               />
             </label>
@@ -627,7 +628,7 @@ export function CustomersPage() {
                       {(bulkSelectionMode) && <input type="checkbox" disabled={bulkRemove.isPending} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>
                     </td>
-                    <td>{customer.phone ?? "Telefon yok"}<small>{customer.email ?? "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
+                    <td>{customer.phone ?? "Telefon yok"}<small>{displayEmail(customer.email) || "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
@@ -695,7 +696,7 @@ export function CustomersPage() {
           <label><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
           <label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
           <label><span className="field-label">Ek Telefonlar</span><input name="extraPhones" placeholder="Virgülle ayırabilirsiniz" defaultValue={editing?.extraPhones ?? ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.split(",").map((phone) => formatPhone(phone.trim())).filter(Boolean).join(", "); }} /></label>
-          <label><span className="field-label">E-Posta</span> <EmailInput name="email" defaultValue={editing?.email ?? ""} /></label>
+          <label><span className="field-label">E-Posta</span> <EmailInput name="email" defaultValue={displayEmail(editing?.email)} /></label>
           <label><span className="field-label">Ek E-Posta Adresleri</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>
           <label><span className="field-label">Şirket</span> <input name="company" maxLength={120} defaultValue={editing?.company ?? ""}/></label>
           <label><span className="field-label">Müşteri Notu</span> <textarea name="staffNote" maxLength={2000} rows={4} defaultValue={editing?.staffNote ?? ""} placeholder="Örn. Arama nedeni, tercih ettiği dönüş saati veya personel için önemli bilgi"/></label>
@@ -889,7 +890,7 @@ export function PhoneSupportPage() {
           </label>
           {!hasSearched && <p className="management-empty phone-support-empty">Arayan kişinin bilgilerini yazmaya başlayın.</p>}
           {hasSearched && <ListState loading={customers.isPending} error={customers.error} empty={false} />}
-          {displayResults.map((customer) => <button className={`customer-choice ${customerId === customer.id ? "selected" : ""}`} type="button" key={customer.id} onClick={() => selectCustomer(customer)}><strong>{customer.name}</strong><span>{customer.phone ?? "Telefon yok"} · {customer.email ?? "E-Posta yok"}</span>{customer.company && <small>{customer.company}</small>}{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</button>)}
+          {displayResults.map((customer) => <button className={`customer-choice ${customerId === customer.id ? "selected" : ""}`} type="button" key={customer.id} onClick={() => selectCustomer(customer)}><strong>{customer.name}</strong><span>{customer.phone ?? "Telefon yok"} · {displayEmail(customer.email) || "E-Posta yok"}</span>{customer.company && <small>{customer.company}</small>}{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</button>)}
           {noResults && <p className="phone-support-no-result">Eşleşen kişi bulunamadı. Sağdaki <strong>+</strong> düğmesiyle arayanı ekleyin.</p>}
           {hasSearched && <Pagination pagination={customers.data?.pagination} onChange={setPhonePage} />}
           {showCreate && <form className="management-form phone-support-create" onSubmit={submitCustomer}><h2>Yeni Arayan Kişi</h2><label><span className="field-label">Ad Soyad</span><input name="name" required minLength={2} maxLength={100} defaultValue={!isPhoneSearch(search) && !isEmailSearch(search) ? search.toLocaleUpperCase("tr-TR") : ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }} onKeyDown={focusNextField} /></label><label><span className="field-label">Telefon</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={isPhoneSearch(search) ? formatPhone(search) : ""} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} onKeyDown={focusNextField} /></label><label><span className="field-label">E-Posta</span><EmailInput name="email" defaultValue={isEmailSearch(search) ? search.trim().toLowerCase() : ""} /></label><label><span className="field-label">Şirket</span><input name="company" maxLength={120} /></label><label><span className="field-label">Müşteri Notu</span><textarea name="staffNote" maxLength={2000} rows={3} placeholder="İsteğe bağlı kalıcı müşteri notu" /></label><div className="phone-support-ticket-fields"><h2>Talep Bilgileri</h2><label><span className="field-label">Konu</span><input name="subject" required minLength={5} maxLength={200} /></label><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} onChange={setDepartmentId} params={{ accessible: "true" }} /><FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} /><TagSelect value={tagIds} onChange={setTagIds} /><label><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={7} placeholder="Örn. Ödeme ekranında hata alıyor; hata mesajı: …" /></label></div><ErrorMessage error={createCustomer.error ?? createConversation.error} /><div className="management-actions"><button className="button primary" disabled={createCustomer.isPending || createConversation.isPending || !departmentId}>{createCustomer.isPending || createConversation.isPending ? "Kaydediliyor…" : "Kişiyi ve Talebi Oluştur"}</button><button className="button secondary" type="button" onClick={() => setShowCreate(false)}>Vazgeç</button></div></form>}

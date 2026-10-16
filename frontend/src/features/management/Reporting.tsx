@@ -1,3 +1,4 @@
+import { displayEmail } from "../../utils/email";
 import { SortableTableHead } from "../../components/TableSorting";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,7 +53,7 @@ export function ActivityLogsPage() {
                     <td>{formatDate(log.createdAt)}</td>
                     <td>
                       {log.user?.name ?? log.actor?.name ?? "Sistem"}
-                      <small>{log.user?.email ?? log.actor?.email}</small>
+                      <small>{displayEmail(log.user?.email ?? log.actor?.email)}</small>
                     </td>
                     <td>{activityActionLabel(log.action, log.metadata)}</td>
                     <td>

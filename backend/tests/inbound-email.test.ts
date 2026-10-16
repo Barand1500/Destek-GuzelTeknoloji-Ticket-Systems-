@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { matchesSender, selectEmailCustomer } from '../src/services/inbound-email-matching.js';
-import { inboundReplyText, parseTahsilatSupportRequest } from '../src/services/inbound-email.service.js';
+import { inboundReplyText, parsedEmailReplyText, parseTahsilatSupportRequest } from '../src/services/inbound-email.service.js';
 
 const adem = { id: 'adem', name: 'ADEM DURGUN', email: 'yunusdurgun22@gmail.com', extraEmails: 'alias@example.test, other@example.test' };
 const yunus = { id: 'yunus', name: 'YUNUS DURGUN', email: 'durgunyunus4@gmail.com', extraEmails: null };
@@ -21,6 +21,29 @@ test('inbound email saves only the new reply, not Gmail quoted history', () => {
   assert.equal(inboundReplyText('Yeni cevabım\n\nOn Tue, Sep 24, 2026 at 09:29 Ercan wrote:\n> Previous reply'), 'Yeni cevabım');
   assert.equal(inboundReplyText('<p>Yeni cevabım</p><br><div>24 Eyl 2026 tarihinde Ercan şunu yazdı:</div><blockquote>Önceki yanıt</blockquote>'), 'Yeni cevabım');
   assert.equal(inboundReplyText('hayır\n\nErcan Güzel, 24 Eyl 2026 Per, 09:41 tarihinde\nönceki e-posta'), 'hayır');
+});
+
+test('email replies remove mobile signatures and split localized quote headers without removing the new reply', () => {
+  assert.equal(inboundReplyText('mesajı aldım\n\nGÜZEL Teknoloji - Destek Departmanı  , 16 Eki'), 'mesajı aldım');
+  assert.equal(inboundReplyText("Deneme\n\nMobil Yandex Mail'den gönderildi"), 'Deneme');
+  assert.equal(inboundReplyText('Deneme\n\nMobil Yandex Mail’den gönderildi\n\n'), 'Deneme');
+  assert.equal(inboundReplyText('Yeni yanıt\n\nSent from my iPhone'), 'Yeni yanıt');
+  assert.equal(inboundReplyText('Yeni yanıt\n\nSent from Yandex Mail for Android'), 'Yeni yanıt');
+  assert.equal(inboundReplyText('aldım\n\nGÜZEL Teknoloji - Destek Departmanı , 16 Eki\n2026 Per, 10:10 tarihinde şunu yazdı:\n> eski mesaj'), 'aldım');
+  assert.equal(inboundReplyText('aldım\n\nGÜZEL Teknoloji - Destek Departmanı , 16 Eki\n> eski mesaj'), 'aldım');
+  assert.equal(inboundReplyText('Answer\n\nOn Thu, Oct 16, 2026\nSupport <support@example.test> wrote:\n> old reply'), 'Answer');
+  assert.equal(inboundReplyText("Deneme\n\nMobil Yandex Mail'den gönderildi\n\nOn Thu, Oct 16, 2026 Support wrote:\n> old"), 'Deneme');
+  assert.equal(inboundReplyText("Mobil Yandex Mail'den gönderildi yazısı görünüyor.\nLütfen kontrol edin."), "Mobil Yandex Mail'den gönderildi yazısı görünüyor.\nLütfen kontrol edin.");
+  assert.equal(inboundReplyText('Toplantı, 16 Eki\nSaat 14:00 uygun mu?'), 'Toplantı, 16 Eki\nSaat 14:00 uygun mu?');
+});
+
+test('HTML quote boundaries take priority over flattened plain text', async () => {
+  const plain = 'aldım\n\nGÜZEL Teknoloji - Destek Departmanı , 16 Eki';
+  assert.equal(await parsedEmailReplyText({ text: plain, html: '<div>aldım</div><div class="gmail_quote gmail_quote_container"><div class="gmail_attr">GÜZEL Teknoloji - Destek Departmanı , 16 Eki</div><blockquote>old reply</blockquote></div>' }), 'aldım');
+  assert.equal(await parsedEmailReplyText({ text: plain, html: '<div>aldım</div><div>GÜZEL Teknoloji - Destek Departmanı , 16 Eki</div><blockquote type="cite">old reply</blockquote>' }), 'aldım');
+  assert.equal(await parsedEmailReplyText({ text: 'Answer\n\nold', html: '<div>Answer</div><div id="divRplyFwdMsg">From: Support</div><div>old reply</div>' }), 'Answer');
+  assert.equal(await parsedEmailReplyText({ text: 'A normal reply', html: '<div>A normal reply</div>' }), 'A normal reply');
+  assert.equal(await parsedEmailReplyText({ html: '<p>Ali &amp; Ayşe: &lt;10 &euro; &#128077;</p><div class="gmail_quote">old</div>' }), 'Ali & Ayşe: <10 € 👍');
 });
 test('Tahsilat Destek form emails are converted to the requester, subject and description', () => {
   const expected = {

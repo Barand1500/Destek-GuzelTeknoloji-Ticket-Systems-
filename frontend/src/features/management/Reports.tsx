@@ -1,3 +1,4 @@
+import { displayEmail } from "../../utils/email";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -850,7 +851,7 @@ export function ReportsPage() {
                               >
                                 {person.name}
                               </button>
-                              <small>{person.email}</small>
+                              <small>{displayEmail(person.email)}</small>
                             </td>
                             <td>{person.assigned}</td>
                             <td>{person.resolved}</td>
