@@ -1,5 +1,6 @@
+import { conversationSearch } from "./conversation-search.js";
 import { conversationListOrder } from "./conversation-sorting.js";
-import { selectedReplyChannels, validateReplyChannels, type ReplyChannel } from "./reply-channels.js";
+import { conversationChannelFilter, selectedReplyChannels, validateReplyChannels, type ReplyChannel } from "./reply-channels.js";
 import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Actor } from "../types/express.js";
@@ -80,10 +81,13 @@ export async function getConversation(actor: Actor, id: string) {
 export async function listConversations(actor: Actor, q: z.infer<typeof listSchema>) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const normalizedSearch = q.search ? normalizeSearch(q.search) : "";
-  const ticketNumber = q.search ? Number(q.search.replace(/\D/g, "")) : NaN;
+  const searchText = q.search?.trim();
+  const [statuses, priorities] = searchText ? await Promise.all([
+    db.statusOption.findMany({ where: { OR: [{ name: { contains: searchText } }, { code: { contains: searchText } }] }, select: { code: true } }),
+    db.priorityOption.findMany({ where: { OR: [{ name: { contains: searchText } }, { code: { contains: searchText } }] }, select: { code: true } }),
+  ]) : [[], []];
   const filters: Prisma.ConversationWhereInput = {
-    channel: q.channel,
+    ...(q.channel ? conversationChannelFilter(q.channel) : {}),
     status: q.status,
     priority: q.priority,
     departmentId: q.departmentId,
@@ -92,12 +96,8 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
     ...(q.tagId?{tags:{some:{tagId:q.tagId}}}:{}),
   };
   const categoryFilter: Prisma.ConversationWhereInput[] = q.category
-    ? q.category === "EMAIL"
-      ? [{ channel: "EMAIL" }]
-      : q.category === "TICKET"
-        ? [{ channel: "TICKET" }]
-      : q.category === "SMS" || q.category === "WHATSAPP"
-        ? [{ channel: q.category === "SMS" ? "SMS" : "WHATSAPP" }]
+    ? q.category === "EMAIL" || q.category === "TICKET" || q.category === "SMS" || q.category === "WHATSAPP"
+      ? [conversationChannelFilter(q.category)]
       : q.category === "MINE"
         ? [{ assignedAgentId: actor.id }]
         : q.category === "UNASSIGNED"
@@ -118,12 +118,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         : q.view === "unassigned"
           ? [{ assignedAgentId: null }]
           : []),
-      ...(q.search ? [{ OR: [
-        { searchSubject: { contains: normalizedSearch } },
-        ...(Number.isSafeInteger(ticketNumber) && ticketNumber > 0 ? [{ number: ticketNumber }] : []),
-        { customer: { OR: [{ name: { contains: q.search } }, { email: { contains: q.search } }, { phone: { contains: q.search } }, { company: { contains: q.search } }] } },
-        { assignedAgent: { is: { OR: [{ name: { contains: q.search } }, { email: { contains: q.search } }] } } },
-      ] }] : []),
+      ...(searchText ? [conversationSearch(searchText, actor.role === 'CUSTOMER', { statuses: statuses.map(item => item.code), priorities: priorities.map(item => item.code) })] : []),
     ],
   };
   const [data, total] = await db.$transaction(

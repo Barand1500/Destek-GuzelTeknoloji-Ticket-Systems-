@@ -7534,3 +7534,8 @@ html[data-theme="dark"] .inbox-sort-reset:hover { background: #304b3f; }
 }
 .notifications-page .notification-table td:nth-child(2) { min-width: 160px; }
 .notifications-page .notification-table .notification-conversation-actions { min-width: 170px; }
+.inbox-channel-list { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.inbox-channel-list .management-pill { max-width: 100%; white-space: nowrap; }
+.inbox-table-scroll .inbox-number-cell { width: 1%; white-space: nowrap; }
+.inbox-table-scroll td.inbox-number-cell { font-size: 11px; }
+.inbox-number-cell > a { color: inherit; }

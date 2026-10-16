@@ -1,4 +1,5 @@
 import { elapsedDuration } from "../../utils/elapsed-duration";
+import { conversationChannels } from '../../utils/conversation-channels';
 import { ReplyChannelSelector } from "./ReplyChannelSelector";
 import { EditableCustomerSummary } from "./EditableCustomerSummary";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -234,7 +235,7 @@ export function TicketList() {
   function moveTab(key: string, direction: -1 | 1) {
     setTabOrder((current) => { const index = current.indexOf(key); const target = index + direction; if (index < 0 || target < 0 || target >= current.length) return current; const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; window.localStorage.setItem(`helpdesk-inbox-tabs-${user?.id}`, JSON.stringify({ labels: tabLabels, custom: customTabs, order: next, enabled: tabEnabled })); return next; });
   }
-  type SortColumn = 'subject' | 'department' | 'assignedAgent';
+  type SortColumn = 'number' | 'subject' | 'department' | 'assignedAgent';
   const sortBy = params.get('sortBy');
   const sortDirection = params.get('sortDirection') ?? 'asc';
   function toggleSort(column: SortColumn) {
@@ -249,7 +250,7 @@ export function TicketList() {
   }
   function sortHeader(column: SortColumn, label: string) {
     const active = sortBy === column;
-    return <th aria-sort={active ? sortDirection === 'desc' ? 'descending' : 'ascending' : 'none'}><button className="inbox-sort-button" type="button" onClick={() => toggleSort(column)} title={active ? sortDirection === 'asc' ? 'Z → A sırala' : 'Varsayılan sıralamaya dön' : 'A → Z sırala'}>{label}<span aria-hidden="true">{active ? sortDirection === 'asc' ? '↑' : '↓' : '↕'}</span></button></th>;
+    return <th className={column === 'number' ? 'inbox-number-cell' : undefined} aria-sort={active ? sortDirection === 'desc' ? 'descending' : 'ascending' : 'none'}><button className="inbox-sort-button" type="button" onClick={() => toggleSort(column)} title={active && sortDirection === 'desc' ? 'Varsayılan sıralamaya dön' : column === 'number' ? active ? 'Büyükten küçüğe sırala' : 'Küçükten büyüğe sırala' : active ? 'Z → A sırala' : 'A → Z sırala'}>{label}<span aria-hidden="true">{active ? sortDirection === 'asc' ? '↑' : '↓' : '↕'}</span></button></th>;
   }
   const query = useQuery({
     queryKey: ["conversations", params.toString()],
@@ -425,6 +426,7 @@ export function TicketList() {
             <table>
               <thead>
                 <tr>
+                  {sortHeader('number', 'No')}
                   {sortHeader('subject', 'TALEP')}
                   <th>KANAL</th>
                   <th>DURUM</th>
@@ -440,22 +442,20 @@ export function TicketList() {
               <tbody>
                 {query.data.data.map((ticket) => (
                   <tr key={ticket.id} className="inbox-ticket-row">
+                    <td className="inbox-number-cell"><Link to={conversationPath(user!.role, ticket.id)} aria-label={`${ticket.number} numaralı talebi aç`}>#TK-{String(ticket.number).padStart(5, '0')}</Link></td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`#TK-${String(ticket.number).padStart(5, "0")} ${ticket.subject}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <Link
                         className="ticket-title" title={ticket.subject}
                         to={conversationPath(user!.role, ticket.id)}
                       >
-                        <small>
-                          #TK-{String(ticket.number).padStart(5, "0")}
-                        </small>
                         <span className="inbox-subject-text">{ticket.subject}</span>
                       </Link>
                       <span className="customer-name">
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${channels[ticket.channel]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
-                      <span className="management-pill">{channels[ticket.channel]}</span>
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${conversationChannels(ticket).map(channel => channels[channel]).join(', ')}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                      <div className="inbox-channel-list">{conversationChannels(ticket).map(channel => <span className="management-pill" key={channel}>{channels[channel]}</span>)}</div>
                     </td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
                     </td>

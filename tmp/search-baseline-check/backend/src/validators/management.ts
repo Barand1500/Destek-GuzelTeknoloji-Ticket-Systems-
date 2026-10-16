@@ -1,0 +1,383 @@
+import { z } from "zod";
+import { idSchema, paginationSchema, registerSchema } from "./index.js";
+import { skillKey } from "../services/skill-matching.js";
+
+const skills = z.array(z.object({
+  name: z.string().trim().min(1).max(80),
+  category: z.string().trim().min(1).max(60),
+  level: z.string().trim().min(1).max(20),
+}).strict()).max(100).refine(items => new Set(items.map(item => skillKey(item.name))).size === items.length, 'Aynı yetenek veya dil tekrar eklenemez.');
+export const staffSuggestionsSchema = z.object({ text: z.string().trim().max(10000) }).strict();
+
+const role = z.enum(["ADMIN", "SUPERVISOR", "AGENT", "CUSTOMER"]);
+const search = z.string().trim().max(100).optional();
+const queryBoolean = z
+  .enum(["true", "false"])
+  .transform((v) => v === "true")
+  .optional();
+const nonempty = (v: object) => Object.keys(v).length > 0;
+const sorting = {
+  sortBy: z.enum(['name', 'code', 'roleDepartments', 'url', 'title', 'label', 'body', 'author', 'createdAt', 'user', 'action', 'description', 'message', 'isRead', 'isActive']).optional(),
+  sortDirection: z.enum(['asc', 'desc']).optional(),
+};
+const departments = z
+  .array(idSchema)
+  .max(100)
+  .refine((v) => new Set(v).size === v.length, "Departmanlar tekrarlanamaz.");
+export const directoryQuery = paginationSchema.extend({
+  ...sorting,
+  nameSort: z.enum(['asc', 'desc']).optional(),
+  search,
+  id: idSchema.optional(),
+  role: role.optional(),
+  isActive: queryBoolean,
+});
+export const searchQuery = paginationSchema.extend({ search, ...sorting });
+export const reportQuery = paginationSchema.extend({
+  agentId: idSchema.optional(),
+  departmentId: idSchema.optional(),
+  days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
+});
+export const announcementTemplateSchema = z
+  .object({
+    label: z.string().trim().min(2).max(80),
+    title: z.string().trim().min(2).max(180),
+    body: z.string().trim().min(2).max(10000),
+  })
+  .strict();
+export const createUserSchema = registerSchema
+  .extend({ role, accessRoleId: idSchema.nullable().optional(), departmentIds: departments.default([]), skills: skills.default([]) })
+  .strict();
+export const createCustomerSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100),
+    email: z.preprocess(
+      (value) =>
+        typeof value === "string" && !value.trim() ? undefined : value,
+      z.string().trim().toLowerCase().pipe(z.email()).optional(),
+    ),
+    phone: z.string().trim().min(7).max(30),
+    company: z.string().trim().min(2).max(120).optional(),
+    staffNote: z.string().trim().min(1).max(2000).optional(),
+    extraPhones: z.string().trim().max(500).optional(),
+    extraEmails: z.string().trim().max(500).optional(),
+  })
+  .strict();
+export const updateCustomerSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100).optional(),
+    email: z
+      .union([z.literal(""), z.string().trim().toLowerCase().pipe(z.email())])
+      .transform((value) => value || null)
+      .optional(),
+    phone: z.string().trim().min(7).max(30).optional(),
+    company: z
+      .union([z.literal(""), z.string().trim().min(2).max(120)])
+      .transform((value) => value || null)
+      .optional(),
+    staffNote: z
+      .union([z.literal(""), z.string().trim().min(1).max(2000)])
+      .transform((value) => value || null)
+      .optional(),
+    isActive: z.boolean().optional(),
+    extraPhones: z.string().trim().max(500).nullable().optional(),
+    extraEmails: z.string().trim().max(500).nullable().optional(),
+  })
+  .strict()
+  .refine(nonempty);
+export const updateUserSchema = registerSchema
+  .partial()
+  .extend({
+    role: role.optional(),
+    accessRoleId: idSchema.nullable().optional(),
+    isActive: z.boolean().optional(),
+    departmentIds: departments.optional(),
+    skills: skills.optional(),
+    assignmentTransfers: z.array(z.object({
+      conversationIds: z.array(idSchema).min(1).max(1000),
+      departmentId: idSchema,
+      assignedAgentId: idSchema.nullable(),
+    }).strict()).max(1000).optional(),
+  })
+  .strict()
+  .refine(nonempty);
+export const deleteUserSchema = z.object({
+  assignmentTransfers: z.array(z.object({
+    conversationIds: z.array(idSchema).min(1).max(1000),
+    departmentId: idSchema,
+    assignedAgentId: idSchema.nullable(),
+  }).strict()).max(1000).optional(),
+}).strict();
+export const userAssignmentImpactQuery = z.object({
+  role,
+  accessRoleId: z.preprocess((value) => value == null || value === "" || value === "null" ? null : value, idSchema.nullable()),
+  isActive: z.enum(["true", "false"]).transform((value) => value === "true"),
+  forDeletion: z.preprocess((value) => value === "true" || value === true, z.boolean()).optional().default(false),
+  departmentIds: z.preprocess((value) => typeof value === "string" && value ? value.split(",") : [], departments),
+}).strict();
+export const departmentSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .strict()
+  .refine(nonempty);
+export const tagSchema = z
+  .object({
+    name: z.string().trim().min(1).max(50),
+    code: z
+      .string()
+      .trim()
+      .min(1)
+      .max(40)
+      .regex(/^[A-Z0-9_]+$/),
+    color: z
+      .string()
+      .regex(/^#[\da-fA-F]{6}$/)
+      .default("#64748b"),
+  })
+  .strict();
+export const updateTagSchema = tagSchema.partial().refine(nonempty);
+const optionSchema = z
+  .object({
+    name: z.string().trim().min(1).max(60),
+    code: z
+      .string()
+      .trim()
+      .min(1)
+      .max(40)
+      .regex(/^[A-Z0-9_]+$/),
+    color: z
+      .string()
+      .regex(/^#[\da-fA-F]{6}$/)
+      .default("#398571"),
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+export const statusOptionSchema = optionSchema;
+export const updateStatusOptionSchema = optionSchema.partial().refine(nonempty);
+export const priorityOptionSchema = optionSchema.extend({
+  color: z
+    .string()
+    .regex(/^#[\da-fA-F]{6}$/)
+    .default("#64748b"),
+});
+export const updatePriorityOptionSchema = priorityOptionSchema
+  .partial()
+  .refine(nonempty);
+export const websiteSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100),
+    url: z.string().trim().url().max(500),
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+export const updateWebsiteSchema = websiteSchema.partial().refine(nonempty);
+export const savedReplySchema = z
+  .object({
+    title: z.string().trim().min(2).max(100),
+    body: z.string().trim().min(1).max(10000),
+  })
+  .strict();
+export const updateSavedReplySchema = savedReplySchema
+  .partial()
+  .refine(nonempty);
+export const notificationQuery = paginationSchema.extend({
+  ...sorting,
+  isRead: queryBoolean,
+  search,
+});
+export const notificationDeleteQuery = z.object({
+  period: z.enum(["day", "week", "month", "all"]),
+});
+export const notificationVisibleDeleteSchema = z.object({
+  ids: z.array(idSchema).min(1).max(100),
+});
+export const activityQuery = paginationSchema.extend({
+  ...sorting,
+  search,
+  action: z.string().trim().max(100).optional(),
+  userId: idSchema.optional(),
+});
+export const activityDeleteQuery = z.object({
+  period: z.enum(["day", "week", "month", "all"]),
+});
+const integrationText = z.string().trim().max(500);
+export const notificationSettingsSchema = z
+  .object({
+    ticketCreatedSubject: z.string().trim().min(1).max(191),
+    ticketCreatedBody: z.string().trim().min(1).max(10000),
+    ticketReplySubject: z.string().trim().min(1).max(191),
+    ticketReplyBody: z.string().trim().min(1).max(10000),
+  })
+  .strict();
+const integrationDepartment = z
+  .union([idSchema, z.literal(""), z.null()])
+  .transform((value) => value || null);
+export const integrationSettingsSchema = z
+  .object({
+    responseFastMinutes: z.number().int().min(1).max(1440),
+    responseNormalMinutes: z.number().int().min(2).max(10080),
+    responseFastColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+    responseNormalColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+    responseLateColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+    responseFastFromMinutes: z.number().int().min(0).max(10080),
+    responseFastToMinutes: z.number().int().min(0).max(10080),
+    responseNormalFromMinutes: z.number().int().min(0).max(10080),
+    responseNormalToMinutes: z.number().int().min(0).max(10080),
+    responseLateFromMinutes: z.number().int().min(0).max(10080),
+    responseLateToMinutes: z.number().int().min(0).max(10080),
+    smtpEnabled: z.boolean(),
+    smtpHost: integrationText,
+    smtpPort: z.number().int().min(1).max(65535),
+    smtpSecure: z.boolean(),
+    smtpUser: integrationText,
+    smtpPassword: integrationText,
+    smtpFromAddress: z.union([
+      z.literal(""),
+      z.string().trim().toLowerCase().pipe(z.email()),
+    ]),
+    smtpFromName: integrationText,
+    imapEnabled: z.boolean(),
+    imapConnectionName: integrationText,
+    imapHost: integrationText,
+    imapPort: z.number().int().min(1).max(65535),
+    imapSecure: z.boolean(),
+    imapAuthType: z.enum(["BASIC", "OAUTH2"]),
+    imapUser: integrationText,
+    imapPassword: integrationText,
+    imapMailbox: z.string().trim().min(1).max(100),
+    imapPollIntervalSeconds: z.number().int().min(15).max(3600),
+    imapCreateTickets: z.boolean(),
+    imapCreateReplies: z.boolean(),
+    imapDepartmentId: integrationDepartment,
+    smsEnabled: z.boolean(),
+    smsApiUser: integrationText,
+    smsApiPassword: integrationText,
+    smsSender: integrationText,
+    smsVirtualNumber: integrationText,
+    smsWebhookSecret: integrationText,
+    smsDepartmentId: integrationDepartment,
+    whatsappEnabled: z.boolean(),
+    whatsappAppId: integrationText,
+    whatsappAppSecret: integrationText,
+    whatsappPhoneNumberId: integrationText,
+    whatsappAccessToken: z.string().trim().max(8192),
+    whatsappVerifyToken: integrationText,
+    whatsappDepartmentId: integrationDepartment,
+    emailNotifications: notificationSettingsSchema.optional(),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.responseFastFromMinutes <= value.responseFastToMinutes &&
+      value.responseNormalFromMinutes <= value.responseNormalToMinutes &&
+      value.responseLateFromMinutes <= value.responseLateToMinutes,
+    {
+      message: "Her aralığın başlangıcı bitişinden büyük olamaz.",
+      path: ["responseFastToMinutes"],
+    },
+  )
+  .refine(
+    (value) =>
+      value.responseFastToMinutes < value.responseNormalFromMinutes &&
+      value.responseNormalToMinutes < value.responseLateFromMinutes,
+    {
+      message:
+        "Yanıt süre aralıkları çakışamaz; hızlı, normal ve çok geç sırasıyla ilerlemelidir.",
+      path: ["responseNormalFromMinutes"],
+    },
+  )
+  .superRefine((value, context) => {
+    if (value.smsEnabled) {
+      if (!value.smsApiUser)
+        context.addIssue({
+          code: "custom",
+          message: "Netgsm API kullanıcı adı zorunludur.",
+          path: ["smsApiUser"],
+        });
+      if (!value.smsApiPassword)
+        context.addIssue({
+          code: "custom",
+          message: "Netgsm API parolası zorunludur.",
+          path: ["smsApiPassword"],
+        });
+      if (value.smsSender.length < 3 || value.smsSender.length > 11)
+        context.addIssue({
+          code: "custom",
+          message: "Gönderici başlığı 3-11 karakter olmalıdır.",
+          path: ["smsSender"],
+        });
+      if (value.smsWebhookSecret.length < 16)
+        context.addIssue({
+          code: "custom",
+          message: "Webhook gizli anahtarı en az 16 karakter olmalıdır.",
+          path: ["smsWebhookSecret"],
+        });
+    }
+    if (value.whatsappEnabled) {
+      for (const [field, label] of [
+        ["whatsappAppId", "Meta uygulama kimliği"],
+        ["whatsappAppSecret", "Uygulama gizli anahtarı"],
+        ["whatsappPhoneNumberId", "Telefon numarası kimliği"],
+        ["whatsappAccessToken", "Erişim belirteci"],
+      ] as const) {
+        if (!value[field])
+          context.addIssue({
+            code: "custom",
+            message: `${label} zorunludur.`,
+            path: [field],
+          });
+      }
+      if (value.whatsappVerifyToken.length < 16)
+        context.addIssue({
+          code: "custom",
+          message: "Webhook doğrulama belirteci en az 16 karakter olmalıdır.",
+          path: ["whatsappVerifyToken"],
+        });
+    }
+  });
+export const integrationTestSchema = z
+  .object({ channel: z.enum(["SMTP", "IMAP", "SMS", "WHATSAPP"]) })
+  .strict();
+export const presenceSettingsSchema = z
+  .object({ idleMinutes: z.number().int().min(1).max(120) })
+  .strict();
+export const responseTimeSettingsSchema = z
+  .object({
+    responseFastFromMinutes: z.number().int().min(0).max(10080),
+    responseFastToMinutes: z.number().int().min(0).max(10080),
+    responseNormalFromMinutes: z.number().int().min(0).max(10080),
+    responseNormalToMinutes: z.number().int().min(0).max(10080),
+    responseLateFromMinutes: z.number().int().min(0).max(10080),
+    responseLateToMinutes: z.number().int().min(0).max(10080),
+    responseFastColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+    responseNormalColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+    responseLateColor: z.string().regex(/^#[\da-fA-F]{6}$/),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.responseFastFromMinutes <= value.responseFastToMinutes &&
+      value.responseNormalFromMinutes <= value.responseNormalToMinutes &&
+      value.responseLateFromMinutes <= value.responseLateToMinutes,
+    {
+      message: "Her aralığın başlangıcı bitişinden büyük olamaz.",
+      path: ["responseFastToMinutes"],
+    },
+  )
+  .refine(
+    (value) =>
+      value.responseFastToMinutes < value.responseNormalFromMinutes &&
+      value.responseNormalToMinutes < value.responseLateFromMinutes,
+    {
+      message:
+        "Yanıt süre aralıkları çakışamaz; hızlı, normal ve çok geç sırasıyla ilerlemelidir.",
+      path: ["responseNormalFromMinutes"],
+    },
+  );
+export const profileSchema = registerSchema
+  .partial()
+  .extend({ currentPassword: z.string().min(1).max(200).optional() })
+  .strict()
+  .refine((v) => Boolean(v.name || v.email || v.phone !== undefined || v.password));

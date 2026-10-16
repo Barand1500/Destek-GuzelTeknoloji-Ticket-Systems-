@@ -18,6 +18,7 @@ export function ReplyChannelSelector({ conversation, editable }: { conversation:
   const save=useMutation({mutationFn:async(replyChannels:Channel[])=>api.patch(`/conversations/${conversation.id}`,{replyChannels}),onSuccess:(_,replyChannels)=>{
     client.setQueryData<Conversation>(['conversation',conversation.id],current=>current?{...current,replyChannels}:current);
     void client.invalidateQueries({queryKey:['conversation',conversation.id]});setEditing(false);
+    void client.invalidateQueries({queryKey:['conversations']});
   }});
   useEffect(()=>{
     if(!editing)return;

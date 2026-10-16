@@ -29,7 +29,7 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 export const listSchema = paginationSchema.extend({
-  sortBy: z.enum(['subject', 'department', 'assignedAgent']).optional(),
+  sortBy: z.enum(['number', 'subject', 'department', 'assignedAgent']).optional(),
   sortDirection: z.enum(['asc', 'desc']).optional(),
   search: z.string().trim().max(100).optional(),
   status: statusSchema.optional(),
@@ -38,7 +38,7 @@ export const listSchema = paginationSchema.extend({
   tagId: idSchema.optional(),
   assignedAgentId: idSchema.optional(),
   customerId: idSchema.optional(),
-  channel: z.enum(['TICKET','EMAIL','LIVE_CHAT']).optional(),
+  channel: z.enum(['TICKET','EMAIL','SMS','WHATSAPP','LIVE_CHAT']).optional(),
   category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),
   view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent", "today"]).default("all"),
 });

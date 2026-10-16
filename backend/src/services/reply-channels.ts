@@ -1,9 +1,20 @@
 ﻿import { env } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
+import { Prisma } from '../generated/prisma/client.js';
+import type { ConversationChannel } from '../generated/prisma/enums.js';
 export type ReplyChannel = 'TICKET' | 'EMAIL' | 'SMS' | 'WHATSAPP';
 export function selectedReplyChannels(value: unknown, original: string): ReplyChannel[] {
   if (Array.isArray(value) && value.length && value.every(item => ['TICKET','EMAIL','SMS','WHATSAPP'].includes(item))) return [...new Set(value)] as ReplyChannel[];
   return [['TICKET','EMAIL','SMS','WHATSAPP'].includes(original) ? original : 'TICKET'] as ReplyChannel[];
+}
+export function conversationChannelFilter(channel: ConversationChannel): Prisma.ConversationWhereInput {
+  return { OR: [
+    { replyChannels: { array_contains: channel } },
+    { AND: [
+      { OR: [{ replyChannels: { equals: Prisma.DbNull } }, { replyChannels: { equals: Prisma.JsonNull } }, { replyChannels: { equals: [] } }] },
+      { channel },
+    ] },
+  ] };
 }
 export function validateReplyChannels(channels: ReplyChannel[], customer: { email?: string | null; phone?: string | null }, settings: { smtpEnabled?: boolean; smtpHost?: string; smtpFromAddress?: string; smtpUser?: string; smtpPassword?: string; smsEnabled?: boolean; whatsappEnabled?: boolean } | null) {
   const stored = Boolean(settings && (settings.smtpHost || settings.smtpFromAddress || settings.smtpUser || settings.smtpPassword));
