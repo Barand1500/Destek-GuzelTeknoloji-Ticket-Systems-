@@ -4,11 +4,13 @@ import { db } from "../config/db.js";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/errors.js";
 import { sendSupportEmail } from "./mailer.service.js";
+import { canonicalEmail } from '../utils/email.js';
 
 const hash = (value: string) => createHmac("sha256", env.JWT_ACCESS_SECRET).update(value).digest("hex");
 const invalid = () => new AppError(400, "INVALID_RESET", "Kod geçersiz veya süresi dolmuş. Yeni kod isteyin.");
 
 export async function requestPasswordReset(email: string, send = sendSupportEmail) {
+  email = canonicalEmail(email);
   // Contacts without a login identity cannot acquire an account through recovery.
   const user = await db.user.findUnique({ where: { loginEmail: email } });
   if (!user?.isActive || user.deletedAt) return;
@@ -32,6 +34,7 @@ export async function requestPasswordReset(email: string, send = sendSupportEmai
 }
 
 export async function verifyPasswordReset(email: string, code: string) {
+  email = canonicalEmail(email);
   const user = await db.user.findUnique({ where: { loginEmail: email } });
   if (!user?.isActive || user.deletedAt) throw invalid();
   const reset = await db.passwordReset.findUnique({ where: { userId: user.id } });

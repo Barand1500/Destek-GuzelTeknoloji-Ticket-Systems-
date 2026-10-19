@@ -2,6 +2,15 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
 import { db } from '../config/db.js';
 import { publishChange } from './events.service.js';
+import path from 'node:path';
+import { uploadRoot, type StoredUpload } from './uploads.service.js';
+import { enqueueOutbound } from './outbound-queue.store.js';
+import type { Prisma } from '../generated/prisma/client.js';
+
+export type EmailAttachment = { filename: string; path: string; contentType: string };
+export function emailAttachments(files: StoredUpload[]): EmailAttachment[] {
+  return files.map(file => ({ filename: file.originalName, path: path.join(uploadRoot, file.storageKey), contentType: file.mimeType }));
+}
 
 async function transportForSettings() {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
@@ -30,13 +39,13 @@ async function transportForSettings() {
 }) };
 }
 
-export async function sendSupportEmail(to: string, subject: string, text: string, audit?: EmailAudit, attachments?: Array<{ filename: string; path: string; contentType: string }>) {
+export async function sendSupportEmail(to: string, subject: string, text: string, audit?: EmailAudit, attachments?: EmailAttachment[], stableMessageId?: string) {
   const mail = await transportForSettings();
   if (!mail) {
     console.warn('SMTP e-postası gönderilmedi: SMTP_HOST, SMTP_FROM veya SMTP kimlik bilgileri eksik.');
     throw Object.assign(new Error('SMTP ayarları eksik.'), { code: 'SMTP_NOT_CONFIGURED' });
   }
-  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text, attachments });
+  const result = await mail.transport.sendMail({ from: mail.from, replyTo: mail.from, to, subject, text, attachments, ...(stableMessageId ? { messageId: stableMessageId } : {}) });
   if (!result.accepted.length || result.rejected.length) throw Object.assign(new Error('E-posta alıcısı sunucu tarafından reddedildi.'), { code: 'RECIPIENT_REJECTED' });
   return { sent: true, accepted: result.accepted.length, rejected: result.rejected.length, response: result.response, messageId: result.messageId };
 }
@@ -48,7 +57,7 @@ export async function verifySupportEmail() {
   return { configured: true };
 }
 
-type EmailAudit = { conversationId: string; userId: string };
+type EmailAudit = { conversationId: string; userId: string; messageId?: string };
 type SmtpFailure = { code?: string; responseCode?: number; errno?: string | number; syscall?: string; command?: string; message?: string };
 export function smtpFailureReason(error: SmtpFailure): string {
   if (error.code === 'EACCES' || error.code === 'EPERM' || (error.syscall === 'connect' && (error.errno === -4092 || /\b(EACCES|EPERM)\b/.test(error.message ?? '')))) {
@@ -59,12 +68,13 @@ export function smtpFailureReason(error: SmtpFailure): string {
 export async function deliverSupportEmail(to: string, subject: string, text: string, context: string, audit?: EmailAudit,
   send = sendSupportEmail,
   wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)),
+  attachments: EmailAttachment[] = [],
 ) {
   let failure: SmtpFailure | undefined;
   let receipt: Awaited<ReturnType<typeof sendSupportEmail>> | undefined;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      receipt = await send(to, subject, text, audit);
+      receipt = await send(to, subject, text, audit, attachments);
       failure = undefined;
       break;
     } catch (error) {
@@ -78,17 +88,12 @@ export async function deliverSupportEmail(to: string, subject: string, text: str
   if (audit) {
     await db.activityLog.create({ data: { userId: audit.userId, entityId: audit.conversationId,
       action: failure ? 'conversation.email_failed' : 'conversation.email_sent',
-      metadata: { reason: failure ? `${context}: ${smtpFailureReason(failure)}` : context, recipient: to, ...(failure ? { code: failure.code ?? 'SMTP_ERROR', command: failure.command ?? '', syscall: failure.syscall ?? '' } : {}), ...(failure?.responseCode ? { responseCode: failure.responseCode } : {}), ...(receipt ? { messageId: receipt.messageId ?? '', smtpResponse: receipt.response, accepted: receipt.accepted } : {}) },
+      metadata: { reason: failure ? `${context}: ${smtpFailureReason(failure)}` : context, recipient: to, attachmentCount: attachments.length, ...(failure ? { code: failure.code ?? 'SMTP_ERROR', command: failure.command ?? '', syscall: failure.syscall ?? '' } : {}), ...(failure?.responseCode ? { responseCode: failure.responseCode } : {}), ...(receipt ? { messageId: receipt.messageId ?? '', smtpResponse: receipt.response, accepted: receipt.accepted } : {}) },
     } });
     publishChange(audit.conversationId, true);
   }
   return { sent: !failure };
 }
-export function queueSupportEmail(to: string, subject: string, text: string, context: string, audit?: EmailAudit) {
-  if (env.NODE_ENV === "test") return;
-  setImmediate(() => {
-    void deliverSupportEmail(to, subject, text, context, audit).catch((error) => {
-      console.error(`${context} e-postası gönderilemedi:`, error);
-    });
-  });
+export async function queueSupportEmail(to: string, subject: string, text: string, context: string, audit?: { conversationId?: string; userId?: string; messageId?: string }, attachments: EmailAttachment[] = [], client: Prisma.TransactionClient = db, dedupeKey?: string) {
+  return enqueueOutbound('EMAIL', { recipient: { email: to }, subject, text, reason: context, context: audit, attachments }, client, dedupeKey ?? (audit?.messageId ? `${audit.messageId}:EMAIL` : undefined));
 }

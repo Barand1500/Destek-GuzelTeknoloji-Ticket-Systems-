@@ -1,4 +1,6 @@
+import { issueFormLink } from './form-access.service.js';
 import { conversationSearch } from "./conversation-search.js";
+import { internationalEmailSearchIds } from './email-search.js';
 import { conversationListOrder } from "./conversation-sorting.js";
 import { conversationChannelFilter, selectedReplyChannels, validateReplyChannels, type ReplyChannel } from "./reply-channels.js";
 import { db } from "../config/db.js";
@@ -8,8 +10,10 @@ import { AppError } from "../utils/errors.js";
 import { can, permissionScope } from './permissions.js';
 import type { StoredUpload } from './uploads.service.js';
 import { notifyConversation, publishChange } from './events.service.js';
-import { queueSupportEmail } from './mailer.service.js';
-import { sendConversationChannelReply } from './integrations.service.js';
+import { queueSupportEmail, emailAttachments } from './mailer.service.js';
+import { enqueueChannelReply } from './outbound-queue.store.js';
+import { randomUUID } from 'node:crypto';
+import { whatsappFileKind } from './whatsapp-media.service.js';
 import { onlineStaffCount } from './presence.service.js';
 import type { z } from "zod";
 import type {
@@ -19,31 +23,53 @@ import type {
   updateConversationSchema,
 } from "../validators/index.js";
 const person = { id: true, name: true, email: true, phone: true, company: true, staffNote: true, extraPhones: true, extraEmails: true, role: true } as const;
+import { assignedTo, unassigned as unassignedFilter, assignmentIds, setAssignees, validateAssignees } from './conversation-assignees.js';
 const conversationInclude = {
   customer: { select: person },
+  formRequest: true,
   assignedAgent: { select: person },
+  assignees: { include: { user: { select: person } }, orderBy: { createdAt: "asc" } },
   department: true,
   tags: {include:{tag:true}},
   website: true,
 } as const;
 const normalizeSearch = (value: string) =>
   value.normalize("NFKC").toLocaleLowerCase("tr-TR");
-async function supportContact(userId: string) {
-  const settings = await db.integrationSettings.findUnique({
+async function supportContact(userId: string, client: Prisma.TransactionClient = db) {
+  const settings = await client.integrationSettings.findUnique({
     where: { id: "default" },
     select: { smtpEnabled: true, smtpFromAddress: true },
   });
-  const profile = await db.user.findUnique({ where: { id: userId }, select: { phone: true } });
+  const profile = await client.user.findUnique({ where: { id: userId }, select: { phone: true } });
   return [
     profile?.phone && `Telefon: ${profile.phone}`,
     settings?.smtpEnabled && settings.smtpFromAddress && `E-posta: ${settings.smtpFromAddress}`,
   ].filter(Boolean).join("\n");
 }
+async function enqueueConversationMessages(tx: Prisma.TransactionClient, actor: Actor, conversation: { id: string; subject: string; number: number; customerId: string }, messageId: string, body: string, files: StoredUpload[], channels: ReplyChannel[], mode: 'create' | 'direct' | 'reply') {
+  if (!channels.some(channel => channel === 'EMAIL' || channel === 'FORM' || (actor.role !== 'CUSTOMER' && (channel === 'SMS' || channel === 'WHATSAPP')))) return;
+  const customer = await tx.user.findUniqueOrThrow({ where: { id: conversation.customerId }, select: { name: true, email: true, phone: true } });
+  const context = { conversationId: conversation.id, userId: actor.id, messageId };
+  const formRequest = channels.includes('FORM') ? await tx.formRequest.findUnique({ where: { conversationId: conversation.id } }) : null;
+  const email = formRequest?.email ?? customer.email;
+  if ((channels.includes('EMAIL') || channels.includes('FORM')) && email) {
+    const contact = await supportContact(actor.id, tx);
+    const template = await tx.notificationSettings.upsert({ where: { id: 'default' }, create: { id: 'default', ticketCreatedSubject: 'Talebiniz oluşturuldu (#{number})', ticketCreatedBody: 'Merhaba {name},\n\n"{subject}" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.', ticketReplySubject: 'Talebinize yeni yanıt geldi (#{number})', ticketReplyBody: 'Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}' }, update: {} });
+    const replace = (value: string) => value.replaceAll('{name}', customer.name).replaceAll('{subject}', conversation.subject).replaceAll('{number}', String(conversation.number)).replaceAll('{reply}', body);
+    let subject = mode === 'direct' ? conversation.subject : replace(mode === 'reply' ? template.ticketReplySubject : template.ticketCreatedSubject);
+    if (channels.includes('FORM')) subject = `#TK-${String(conversation.number).padStart(5, '0')} · ${subject}`;
+    let text = mode === 'direct' ? body : `${replace(mode === 'reply' ? template.ticketReplyBody : template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ''}`;
+    const recipient = email;
+    if (channels.includes('FORM')) text += '\n\nTalebinizi görüntüleyin ve yanıtlayın:\n' + await issueFormLink(tx, conversation.id, recipient) + '\nBağlantı 7 gün geçerlidir. Başkalarıyla paylaşmayın.';
+    await queueSupportEmail(recipient, subject, text, mode === 'reply' ? 'Yanıt' : mode === 'direct' ? 'Talep kanal mesajı' : 'Talep oluşturma', context, emailAttachments(files), tx);
+  }
+  if (actor.role !== 'CUSTOMER') for (const channel of channels) if (channel === 'SMS' || channel === 'WHATSAPP') await enqueueChannelReply(channel, customer, body, context, files, tx);
+}
 export function visibility(actor: Actor): Prisma.ConversationWhereInput {
   if (actor.role === 'CUSTOMER') return { deletedAt: null, customerId: actor.id };
   if (actor.accessRole || actor.roleScope) {
     const scope = permissionScope(actor);
-    if (scope === 'OWN') return { deletedAt: null, assignedAgentId: actor.id };
+    if (scope === 'OWN') return { deletedAt: null, ...assignedTo(actor.id) };
     if (scope === 'DEPARTMENT') return { deletedAt: null, departmentId: { in: actor.departmentIds } };
     return { deletedAt: null };
   }
@@ -51,13 +77,13 @@ export function visibility(actor: Actor): Prisma.ConversationWhereInput {
     case "ADMIN":
       return { deletedAt: null };
     case "AGENT":
-      return { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { assignedAgentId: null, departmentId: { in: actor.departmentIds } }, { participants: { some: { userId: actor.id } } }] };
+      return { deletedAt: null, OR: [assignedTo(actor.id), { ...unassignedFilter(), departmentId: { in: actor.departmentIds } }, { participants: { some: { userId: actor.id } } }] };
     case "SUPERVISOR":
       return { deletedAt: null, departmentId: { in: actor.departmentIds } };
   }
 }
 export function mutationVisibility(actor: Actor): Prisma.ConversationWhereInput {
-  return actor.role === 'AGENT' ? { deletedAt: null, assignedAgentId: actor.id } : visibility(actor);
+  return actor.role === 'AGENT' ? { deletedAt: null, ...assignedTo(actor.id) } : visibility(actor);
 }
 export async function getConversation(actor: Actor, id: string) {
   const conversation = await db.conversation.findFirst({
@@ -70,7 +96,7 @@ export async function getConversation(actor: Actor, id: string) {
       "TICKET_NOT_FOUND",
       "Talep bulunamadı veya erişim yetkiniz yok.",
     );
-  const canAddInternalNote = actor.role !== "CUSTOMER" && (actor.role !== "AGENT" || conversation.assignedAgentId === actor.id || await db.conversationParticipant.count({ where: { conversationId: id, userId: actor.id } }) > 0);
+  const canAddInternalNote = actor.role !== "CUSTOMER" && (actor.role !== "AGENT" || conversation.assignees.some(item => item.userId === actor.id) || conversation.assignedAgentId === actor.id || await db.conversationParticipant.count({ where: { conversationId: id, userId: actor.id } }) > 0);
   const creation = await db.activityLog.findFirst({
     where: { entityId: id, entityType: "Conversation", action: "conversation.created" },
     orderBy: { createdAt: "asc" },
@@ -82,6 +108,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const searchText = q.search?.trim();
+  const emailSearchIds = await internationalEmailSearchIds(searchText);
   const [statuses, priorities] = searchText ? await Promise.all([
     db.statusOption.findMany({ where: { OR: [{ name: { contains: searchText } }, { code: { contains: searchText } }] }, select: { code: true } }),
     db.priorityOption.findMany({ where: { OR: [{ name: { contains: searchText } }, { code: { contains: searchText } }] }, select: { code: true } }),
@@ -91,17 +118,17 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
     status: q.status,
     priority: q.priority,
     departmentId: q.departmentId,
-  assignedAgentId: q.assignedAgentId,
+    ...(q.assignedAgentId ? assignedTo(q.assignedAgentId) : {}),
     customerId: q.customerId,
     ...(q.tagId?{tags:{some:{tagId:q.tagId}}}:{}),
   };
   const categoryFilter: Prisma.ConversationWhereInput[] = q.category
-    ? q.category === "EMAIL" || q.category === "TICKET" || q.category === "SMS" || q.category === "WHATSAPP"
+    ? q.category === "FORM" || q.category === "EMAIL" || q.category === "TICKET" || q.category === "SMS" || q.category === "WHATSAPP"
       ? [conversationChannelFilter(q.category)]
       : q.category === "MINE"
-        ? [{ assignedAgentId: actor.id }]
+        ? [assignedTo(actor.id)]
         : q.category === "UNASSIGNED"
-          ? [{ assignedAgentId: null }]
+          ? [unassignedFilter()]
           : q.category === "ALL"
             ? []
             : [{ tags: { some: { tag: { code: q.category } } } }]
@@ -114,11 +141,11 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
       ...categoryFilter,
       ...(['open','pending','resolved','closed'].includes(q.view) ? [{ status: q.view.toUpperCase() as 'OPEN'|'PENDING'|'RESOLVED'|'CLOSED' }] : q.view === 'urgent' ? [{ priority: 'URGENT' as const }] : []),
       ...(q.view === "mine"
-        ? [{ assignedAgentId: actor.id }]
+        ? [assignedTo(actor.id)]
         : q.view === "unassigned"
-          ? [{ assignedAgentId: null }]
+          ? [unassignedFilter()]
           : []),
-      ...(searchText ? [conversationSearch(searchText, actor.role === 'CUSTOMER', { statuses: statuses.map(item => item.code), priorities: priorities.map(item => item.code) })] : []),
+      ...(searchText ? [conversationSearch(searchText, actor.role === 'CUSTOMER', { statuses: statuses.map(item => item.code), priorities: priorities.map(item => item.code), emailSearchIds })] : []),
     ],
   };
   const [data, total] = await db.$transaction(
@@ -168,6 +195,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         const responseTime = responseTimes.get(conversation.id);
         return {
           ...conversation,
+          assignees: conversation.assignees.map(item => ({ ...item, messageCount: staffReplyStats.filter(stat => stat.authorId === item.userId).reduce((sum, stat) => sum + stat._count._all, 0) })),
           responseTimeStartAt: responseTime?.start ?? null,
           responseTimeAt: responseTime?.end ?? null,
           customerMessageCount: customerStats.reduce((sum, stat) => sum + stat._count._all, 0),
@@ -197,8 +225,9 @@ export async function createConversation(
   files:StoredUpload[] = [],
 ) {
   const creationChannels = selectedReplyChannels(input.replyChannels, input.channel);
+  if (creationChannels.includes('WHATSAPP')) files.forEach(whatsappFileKind);
   if (actor.role === 'CUSTOMER' && input.replyChannels !== undefined) throw new AppError(403, 'FORBIDDEN', 'Dönüş kanallarını yalnızca personel seçebilir.');
-  if (input.replyChannels) input = { ...input, channel: creationChannels.find(channel => channel !== 'TICKET') ?? 'TICKET' };
+  if (input.replyChannels) input = { ...input, channel: creationChannels.includes('FORM') ? 'FORM' : creationChannels.find(channel => channel !== 'TICKET') ?? 'TICKET' };
   if (actor.role === "CUSTOMER" && input.customerId)
     throw new AppError(403, "FORBIDDEN", "Müşteri hesabıyla yalnızca kendi adınıza talep açabilirsiniz.");
   if (actor.role !== "CUSTOMER" && !input.customerId)
@@ -216,7 +245,7 @@ export async function createConversation(
   }
   if (actor.role === "CUSTOMER" && input.channel !== "TICKET")
     throw new AppError(403, "FORBIDDEN", "Müşteri talepleri yalnızca destek talebi kanalıyla açılabilir.");
-  if (actor.role !== "CUSTOMER" && input.channel === "EMAIL") {
+  if (actor.role !== "CUSTOMER" && (input.channel === "EMAIL" || input.channel === "FORM")) {
     const recipient = await db.user.findFirst({ where: { id: customerId, role: "CUSTOMER", isActive: true, deletedAt: null }, select: { email: true } });
     if (!recipient?.email) throw new AppError(400, "CHANNEL_RECIPIENT_MISSING", "E-posta kanalından göndermek için müşterinin e-posta adresi kayıtlı olmalı.");
   }
@@ -227,17 +256,22 @@ export async function createConversation(
     const recipient = await db.user.findFirst({ where: { id: customerId, role: "CUSTOMER", isActive: true, deletedAt: null }, select: { phone: true } });
     if (!recipient?.phone) throw new AppError(400, "CHANNEL_RECIPIENT_MISSING", "Seçilen kanaldan göndermek için müşterinin telefon numarası kayıtlı olmalı.");
   }
+  if(actor.role==='CUSTOMER' && (input.assignedAgentId || input.assignedAgentIds?.length)) throw new AppError(403, 'FORBIDDEN', 'Personel atama yetkiniz yok.');
   if(actor.role!=='CUSTOMER'){
     if (permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)) throw new AppError(403, 'FORBIDDEN', 'Bu departmana talep açma yetkiniz yok.');
-    if (input.assignedAgentId && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
+    if ((input.assignedAgentId || input.assignedAgentIds?.length) && !can(actor, 'conversations.assign')) throw new AppError(403, 'FORBIDDEN', 'Atama yetkiniz yok.');
     const customer=await db.user.findFirst({where:{id:customerId,role:'CUSTOMER',isActive:true}});
     if(!customer)throw new AppError(400,'INVALID_CUSTOMER','Aktif bir müşteri seçin.');
   }
+  const initialMessageId = randomUUID();
   const result=await db.$transaction(async (tx) => {
     if (!(await tx.priorityOption.findFirst({ where: { code: input.priority, isActive: true } }))) throw new AppError(400, "INVALID_PRIORITY", "Öncelik seçeneği geçersiz.");
     if(input.tagIds && (new Set(input.tagIds).size!==input.tagIds.length || await tx.tag.count({where:{id:{in:input.tagIds}}})!==input.tagIds.length)) throw new AppError(400,'INVALID_TAG','Etiketler geçersiz.');
     const customerInitiatedMessage = actor.role === "CUSTOMER" || input.channel === "TICKET" || input.source === "PHONE_SUPPORT";
     if (input.assignedAgentId && !(await tx.user.findFirst({ where: { id: input.assignedAgentId, OR: [{ role: { in: ["ADMIN", "AGENT", "SUPERVISOR"] } }, { accessRoleId: { not: null } }], isActive: true, deletedAt: null, departments: { some: { departmentId: input.departmentId } } } }))) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel bu departmanda aktif değil.");
+    const selectedAssignees = input.assignedAgentIds ?? (input.assignedAgentId ? [input.assignedAgentId] : []);
+    await validateAssignees(tx, selectedAssignees, input.departmentId);
+    const initialAssignees = [...new Set([...selectedAssignees, ...(!customerInitiatedMessage ? [actor.id] : [])])];
     const website = input.websiteId ? await tx.website.findFirst({ where: { id: input.websiteId, isActive: true } }) : null;
     if (input.websiteId && !website) throw new AppError(400, "INVALID_WEBSITE", "Geçerli bir web sitesi seçin.");
     const conversation = await tx.conversation.create({
@@ -245,7 +279,8 @@ export async function createConversation(
         subject: input.subject,
         websiteUrl: website?.url ?? input.websiteUrl,
         websiteId: website?.id,
-        assignedAgentId: input.assignedAgentId,
+        assignedAgentId: initialAssignees[0] ?? null,
+        assignees: { create: initialAssignees.map(userId => ({ userId })) },
         channel: input.channel,
         ...(input.replyChannels ? { replyChannels: input.replyChannels } : {}),
         source: actor.role !== "CUSTOMER" && input.source === "PHONE_SUPPORT" ? "PHONE_SUPPORT" : "TICKET",
@@ -254,7 +289,7 @@ export async function createConversation(
         priority: input.priority,
         customerId,
         ...(input.tagIds ? { tags: { create: input.tagIds.map(tagId => ({ tagId })) } } : {}),
-        messages: { create: { authorId: customerInitiatedMessage ? customerId : actor.id, body: input.message,type: customerInitiatedMessage ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
+        messages: { create: { id: initialMessageId, authorId: customerInitiatedMessage ? customerId : actor.id, body: input.message,type: customerInitiatedMessage ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
       },
       include: conversationInclude,
     });
@@ -262,19 +297,10 @@ export async function createConversation(
       data: { userId: actor.id, action: "conversation.created", entityId: conversation.id, metadata: { subject: conversation.subject, number: conversation.number }, ipAddress:actor.ipAddress },
     });
     await notifyConversation(tx,actor,conversation,'CREATED','Yeni talep oluşturuldu');
+    await enqueueConversationMessages(tx, actor, conversation, initialMessageId, input.message, files, creationChannels, actor.role !== 'CUSTOMER' && (Boolean(input.replyChannels) || (input.channel === 'EMAIL' && input.source !== 'PHONE_SUPPORT')) ? 'direct' : 'create');
     return conversation;
   });
   publishChange(result.id);
-  if (result.customer.email && creationChannels.includes("EMAIL")) {
-    const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
-    const replace = (value: string) => value.replaceAll("{name}", result.customer.name).replaceAll("{subject}", result.subject).replaceAll("{number}", String(result.number));
-    const selectedEmailMessage = actor.role !== "CUSTOMER" && (Boolean(input.replyChannels) || (input.channel === "EMAIL" && input.source !== "PHONE_SUPPORT"));
-    queueSupportEmail(result.customer.email, selectedEmailMessage ? result.subject : replace(template.ticketCreatedSubject), selectedEmailMessage ? input.message : `${replace(template.ticketCreatedBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, selectedEmailMessage ? "Talep kanal mesajı" : "Talep oluşturma", { conversationId: result.id, userId: actor.id });
-  }
-  if (actor.role !== "CUSTOMER") for (const channel of creationChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
-    void sendConversationChannelReply(channel, result.customer, input.message, { conversationId: result.id, userId: actor.id })
-      .catch(() => console.error('[Kanal gönderimi] Gönderim günlüğü kaydedilemedi', { conversationId: result.id, channel }));
-  }
   return result;
 }
 export async function messages(
@@ -353,7 +379,7 @@ export async function addMessage(
   if (input.type && input.isInternalNote !== undefined && (input.type === 'INTERNAL_NOTE') !== input.isInternalNote)
     throw new AppError(400,'INVALID_MESSAGE_TYPE','Mesaj türü ve dahili not seçimi uyuşmuyor.');
   const internal = type === 'INTERNAL_NOTE';
-  if (actor.accessRole && !can(actor, internal ? 'conversations.note' : 'conversations.reply'))
+  if (actor.role !== 'CUSTOMER' && !can(actor, internal ? 'conversations.note' : 'conversations.reply'))
     throw new AppError(403, 'FORBIDDEN', 'Bu mesaj türü için yetkiniz yok.');
   const mentionUserIds = input.mentionUserIds ?? [];
   let deliveryChannels: ReplyChannel[] = [];
@@ -364,10 +390,10 @@ export async function addMessage(
   const result=await db.$transaction(async (tx) => {
     // Authorized update obtains a row lock before writing a message, serializing assignment/status changes.
     const agentWriteScope: Prisma.ConversationWhereInput = internal
-      ? { deletedAt: null, OR: [{ assignedAgentId: actor.id }, { participants: { some: { userId: actor.id } } }] }
-      : mutationVisibility(actor);
+      ? { deletedAt: null, OR: [assignedTo(actor.id), { participants: { some: { userId: actor.id } } }] }
+      : visibility(actor);
     const lock = await tx.conversation.updateMany({
-      where: { AND: [actor.role === "AGENT" ? agentWriteScope : mutationVisibility(actor), { id, status: { not: "CLOSED" } }] },
+      where: { AND: [actor.role === "AGENT" ? agentWriteScope : visibility(actor), { id, status: { not: "CLOSED" } }] },
       data: { updatedAt: new Date() },
     });
     if (lock.count !== 1)
@@ -378,11 +404,18 @@ export async function addMessage(
       );
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
     if (type === 'AGENT_REPLY') {
+      const ids = await assignmentIds(tx, id, conversation.assignedAgentId);
+      if (!ids.includes(actor.id)) {
+        await setAssignees(tx, id, [...ids, actor.id]);
+        await tx.activityLog.create({ data: { userId: actor.id, action: 'conversation.updated', entityId: id, metadata: { assignedAgentIds: [...ids, actor.id], details: [`Yanıt verdiği için atananlara eklendi: ${actor.name}`] }, ipAddress: actor.ipAddress } });
+      }
       deliveryChannels = selectedReplyChannels(conversation.replyChannels, conversation.channel);
+      if (deliveryChannels.includes('WHATSAPP')) files.forEach(whatsappFileKind);
       if (conversation.replyChannels != null) {
         const recipient = await tx.user.findUniqueOrThrow({ where: { id: conversation.customerId }, select: { email: true, phone: true } });
         const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
-        validateReplyChannels(deliveryChannels, recipient, settings);
+        const request = deliveryChannels.includes('FORM') ? await tx.formRequest.findUnique({ where: { conversationId: id } }) : null;
+        validateReplyChannels(deliveryChannels, { ...recipient, email: request?.email ?? recipient.email }, settings);
       }
     }
     const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
@@ -412,27 +445,10 @@ export async function addMessage(
     });
     if(type==='AGENT_REPLY'&&!conversation.firstResponseAt)await tx.conversation.update({where:{id},data:{firstResponseAt:message.createdAt}});
     if (!internal) await notifyConversation(tx,actor,conversation,'REPLY','Görüşmeye yeni yanıt');
+    if (type === 'AGENT_REPLY') await enqueueConversationMessages(tx, actor, conversation, message.id, input.body, files, deliveryChannels, 'reply');
     return message;
   });
   publishChange(id,internal);
-  if (type === 'AGENT_REPLY') {
-    const conversation = await db.conversation.findUnique({
-      where: { id }, include: { customer: { select: { name: true, email: true, phone: true } } },
-    });
-    if (deliveryChannels.includes("EMAIL") && conversation?.customer.email) {
-      const contact = await supportContact(actor.id); const template = await db.notificationSettings.upsert({ where: { id: "default" }, create: { id: "default", ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n\"{subject}\" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.", ticketReplySubject: "Talebinize yeni yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}" }, update: {} });
-      const replace = (value: string) => value.replaceAll("{name}", conversation.customer.name).replaceAll("{subject}", conversation.subject).replaceAll("{number}", String(conversation.number)).replaceAll("{reply}", result.body);
-      queueSupportEmail(conversation.customer.email, replace(template.ticketReplySubject), `${replace(template.ticketReplyBody)}${contact ? `\n\nBize ulaşmak için:\n${contact}` : ""}`, "Yanıt", { conversationId: id, userId: actor.id });
-    }
-  }
-  if (type === 'AGENT_REPLY') {
-    const channelConversation = await db.conversation.findUnique({ where: { id }, include: { customer: { select: { email: true, phone: true } } } });
-    if (channelConversation) for (const channel of deliveryChannels.filter((value): value is 'SMS' | 'WHATSAPP' => value === 'SMS' || value === 'WHATSAPP')) {
-      void sendConversationChannelReply(channel, channelConversation.customer, result.body, { conversationId: id, userId: actor.id, messageId: result.id })
-        .catch(() => console.error('[Kanal gönderimi] Gönderim günlüğü kaydedilemedi', { conversationId: id, channel }));
-    }
-
-  }
   return result;
 }
 export async function updateConversation(
@@ -443,14 +459,14 @@ export async function updateConversation(
   if (actor.role === "CUSTOMER")
     throw new AppError(403, "FORBIDDEN", "Bu işlem için yetkiniz yok.");
   if (input.replyChannels !== undefined && !can(actor, 'conversations.reply')) throw new AppError(403, 'FORBIDDEN', 'Yanıt kanallarını değiştirme yetkiniz yok.');
-  if ((input.assignedAgentId !== undefined && !can(actor, 'conversations.assign')) || (input.departmentId !== undefined && !can(actor, 'conversations.transfer')) || (input.departmentId !== undefined && permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)))
+  if (((input.assignedAgentId !== undefined || input.assignedAgentIds !== undefined) && !can(actor, 'conversations.assign')) || (input.departmentId !== undefined && !can(actor, 'conversations.transfer')) || (input.departmentId !== undefined && permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)))
     throw new AppError(
       403,
       "FORBIDDEN",
       "Atama veya departman aktarma yetkiniz yok ya da hedef departman kapsamınız dışında.",
     );
   const result=await db.$transaction(async (tx) => {
-    const accessScope = input.assignedAgentId !== undefined || input.departmentId !== undefined
+    const accessScope = input.assignedAgentId !== undefined || input.assignedAgentIds !== undefined || input.departmentId !== undefined
       ? visibility(actor)
       : mutationVisibility(actor);
     const lock = await tx.conversation.updateMany({
@@ -466,7 +482,10 @@ export async function updateConversation(
     const website = input.websiteId === undefined ? undefined : input.websiteId ? await tx.website.findFirst({ where: { id: input.websiteId, isActive: true } }) : null;
     if (input.websiteId && !website) throw new AppError(400, "INVALID_WEBSITE", "Geçerli bir web sitesi seçin.");
     const targetDepartment=input.departmentId??conversation.departmentId;
-    const assignedAgentId=input.assignedAgentId!==undefined?input.assignedAgentId:targetDepartment!==conversation.departmentId?null:conversation.assignedAgentId;
+    const previousIds = await assignmentIds(tx, id, conversation.assignedAgentId);
+    const nextIds = input.assignedAgentIds ?? (input.assignedAgentId !== undefined ? (input.assignedAgentId ? [input.assignedAgentId] : []) : targetDepartment !== conversation.departmentId ? [] : previousIds);
+    if (input.assignedAgentIds !== undefined) await validateAssignees(tx, nextIds, targetDepartment, targetDepartment === conversation.departmentId ? previousIds : []);
+    const assignedAgentId = nextIds[0] ?? null;
     if (input.assignedAgentId) {
       const agent = await tx.user.findFirst({
         where: {
@@ -490,7 +509,8 @@ export async function updateConversation(
       const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
       validateReplyChannels(input.replyChannels, recipient, settings);
     }
-    const {tagIds,...changes}=input;
+    const {tagIds, assignedAgentIds: _assignedAgentIds, ...changes}=input;
+    await setAssignees(tx, id, nextIds);
     const updated = await tx.conversation.update({
       where: { id },
       data: {
@@ -512,16 +532,16 @@ export async function updateConversation(
         userId: actor.id,
         action: "conversation.updated",
         entityId: id,
-        metadata: input,
+        metadata: { ...input, ...(input.assignedAgentIds !== undefined || input.assignedAgentId !== undefined ? { details: [`Atanan personeller: ${updated.assignees.map(item => item.user.name).join(', ') || 'Atanmamış'}`] } : {}) },
         ipAddress:actor.ipAddress,
       },
     });
-    await notifyConversation(tx,actor,updated,'UPDATED',input.departmentId?'Görüşme departmana aktarıldı':input.assignedAgentId!==undefined?'Görüşme ataması güncellendi':'Görüşme güncellendi');
+    await notifyConversation(tx,actor,updated,'UPDATED',input.departmentId?'Görüşme departmana aktarıldı':(input.assignedAgentId!==undefined || input.assignedAgentIds!==undefined)?'Görüşme ataması güncellendi':'Görüşme güncellendi');
     const changesText: string[]=[];
     if(updated.status!==conversation.status)changesText.push(`Durum: ${updated.status}`);
     if(updated.priority!==conversation.priority)changesText.push(`Öncelik: ${updated.priority}`);
     if(updated.departmentId!==conversation.departmentId)changesText.push(`Departman: ${updated.department.name}`);
-    if(updated.assignedAgentId!==conversation.assignedAgentId)changesText.push(updated.assignedAgent ? `Atanan temsilci: ${updated.assignedAgent.name}` : 'Temsilci ataması kaldırıldı');
+    if(JSON.stringify(nextIds)!==JSON.stringify(previousIds))changesText.push(updated.assignees.length ? `Atanan personeller: ${updated.assignees.map(item => item.user.name).join(', ')}` : 'Personel atamaları kaldırıldı');
     if(updated.websiteId!==conversation.websiteId)changesText.push(updated.website ? `Web sitesi: ${updated.website.name}` : 'Web sitesi kaldırıldı');
     if(changesText.length)await tx.conversationMessage.create({data:{conversationId:id,authorId:actor.id,type:'SYSTEM',body:changesText.join(' · ')}});
     return updated;
@@ -533,8 +553,9 @@ export async function assignToMe(actor:Actor,id:string){
   if(actor.role!=='AGENT' && !(actor.accessRole && can(actor, 'conversations.assign')))throw new AppError(403,'FORBIDDEN','Bu işlem destek temsilcilerine açıktır.');
   await getConversation(actor,id);
   const result=await db.$transaction(async tx=>{
-    const claimed=await tx.conversation.updateMany({where:{id,deletedAt:null,assignedAgentId:null,departmentId:{in:actor.departmentIds},status:{not:'CLOSED'}},data:{assignedAgentId:actor.id}});
+    const claimed=await tx.conversation.updateMany({where:{id,deletedAt:null,...unassignedFilter(),departmentId:{in:actor.departmentIds},status:{not:'CLOSED'}},data:{assignedAgentId:actor.id}});
     if(claimed.count!==1)throw new AppError(409,'CONVERSATION_UNAVAILABLE','Görüşme başka bir temsilciye atanmış veya kapalı.');
+    await setAssignees(tx, id, [actor.id]);
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id},include:conversationInclude});
     await tx.conversationMessage.create({data:{conversationId:id,authorId:actor.id,type:'SYSTEM',body:`Atanan temsilci: ${conversation.assignedAgent!.name}`}});
     await tx.activityLog.create({data:{userId:actor.id,action:'conversation.claimed',entityId:id,ipAddress:actor.ipAddress}});
@@ -577,7 +598,7 @@ export async function summary(actor: Actor) {
     where: {
       AND: [
         visibility(actor),
-        { assignedAgentId: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+        { ...unassignedFilter(), status: { notIn: ["RESOLVED", "CLOSED"] } },
       ],
     },
   });

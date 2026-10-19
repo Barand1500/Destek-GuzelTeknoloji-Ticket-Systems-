@@ -93,11 +93,13 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
   stub(db.department, 'findFirst', async () => ({ id: 'technical' }));
   stub(db.activityLog, 'findFirst', async () => ({ entityId: foreignReference ? 'other-customer-ticket' : target.id }));
   stub(db.conversation, 'findFirst', async ({ where }: any) => {
-    assert.deepEqual(where.customerId.in, [adem.id]);
+    assert.deepEqual(where.OR[0].customerId.in, [adem.id]);
+    assert(matchesSender(adem, where.OR[1].formRequest.is.email));
     assert.equal(where.deletedAt, null);
     return where.id === target.id || where.number === 36 ? target : null;
   });
   const tx = {
+    conversationAssignee: { findMany: async () => [] },
     conversation: { create: async ({ data }: any) => { newTickets.push(data); return { ...data, id: 'new-ticket' }; }, update: async () => target },
     conversationMessage: { create: async ({ data }: any) => { messages.push(data); return data; } },
     incomingEmail: { create: async () => ({}) },

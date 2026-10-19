@@ -1,0 +1,30 @@
+.public-form-page{min-height:100dvh;background:var(--bg,#f5f8f6);padding:32px 16px;color:var(--text,#243e36)}
+.public-form-page.embedded{min-height:0;padding:12px;background:transparent}
+.public-form-card{width:100%;max-width:780px;margin:0 auto;background:var(--surface,#fff);border:1px solid var(--border,#dbe5df);border-radius:16px;padding:28px;overflow-wrap:anywhere}
+.public-form-card h1{font-size:26px;margin:0 0 12px}.public-form-card>p{line-height:1.6}
+.public-form-fields{display:grid;gap:20px;margin-top:24px}.public-form-fields label{display:grid;gap:8px;min-width:0;font-size:14px}.public-form-fields input,.public-form-fields textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--border,#b9cec4);border-radius:8px;padding:12px;background:var(--surface,#fff);color:inherit;font:inherit}.public-form-fields textarea{resize:none;overflow:auto}
+.form-back-link{display:inline-flex;align-items:center;gap:7px;margin-bottom:20px;color:var(--ui-text-navigation,#166b5c);font-size:13px;text-decoration:none}
+.form-back-link:hover{text-decoration:underline}
+.form-back-link:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:4px}
+.public-form-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-files small{color:var(--muted,#587066)}
+.form-tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-tracking-actions>.button{width:100%;margin:0}
+@media(max-width:480px){.form-tracking-actions{grid-template-columns:1fr}}
+.public-form-fields .email-field{width:100%;min-width:0}
+.public-form-fields .email-field>input{display:block;min-height:44px;padding:12px;border:1px solid var(--border,#b9cec4);border-radius:8px;background:var(--surface,#fff);color:inherit}
+.public-form-fields .email-field>input:focus{border:1px solid #167766;outline:0;box-shadow:0 0 0 3px rgba(22,119,102,.12)}
+html[data-theme=dark] .public-form-fields .email-field>input{background:#1e3029;border-color:#466356;color:#e5eee9}
+html[data-theme=dark] .public-form-fields .email-field>input:focus{border-color:#8dd0b8;box-shadow:0 0 0 3px rgba(141,208,184,.15)}
+.form-thread{display:grid;gap:16px;margin:24px 0;max-height:60dvh;overflow:auto;scrollbar-width:thin;scrollbar-color:#9bb5a8 transparent}
+.form-message{padding:16px;border:1px solid var(--border,#dbe5df);border-radius:12px;background:var(--bg,#f6f9f7)}.form-message.staff{background:#e5f3ec}.form-message header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.form-message time{font-size:12px}.form-message p{white-space:pre-wrap;overflow-wrap:anywhere}.form-message .button{max-width:100%;white-space:normal;overflow-wrap:anywhere;margin:4px}
+[data-theme=dark] .public-form-card,[data-theme=dark] .public-form-fields input,[data-theme=dark] .public-form-fields textarea{background:#1e3029;color:#e5eee9;border-color:#466356}[data-theme=dark] .public-form-page{background:#15241e;color:#e5eee9}[data-theme=dark] .form-message{background:#20362c;border-color:#466356}[data-theme=dark] .form-message.staff{background:#224c3e}
+.form-settings-links{display:grid;gap:14px;margin-top:24px}.form-settings-panel .form-settings-links textarea{width:100%;box-sizing:border-box;height:95px;min-height:95px;max-height:95px;resize:none;overflow:auto}.form-settings-links input{width:100%;box-sizing:border-box}.form-settings-links button{justify-self:start}
+@media(max-width:540px){.public-form-card{padding:20px}.public-form-columns{grid-template-columns:1fr}.public-form-page{padding:12px}.public-form-card h1{font-size:22px}}
+
+.form-integration-active > :not(.integration-tabs-row):not(.form-settings-slot){display:none!important}
+.form-settings-intro{display:grid;gap:18px;width:max-content;max-width:100%}
+.form-settings-panel .form-settings-fields{grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;min-width:0}
+.form-settings-fields>.management-check{white-space:nowrap;align-self:center}
+.form-settings-actions{display:flex;justify-content:flex-start;margin-top:20px}
+.form-settings-actions>.button{width:auto;min-width:105px;flex:0 0 auto}
+@media(max-width:600px){.form-settings-panel .form-settings-fields{grid-template-columns:1fr}}

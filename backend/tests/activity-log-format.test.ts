@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import { activityActionLabel, activityValueLabel, richDescriptionFor } from '../../frontend/src/features/management/activity-log-format.ts';
 
 const base = { id: 'log', createdAt: '2026-10-07' };
+test('old and new log descriptions show readable IDN addresses and successful email context is not an error', () => {
+  const email = 'baran@xn--gzelteknoloji-wob.com';
+  const sent = richDescriptionFor({ ...base, action: 'conversation.email_sent', metadata: { recipient: email, reason: 'Talep kanal mesajı' } });
+  assert.equal(sent, 'Alıcı: baran@güzelteknoloji.com · İşlem: Talep kanal mesajı');
+  assert.ok(!sent.includes('xn--'));
+  assert.ok(!sent.includes('Hata:'));
+  const changed = richDescriptionFor({ ...base, action: 'customer.updated', metadata: { email, changes: { email: { from: email, to: 'baran@guzelteknoloji.com' } } } });
+  assert.ok(changed.includes('baran@güzelteknoloji.com → baran@guzelteknoloji.com'));
+  assert.ok(!changed.includes('xn--'));
+  const failed = richDescriptionFor({ ...base, action: 'conversation.email_failed', metadata: { recipient: email, reason: 'SMTP 550' } });
+  assert.ok(failed.includes('Hata: SMTP 550'));
+});
 test('roles, statuses and channels have readable values', () => {
   assert.equal(activityValueLabel('ADMIN'), 'Yönetici');
   assert.equal(activityValueLabel('OPEN'), 'Açık');

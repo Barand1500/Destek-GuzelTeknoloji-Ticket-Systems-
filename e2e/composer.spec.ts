@@ -26,6 +26,14 @@ test('Enter sends once, Shift+Enter adds a line, and attachments occupy the left
   });
   await page.goto('/admin/conversations/composer-test');
   const input = page.getByRole('textbox', { name: 'Yanıtınız', exact: true });
+  await expect(input).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('typing:received', { detail: { conversationId: 'different-ticket', people: [{ userId: 'other', name: 'Wrong ticket', expiresAt: Date.now() + 5000 }] } })));
+  await expect(page.locator('.conversation-typing')).toHaveCount(0);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('typing:received', { detail: { conversationId: 'composer-test', people: [{ userId: 'other', name: 'Yunus', expiresAt: Date.now() + 5000 }] } })));
+  await expect(page.locator('.conversation-typing')).toHaveText('Yunus yazıyor…');
+  await expect(page.locator('.conversation .section-heading .conversation-typing')).toHaveText('Yunus yazıyor…');
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('typing:received', { detail: { conversationId: 'composer-test', people: [] } })));
+  await expect(page.locator('.conversation-typing')).toHaveCount(0);
   await input.fill('   ');
   await input.press('Enter');
   expect(submissions).toHaveLength(0);
@@ -34,11 +42,11 @@ test('Enter sends once, Shift+Enter adds a line, and attachments occupy the left
   await input.pressSequentially('Ikinci satir');
   await expect(input).toHaveValue('İlk satır\nIkinci satir');
   expect(submissions).toHaveLength(0);
-  await page.getByLabel('Dosya ekle', { exact: true }).setInputFiles([
+  await page.getByLabel('Dosya Ekle', { exact: true }).setInputFiles([
     { name: 'dosya-bir.txt', mimeType: 'text/plain', buffer: Buffer.from('one') },
     { name: 'dosya-iki.txt', mimeType: 'text/plain', buffer: Buffer.from('two') },
   ]);
-  const fileList = page.getByRole('list', { name: 'Gönderilecek dosyalar' });
+  const fileList = page.getByRole('list', { name: 'Gönderilecek Dosyalar' });
   await expect(fileList.getByRole('listitem')).toHaveCount(2);
   const removeButton = fileList.getByRole('button', { name: 'dosya-iki.txt kaldır' });
   const removeBox = (await removeButton.boundingBox())!;
@@ -64,8 +72,8 @@ test('Enter sends once, Shift+Enter adds a line, and attachments occupy the left
   await expect(fileList.getByRole('listitem')).toHaveCount(0);
   expect(submissions[1]).toContain('dosya-bir.txt');
   expect(submissions[1]).not.toContain('dosya-iki.txt');
-  await page.getByRole('button', { name: 'Dahili not', exact: true }).click();
-  const note = page.getByRole('textbox', { name: 'Dahili not', exact: true });
+  await page.getByRole('button', { name: 'Dahili Not', exact: true }).click();
+  const note = page.getByRole('textbox', { name: 'Dahili Not', exact: true });
   await note.fill('Ekip notu');
   await note.press('Enter');
   await expect.poll(() => submissions.length).toBe(3);

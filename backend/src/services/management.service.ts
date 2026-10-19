@@ -1,6 +1,8 @@
+import { assignedTo, transferAssignee, assignmentCounts } from './conversation-assignees.js';
 import { managementOrder, sortManagementRows } from './management-sorting.js';
 import { activityActionLabel, richDescriptionFor, type ActivityLog } from '../utils/activity-log-format.js';
 import { customerListOrder } from "./customer-sorting.js";
+import { internationalEmailSearchIds, readableEmail } from './email-search.js';
 import bcrypt from "bcrypt";
 import { randomBytes } from "node:crypto";
 import { unlink } from "node:fs/promises";
@@ -145,6 +147,7 @@ export async function users(
 ) {
   if (customersOnly) requireStaff(actor);
   else requireUserPermission(actor, 'view');
+  const emailSearchIds = await internationalEmailSearchIds(q.search);
   let phoneDigits = q.search?.replace(/\D/g, "") ?? "";
   if (phoneDigits && phoneDigits[0] !== "0" && !phoneDigits.startsWith("90"))
     phoneDigits = `0${phoneDigits}`;
@@ -197,6 +200,8 @@ export async function users(
           OR: [
             { name: { contains: q.search } },
             { email: { contains: q.search } },
+            { extraEmails: { contains: q.search } },
+            ...(emailSearchIds.length ? [{ id: { in: emailSearchIds } }] : []),
             { phone: { contains: q.search } },
             { company: { contains: q.search } },
             ...(roleMatches.length ? [{ role: { in: roleMatches } }] : []),
@@ -370,16 +375,17 @@ export async function createCustomer(
         })),
       });
     }
-    return data;
-  });
-  publishChange();
-  if (data.email)
-    queueSupportEmail(
+    if (data.email)
+      await queueSupportEmail(
       data.email,
       "Destek merkezine hoş geldiniz",
       `Merhaba ${data.name},\n\nDestek merkezi kaydınız oluşturuldu. İhtiyacınız olduğunda bu e-posta adresi üzerinden bizimle iletişime geçebilirsiniz.`,
       "Müşteri karşılama",
+      { userId: data.id }, [], tx, `welcome:${data.id}`,
     );
+    return data;
+  });
+  publishChange();
   return data;
 }
 export async function customer(actor: Actor, id: string) {
@@ -575,7 +581,7 @@ export async function userAssignmentImpact(
     : target.departmentIds;
   const isEligibleStaff = !target.forDeletion && target.isActive && (Boolean(target.accessRoleId) || ["ADMIN", "AGENT", "SUPERVISOR"].includes(target.role));
   const assigned = await db.conversation.findMany({
-    where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+    where: { ...assignedTo(id), deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
     select: {
       id: true, number: true, subject: true, status: true, priority: true, createdAt: true,
       departmentId: true,
@@ -644,7 +650,7 @@ export async function updateUser(
       throw new AppError(409, "LAST_ADMIN", "Son aktif yönetici kaldırılamaz.");
     const canRemainAssigned = active && (Boolean(accessRoleId) || ["ADMIN", "AGENT", "SUPERVISOR"].includes(role));
     const assignedConversations = await tx.conversation.findMany({
-      where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+      where: { ...assignedTo(id), deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
       select: { id: true, number: true, departmentId: true, assignedAgentId: true },
     });
     const affectedConversations = assignedConversations.filter((conversation) =>
@@ -691,10 +697,7 @@ export async function updateUser(
         if (!recipient) throw new AppError(400, "INVALID_ASSIGNEE", "Seçilen personel hedef departmanda aktif değil.");
       }
       for (const conversation of conversations) {
-        await tx.conversation.update({
-          where: { id: conversation.id },
-          data: { departmentId: transfer.departmentId, assignedAgentId: transfer.assignedAgentId },
-        });
+        await transferAssignee(tx, conversation.id, id, transfer.assignedAgentId, transfer.departmentId);
         await audit(tx, actor, "conversation.updated", "Conversation", conversation.id, {
           fields: ["departmentId", "assignedAgentId"],
           previousDepartmentId: conversation.departmentId,
@@ -811,7 +814,7 @@ export async function deleteUser(actor: Actor, id: string, input: z.infer<typeof
     if (current.role === "ADMIN" && !current.accessRoleId && current.isActive && (await tx.user.count({ where: { role: "ADMIN", accessRoleId: null, isActive: true, deletedAt: null } })) <= 1)
       throw new AppError(409, "LAST_ADMIN", "Son aktif y\u00f6netici silinemez.");
     const assigned = await tx.conversation.findMany({
-      where: { assignedAgentId: id, deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
+      where: { ...assignedTo(id), deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
       select: { id: true, number: true, departmentId: true },
     });
     if (permissionScope(actor) !== 'ALL' && assigned.some((conversation) => !actor.departmentIds.includes(conversation.departmentId)))
@@ -841,7 +844,7 @@ export async function deleteUser(actor: Actor, id: string, input: z.infer<typeof
         if (!recipient) throw new AppError(400, "INVALID_ASSIGNEE", "Se\u00e7ilen personel hedef departmanda aktif de\u011fil.");
       }
       for (const conversation of conversations) {
-        await tx.conversation.update({ where: { id: conversation.id }, data: { departmentId: group.departmentId, assignedAgentId: group.assignedAgentId } });
+        await transferAssignee(tx, conversation.id, id, group.assignedAgentId, group.departmentId);
         await tx.conversationMessage.create({ data: { conversationId: conversation.id, authorId: actor.id, type: "SYSTEM", body: current.name + " personeli silindi; talep " + (group.assignedAgentId ? "se\u00e7ilen personele aktar\u0131ld\u0131" : "departman kuyru\u011funa al\u0131nd\u0131") + "." } });
         await audit(tx, actor, "conversation.updated", "Conversation", conversation.id, { fields: ["departmentId", "assignedAgentId"], previousDepartmentId: conversation.departmentId, departmentId: group.departmentId, previousAssigneeId: id, assignedAgentId: group.assignedAgentId, transferredDuringUserDeletion: id });
         movedConversationIds.push(conversation.id);
@@ -921,9 +924,8 @@ export async function departmentAgents(
         accessRoleId: true,
         _count: {
           select: {
-            assignedConversations: {
-              where: { deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } },
-            },
+            conversationAssignments: { where: { conversation: { deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] } } } },
+            assignedConversations: { where: { deletedAt: null, status: { notIn: ["RESOLVED", "CLOSED"] }, assignees: { none: {} } } },
           },
         },
       },
@@ -933,7 +935,7 @@ export async function departmentAgents(
     db.user.count({ where }),
   ]);
   return {
-    data: data.map(({ _count, role, accessRoleId, ...agent }) => ({ ...agent, displayName: role === 'ADMIN' && !accessRoleId ? `${agent.name} (Yönetici)` : agent.name, openConversationCount: _count.assignedConversations })),
+    data: data.map(({ _count, role, accessRoleId, ...agent }) => ({ ...agent, displayName: role === 'ADMIN' && !accessRoleId ? `${agent.name} (Yönetici)` : agent.name, openConversationCount: _count.assignedConversations + _count.conversationAssignments })),
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }
@@ -1554,6 +1556,8 @@ export async function activityLogs(
       })).map((conversation) => conversation.id)
     : [];
   const searchableActionLabels: Record<string, string> = {
+    'conversation.email_queued': 'E-Posta gönderim kuyruğuna alındı',
+    'conversation.channel_reply_queued': 'Kanal mesajı gönderim kuyruğuna alındı',
     "conversation.channel_reply_requested": "WhatsApp SMS kanal gönderimi başlatıldı",
     "conversation.channel_reply_sent": "WhatsApp SMS gönderimi sağlayıcı Meta Netgsm tarafından kabul edildi",
     "conversation.channel_reply_failed": "WhatsApp SMS mesajı gönderilemedi",
@@ -1590,6 +1594,9 @@ export async function activityLogs(
     "tag.deleted": "Etiket silindi",
   };
   const normalizedSearch = q.search?.toLocaleLowerCase("tr-TR");
+  // International email fragments cannot be matched against encoded JSON with
+  // SQL contains. Search readable values before pagination, retaining base filters.
+  const readableSearch = Boolean(q.search && /[^\x00-\x7f]|@/.test(q.search));
   const matchingActions = normalizedSearch
     ? Object.entries(searchableActionLabels)
         .filter(([, label]) => label.toLocaleLowerCase("tr-TR").includes(normalizedSearch))
@@ -1602,7 +1609,7 @@ export async function activityLogs(
   const where: Prisma.ActivityLogWhereInput = {
     userId: q.userId,
     ...(q.action ? { action: { contains: q.action } } : {}),
-    ...(q.search
+    ...(q.search && !readableSearch
       ? {
           OR: [
             { action: { contains: q.search } },
@@ -1621,7 +1628,7 @@ export async function activityLogs(
       where,
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: managementOrder<Prisma.ActivityLogOrderByWithRelationInput>(q,{createdAt:direction=>({createdAt:direction}),user:direction=>({user:{name:direction}})},[{createdAt:'desc'},{id:'desc'}]),
-      ...(computedSort ? {} : paging(q)),
+      ...(computedSort || readableSearch ? {} : paging(q)),
     }),
     db.activityLog.count({ where }),
   ]);
@@ -1698,13 +1705,20 @@ export async function activityLogs(
       },
     };
   });
-  const sorted = computedSort ? sortManagementRows(data, q, {
+  const readableMatches = readableSearch ? data.filter(log => {
+    const values = [log.user?.name, log.user?.email, log.action,
+      activityActionLabel(log.action, log.metadata as ActivityLog['metadata']),
+      richDescriptionFor(log as unknown as ActivityLog)];
+    return values.some(value => value && [value, readableEmail(value)].some(text => text.normalize('NFKC').toLocaleLowerCase('tr-TR').includes(q.search!.trim().normalize('NFKC').toLocaleLowerCase('tr-TR'))));
+  }) : data;
+  const ordered = computedSort ? sortManagementRows(readableMatches, q, {
     action: log => activityActionLabel(log.action, log.metadata as ActivityLog['metadata']),
-    description: log => richDescriptionFor(log as unknown as ActivityLog),
-  }).slice((q.page - 1) * q.limit, q.page * q.limit) : data;
+    description: log => readableEmail(richDescriptionFor(log as unknown as ActivityLog)),
+  }) : readableMatches;
+  const sorted = computedSort || readableSearch ? ordered.slice((q.page - 1) * q.limit, q.page * q.limit) : ordered;
   return {
     data: sorted,
-    pagination: pagination({ page: q.page, limit: q.limit }, total),
+    pagination: pagination({ page: q.page, limit: q.limit }, readableSearch ? readableMatches.length : total),
   };
 }
 export async function deleteActivityLogs(
@@ -1783,6 +1797,18 @@ export async function updateNotificationSettings(
     update: input,
   });
 }
+export async function updateIncomingStart(actor: Actor, incomingMessagesSince: Date | null) {
+  requirePermission(actor, 'integrations.update');
+  return db.$transaction(async tx => {
+    const data = await tx.integrationSettings.upsert({
+      where: { id: 'default' }, create: { id: 'default', incomingMessagesSince }, update: { incomingMessagesSince },
+    });
+    await audit(tx, actor, 'integrations.updated', 'IntegrationSettings', 'default', {
+      details: [`Gelen mesaj başlangıç tarihi: ${incomingMessagesSince?.toISOString() ?? 'Sınır yok'}`],
+    });
+    return data;
+  });
+}
 export async function updateIntegrationSettings(
   actor: Actor,
   input: z.infer<typeof schema.integrationSettingsSchema>,
@@ -1831,6 +1857,7 @@ export async function updateIntegrationSettings(
       responseLateFromMinutes: "Gecikmiş yanıt aralığı başlangıcı", responseLateToMinutes: "Gecikmiş yanıt aralığı bitişi",
       smtpEnabled: "SMTP etkinliği", smtpHost: "SMTP sunucusu", smtpPort: "SMTP portu", smtpSecure: "SMTP güvenli bağlantısı",
       smtpUser: "SMTP kullanıcı adı", smtpPassword: "SMTP parolası", smtpFromAddress: "Gönderen e-posta adresi", smtpFromName: "Gönderen adı",
+      incomingMessagesSince: "Gelen mesaj başlangıç tarihi",
       imapEnabled: "IMAP etkinliği", imapConnectionName: "IMAP bağlantı adı", imapHost: "IMAP sunucusu", imapPort: "IMAP portu",
       imapSecure: "IMAP güvenli bağlantısı", imapAuthType: "IMAP kimlik doğrulama türü", imapUser: "IMAP kullanıcı adı",
       imapPassword: "IMAP parolası", imapMailbox: "IMAP posta kutusu", imapPollIntervalSeconds: "E-posta kontrol aralığı",
@@ -2044,7 +2071,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
   if (!can(actor, "reports.view"))
     throw new AppError(403, "FORBIDDEN", "Raporlara erişim yetkiniz yok.");
   const scope: Prisma.ConversationWhereInput = { AND: [visibility(actor),
-    ...(q.agentId ? [{ assignedAgentId: q.agentId }] : []),
+    ...(q.agentId ? [assignedTo(q.agentId)] : []),
     ...(q.departmentId ? [{ departmentId: q.departmentId }] : []),
   ] };
   const to = new Date();
@@ -2089,11 +2116,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
     orderBy: { name: "asc" },
   });
   const agentIds = agents.map((a) => a.id);
-  const counts = await db.conversation.groupBy({
-    by: ["departmentId", "assignedAgentId", "status"],
-    where: scope,
-    _count: true,
-  });
+  const { counts, departmentStatuses } = await assignmentCounts(db, scope);
   const daily = Array.from({ length: q.days ?? 30 }, (_, i) => ({
     date: new Date(from.getTime() + i * 86400000).toISOString().slice(0, 10),
     created: 0,
@@ -2125,6 +2148,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
         resolvedAt: true,
         firstResponseAt: true,
         assignedAgentId: true,
+        assignees: { select: { userId: true } },
       },
       orderBy: { id: "asc" },
       take: 500,
@@ -2153,17 +2177,14 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
         );
         responseSum += minutes;
         responseCount++;
-        if (
-          conversation.assignedAgentId &&
-          agentIds.includes(conversation.assignedAgentId)
-        ) {
-          const prev = agentResponses.get(conversation.assignedAgentId) ?? {
+        for (const assignedId of [...new Set([...(conversation.assignedAgentId ? [conversation.assignedAgentId] : []), ...conversation.assignees.map(item => item.userId)])].filter(id => agentIds.includes(id))) {
+          const prev = agentResponses.get(assignedId) ?? {
             sum: 0,
             count: 0,
           };
           prev.sum += minutes;
           prev.count++;
-          agentResponses.set(conversation.assignedAgentId, prev);
+          agentResponses.set(assignedId, prev);
         }
       }
       if (conversation.resolvedAt) {
@@ -2202,7 +2223,7 @@ export async function reports(actor: Actor, q: Page & { agentId?: string; depart
       ...d,
       count:
         departmentCounts.find((c) => c.departmentId === d.id)?._count._all ?? 0,
-      statuses: Object.fromEntries([...new Set(counts.filter((r) => r.departmentId === d.id).map((r) => r.status))].map((status) => [status, counts.filter((r) => r.departmentId === d.id && r.status === status).reduce((sum, r) => sum + r._count, 0)])),
+      statuses: Object.fromEntries([...new Set(departmentStatuses.filter((r) => r.departmentId === d.id).map((r) => r.status))].map((status) => [status, departmentStatuses.filter((r) => r.departmentId === d.id && r.status === status).reduce((sum, item) => sum + item.count, 0)])),
       employees: staff.filter((a) => a.departmentIds.includes(d.id) || counts.some((r) => r.departmentId === d.id && r.assignedAgentId === a.id)).map((a) => {
         const rows = counts.filter((r) => r.departmentId === d.id && r.assignedAgentId === a.id);
         return { id: a.id, name: a.name, assigned: rows.reduce((sum, r) => sum + r._count, 0), resolved: rows.filter((r) => r.status === "RESOLVED" || r.status === "CLOSED").reduce((sum, r) => sum + r._count, 0) };

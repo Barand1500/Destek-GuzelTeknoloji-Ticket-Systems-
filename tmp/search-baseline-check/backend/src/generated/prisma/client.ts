@@ -92,6 +92,26 @@ export type DepartmentAgent = Prisma.DepartmentAgentModel
  */
 export type Conversation = Prisma.ConversationModel
 /**
+ * Model FormSettings
+ * 
+ */
+export type FormSettings = Prisma.FormSettingsModel
+/**
+ * Model FormRequest
+ * 
+ */
+export type FormRequest = Prisma.FormRequestModel
+/**
+ * Model FormAccess
+ * 
+ */
+export type FormAccess = Prisma.FormAccessModel
+/**
+ * Model FormLoginChallenge
+ * 
+ */
+export type FormLoginChallenge = Prisma.FormLoginChallengeModel
+/**
  * Model StatusOption
  * 
  */
@@ -101,6 +121,11 @@ export type StatusOption = Prisma.StatusOptionModel
  * 
  */
 export type PriorityOption = Prisma.PriorityOptionModel
+/**
+ * Model ConversationAssignee
+ * 
+ */
+export type ConversationAssignee = Prisma.ConversationAssigneeModel
 /**
  * Model ConversationMessage
  * 
@@ -121,6 +146,21 @@ export type ConversationMessageMention = Prisma.ConversationMessageMentionModel
  * 
  */
 export type IncomingEmail = Prisma.IncomingEmailModel
+/**
+ * Model ImapSyncState
+ * 
+ */
+export type ImapSyncState = Prisma.ImapSyncStateModel
+/**
+ * Model OutboundMessage
+ * 
+ */
+export type OutboundMessage = Prisma.OutboundMessageModel
+/**
+ * Model ImapSyncRetry
+ * 
+ */
+export type ImapSyncRetry = Prisma.ImapSyncRetryModel
 /**
  * Model ActivityLog
  * 

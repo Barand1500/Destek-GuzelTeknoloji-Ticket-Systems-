@@ -13,6 +13,7 @@ async function mockSettings(page: Page) {
   };
   let notifications = { ticketCreatedSubject: "Talebiniz oluşturuldu (#{number})", ticketCreatedBody: "Merhaba {name},\n\n{subject} başlıklı talebiniz oluşturuldu.", ticketReplySubject: "Talebinize yanıt geldi (#{number})", ticketReplyBody: "Merhaba {name},\n\n{reply}" };
   const writes: Record<string, unknown>[] = [];
+  const incomingWrites: Record<string, unknown>[] = [];
   let tests = 0;
   let rejectNextSave = false;
   const empty = { success: true, data: [], pagination: { page: 1, total: 0, totalPages: 1 } };
@@ -21,6 +22,12 @@ async function mockSettings(page: Page) {
     const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
     if (path === "/auth/refresh") return route.fulfill({ json: { success: true, data: { accessToken: "test-token", user: { id: "integration-admin", name: "Admin", role: "ADMIN" } } } });
     if (path === "/integrations/test") { tests++; return route.fulfill({ json: { success: true, data: { success: true } } }); }
+    if (path === '/integrations/incoming-start' && route.request().method() === 'PATCH') {
+      const input = route.request().postDataJSON();
+      incomingWrites.push(input);
+      integration = { ...integration, ...input };
+      return route.fulfill({ json: { success: true, data: integration } });
+    }
     if (path === "/integrations" && route.request().method() === "PUT") {
       const input = route.request().postDataJSON();
       writes.push(input);
@@ -35,8 +42,39 @@ async function mockSettings(page: Page) {
     if (path === "/departments") return route.fulfill({ json: { ...empty, data: [{ id: "department-test", name: "Genel Destek" }] } });
     return route.fulfill({ json: empty });
   });
-  return { writes, get tests() { return tests; }, rejectNextSave() { rejectNextSave = true; } };
+  return { writes, incomingWrites, get tests() { return tests; }, rejectNextSave() { rejectNextSave = true; } };
 }
+
+test('incoming start opens a compact modal and saves independently of connection drafts', async ({ page }) => {
+  const requests = await mockSettings(page);
+  await page.goto('/admin/integrations/channels');
+  await page.getByRole('textbox', { name: /SMTP Sunucusu/i }).fill('unsaved.example.test');
+  await page.getByRole('button', { name: 'Gelen mesaj başlangıç ayarları' }).click();
+  const modal = page.getByRole('dialog', { name: 'Gelen mesaj başlangıcı' });
+  await expect(modal).toBeVisible();
+  await expect(modal.getByText('Değişiklik aşağıdaki', { exact: false })).toHaveCount(0);
+  await modal.getByLabel('Başlangıç tarihi ve saati').fill('2026-10-16T12:30');
+  await page.setViewportSize({ width: 390, height: 720 });
+  const bounds = await modal.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.width).toBeLessThanOrEqual(390);
+  expect(Math.abs(bounds!.x + bounds!.width / 2 - 195)).toBeLessThan(2);
+  expect(bounds!.y).toBeGreaterThan(0);
+  await page.screenshot({ path: '.local/incoming-start-modal.png' });
+  await modal.getByRole('button', { name: 'Kaydet', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+  expect(requests.incomingWrites).toHaveLength(1);
+  expect(Object.keys(requests.incomingWrites[0])).toEqual(['incomingMessagesSince']);
+  expect(requests.writes).toHaveLength(0);
+  await expect(page.getByRole('textbox', { name: /SMTP Sunucusu/i })).toHaveValue('unsaved.example.test');
+  await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
+  await expect(page.getByRole('status')).toBeVisible();
+  expect(requests.writes[0]).not.toHaveProperty('incomingMessagesSince');
+  await page.getByRole('button', { name: 'Gelen mesaj başlangıç ayarları' }).click();
+  await expect(modal.getByLabel('Başlangıç tarihi ve saati')).toHaveValue('2026-10-16T12:30');
+  await page.keyboard.press('Escape');
+  await expect(modal).not.toBeVisible();
+});
 
 test("SMTP, IMAP and notification drafts survive tab changes and save in one request without testing", async ({ page }) => {
   const requests = await mockSettings(page);

@@ -61,12 +61,20 @@ export const ModelName = {
   Department: 'Department',
   DepartmentAgent: 'DepartmentAgent',
   Conversation: 'Conversation',
+  FormSettings: 'FormSettings',
+  FormRequest: 'FormRequest',
+  FormAccess: 'FormAccess',
+  FormLoginChallenge: 'FormLoginChallenge',
   StatusOption: 'StatusOption',
   PriorityOption: 'PriorityOption',
+  ConversationAssignee: 'ConversationAssignee',
   ConversationMessage: 'ConversationMessage',
   ConversationParticipant: 'ConversationParticipant',
   ConversationMessageMention: 'ConversationMessageMention',
   IncomingEmail: 'IncomingEmail',
+  ImapSyncState: 'ImapSyncState',
+  OutboundMessage: 'OutboundMessage',
+  ImapSyncRetry: 'ImapSyncRetry',
   ActivityLog: 'ActivityLog',
   ConversationAttachment: 'ConversationAttachment',
   CustomerAttachment: 'CustomerAttachment',
@@ -250,6 +258,56 @@ export const ConversationScalarFieldEnum = {
 export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
 
 
+export const FormSettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  departmentId: 'departmentId',
+  title: 'title',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FormSettingsScalarFieldEnum = (typeof FormSettingsScalarFieldEnum)[keyof typeof FormSettingsScalarFieldEnum]
+
+
+export const FormRequestScalarFieldEnum = {
+  conversationId: 'conversationId',
+  email: 'email',
+  name: 'name',
+  phone: 'phone',
+  company: 'company',
+  createdAt: 'createdAt'
+} as const
+
+export type FormRequestScalarFieldEnum = (typeof FormRequestScalarFieldEnum)[keyof typeof FormRequestScalarFieldEnum]
+
+
+export const FormAccessScalarFieldEnum = {
+  tokenHash: 'tokenHash',
+  conversationId: 'conversationId',
+  email: 'email',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormAccessScalarFieldEnum = (typeof FormAccessScalarFieldEnum)[keyof typeof FormAccessScalarFieldEnum]
+
+
+export const FormLoginChallengeScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  email: 'email',
+  codeHash: 'codeHash',
+  attempts: 'attempts',
+  requests: 'requests',
+  requestWindowAt: 'requestWindowAt',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormLoginChallengeScalarFieldEnum = (typeof FormLoginChallengeScalarFieldEnum)[keyof typeof FormLoginChallengeScalarFieldEnum]
+
+
 export const StatusOptionScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -276,6 +334,15 @@ export const PriorityOptionScalarFieldEnum = {
 } as const
 
 export type PriorityOptionScalarFieldEnum = (typeof PriorityOptionScalarFieldEnum)[keyof typeof PriorityOptionScalarFieldEnum]
+
+
+export const ConversationAssigneeScalarFieldEnum = {
+  conversationId: 'conversationId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type ConversationAssigneeScalarFieldEnum = (typeof ConversationAssigneeScalarFieldEnum)[keyof typeof ConversationAssigneeScalarFieldEnum]
 
 
 export const ConversationMessageScalarFieldEnum = {
@@ -317,6 +384,52 @@ export const IncomingEmailScalarFieldEnum = {
 } as const
 
 export type IncomingEmailScalarFieldEnum = (typeof IncomingEmailScalarFieldEnum)[keyof typeof IncomingEmailScalarFieldEnum]
+
+
+export const ImapSyncStateScalarFieldEnum = {
+  id: 'id',
+  mailbox: 'mailbox',
+  uidValidity: 'uidValidity',
+  lastUid: 'lastUid',
+  leaseToken: 'leaseToken',
+  leaseUntil: 'leaseUntil',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ImapSyncStateScalarFieldEnum = (typeof ImapSyncStateScalarFieldEnum)[keyof typeof ImapSyncStateScalarFieldEnum]
+
+
+export const OutboundMessageScalarFieldEnum = {
+  id: 'id',
+  dedupeKey: 'dedupeKey',
+  channel: 'channel',
+  payload: 'payload',
+  conversationId: 'conversationId',
+  userId: 'userId',
+  status: 'status',
+  sequence: 'sequence',
+  attempts: 'attempts',
+  availableAt: 'availableAt',
+  leaseToken: 'leaseToken',
+  leaseUntil: 'leaseUntil',
+  lastError: 'lastError',
+  providerMessageId: 'providerMessageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OutboundMessageScalarFieldEnum = (typeof OutboundMessageScalarFieldEnum)[keyof typeof OutboundMessageScalarFieldEnum]
+
+
+export const ImapSyncRetryScalarFieldEnum = {
+  syncId: 'syncId',
+  uid: 'uid',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError'
+} as const
+
+export type ImapSyncRetryScalarFieldEnum = (typeof ImapSyncRetryScalarFieldEnum)[keyof typeof ImapSyncRetryScalarFieldEnum]
 
 
 export const ActivityLogScalarFieldEnum = {
@@ -494,6 +607,7 @@ export const IntegrationSettingsScalarFieldEnum = {
   smtpFromAddress: 'smtpFromAddress',
   smtpFromName: 'smtpFromName',
   imapEnabled: 'imapEnabled',
+  incomingMessagesSince: 'incomingMessagesSince',
   imapConnectionName: 'imapConnectionName',
   imapHost: 'imapHost',
   imapPort: 'imapPort',
@@ -792,6 +906,45 @@ export const ConversationOrderByRelevanceFieldEnum = {
 export type ConversationOrderByRelevanceFieldEnum = (typeof ConversationOrderByRelevanceFieldEnum)[keyof typeof ConversationOrderByRelevanceFieldEnum]
 
 
+export const FormSettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  departmentId: 'departmentId',
+  title: 'title'
+} as const
+
+export type FormSettingsOrderByRelevanceFieldEnum = (typeof FormSettingsOrderByRelevanceFieldEnum)[keyof typeof FormSettingsOrderByRelevanceFieldEnum]
+
+
+export const FormRequestOrderByRelevanceFieldEnum = {
+  conversationId: 'conversationId',
+  email: 'email',
+  name: 'name',
+  phone: 'phone',
+  company: 'company'
+} as const
+
+export type FormRequestOrderByRelevanceFieldEnum = (typeof FormRequestOrderByRelevanceFieldEnum)[keyof typeof FormRequestOrderByRelevanceFieldEnum]
+
+
+export const FormAccessOrderByRelevanceFieldEnum = {
+  tokenHash: 'tokenHash',
+  conversationId: 'conversationId',
+  email: 'email'
+} as const
+
+export type FormAccessOrderByRelevanceFieldEnum = (typeof FormAccessOrderByRelevanceFieldEnum)[keyof typeof FormAccessOrderByRelevanceFieldEnum]
+
+
+export const FormLoginChallengeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  email: 'email',
+  codeHash: 'codeHash'
+} as const
+
+export type FormLoginChallengeOrderByRelevanceFieldEnum = (typeof FormLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof FormLoginChallengeOrderByRelevanceFieldEnum]
+
+
 export const StatusOptionOrderByRelevanceFieldEnum = {
   id: 'id',
   code: 'code',
@@ -810,6 +963,14 @@ export const PriorityOptionOrderByRelevanceFieldEnum = {
 } as const
 
 export type PriorityOptionOrderByRelevanceFieldEnum = (typeof PriorityOptionOrderByRelevanceFieldEnum)[keyof typeof PriorityOptionOrderByRelevanceFieldEnum]
+
+
+export const ConversationAssigneeOrderByRelevanceFieldEnum = {
+  conversationId: 'conversationId',
+  userId: 'userId'
+} as const
+
+export type ConversationAssigneeOrderByRelevanceFieldEnum = (typeof ConversationAssigneeOrderByRelevanceFieldEnum)[keyof typeof ConversationAssigneeOrderByRelevanceFieldEnum]
 
 
 export const ConversationMessageOrderByRelevanceFieldEnum = {
@@ -846,6 +1007,39 @@ export const IncomingEmailOrderByRelevanceFieldEnum = {
 } as const
 
 export type IncomingEmailOrderByRelevanceFieldEnum = (typeof IncomingEmailOrderByRelevanceFieldEnum)[keyof typeof IncomingEmailOrderByRelevanceFieldEnum]
+
+
+export const ImapSyncStateOrderByRelevanceFieldEnum = {
+  id: 'id',
+  mailbox: 'mailbox',
+  uidValidity: 'uidValidity',
+  leaseToken: 'leaseToken'
+} as const
+
+export type ImapSyncStateOrderByRelevanceFieldEnum = (typeof ImapSyncStateOrderByRelevanceFieldEnum)[keyof typeof ImapSyncStateOrderByRelevanceFieldEnum]
+
+
+export const OutboundMessageOrderByRelevanceFieldEnum = {
+  id: 'id',
+  dedupeKey: 'dedupeKey',
+  channel: 'channel',
+  conversationId: 'conversationId',
+  userId: 'userId',
+  status: 'status',
+  leaseToken: 'leaseToken',
+  lastError: 'lastError',
+  providerMessageId: 'providerMessageId'
+} as const
+
+export type OutboundMessageOrderByRelevanceFieldEnum = (typeof OutboundMessageOrderByRelevanceFieldEnum)[keyof typeof OutboundMessageOrderByRelevanceFieldEnum]
+
+
+export const ImapSyncRetryOrderByRelevanceFieldEnum = {
+  syncId: 'syncId',
+  lastError: 'lastError'
+} as const
+
+export type ImapSyncRetryOrderByRelevanceFieldEnum = (typeof ImapSyncRetryOrderByRelevanceFieldEnum)[keyof typeof ImapSyncRetryOrderByRelevanceFieldEnum]
 
 
 export const ActivityLogOrderByRelevanceFieldEnum = {

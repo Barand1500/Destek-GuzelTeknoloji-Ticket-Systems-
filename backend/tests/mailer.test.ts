@@ -48,7 +48,10 @@ test('email creation and replies send mail; internal notes and phone conversatio
   const { env } = await import('../src/config/env.js');
   const nodemailer = (await import('nodemailer')).default;
   const { createConversation, addMessage } = await import('../src/services/conversations.service.js');
-  const sent: Array<{ from: string; replyTo: string; to: string; subject: string; text: string }> = [];
+  const { processOutboundQueue } = await import('../src/services/outbound-queue.service.js');
+  const jobs: any[] = [];
+  let messageIndex = 0;
+  const sent: Array<{ from: string; replyTo: string; to: string; subject: string; text: string; attachments?: Array<{ filename: string; path: string; contentType: string }> }> = [];
   const audits: any[] = [];
   const createdData: any[] = [];
   const customer = { id: 'customer', name: 'Test customer', email: 'customer@example.test', phone: '905321112233' };
@@ -56,12 +59,34 @@ test('email creation and replies send mail; internal notes and phone conversatio
   const conversation = { id: 'conversation', number: 42, subject: 'Mail flow test', replyChannels: null as string[] | null, channel: 'EMAIL', customerId: customer.id, customer, departmentId: 'department', assignedAgentId: null, firstResponseAt: new Date() };
   const actor = { id: 'admin', name: 'Test admin', email: 'admin@example.test', role: 'ADMIN' as const, departmentIds: [], sessionId: 'test' };
   const log = async ({ data }: any) => { const row = { id: `log-${audits.length}`, ...data }; audits.push(row); return row; };
+  const logUpsert = async ({ where, create, update }: any) => {
+    const existing = audits.find(row => row.id === where.id);
+    return existing ? Object.assign(existing, update) : log({ data: create });
+  };
+  const queue = {
+    create: async ({ data }: any) => { const row = { id: `job-${jobs.length}`, status: 'PENDING', attempts: 0, availableAt: new Date(), createdAt: new Date(), ...data }; jobs.push(row); return row; },
+    upsert: async ({ where, create }: any) => jobs.find(row => row.dedupeKey === where.dedupeKey) ?? queue.create({ data: create }),
+    findMany: async () => jobs.filter(row => row.status === 'PENDING' && row.availableAt <= new Date()),
+    findFirst: async () => null,
+    findUniqueOrThrow: async ({ where }: any) => jobs.find(row => row.id === where.id),
+    updateMany: async ({ where, data }: any) => {
+      const row = jobs.find(item => item.id === where.id && (!where.status || item.status === where.status) && (!where.leaseToken || item.leaseToken === where.leaseToken));
+      if (!row) return { count: 0 };
+      const attempts = row.attempts + (data.attempts?.increment ?? 0);
+      Object.assign(row, data, { attempts }); return { count: 1 };
+    },
+  };
   const tx = {
+    $queryRaw: async () => [{ deletedAt: null }],
+    outboundMessage: queue,
+    externalMessage: { upsert: async ({ create }: any) => create },
+    notificationSettings: { upsert: async ({ create }: any) => create },
     priorityOption: { findFirst: async () => ({ code: 'NORMAL' }) },
-    conversation: { create: async ({ data }: any) => { createdData.push(data); return conversation; }, updateMany: async () => ({ count: 1 }), findUniqueOrThrow: async () => conversation },
-    conversationMessage: { create: async ({ data }: any) => ({ id: 'message', createdAt: new Date(), ...data }) },
-    activityLog: { create: log },
-    user: { findMany: async () => [], findUniqueOrThrow: async () => customer },
+    conversation: { create: async ({ data }: any) => { createdData.push(data); return conversation; }, update: async ({ data }: any) => Object.assign(conversation, data), updateMany: async () => ({ count: 1 }), findUniqueOrThrow: async () => conversation },
+    conversationAssignee: { findMany: async () => [], deleteMany: async () => ({ count: 0 }), createMany: async () => ({ count: 1 }) },
+    conversationMessage: { create: async ({ data }: any) => ({ id: `message-${messageIndex++}`, createdAt: new Date(), ...data }) },
+    activityLog: { create: log, upsert: logUpsert },
+    user: { findMany: async () => [], findUnique: async () => null, findUniqueOrThrow: async () => customer },
     integrationSettings: { findUnique: async () => integration },
     notification: { createMany: async () => ({ count: 1 }) },
   };
@@ -79,15 +104,18 @@ test('email creation and replies send mail; internal notes and phone conversatio
   stub(db.user, 'findFirst', async () => customer);
   stub(db.conversation, 'findUnique', async () => conversation);
   stub(db.activityLog, 'create', log);
+  stub(db.activityLog, 'upsert', logUpsert);
+  stub(db.outboundMessage, 'findMany', queue.findMany);
   stub(db.externalMessage, 'upsert', async ({ create }: any) => create);
   stub(db.activityLog, 'update', async ({ where, data }: any) => Object.assign(audits.find(row => row.id === where.id), data));
   stub(db.integrationSettings, 'findUnique', async () => integration);
   t.mock.method(nodemailer, 'createTransport', () => ({ sendMail: async (mail: any) => { sent.push(mail); return { accepted: [mail.to], rejected: [], response: '250 OK', messageId: '<test@example.test>' }; } }));
   const previous = env.NODE_ENV;
   env.NODE_ENV = 'development'; // Exercise the real queue, with all network and DB calls mocked.
-  const flush = () => new Promise<void>(resolve => setImmediate(resolve));
+  const flush = () => processOutboundQueue();
   try {
-    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'Initial request', priority: 'NORMAL', channel: 'EMAIL' });
+    const files = [{ originalName: 'report.txt', mimeType: 'text/plain', size: 5, storageKey: 'test-file-key' }];
+    await createConversation(actor, { customerId: customer.id, departmentId: 'department', subject: conversation.subject, message: 'Initial request', priority: 'NORMAL', channel: 'EMAIL' }, files);
     await flush();
     assert.equal(sent.length, 1);
     assert.equal(sent[0].to, customer.email);
@@ -95,12 +123,16 @@ test('email creation and replies send mail; internal notes and phone conversatio
     assert.equal(sent[0].replyTo, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
     assert.doesNotMatch(sent[0].replyTo, /\+(?:t-|ticket-)/i);
     assert.equal(sent[0].subject, conversation.subject);
-    await addMessage(actor, conversation.id, { body: 'Public answer', type: 'AGENT_REPLY' });
+    assert.equal(sent[0].attachments?.[0].filename, 'report.txt');
+    await addMessage(actor, conversation.id, { body: 'Public answer', type: 'AGENT_REPLY' }, files);
     await flush();
     assert.equal(sent.length, 2);
     assert.match(sent[1].text, /Public answer/);
     assert.equal(sent[1].to, customer.email);
     assert.equal(sent[1].replyTo, 'Güzel Teknoloji Destek <guzelteknoloji50@gmail.com>');
+    assert.equal(sent[1].attachments?.[0].filename, 'report.txt');
+    assert.equal(sent[1].attachments?.[0].contentType, 'text/plain');
+    assert.ok(sent[1].attachments?.[0].path.endsWith('test-file-key'));
     await addMessage(actor, conversation.id, { body: 'Private note', type: 'INTERNAL_NOTE' });
     await flush();
     assert.equal(sent.length, 2);

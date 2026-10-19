@@ -407,12 +407,20 @@ export const ModelName = {
   Department: 'Department',
   DepartmentAgent: 'DepartmentAgent',
   Conversation: 'Conversation',
+  FormSettings: 'FormSettings',
+  FormRequest: 'FormRequest',
+  FormAccess: 'FormAccess',
+  FormLoginChallenge: 'FormLoginChallenge',
   StatusOption: 'StatusOption',
   PriorityOption: 'PriorityOption',
+  ConversationAssignee: 'ConversationAssignee',
   ConversationMessage: 'ConversationMessage',
   ConversationParticipant: 'ConversationParticipant',
   ConversationMessageMention: 'ConversationMessageMention',
   IncomingEmail: 'IncomingEmail',
+  ImapSyncState: 'ImapSyncState',
+  OutboundMessage: 'OutboundMessage',
+  ImapSyncRetry: 'ImapSyncRetry',
   ActivityLog: 'ActivityLog',
   ConversationAttachment: 'ConversationAttachment',
   CustomerAttachment: 'CustomerAttachment',
@@ -448,7 +456,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "statusOption" | "priorityOption" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1112,6 +1120,270 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FormSettings: {
+      payload: Prisma.$FormSettingsPayload<ExtArgs>
+      fields: Prisma.FormSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.FormSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.FormSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.FormSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.FormSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        update: {
+          args: Prisma.FormSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.FormSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.FormSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormSettings>
+        }
+        groupBy: {
+          args: Prisma.FormSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    FormRequest: {
+      payload: Prisma.$FormRequestPayload<ExtArgs>
+      fields: Prisma.FormRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.FormRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        findMany: {
+          args: Prisma.FormRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>[]
+        }
+        create: {
+          args: Prisma.FormRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        createMany: {
+          args: Prisma.FormRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        update: {
+          args: Prisma.FormRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.FormRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.FormRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormRequest>
+        }
+        groupBy: {
+          args: Prisma.FormRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormRequestCountAggregateOutputType> | number
+        }
+      }
+    }
+    FormAccess: {
+      payload: Prisma.$FormAccessPayload<ExtArgs>
+      fields: Prisma.FormAccessFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormAccessFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormAccessFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        findFirst: {
+          args: Prisma.FormAccessFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormAccessFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        findMany: {
+          args: Prisma.FormAccessFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>[]
+        }
+        create: {
+          args: Prisma.FormAccessCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        createMany: {
+          args: Prisma.FormAccessCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormAccessDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        update: {
+          args: Prisma.FormAccessUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        deleteMany: {
+          args: Prisma.FormAccessDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormAccessUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormAccessUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormAccessPayload>
+        }
+        aggregate: {
+          args: Prisma.FormAccessAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormAccess>
+        }
+        groupBy: {
+          args: Prisma.FormAccessGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormAccessGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormAccessCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormAccessCountAggregateOutputType> | number
+        }
+      }
+    }
+    FormLoginChallenge: {
+      payload: Prisma.$FormLoginChallengePayload<ExtArgs>
+      fields: Prisma.FormLoginChallengeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormLoginChallengeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormLoginChallengeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        findFirst: {
+          args: Prisma.FormLoginChallengeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormLoginChallengeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        findMany: {
+          args: Prisma.FormLoginChallengeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>[]
+        }
+        create: {
+          args: Prisma.FormLoginChallengeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        createMany: {
+          args: Prisma.FormLoginChallengeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormLoginChallengeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        update: {
+          args: Prisma.FormLoginChallengeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        deleteMany: {
+          args: Prisma.FormLoginChallengeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormLoginChallengeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormLoginChallengeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormLoginChallengePayload>
+        }
+        aggregate: {
+          args: Prisma.FormLoginChallengeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormLoginChallenge>
+        }
+        groupBy: {
+          args: Prisma.FormLoginChallengeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormLoginChallengeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormLoginChallengeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormLoginChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
     StatusOption: {
       payload: Prisma.$StatusOptionPayload<ExtArgs>
       fields: Prisma.StatusOptionFieldRefs
@@ -1241,6 +1513,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PriorityOptionCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PriorityOptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    ConversationAssignee: {
+      payload: Prisma.$ConversationAssigneePayload<ExtArgs>
+      fields: Prisma.ConversationAssigneeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConversationAssigneeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConversationAssigneeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        findFirst: {
+          args: Prisma.ConversationAssigneeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConversationAssigneeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        findMany: {
+          args: Prisma.ConversationAssigneeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>[]
+        }
+        create: {
+          args: Prisma.ConversationAssigneeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        createMany: {
+          args: Prisma.ConversationAssigneeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ConversationAssigneeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        update: {
+          args: Prisma.ConversationAssigneeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        deleteMany: {
+          args: Prisma.ConversationAssigneeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConversationAssigneeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ConversationAssigneeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationAssigneePayload>
+        }
+        aggregate: {
+          args: Prisma.ConversationAssigneeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConversationAssignee>
+        }
+        groupBy: {
+          args: Prisma.ConversationAssigneeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationAssigneeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConversationAssigneeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationAssigneeCountAggregateOutputType> | number
         }
       }
     }
@@ -1505,6 +1843,204 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.IncomingEmailCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.IncomingEmailCountAggregateOutputType> | number
+        }
+      }
+    }
+    ImapSyncState: {
+      payload: Prisma.$ImapSyncStatePayload<ExtArgs>
+      fields: Prisma.ImapSyncStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ImapSyncStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ImapSyncStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        findFirst: {
+          args: Prisma.ImapSyncStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ImapSyncStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        findMany: {
+          args: Prisma.ImapSyncStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>[]
+        }
+        create: {
+          args: Prisma.ImapSyncStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        createMany: {
+          args: Prisma.ImapSyncStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ImapSyncStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        update: {
+          args: Prisma.ImapSyncStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.ImapSyncStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ImapSyncStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ImapSyncStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncStatePayload>
+        }
+        aggregate: {
+          args: Prisma.ImapSyncStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateImapSyncState>
+        }
+        groupBy: {
+          args: Prisma.ImapSyncStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ImapSyncStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ImapSyncStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ImapSyncStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    OutboundMessage: {
+      payload: Prisma.$OutboundMessagePayload<ExtArgs>
+      fields: Prisma.OutboundMessageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OutboundMessageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OutboundMessageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        findFirst: {
+          args: Prisma.OutboundMessageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OutboundMessageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        findMany: {
+          args: Prisma.OutboundMessageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>[]
+        }
+        create: {
+          args: Prisma.OutboundMessageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        createMany: {
+          args: Prisma.OutboundMessageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.OutboundMessageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        update: {
+          args: Prisma.OutboundMessageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        deleteMany: {
+          args: Prisma.OutboundMessageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OutboundMessageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.OutboundMessageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboundMessagePayload>
+        }
+        aggregate: {
+          args: Prisma.OutboundMessageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOutboundMessage>
+        }
+        groupBy: {
+          args: Prisma.OutboundMessageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OutboundMessageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OutboundMessageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OutboundMessageCountAggregateOutputType> | number
+        }
+      }
+    }
+    ImapSyncRetry: {
+      payload: Prisma.$ImapSyncRetryPayload<ExtArgs>
+      fields: Prisma.ImapSyncRetryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ImapSyncRetryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ImapSyncRetryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        findFirst: {
+          args: Prisma.ImapSyncRetryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ImapSyncRetryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        findMany: {
+          args: Prisma.ImapSyncRetryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>[]
+        }
+        create: {
+          args: Prisma.ImapSyncRetryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        createMany: {
+          args: Prisma.ImapSyncRetryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ImapSyncRetryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        update: {
+          args: Prisma.ImapSyncRetryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        deleteMany: {
+          args: Prisma.ImapSyncRetryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ImapSyncRetryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ImapSyncRetryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImapSyncRetryPayload>
+        }
+        aggregate: {
+          args: Prisma.ImapSyncRetryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateImapSyncRetry>
+        }
+        groupBy: {
+          args: Prisma.ImapSyncRetryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ImapSyncRetryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ImapSyncRetryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ImapSyncRetryCountAggregateOutputType> | number
         }
       }
     }
@@ -3012,6 +3548,56 @@ export const ConversationScalarFieldEnum = {
 export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
 
 
+export const FormSettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  departmentId: 'departmentId',
+  title: 'title',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FormSettingsScalarFieldEnum = (typeof FormSettingsScalarFieldEnum)[keyof typeof FormSettingsScalarFieldEnum]
+
+
+export const FormRequestScalarFieldEnum = {
+  conversationId: 'conversationId',
+  email: 'email',
+  name: 'name',
+  phone: 'phone',
+  company: 'company',
+  createdAt: 'createdAt'
+} as const
+
+export type FormRequestScalarFieldEnum = (typeof FormRequestScalarFieldEnum)[keyof typeof FormRequestScalarFieldEnum]
+
+
+export const FormAccessScalarFieldEnum = {
+  tokenHash: 'tokenHash',
+  conversationId: 'conversationId',
+  email: 'email',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormAccessScalarFieldEnum = (typeof FormAccessScalarFieldEnum)[keyof typeof FormAccessScalarFieldEnum]
+
+
+export const FormLoginChallengeScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  email: 'email',
+  codeHash: 'codeHash',
+  attempts: 'attempts',
+  requests: 'requests',
+  requestWindowAt: 'requestWindowAt',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormLoginChallengeScalarFieldEnum = (typeof FormLoginChallengeScalarFieldEnum)[keyof typeof FormLoginChallengeScalarFieldEnum]
+
+
 export const StatusOptionScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -3038,6 +3624,15 @@ export const PriorityOptionScalarFieldEnum = {
 } as const
 
 export type PriorityOptionScalarFieldEnum = (typeof PriorityOptionScalarFieldEnum)[keyof typeof PriorityOptionScalarFieldEnum]
+
+
+export const ConversationAssigneeScalarFieldEnum = {
+  conversationId: 'conversationId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type ConversationAssigneeScalarFieldEnum = (typeof ConversationAssigneeScalarFieldEnum)[keyof typeof ConversationAssigneeScalarFieldEnum]
 
 
 export const ConversationMessageScalarFieldEnum = {
@@ -3079,6 +3674,52 @@ export const IncomingEmailScalarFieldEnum = {
 } as const
 
 export type IncomingEmailScalarFieldEnum = (typeof IncomingEmailScalarFieldEnum)[keyof typeof IncomingEmailScalarFieldEnum]
+
+
+export const ImapSyncStateScalarFieldEnum = {
+  id: 'id',
+  mailbox: 'mailbox',
+  uidValidity: 'uidValidity',
+  lastUid: 'lastUid',
+  leaseToken: 'leaseToken',
+  leaseUntil: 'leaseUntil',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ImapSyncStateScalarFieldEnum = (typeof ImapSyncStateScalarFieldEnum)[keyof typeof ImapSyncStateScalarFieldEnum]
+
+
+export const OutboundMessageScalarFieldEnum = {
+  id: 'id',
+  dedupeKey: 'dedupeKey',
+  channel: 'channel',
+  payload: 'payload',
+  conversationId: 'conversationId',
+  userId: 'userId',
+  status: 'status',
+  sequence: 'sequence',
+  attempts: 'attempts',
+  availableAt: 'availableAt',
+  leaseToken: 'leaseToken',
+  leaseUntil: 'leaseUntil',
+  lastError: 'lastError',
+  providerMessageId: 'providerMessageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OutboundMessageScalarFieldEnum = (typeof OutboundMessageScalarFieldEnum)[keyof typeof OutboundMessageScalarFieldEnum]
+
+
+export const ImapSyncRetryScalarFieldEnum = {
+  syncId: 'syncId',
+  uid: 'uid',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError'
+} as const
+
+export type ImapSyncRetryScalarFieldEnum = (typeof ImapSyncRetryScalarFieldEnum)[keyof typeof ImapSyncRetryScalarFieldEnum]
 
 
 export const ActivityLogScalarFieldEnum = {
@@ -3256,6 +3897,7 @@ export const IntegrationSettingsScalarFieldEnum = {
   smtpFromAddress: 'smtpFromAddress',
   smtpFromName: 'smtpFromName',
   imapEnabled: 'imapEnabled',
+  incomingMessagesSince: 'incomingMessagesSince',
   imapConnectionName: 'imapConnectionName',
   imapHost: 'imapHost',
   imapPort: 'imapPort',
@@ -3554,6 +4196,45 @@ export const ConversationOrderByRelevanceFieldEnum = {
 export type ConversationOrderByRelevanceFieldEnum = (typeof ConversationOrderByRelevanceFieldEnum)[keyof typeof ConversationOrderByRelevanceFieldEnum]
 
 
+export const FormSettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  departmentId: 'departmentId',
+  title: 'title'
+} as const
+
+export type FormSettingsOrderByRelevanceFieldEnum = (typeof FormSettingsOrderByRelevanceFieldEnum)[keyof typeof FormSettingsOrderByRelevanceFieldEnum]
+
+
+export const FormRequestOrderByRelevanceFieldEnum = {
+  conversationId: 'conversationId',
+  email: 'email',
+  name: 'name',
+  phone: 'phone',
+  company: 'company'
+} as const
+
+export type FormRequestOrderByRelevanceFieldEnum = (typeof FormRequestOrderByRelevanceFieldEnum)[keyof typeof FormRequestOrderByRelevanceFieldEnum]
+
+
+export const FormAccessOrderByRelevanceFieldEnum = {
+  tokenHash: 'tokenHash',
+  conversationId: 'conversationId',
+  email: 'email'
+} as const
+
+export type FormAccessOrderByRelevanceFieldEnum = (typeof FormAccessOrderByRelevanceFieldEnum)[keyof typeof FormAccessOrderByRelevanceFieldEnum]
+
+
+export const FormLoginChallengeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  email: 'email',
+  codeHash: 'codeHash'
+} as const
+
+export type FormLoginChallengeOrderByRelevanceFieldEnum = (typeof FormLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof FormLoginChallengeOrderByRelevanceFieldEnum]
+
+
 export const StatusOptionOrderByRelevanceFieldEnum = {
   id: 'id',
   code: 'code',
@@ -3572,6 +4253,14 @@ export const PriorityOptionOrderByRelevanceFieldEnum = {
 } as const
 
 export type PriorityOptionOrderByRelevanceFieldEnum = (typeof PriorityOptionOrderByRelevanceFieldEnum)[keyof typeof PriorityOptionOrderByRelevanceFieldEnum]
+
+
+export const ConversationAssigneeOrderByRelevanceFieldEnum = {
+  conversationId: 'conversationId',
+  userId: 'userId'
+} as const
+
+export type ConversationAssigneeOrderByRelevanceFieldEnum = (typeof ConversationAssigneeOrderByRelevanceFieldEnum)[keyof typeof ConversationAssigneeOrderByRelevanceFieldEnum]
 
 
 export const ConversationMessageOrderByRelevanceFieldEnum = {
@@ -3608,6 +4297,39 @@ export const IncomingEmailOrderByRelevanceFieldEnum = {
 } as const
 
 export type IncomingEmailOrderByRelevanceFieldEnum = (typeof IncomingEmailOrderByRelevanceFieldEnum)[keyof typeof IncomingEmailOrderByRelevanceFieldEnum]
+
+
+export const ImapSyncStateOrderByRelevanceFieldEnum = {
+  id: 'id',
+  mailbox: 'mailbox',
+  uidValidity: 'uidValidity',
+  leaseToken: 'leaseToken'
+} as const
+
+export type ImapSyncStateOrderByRelevanceFieldEnum = (typeof ImapSyncStateOrderByRelevanceFieldEnum)[keyof typeof ImapSyncStateOrderByRelevanceFieldEnum]
+
+
+export const OutboundMessageOrderByRelevanceFieldEnum = {
+  id: 'id',
+  dedupeKey: 'dedupeKey',
+  channel: 'channel',
+  conversationId: 'conversationId',
+  userId: 'userId',
+  status: 'status',
+  leaseToken: 'leaseToken',
+  lastError: 'lastError',
+  providerMessageId: 'providerMessageId'
+} as const
+
+export type OutboundMessageOrderByRelevanceFieldEnum = (typeof OutboundMessageOrderByRelevanceFieldEnum)[keyof typeof OutboundMessageOrderByRelevanceFieldEnum]
+
+
+export const ImapSyncRetryOrderByRelevanceFieldEnum = {
+  syncId: 'syncId',
+  lastError: 'lastError'
+} as const
+
+export type ImapSyncRetryOrderByRelevanceFieldEnum = (typeof ImapSyncRetryOrderByRelevanceFieldEnum)[keyof typeof ImapSyncRetryOrderByRelevanceFieldEnum]
 
 
 export const ActivityLogOrderByRelevanceFieldEnum = {
@@ -4088,12 +4810,20 @@ export type GlobalOmitConfig = {
   department?: Prisma.DepartmentOmit
   departmentAgent?: Prisma.DepartmentAgentOmit
   conversation?: Prisma.ConversationOmit
+  formSettings?: Prisma.FormSettingsOmit
+  formRequest?: Prisma.FormRequestOmit
+  formAccess?: Prisma.FormAccessOmit
+  formLoginChallenge?: Prisma.FormLoginChallengeOmit
   statusOption?: Prisma.StatusOptionOmit
   priorityOption?: Prisma.PriorityOptionOmit
+  conversationAssignee?: Prisma.ConversationAssigneeOmit
   conversationMessage?: Prisma.ConversationMessageOmit
   conversationParticipant?: Prisma.ConversationParticipantOmit
   conversationMessageMention?: Prisma.ConversationMessageMentionOmit
   incomingEmail?: Prisma.IncomingEmailOmit
+  imapSyncState?: Prisma.ImapSyncStateOmit
+  outboundMessage?: Prisma.OutboundMessageOmit
+  imapSyncRetry?: Prisma.ImapSyncRetryOmit
   activityLog?: Prisma.ActivityLogOmit
   conversationAttachment?: Prisma.ConversationAttachmentOmit
   customerAttachment?: Prisma.CustomerAttachmentOmit

@@ -24,7 +24,8 @@ export const ConversationChannel = {
   EMAIL: 'EMAIL',
   SMS: 'SMS',
   WHATSAPP: 'WHATSAPP',
-  LIVE_CHAT: 'LIVE_CHAT'
+  LIVE_CHAT: 'LIVE_CHAT',
+  FORM: 'FORM'
 } as const
 
 export type ConversationChannel = (typeof ConversationChannel)[keyof typeof ConversationChannel]

@@ -1,3 +1,4 @@
+import { FormPortal } from './features/tickets/FormPortal';
 import ReactDOM from "react-dom/client";
 import {
   BrowserRouter,
@@ -77,6 +78,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Realtime />
         <Routes>
           <Route path="/" element={<Navigate to="/auth" replace />} />
+          <Route path="/form/destek" element={<FormPortal />} /><Route path="/form/talep" element={<FormPortal />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/register" element={<Navigate to="/auth" replace />} />
           <Route element={<Layout />}>

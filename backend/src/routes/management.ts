@@ -1,3 +1,4 @@
+import { getFormSettings, saveFormSettings, formSettingsSchema } from '../services/forms.service.js';
 import { Router } from "express";
 import { mergeCustomers, mergeCustomersInput, duplicateCustomers, duplicateCustomersQuery } from '../services/customer-merge.service.js';
 import * as skillCatalog from '../services/skill-catalog.service.js';
@@ -111,7 +112,13 @@ managementRouter.put("/staff-presence/settings", admin, async (req, res) => {
   res.json({ success: true, data: await updatePresenceSettings(idleMinutes) });
 });
 managementRouter.delete("/activity-logs", staff, async (req, res) => res.json({ success: true, data: await service.deleteActivityLogs(req.actor, schema.activityDeleteQuery.parse(req.query).period) }));
+managementRouter.get('/integrations/form', staff, async (_req, res) => res.json({ success: true, data: await getFormSettings() }));
+managementRouter.put('/integrations/form', staff, async (req, res) => res.json({ success: true, data: await saveFormSettings(req.actor, formSettingsSchema.parse(req.body)) }));
 managementRouter.get("/integrations", staff, async (req, res) => res.json({ success: true, data: await service.integrationSettings(req.actor) }));
+managementRouter.patch('/integrations/incoming-start', staff, async (req, res) => {
+  const { incomingMessagesSince } = z.object({ incomingMessagesSince: z.iso.datetime().transform(value => new Date(value)).nullable() }).strict().parse(req.body);
+  res.json({ success: true, data: await service.updateIncomingStart(req.actor, incomingMessagesSince) });
+});
 managementRouter.put("/integrations", staff, async (req, res) => res.json({ success: true, data: await service.updateIntegrationSettings(req.actor, schema.integrationSettingsSchema.parse(req.body)) }));
 managementRouter.post("/integrations/test", staff, async (req, res) => res.json({ success: true, data: await service.testIntegration(req.actor, schema.integrationTestSchema.parse(req.body).channel) }));
 managementRouter.get("/response-time-settings", staff, async (req, res) => res.json({ success: true, data: await service.responseTimeSettings(req.actor) }));

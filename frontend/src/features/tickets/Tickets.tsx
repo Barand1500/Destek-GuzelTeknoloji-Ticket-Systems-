@@ -3,8 +3,9 @@ import { elapsedDuration } from "../../utils/elapsed-duration";
 import { conversationChannels } from '../../utils/conversation-channels';
 import { ReplyChannelSelector } from "./ReplyChannelSelector";
 import { EditableCustomerSummary } from "./EditableCustomerSummary";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { useWorkSession } from "../../components/WorkSession";
+import { useConversationTyping } from '../../components/useConversationTyping';
 import { activityActionLabel, activityValueLabel } from "../management/activity-log-format";
 import {
   Link,
@@ -12,7 +13,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   RotateCcw,
   ArrowLeft,
@@ -36,7 +37,7 @@ import {
 import { api, errorText } from "../../services/api";
 import { DirectorySelect } from '../../components/DirectorySelect';
 import { DeleteModal } from '../../components/DeleteModal';
-import { DropdownSelect } from '../../components/DropdownSelect';
+import { DropdownSelect, MultiDropdownSelect } from '../../components/DropdownSelect';
 import { SearchableDropdown } from '../../components/SearchableDropdown';
 import { AttachmentLinks,CompactFilePicker,ComposerFiles,FilePicker,SavedReplyPicker,TagEditor,TagPicker,FormDropdown } from './TicketExtras';
 import './extras.css';
@@ -197,7 +198,7 @@ export function TicketList() {
   const limit = [10, 15, 20, 50].includes(requestedLimit) ? requestedLimit : 15;
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
-  const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", mine: "Bana atanan", unassigned: "Atanmamış" };
+  const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", form: "Form", mine: "Bana atanan", unassigned: "Atanmamış" };
   const filterDescriptions: Record<string, string> = { all: "Tüm talepler", ticket: "Telefon desteği ekranından açılan talepler", mail: "Gelen ve giden E-Posta görüşmeleri", sms: "SMS ile gelen talepler", whatsapp: "WhatsApp üzerinden gelen talepler", mine: "Size atanmış talepler", unassigned: "Atanmamış Talepler", today: "Bugün açılan talepler" };
   const [tabLabels, setTabLabels] = useState(defaultTabLabels);
   const [tabOrder, setTabOrder] = useState(Object.keys(defaultTabLabels));
@@ -295,8 +296,8 @@ export function TicketList() {
   function selectView(key: string) {
     const custom = customTabs.find((tab) => tab.id === key);
     if (!custom) {
-      const code = key === "mail" ? "EMAIL" : key === "sms" ? "SMS" : key === "whatsapp" ? "WHATSAPP" : key === "ticket" ? "TICKET" : key === "all" ? "ALL" : key === "mine" ? "MINE" : "UNASSIGNED";
-      setParams((p) => { p.set("view", ["mail", "sms", "whatsapp", "ticket"].includes(key) ? "all" : key); p.set("category", code); p.delete("channel"); p.delete("tagId"); p.delete("page"); return p; });
+      const code = key === "form" ? "FORM" : key === "mail" ? "EMAIL" : key === "sms" ? "SMS" : key === "whatsapp" ? "WHATSAPP" : key === "ticket" ? "TICKET" : key === "all" ? "ALL" : key === "mine" ? "MINE" : "UNASSIGNED";
+      setParams((p) => { p.set("view", ["mail", "sms", "whatsapp", "ticket", "form"].includes(key) ? "all" : key); p.set("category", code); p.delete("channel"); p.delete("tagId"); p.delete("page"); return p; });
       return;
     }
     const tag = tagsQuery.data?.data.find((item) => item.id === custom.tagId);
@@ -345,7 +346,7 @@ export function TicketList() {
           ).map(([value, label]) => (
             <button
               key={value}
-              className={(customTabs.some((tab) => tab.id === value) ? params.get("category") === tagsQuery.data?.data.find((tag) => tag.id === customTabs.find((tab) => tab.id === value)?.tagId)?.code : ["mail", "sms", "whatsapp", "ticket"].includes(value) ? params.get("category") === ({ mail: "EMAIL", sms: "SMS", whatsapp: "WHATSAPP", ticket: "TICKET" } as Record<string, string>)[value] : view === value && !params.get("tagId") && (value === "all" ? !params.get("category") || params.get("category") === "ALL" : params.get("category") === value.toUpperCase())) ? "active" : ""}
+              className={(customTabs.some((tab) => tab.id === value) ? params.get("category") === tagsQuery.data?.data.find((tag) => tag.id === customTabs.find((tab) => tab.id === value)?.tagId)?.code : ["mail", "sms", "whatsapp", "ticket", "form"].includes(value) ? params.get("category") === ({ form: "FORM", mail: "EMAIL", sms: "SMS", whatsapp: "WHATSAPP", ticket: "TICKET" } as Record<string, string>)[value] : view === value && !params.get("tagId") && (value === "all" ? !params.get("category") || params.get("category") === "ALL" : params.get("category") === value.toUpperCase())) ? "active" : ""}
               onClick={() => selectView(value)}
             >
               {label}
@@ -467,10 +468,8 @@ export function TicketList() {
                       {priorities[ticket.priority]}
                     </td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Departman: ${ticket.department.name}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{ticket.department.name}</td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Atanan: ${ticket.assignedAgent?.name ?? "Atanmamış"}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
-                      {ticket.assignedAgent ? <>{ticket.assignedAgent.name} <small>({ticket.assignedAgentMessageCount ?? 0})</small></> : (
-                        <span className="muted">Atanmamış</span>
-                      )}
+                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Atanan: ${(ticket.assignees?.map(item => item.user.name).join(", ") || ticket.assignedAgent?.name || "Atanmamış")}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                      {ticket.assignees?.length ? ticket.assignees.map(item => <div key={item.userId}>{item.user.name} <small>({item.messageCount ?? 0})</small></div>) : ticket.assignedAgent ? <>{ticket.assignedAgent.name} <small>({ticket.assignedAgentMessageCount ?? 0})</small></> : 'Atanmamış'}
                     </td>
                     <td className="muted inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
@@ -626,7 +625,9 @@ export function NewTicket() {
           <input
             name="subject"
             required
-            minLength={5}
+            pattern={'.*\\S.*'}
+            onInvalid={event => event.currentTarget.setCustomValidity('Konu boş bırakılamaz.')}
+            onInput={event => event.currentTarget.setCustomValidity('')}
             maxLength={200}
             placeholder="Talebinizi kısaca özetleyin"
           />
@@ -673,25 +674,44 @@ export function TicketDetail() {
   const [body, setBody] = useState("");
   const [internal, setInternal] = useState(false);
   const [selectedMentions, setSelectedMentions] = useState<SelectedMention[]>([]);
-  const [page, setPage] = useState(1);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const initialMessagePage = useRef<{ id: string; page: number } | null>(null);
+  const prependPosition = useRef<{ height: number; top: number } | null>(null);
   const sending = useRef(false);
   const stickToBottom = useRef(true);
+  useLayoutEffect(() => { stickToBottom.current = true; prependPosition.current = null; }, [id]);
   const ticket = useQuery({
     queryKey: ["conversation", id],
     queryFn: async () => (await api.get(`/conversations/${id}`)).data.data as Conversation,
     refetchInterval: 15_000,
   });
-  const messages = useQuery({
-    queryKey: ["messages", id, page],
-    queryFn: async () =>
-      (
-        await api.get<Page<Message>>(`/conversations/${id}/messages`, {
-          params: { page, limit: 25 },
-        })
-      ).data,
+  const messages = useInfiniteQuery({
+    queryKey: ["messages", id],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
+      const fetchPage = async (page: number) => (await api.get<Page<Message>>(`/conversations/${id}/messages`, { params: { page, limit: 50 }, signal })).data;
+      if (pageParam > 0) return fetchPage(pageParam);
+      const remembered = initialMessagePage.current;
+      if (remembered && remembered.id === id) return fetchPage(remembered.page);
+      const first = await fetchPage(1);
+      const lastPage = Math.max(1, first.pagination.totalPages);
+      const result = lastPage === 1 ? first : await fetchPage(lastPage);
+      initialMessagePage.current = { id: id!, page: lastPage };
+      return result;
+    },
+    getPreviousPageParam: first => first.pagination.page > 1 ? first.pagination.page - 1 : undefined,
+    getNextPageParam: last => last.pagination.page < last.pagination.totalPages ? last.pagination.page + 1 : undefined,
     refetchInterval: 15_000,
   });
+  const visibleMessages = [...new Map((messages.data?.pages.flatMap(chunk => chunk.data) ?? []).map(message => [message.id, message])).values()];
+  const messageTotal = messages.data?.pages.at(-1)?.pagination.total ?? 0;
+  function loadPreviousMessages() {
+    const list = messageListRef.current;
+    if (!list || !messages.hasPreviousPage || messages.isFetching) return;
+    stickToBottom.current = false;
+    prependPosition.current = { height: list.scrollHeight, top: list.scrollTop };
+    void messages.fetchPreviousPage().catch(() => { prependPosition.current = null; });
+  }
   const statusOptionsQuery = useQuery({
     queryKey: ["status-options"],
     queryFn: async () => (await api.get<Page<{ id: string; code: string; name: string; color: string }>>("/status-options", { params: { limit: 100 } })).data.data,
@@ -740,8 +760,6 @@ export function TicketDetail() {
       setSelectedMentions([]);
       setFiles([]);setFileKey(key=>key+1);
       stickToBottom.current = true;
-      const total = messages.data?.pagination.total ?? 0;
-      setPage(Math.ceil((total + 1) / 25));
       invalidate();
     },
     onSettled: () => { sending.current = false; },
@@ -750,13 +768,27 @@ export function TicketDetail() {
     mutationFn: async (input: unknown) => api.patch(`/conversations/${id}`, input),
     onSuccess: invalidate,
   });
+  const liveTyping = useConversationTyping(id, Boolean(ticket.data && !internal && !reply.isPending && ticket.data.status !== 'CLOSED' && hasPermission(user, 'conversations.reply')));
   const claim = useMutation({ mutationFn: () => api.post(`/conversations/${id}/assign-to-me`), onSuccess: invalidate });
   const remove=useMutation({mutationFn:()=>api.delete(`/conversations/${id}`),onSuccess:()=>{invalidate();forgetConversation(conversationPath(user!.role, id!));navigate(inboxPath(user!.role));}});
+  useLayoutEffect(() => {
+    const list = messageListRef.current;
+    if (!list) return;
+    if (prependPosition.current && !messages.isFetchingPreviousPage) {
+      const previous = prependPosition.current;
+      list.scrollTop = previous.top + list.scrollHeight - previous.height;
+      prependPosition.current = null;
+    } else if (stickToBottom.current && !prependPosition.current) list.scrollTop = list.scrollHeight;
+  }, [messages.data, messages.isFetchingPreviousPage, ticket.data?.id]);
+  useEffect(() => {
+    if (messages.hasNextPage && !messages.isFetching && !messages.isFetchNextPageError) void messages.fetchNextPage().catch(() => {});
+  }, [messages.hasNextPage, messages.isFetching, messages.isFetchNextPageError, messages.fetchNextPage]);
   useEffect(() => {
     const list = messageListRef.current;
-    if (!list || !stickToBottom.current) return;
-    list.scrollTop = list.scrollHeight;
-  }, [messages.data?.data, page]);
+    if (list && list.scrollHeight <= list.clientHeight && messages.hasPreviousPage && !messages.isFetching && !messages.isFetchPreviousPageError) {
+      void messages.fetchPreviousPage().catch(() => {});
+    }
+  }, [messages.data, messages.hasPreviousPage, messages.isFetching, messages.isFetchPreviousPageError, messages.fetchPreviousPage, ticket.data?.id]);
   if (ticket.isPending) return <main className="page">Talep yükleniyor…</main>;
   if (ticket.isError)
     return (
@@ -767,18 +799,19 @@ export function TicketDetail() {
     );
   const t = ticket.data;
   const agentById = new Map((agents.data ?? []).map((agent) => [agent.id, agent]));
+  const assignedPeople = t.assignees?.length ? t.assignees.map(item => item.user) : t.assignedAgent ? [t.assignedAgent] : [];
   const assigneeOptions = [
     { value: '', label: 'Atanmamış' },
-    ...(t.assignedAgent ? [{ value: t.assignedAgent.id, label: t.assignedAgent.name, presence: presenceById.get(t.assignedAgent.id), openConversationCount: agentById.get(t.assignedAgent.id)?.openConversationCount }] : []),
-    ...(agents.data ?? []).filter(agent => agent.id !== t.assignedAgent?.id).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id), openConversationCount: agent.openConversationCount })),
+    ...assignedPeople.map(person => ({ value: person.id, label: person.name, presence: presenceById.get(person.id), openConversationCount: agentById.get(person.id)?.openConversationCount })),
+    ...(agents.data ?? []).filter(agent => !assignedPeople.some(person => person.id === agent.id)).map(agent => ({ value: agent.id, label: agent.name, presence: presenceById.get(agent.id), openConversationCount: agent.openConversationCount })),
   ];
   const websiteOptions = [
     { value: "", label: "Proje Seçilmedi" },
     ...(t.website && !websites.data?.some((site) => site.id === t.website?.id) ? [{ value: t.website.id, label: t.website.name }] : []),
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
-  const agentNeedsClaim = user?.role === 'AGENT' && !t.assignedAgentId;
-  const canPublicReply = hasPermission(user, 'conversations.reply') && t.status !== 'CLOSED' && (user?.role !== 'AGENT' || t.assignedAgentId === user.id);
+  const agentNeedsClaim = user?.role === 'AGENT' && assignedPeople.length === 0;
+  const canPublicReply = hasPermission(user, 'conversations.reply') && t.status !== 'CLOSED';
   const canInternalNote = hasPermission(user, 'conversations.note') && t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
   const canWrite = internal ? canInternalNote : canPublicReply;
   const canSubmitReply = Boolean(body.trim() || files.length);
@@ -812,9 +845,10 @@ export function TicketDetail() {
           <div className="section-heading">
             <MessageSquare size={18} />
             Konuşma
+          {liveTyping.people.length > 0 && <div className="conversation-typing" role="status" aria-live="polite"><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span><span>{liveTyping.people.map(person => person.name).join(', ')} yazıyor…</span></div>}
             <Link className="conversation-log-link" to={conversationLogPath(user!.role, t.id)} title="Konuşma Logları" aria-label="Konuşma Loglarını Aç">
               <History size={15} />
-              <span className="muted">{messages.data?.pagination.total ?? 0} mesaj</span>
+              <span className="muted">{messageTotal} mesaj</span>
             </Link>
           </div>
           <div
@@ -824,11 +858,14 @@ export function TicketDetail() {
               const list = messageListRef.current;
               if (!list) return;
               stickToBottom.current = list.scrollHeight - list.scrollTop - list.clientHeight < 96;
+              if (list.scrollTop < 80) loadPreviousMessages();
             }}
+            onWheel={event => { if (event.deltaY < 0 && (messageListRef.current?.scrollTop ?? 0) < 80) loadPreviousMessages(); }}
           >
+            {messages.isFetchingPreviousPage && <p className="muted" role="status">Eski mesajlar yükleniyor…</p>}
             {messages.isPending && <p>Mesajlar yükleniyor…</p>}
             {messages.isError && <QueryError error={messages.error} />}{" "}
-            {messages.data?.data.filter((message) => message.type !== "SYSTEM").map((message, index, visibleMessages) => {
+            {visibleMessages.filter((message) => message.type !== "SYSTEM").map((message, index, visibleMessages) => {
               const priorCustomerMessage = message.type === "AGENT_REPLY" ? visibleMessages.slice(0, index).reverse().find((item) => item.type === "CUSTOMER_MESSAGE") : undefined;
               return (
               <article
@@ -836,7 +873,7 @@ export function TicketDetail() {
                 className={`message ${message.type === "INTERNAL_NOTE" ? "internal-note" : ""} ${message.author?.id === user?.id ? "outgoing" : "incoming"}`}
               >
                 <span className="avatar">
-                  {(message.author?.name ?? "Sistem").slice(0, 1)}
+                  {(message.author?.name ?? "Sistem").slice(0, 1).toLocaleUpperCase("tr-TR")}
                 </span>
                 <div className="message-content">
                   <header>
@@ -857,25 +894,12 @@ export function TicketDetail() {
               );
             })}
           </div>
-          {(messages.data?.pagination.totalPages ?? 0) > 1 && (
-            <div className="pagination">
-              <button aria-label="Önceki Sayfa" title="Önceki Sayfa" disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft size={14} /></button>
-              <span>Sayfa {page}</span>
-              <button
-                aria-label="Sonraki Sayfa"
-                title="Sonraki Sayfa"
-                disabled={page >= (messages.data?.pagination.totalPages ?? 1)}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
           <form
             className={`composer ${internal ? "internal-note" : ""}`}
             onSubmit={(e) => {
               e.preventDefault();
               if (sending.current || reply.isPending || !canWrite || !canSubmitReply) return;
+              liveTyping.stop();
               sending.current = true;
               reply.mutate();
             }}
@@ -912,7 +936,8 @@ export function TicketDetail() {
             /> : <textarea
               aria-label={internal ? "Dahili Not" : "Yanıtınız"}
               value={body}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={(e) => { setBody(e.target.value); liveTyping.typing(e.target.value); }}
+              onBlur={liveTyping.stop}
               onKeyDown={(e) => {
                 if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.nativeEvent.isComposing || e.keyCode === 229) return;
                 e.preventDefault();
@@ -972,9 +997,9 @@ export function TicketDetail() {
           </div>
           <div className="ticket-assignee-property">
             {canAssignStaff ? (
-              <SearchableDropdown label="Atanan Personel" name="assignedAgentId" value={t.assignedAgent?.id??''} disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={value=>{if(value !== (t.assignedAgent?.id ?? '') && (value===''||(agents.data??[]).some(agent=>agent.id===value)))update.mutate({assignedAgentId:value||null})}} options={assigneeOptions} />
+              <MultiDropdownSelect className="assignee-multi-select" label="Atanan Personeller" ariaLabel="Atanan Personeller" value={assignedPeople.map(person => person.id)} selectionLabel={assignedPeople.map(person => person.name).join(', ')} emptyLabel="Atanmamış" disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={assignedAgentIds => update.mutate({ assignedAgentIds })} options={assigneeOptions.filter(option => option.value)} />
             ) : (
-              <label>Atanan personel<span>{t.assignedAgent?.name ?? "Atanmamış"}</span></label>
+              <label>Atanan personel<span>{assignedPeople.map(person => person.name).join(", ") || "Atanmamış"}</span></label>
             )}
           </div>
           {agents.isError && <QueryError error={agents.error} />}
@@ -982,7 +1007,7 @@ export function TicketDetail() {
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending || !hasPermission(user, 'conversations.update')}/>}
           {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
           {update.isError && <QueryError error={update.error} />}{" "}
-          {agentNeedsClaim && <div><p className="muted">Bu görüşme departman kuyruğunda. Yanıtlamadan önce üzerinize alın.</p><button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize Alınıyor…' : 'Üzerime Ata'}</button>{claim.isError && <QueryError error={claim.error}/>}</div>}
+          {agentNeedsClaim && <div><p className="muted">Yanıt verdiğinizde talebe otomatik atanırsınız.</p>{canAssignStaff && <button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize Alınıyor…' : 'Üzerime Ata'}</button>}{claim.isError && <QueryError error={claim.error}/>}</div>}
           <div className="ticket-actions">
           {user?.role !== "CUSTOMER" &&
             t.status !== "RESOLVED" &&

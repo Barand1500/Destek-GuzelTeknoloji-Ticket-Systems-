@@ -1,18 +1,19 @@
 export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
 export type AccessRole = { id: string; name: string; permissions: string[]; scope: string };
 export type StaffSkill = { name: string; category: string; level: string; levelScore?: number };
-export type User = { id: string; name: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; accessRoleId?: string | null; accessRole?: AccessRole | null; rolePermissions?: string[]; roleScope?: string; departmentIds?: string[] };
+export type User = { id: string; name: string; displayName?: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; accessRoleId?: string | null; accessRole?: AccessRole | null; rolePermissions?: string[]; roleScope?: string; departmentIds?: string[] };
 export type Department = { id: string; name: string };
 export type Tag={id:string;name:string;code:string;color:string};
 export type Website={id:string;name:string;url:string;isActive:boolean;guideFileCount?:number};
 export type Attachment={id:string;originalName:string;size:number;mimeType:string};
 export type Status = string;
 export type Priority = string;
-export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIVE_CHAT";
+export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIVE_CHAT" | "FORM";
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
-export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",LIVE_CHAT:"Canlı sohbet"};
+export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",FORM:"Form",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
-  replyChannels?: Array<"TICKET" | "EMAIL" | "SMS" | "WHATSAPP"> | null;
+  formRequest?: { name: string; email: string; phone: string | null; company: string | null } | null;
+  replyChannels?: Array<"TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "FORM"> | null;
   channel: ConversationChannel;
   source?: string;
   customerId: string;
@@ -28,6 +29,7 @@ export type Conversation = {
   customer: User;
   createdBy?: User | null;
   assignedAgent: User | null;
+  assignees?: Array<{ userId: string; user: User; messageCount?: number }>;
   department: Department;
   status: Status;
   priority: Priority;

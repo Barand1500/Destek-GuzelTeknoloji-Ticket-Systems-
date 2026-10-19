@@ -275,9 +275,11 @@ export type UserWhereInput = {
   skills?: Prisma.UserSkillListRelationFilter
   customerConversations?: Prisma.ConversationListRelationFilter
   assignedConversations?: Prisma.ConversationListRelationFilter
+  conversationAssignments?: Prisma.ConversationAssigneeListRelationFilter
   messages?: Prisma.ConversationMessageListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
   passwordResets?: Prisma.PasswordResetListRelationFilter
+  outboundMessages?: Prisma.OutboundMessageListRelationFilter
   logs?: Prisma.ActivityLogListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   savedReplies?: Prisma.SavedReplyListRelationFilter
@@ -310,9 +312,11 @@ export type UserOrderByWithRelationInput = {
   skills?: Prisma.UserSkillOrderByRelationAggregateInput
   customerConversations?: Prisma.ConversationOrderByRelationAggregateInput
   assignedConversations?: Prisma.ConversationOrderByRelationAggregateInput
+  conversationAssignments?: Prisma.ConversationAssigneeOrderByRelationAggregateInput
   messages?: Prisma.ConversationMessageOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   passwordResets?: Prisma.PasswordResetOrderByRelationAggregateInput
+  outboundMessages?: Prisma.OutboundMessageOrderByRelationAggregateInput
   logs?: Prisma.ActivityLogOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   savedReplies?: Prisma.SavedReplyOrderByRelationAggregateInput
@@ -349,9 +353,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   skills?: Prisma.UserSkillListRelationFilter
   customerConversations?: Prisma.ConversationListRelationFilter
   assignedConversations?: Prisma.ConversationListRelationFilter
+  conversationAssignments?: Prisma.ConversationAssigneeListRelationFilter
   messages?: Prisma.ConversationMessageListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
   passwordResets?: Prisma.PasswordResetListRelationFilter
+  outboundMessages?: Prisma.OutboundMessageListRelationFilter
   logs?: Prisma.ActivityLogListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   savedReplies?: Prisma.SavedReplyListRelationFilter
@@ -427,9 +433,11 @@ export type UserCreateInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -461,9 +469,11 @@ export type UserUncheckedCreateInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -495,9 +505,11 @@ export type UserUpdateInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -529,9 +541,11 @@ export type UserUncheckedUpdateInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -821,6 +835,20 @@ export type UserUpdateOneWithoutAssignedConversationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedConversationsInput, Prisma.UserUpdateWithoutAssignedConversationsInput>, Prisma.UserUncheckedUpdateWithoutAssignedConversationsInput>
 }
 
+export type UserCreateNestedOneWithoutConversationAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationAssignmentsInput, Prisma.UserUncheckedCreateWithoutConversationAssignmentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationAssignmentsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutConversationAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationAssignmentsInput, Prisma.UserUncheckedCreateWithoutConversationAssignmentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationAssignmentsInput
+  upsert?: Prisma.UserUpsertWithoutConversationAssignmentsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutConversationAssignmentsInput, Prisma.UserUpdateWithoutConversationAssignmentsInput>, Prisma.UserUncheckedUpdateWithoutConversationAssignmentsInput>
+}
+
 export type UserCreateNestedOneWithoutMessagesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutMessagesInput, Prisma.UserUncheckedCreateWithoutMessagesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessagesInput
@@ -861,6 +889,22 @@ export type UserUpdateOneRequiredWithoutMessageMentionsNestedInput = {
   upsert?: Prisma.UserUpsertWithoutMessageMentionsInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMessageMentionsInput, Prisma.UserUpdateWithoutMessageMentionsInput>, Prisma.UserUncheckedUpdateWithoutMessageMentionsInput>
+}
+
+export type UserCreateNestedOneWithoutOutboundMessagesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOutboundMessagesInput, Prisma.UserUncheckedCreateWithoutOutboundMessagesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOutboundMessagesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutOutboundMessagesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOutboundMessagesInput, Prisma.UserUncheckedCreateWithoutOutboundMessagesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOutboundMessagesInput
+  upsert?: Prisma.UserUpsertWithoutOutboundMessagesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOutboundMessagesInput, Prisma.UserUpdateWithoutOutboundMessagesInput>, Prisma.UserUncheckedUpdateWithoutOutboundMessagesInput>
 }
 
 export type UserCreateNestedOneWithoutLogsInput = {
@@ -969,9 +1013,11 @@ export type UserCreateWithoutAccessRoleInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1002,9 +1048,11 @@ export type UserUncheckedCreateWithoutAccessRoleInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1083,9 +1131,11 @@ export type UserCreateWithoutSkillsInput = {
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1116,9 +1166,11 @@ export type UserUncheckedCreateWithoutSkillsInput = {
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1165,9 +1217,11 @@ export type UserUpdateWithoutSkillsInput = {
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1198,9 +1252,11 @@ export type UserUncheckedUpdateWithoutSkillsInput = {
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1232,8 +1288,10 @@ export type UserCreateWithoutPasswordResetsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1265,8 +1323,10 @@ export type UserUncheckedCreateWithoutPasswordResetsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1314,8 +1374,10 @@ export type UserUpdateWithoutPasswordResetsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1347,8 +1409,10 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1380,8 +1444,10 @@ export type UserCreateWithoutSessionsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1413,8 +1479,10 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1462,8 +1530,10 @@ export type UserUpdateWithoutSessionsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1495,8 +1565,10 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1527,9 +1599,11 @@ export type UserCreateWithoutDepartmentsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1560,9 +1634,11 @@ export type UserUncheckedCreateWithoutDepartmentsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1609,9 +1685,11 @@ export type UserUpdateWithoutDepartmentsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1642,9 +1720,11 @@ export type UserUncheckedUpdateWithoutDepartmentsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1675,9 +1755,11 @@ export type UserCreateWithoutCustomerConversationsInput = {
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1708,9 +1790,11 @@ export type UserUncheckedCreateWithoutCustomerConversationsInput = {
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1746,9 +1830,11 @@ export type UserCreateWithoutAssignedConversationsInput = {
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -1779,9 +1865,11 @@ export type UserUncheckedCreateWithoutAssignedConversationsInput = {
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -1828,9 +1916,11 @@ export type UserUpdateWithoutCustomerConversationsInput = {
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1861,9 +1951,11 @@ export type UserUncheckedUpdateWithoutCustomerConversationsInput = {
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1905,9 +1997,11 @@ export type UserUpdateWithoutAssignedConversationsInput = {
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -1938,9 +2032,167 @@ export type UserUncheckedUpdateWithoutAssignedConversationsInput = {
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutConversationAssignmentsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutConversationAssignmentsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutConversationAssignmentsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationAssignmentsInput, Prisma.UserUncheckedCreateWithoutConversationAssignmentsInput>
+}
+
+export type UserUpsertWithoutConversationAssignmentsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutConversationAssignmentsInput, Prisma.UserUncheckedUpdateWithoutConversationAssignmentsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationAssignmentsInput, Prisma.UserUncheckedCreateWithoutConversationAssignmentsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutConversationAssignmentsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutConversationAssignmentsInput, Prisma.UserUncheckedUpdateWithoutConversationAssignmentsInput>
+}
+
+export type UserUpdateWithoutConversationAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutConversationAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -1972,8 +2224,10 @@ export type UserCreateWithoutMessagesInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2005,8 +2259,10 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2054,8 +2310,10 @@ export type UserUpdateWithoutMessagesInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2087,8 +2345,10 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -2120,9 +2380,11 @@ export type UserCreateWithoutConversationParticipantsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2153,9 +2415,11 @@ export type UserUncheckedCreateWithoutConversationParticipantsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2202,9 +2466,11 @@ export type UserUpdateWithoutConversationParticipantsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2235,9 +2501,11 @@ export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -2268,9 +2536,11 @@ export type UserCreateWithoutMessageMentionsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2301,9 +2571,11 @@ export type UserUncheckedCreateWithoutMessageMentionsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2350,9 +2622,11 @@ export type UserUpdateWithoutMessageMentionsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2383,6 +2657,163 @@ export type UserUncheckedUpdateWithoutMessageMentionsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutOutboundMessagesInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutOutboundMessagesInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutOutboundMessagesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutOutboundMessagesInput, Prisma.UserUncheckedCreateWithoutOutboundMessagesInput>
+}
+
+export type UserUpsertWithoutOutboundMessagesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutOutboundMessagesInput, Prisma.UserUncheckedUpdateWithoutOutboundMessagesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutOutboundMessagesInput, Prisma.UserUncheckedCreateWithoutOutboundMessagesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutOutboundMessagesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutOutboundMessagesInput, Prisma.UserUncheckedUpdateWithoutOutboundMessagesInput>
+}
+
+export type UserUpdateWithoutOutboundMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutOutboundMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
@@ -2393,6 +2824,7 @@ export type UserUncheckedUpdateWithoutMessageMentionsInput = {
   customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
   projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
   conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLogsInput = {
@@ -2416,9 +2848,11 @@ export type UserCreateWithoutLogsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
   attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
@@ -2449,9 +2883,11 @@ export type UserUncheckedCreateWithoutLogsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
@@ -2498,9 +2934,11 @@ export type UserUpdateWithoutLogsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
   attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
@@ -2531,9 +2969,11 @@ export type UserUncheckedUpdateWithoutLogsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
@@ -2564,9 +3004,11 @@ export type UserCreateWithoutAttachmentsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2597,9 +3039,11 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2646,9 +3090,11 @@ export type UserUpdateWithoutAttachmentsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2679,9 +3125,11 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -2712,9 +3160,11 @@ export type UserCreateWithoutCustomerFilesInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2745,9 +3195,11 @@ export type UserUncheckedCreateWithoutCustomerFilesInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2794,9 +3246,11 @@ export type UserUpdateWithoutCustomerFilesInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2827,9 +3281,11 @@ export type UserUncheckedUpdateWithoutCustomerFilesInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -2860,9 +3316,11 @@ export type UserCreateWithoutProjectGuideFilesInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
@@ -2893,9 +3351,11 @@ export type UserUncheckedCreateWithoutProjectGuideFilesInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
@@ -2942,9 +3402,11 @@ export type UserUpdateWithoutProjectGuideFilesInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -2975,9 +3437,11 @@ export type UserUncheckedUpdateWithoutProjectGuideFilesInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -3008,9 +3472,11 @@ export type UserCreateWithoutNotificationsInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
   attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
@@ -3041,9 +3507,11 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
@@ -3090,9 +3558,11 @@ export type UserUpdateWithoutNotificationsInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
   attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
@@ -3123,9 +3593,11 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
@@ -3156,9 +3628,11 @@ export type UserCreateWithoutSavedRepliesInput = {
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
@@ -3189,9 +3663,11 @@ export type UserUncheckedCreateWithoutSavedRepliesInput = {
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
@@ -3238,9 +3714,11 @@ export type UserUpdateWithoutSavedRepliesInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
@@ -3271,9 +3749,11 @@ export type UserUncheckedUpdateWithoutSavedRepliesInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
@@ -3321,9 +3801,11 @@ export type UserUpdateWithoutAccessRoleInput = {
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
@@ -3354,9 +3836,11 @@ export type UserUncheckedUpdateWithoutAccessRoleInput = {
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
@@ -3395,9 +3879,11 @@ export type UserCountOutputType = {
   skills: number
   customerConversations: number
   assignedConversations: number
+  conversationAssignments: number
   messages: number
   sessions: number
   passwordResets: number
+  outboundMessages: number
   logs: number
   notifications: number
   savedReplies: number
@@ -3413,9 +3899,11 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   skills?: boolean | UserCountOutputTypeCountSkillsArgs
   customerConversations?: boolean | UserCountOutputTypeCountCustomerConversationsArgs
   assignedConversations?: boolean | UserCountOutputTypeCountAssignedConversationsArgs
+  conversationAssignments?: boolean | UserCountOutputTypeCountConversationAssignmentsArgs
   messages?: boolean | UserCountOutputTypeCountMessagesArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   passwordResets?: boolean | UserCountOutputTypeCountPasswordResetsArgs
+  outboundMessages?: boolean | UserCountOutputTypeCountOutboundMessagesArgs
   logs?: boolean | UserCountOutputTypeCountLogsArgs
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
   savedReplies?: boolean | UserCountOutputTypeCountSavedRepliesArgs
@@ -3467,6 +3955,13 @@ export type UserCountOutputTypeCountAssignedConversationsArgs<ExtArgs extends ru
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountConversationAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ConversationAssigneeWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ConversationMessageWhereInput
 }
@@ -3483,6 +3978,13 @@ export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.E
  */
 export type UserCountOutputTypeCountPasswordResetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PasswordResetWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOutboundMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OutboundMessageWhereInput
 }
 
 /**
@@ -3564,9 +4066,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   skills?: boolean | Prisma.User$skillsArgs<ExtArgs>
   customerConversations?: boolean | Prisma.User$customerConversationsArgs<ExtArgs>
   assignedConversations?: boolean | Prisma.User$assignedConversationsArgs<ExtArgs>
+  conversationAssignments?: boolean | Prisma.User$conversationAssignmentsArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
+  outboundMessages?: boolean | Prisma.User$outboundMessagesArgs<ExtArgs>
   logs?: boolean | Prisma.User$logsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   savedReplies?: boolean | Prisma.User$savedRepliesArgs<ExtArgs>
@@ -3606,9 +4110,11 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   skills?: boolean | Prisma.User$skillsArgs<ExtArgs>
   customerConversations?: boolean | Prisma.User$customerConversationsArgs<ExtArgs>
   assignedConversations?: boolean | Prisma.User$assignedConversationsArgs<ExtArgs>
+  conversationAssignments?: boolean | Prisma.User$conversationAssignmentsArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
+  outboundMessages?: boolean | Prisma.User$outboundMessagesArgs<ExtArgs>
   logs?: boolean | Prisma.User$logsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   savedReplies?: boolean | Prisma.User$savedRepliesArgs<ExtArgs>
@@ -3628,9 +4134,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     skills: Prisma.$UserSkillPayload<ExtArgs>[]
     customerConversations: Prisma.$ConversationPayload<ExtArgs>[]
     assignedConversations: Prisma.$ConversationPayload<ExtArgs>[]
+    conversationAssignments: Prisma.$ConversationAssigneePayload<ExtArgs>[]
     messages: Prisma.$ConversationMessagePayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     passwordResets: Prisma.$PasswordResetPayload<ExtArgs>[]
+    outboundMessages: Prisma.$OutboundMessagePayload<ExtArgs>[]
     logs: Prisma.$ActivityLogPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     savedReplies: Prisma.$SavedReplyPayload<ExtArgs>[]
@@ -4002,9 +4510,11 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   skills<T extends Prisma.User$skillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   customerConversations<T extends Prisma.User$customerConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$customerConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedConversations<T extends Prisma.User$assignedConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  conversationAssignments<T extends Prisma.User$conversationAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$conversationAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationAssigneePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.User$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   passwordResets<T extends Prisma.User$passwordResetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  outboundMessages<T extends Prisma.User$outboundMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$outboundMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OutboundMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   logs<T extends Prisma.User$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   savedReplies<T extends Prisma.User$savedRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$savedRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SavedReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4521,6 +5031,30 @@ export type User$assignedConversationsArgs<ExtArgs extends runtime.Types.Extensi
 }
 
 /**
+ * User.conversationAssignments
+ */
+export type User$conversationAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ConversationAssignee
+   */
+  select?: Prisma.ConversationAssigneeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ConversationAssignee
+   */
+  omit?: Prisma.ConversationAssigneeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationAssigneeInclude<ExtArgs> | null
+  where?: Prisma.ConversationAssigneeWhereInput
+  orderBy?: Prisma.ConversationAssigneeOrderByWithRelationInput | Prisma.ConversationAssigneeOrderByWithRelationInput[]
+  cursor?: Prisma.ConversationAssigneeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ConversationAssigneeScalarFieldEnum | Prisma.ConversationAssigneeScalarFieldEnum[]
+}
+
+/**
  * User.messages
  */
 export type User$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4590,6 +5124,30 @@ export type User$passwordResetsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.PasswordResetScalarFieldEnum | Prisma.PasswordResetScalarFieldEnum[]
+}
+
+/**
+ * User.outboundMessages
+ */
+export type User$outboundMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OutboundMessage
+   */
+  select?: Prisma.OutboundMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OutboundMessage
+   */
+  omit?: Prisma.OutboundMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OutboundMessageInclude<ExtArgs> | null
+  where?: Prisma.OutboundMessageWhereInput
+  orderBy?: Prisma.OutboundMessageOrderByWithRelationInput | Prisma.OutboundMessageOrderByWithRelationInput[]
+  cursor?: Prisma.OutboundMessageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OutboundMessageScalarFieldEnum | Prisma.OutboundMessageScalarFieldEnum[]
 }
 
 /**

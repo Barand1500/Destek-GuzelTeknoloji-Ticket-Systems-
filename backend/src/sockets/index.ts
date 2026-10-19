@@ -6,10 +6,12 @@ import { events } from '../services/events.service.js';
 import { can } from '../services/permissions.js';
 import { db } from '../config/db.js';
 import { visibility } from '../services/conversations.service.js';
+import { attachConversationTyping } from './typing.js';
 import { canReceiveStaffPresence, connectPresence, disconnectPresence, presenceEvents, updatePresence, type PresenceChanged } from '../services/presence.service.js';
 export function attachSockets(server:HttpServer){
   const io=new Server(server,{cors:{origin:(origin,done)=>done(null,!origin||allowedOrigins.has(origin)),credentials:true},maxHttpBufferSize:10000});
   io.use(async(socket,next)=>{try{await resolveActor(typeof socket.handshake.auth.token==='string'?socket.handshake.auth.token:undefined);next();}catch{next(new Error('UNAUTHENTICATED'));}});
+  attachConversationTyping(io);
   io.on('connection',async socket=>{
     try{
       const actor=await resolveActor(socket.handshake.auth.token);

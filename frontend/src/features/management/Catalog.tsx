@@ -169,7 +169,7 @@ export function TagsPage() {
   const [viewLabels, setViewLabels] = useState<Record<string, string>>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem(`helpdesk-inbox-tabs-${user?.id}`) ?? '{}');
-      const codes: Record<string, string> = { all: 'ALL', ticket: 'TICKET', mail: 'EMAIL', sms: 'SMS', whatsapp: 'WHATSAPP', mine: 'MINE', unassigned: 'UNASSIGNED' };
+      const codes: Record<string, string> = { all: 'ALL', ticket: 'TICKET', mail: 'EMAIL', sms: 'SMS', whatsapp: 'WHATSAPP', form: 'FORM', mine: 'MINE', unassigned: 'UNASSIGNED' };
       return Object.fromEntries(Object.entries(saved.labels ?? {}).filter(([key, value]) => codes[key] && typeof value === 'string').map(([key, value]) => [codes[key], value as string]));
     } catch { return {}; }
   });
@@ -188,6 +188,7 @@ export function TagsPage() {
     { id: "view-mail", name: "Mail", code: "EMAIL", color: "#7c9b91", href: "/admin/conversations?view=all&category=EMAIL" },
     { id: "view-sms", name: "SMS", code: "SMS", color: "#7c9b91", href: "/admin/conversations?view=all&category=SMS" },
     { id: "view-whatsapp", name: "WhatsApp", code: "WHATSAPP", color: "#7c9b91", href: "/admin/conversations?view=all&category=WHATSAPP" },
+    { id: "view-form", name: "Form", code: "FORM", color: "#7c9b91", href: "/admin/conversations?view=all&category=FORM" },
     { id: "view-mine", name: "Bana atanan", code: "MINE", color: "#7c9b91", href: "/admin/conversations?view=mine&category=MINE" },
     { id: "view-unassigned", name: "Atanmamış", code: "UNASSIGNED", color: "#7c9b91", href: "/admin/conversations?view=unassigned&category=UNASSIGNED" },
   ].map((view) => ({ ...view, name: viewLabels[view.code] ?? view.name }));
@@ -199,7 +200,7 @@ export function TagsPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     const form = formValues(event);
     if (editingView) {
-      const key = ({ ALL: "all", TICKET: "ticket", EMAIL: "mail", SMS: "sms", WHATSAPP: "whatsapp", MINE: "mine", UNASSIGNED: "unassigned" } as Record<string, string>)[editingView.code] ?? "all";
+      const key = ({ ALL: "all", TICKET: "ticket", EMAIL: "mail", SMS: "sms", WHATSAPP: "whatsapp", FORM: "form", MINE: "mine", UNASSIGNED: "unassigned" } as Record<string, string>)[editingView.code] ?? "all";
       const storageKey = `helpdesk-inbox-tabs-${user?.id}`;
       try {
         const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}");

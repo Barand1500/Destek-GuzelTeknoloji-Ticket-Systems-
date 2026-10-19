@@ -696,7 +696,7 @@ function WorkspaceLayout() {
               aria-label="Profilim"
               title="Profilim"
             >
-              <span className="avatar">{user.name.slice(0, 1)}</span>
+              <span className="avatar">{user.name.slice(0, 1).toLocaleUpperCase("tr-TR")}</span>
               <span className="topbar-profile-name">{user.name}</span>
               <UserRound size={16} />
             </NavLink>

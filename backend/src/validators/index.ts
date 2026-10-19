@@ -39,18 +39,19 @@ export const listSchema = paginationSchema.extend({
   tagId: idSchema.optional(),
   assignedAgentId: idSchema.optional(),
   customerId: idSchema.optional(),
-  channel: z.enum(['TICKET','EMAIL','SMS','WHATSAPP','LIVE_CHAT']).optional(),
+  channel: z.enum(['TICKET','EMAIL','SMS','WHATSAPP','FORM','LIVE_CHAT']).optional(),
   category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),
   view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent", "today"]).default("all"),
 });
 export const createConversationSchema = z
   .object({
-    channel: z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP']).default('TICKET'),
-    subject: z.string().trim().min(5).max(200),
+    channel: z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP', 'FORM']).default('TICKET'),
+    subject: z.string().trim().min(1, 'Konu boş bırakılamaz.').max(200),
     message: z.string().trim().min(1).max(10000),
     websiteUrl: z.string().trim().url().max(500).optional(),
     websiteId: idSchema.optional(),
     assignedAgentId: idSchema.optional(),
+    assignedAgentIds: z.array(idSchema).max(100).optional(),
     departmentId: idSchema,
     priority: prioritySchema.default("NORMAL"),
     tagIds: z.array(idSchema).max(20).optional(),
@@ -59,7 +60,7 @@ export const createConversationSchema = z
 export const createStaffConversationSchema = createConversationSchema.extend({
   customerId: idSchema,
   source: z.enum(["PHONE_SUPPORT"]).optional(),
-  replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP'])).min(1).max(4).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
+  replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP', 'FORM'])).min(1).max(5).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
 }).strict();
 export const messageSchema = z
   .object({
@@ -78,10 +79,11 @@ export const updateConversationSchema = z
     status: statusSchema.optional(),
     priority: prioritySchema.optional(),
     assignedAgentId: idSchema.nullable().optional(),
+    assignedAgentIds: z.array(idSchema).max(100).optional(),
     departmentId: idSchema.optional(),
     websiteId: idSchema.nullable().optional(),
     tagIds: z.array(idSchema).max(20).optional(),
-    replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP'])).min(1).max(4).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
+    replyChannels: z.array(z.enum(['TICKET', 'EMAIL', 'SMS', 'WHATSAPP', 'FORM'])).min(1).max(5).refine(values => new Set(values).size === values.length, 'Aynı kanal tekrar seçilemez.').optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0);

@@ -78,13 +78,15 @@ html[data-theme="dark"] .announcements-modal {
   background: transparent;
   color: var(--ann-muted);
   cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
 }
 .announcements-close:hover {
-  background: var(--ann-field);
+  background: #edf5ef;
   color: #166b5c;
 }
 html[data-theme="dark"] .announcements-close:hover {
-  color: #8dd1ba;
+  background: #2a3e34;
+  color: #e5eee9;
 }
 .announcements-tabs {
   display: flex;

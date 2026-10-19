@@ -186,8 +186,8 @@ export async function staffPresence(actor?: Actor) {
   startOfDay.setHours(0, 0, 0, 0);
   const [conversations, replyGroups, lastReplies] = await Promise.all([
     db.conversation.findMany({
-      where: { assignedAgentId: { in: ids }, deletedAt: null },
-      select: { assignedAgentId: true, status: true, resolvedAt: true, createdAt: true, firstResponseAt: true },
+      where: { OR: [{ assignedAgentId: { in: ids } }, { assignees: { some: { userId: { in: ids } } } }], deletedAt: null },
+      select: { assignedAgentId: true, assignees: { select: { userId: true } }, status: true, resolvedAt: true, createdAt: true, firstResponseAt: true },
     }),
     db.conversationMessage.groupBy({
       by: ["authorId", "conversationId"],
@@ -208,7 +208,7 @@ export async function staffPresence(actor?: Actor) {
     updatedAt: new Date().toISOString(),
     staff: staff.map((person) => {
       const presence = states.get(person.id);
-      const assigned = conversations.filter((item) => item.assignedAgentId === person.id);
+      const assigned = conversations.filter((item) => item.assignedAgentId === person.id || item.assignees.some(assignment => assignment.userId === person.id));
       const answered = replyGroups.filter((item) => item.authorId === person.id);
       const responseDurations = assigned.flatMap((item) => item.firstResponseAt ? [item.firstResponseAt.getTime() - item.createdAt.getTime()] : []);
       const connected = Boolean(presence?.sockets.size);

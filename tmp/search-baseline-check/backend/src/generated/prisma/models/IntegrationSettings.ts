@@ -76,6 +76,7 @@ export type IntegrationSettingsMinAggregateOutputType = {
   smtpFromAddress: string | null
   smtpFromName: string | null
   imapEnabled: boolean | null
+  incomingMessagesSince: Date | null
   imapConnectionName: string | null
   imapHost: string | null
   imapPort: number | null
@@ -131,6 +132,7 @@ export type IntegrationSettingsMaxAggregateOutputType = {
   smtpFromAddress: string | null
   smtpFromName: string | null
   imapEnabled: boolean | null
+  incomingMessagesSince: Date | null
   imapConnectionName: string | null
   imapHost: string | null
   imapPort: number | null
@@ -186,6 +188,7 @@ export type IntegrationSettingsCountAggregateOutputType = {
   smtpFromAddress: number
   smtpFromName: number
   imapEnabled: number
+  incomingMessagesSince: number
   imapConnectionName: number
   imapHost: number
   imapPort: number
@@ -271,6 +274,7 @@ export type IntegrationSettingsMinAggregateInputType = {
   smtpFromAddress?: true
   smtpFromName?: true
   imapEnabled?: true
+  incomingMessagesSince?: true
   imapConnectionName?: true
   imapHost?: true
   imapPort?: true
@@ -326,6 +330,7 @@ export type IntegrationSettingsMaxAggregateInputType = {
   smtpFromAddress?: true
   smtpFromName?: true
   imapEnabled?: true
+  incomingMessagesSince?: true
   imapConnectionName?: true
   imapHost?: true
   imapPort?: true
@@ -381,6 +386,7 @@ export type IntegrationSettingsCountAggregateInputType = {
   smtpFromAddress?: true
   smtpFromName?: true
   imapEnabled?: true
+  incomingMessagesSince?: true
   imapConnectionName?: true
   imapHost?: true
   imapPort?: true
@@ -523,6 +529,7 @@ export type IntegrationSettingsGroupByOutputType = {
   smtpFromAddress: string
   smtpFromName: string
   imapEnabled: boolean
+  incomingMessagesSince: Date | null
   imapConnectionName: string
   imapHost: string
   imapPort: number
@@ -601,6 +608,7 @@ export type IntegrationSettingsWhereInput = {
   smtpFromAddress?: Prisma.StringFilter<"IntegrationSettings"> | string
   smtpFromName?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapEnabled?: Prisma.BoolFilter<"IntegrationSettings"> | boolean
+  incomingMessagesSince?: Prisma.DateTimeNullableFilter<"IntegrationSettings"> | Date | string | null
   imapConnectionName?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapHost?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapPort?: Prisma.IntFilter<"IntegrationSettings"> | number
@@ -656,6 +664,7 @@ export type IntegrationSettingsOrderByWithRelationInput = {
   smtpFromAddress?: Prisma.SortOrder
   smtpFromName?: Prisma.SortOrder
   imapEnabled?: Prisma.SortOrder
+  incomingMessagesSince?: Prisma.SortOrderInput | Prisma.SortOrder
   imapConnectionName?: Prisma.SortOrder
   imapHost?: Prisma.SortOrder
   imapPort?: Prisma.SortOrder
@@ -715,6 +724,7 @@ export type IntegrationSettingsWhereUniqueInput = Prisma.AtLeast<{
   smtpFromAddress?: Prisma.StringFilter<"IntegrationSettings"> | string
   smtpFromName?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapEnabled?: Prisma.BoolFilter<"IntegrationSettings"> | boolean
+  incomingMessagesSince?: Prisma.DateTimeNullableFilter<"IntegrationSettings"> | Date | string | null
   imapConnectionName?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapHost?: Prisma.StringFilter<"IntegrationSettings"> | string
   imapPort?: Prisma.IntFilter<"IntegrationSettings"> | number
@@ -770,6 +780,7 @@ export type IntegrationSettingsOrderByWithAggregationInput = {
   smtpFromAddress?: Prisma.SortOrder
   smtpFromName?: Prisma.SortOrder
   imapEnabled?: Prisma.SortOrder
+  incomingMessagesSince?: Prisma.SortOrderInput | Prisma.SortOrder
   imapConnectionName?: Prisma.SortOrder
   imapHost?: Prisma.SortOrder
   imapPort?: Prisma.SortOrder
@@ -833,6 +844,7 @@ export type IntegrationSettingsScalarWhereWithAggregatesInput = {
   smtpFromAddress?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   smtpFromName?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   imapEnabled?: Prisma.BoolWithAggregatesFilter<"IntegrationSettings"> | boolean
+  incomingMessagesSince?: Prisma.DateTimeNullableWithAggregatesFilter<"IntegrationSettings"> | Date | string | null
   imapConnectionName?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   imapHost?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   imapPort?: Prisma.IntWithAggregatesFilter<"IntegrationSettings"> | number
@@ -888,6 +900,7 @@ export type IntegrationSettingsCreateInput = {
   smtpFromAddress?: string
   smtpFromName?: string
   imapEnabled?: boolean
+  incomingMessagesSince?: Date | string | null
   imapConnectionName?: string
   imapHost?: string
   imapPort?: number
@@ -943,6 +956,7 @@ export type IntegrationSettingsUncheckedCreateInput = {
   smtpFromAddress?: string
   smtpFromName?: string
   imapEnabled?: boolean
+  incomingMessagesSince?: Date | string | null
   imapConnectionName?: string
   imapHost?: string
   imapPort?: number
@@ -998,6 +1012,7 @@ export type IntegrationSettingsUpdateInput = {
   smtpFromAddress?: Prisma.StringFieldUpdateOperationsInput | string
   smtpFromName?: Prisma.StringFieldUpdateOperationsInput | string
   imapEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  incomingMessagesSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   imapConnectionName?: Prisma.StringFieldUpdateOperationsInput | string
   imapHost?: Prisma.StringFieldUpdateOperationsInput | string
   imapPort?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1053,6 +1068,7 @@ export type IntegrationSettingsUncheckedUpdateInput = {
   smtpFromAddress?: Prisma.StringFieldUpdateOperationsInput | string
   smtpFromName?: Prisma.StringFieldUpdateOperationsInput | string
   imapEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  incomingMessagesSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   imapConnectionName?: Prisma.StringFieldUpdateOperationsInput | string
   imapHost?: Prisma.StringFieldUpdateOperationsInput | string
   imapPort?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1108,6 +1124,7 @@ export type IntegrationSettingsCreateManyInput = {
   smtpFromAddress?: string
   smtpFromName?: string
   imapEnabled?: boolean
+  incomingMessagesSince?: Date | string | null
   imapConnectionName?: string
   imapHost?: string
   imapPort?: number
@@ -1163,6 +1180,7 @@ export type IntegrationSettingsUpdateManyMutationInput = {
   smtpFromAddress?: Prisma.StringFieldUpdateOperationsInput | string
   smtpFromName?: Prisma.StringFieldUpdateOperationsInput | string
   imapEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  incomingMessagesSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   imapConnectionName?: Prisma.StringFieldUpdateOperationsInput | string
   imapHost?: Prisma.StringFieldUpdateOperationsInput | string
   imapPort?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1218,6 +1236,7 @@ export type IntegrationSettingsUncheckedUpdateManyInput = {
   smtpFromAddress?: Prisma.StringFieldUpdateOperationsInput | string
   smtpFromName?: Prisma.StringFieldUpdateOperationsInput | string
   imapEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  incomingMessagesSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   imapConnectionName?: Prisma.StringFieldUpdateOperationsInput | string
   imapHost?: Prisma.StringFieldUpdateOperationsInput | string
   imapPort?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1279,6 +1298,7 @@ export type IntegrationSettingsCountOrderByAggregateInput = {
   smtpFromAddress?: Prisma.SortOrder
   smtpFromName?: Prisma.SortOrder
   imapEnabled?: Prisma.SortOrder
+  incomingMessagesSince?: Prisma.SortOrder
   imapConnectionName?: Prisma.SortOrder
   imapHost?: Prisma.SortOrder
   imapPort?: Prisma.SortOrder
@@ -1348,6 +1368,7 @@ export type IntegrationSettingsMaxOrderByAggregateInput = {
   smtpFromAddress?: Prisma.SortOrder
   smtpFromName?: Prisma.SortOrder
   imapEnabled?: Prisma.SortOrder
+  incomingMessagesSince?: Prisma.SortOrder
   imapConnectionName?: Prisma.SortOrder
   imapHost?: Prisma.SortOrder
   imapPort?: Prisma.SortOrder
@@ -1403,6 +1424,7 @@ export type IntegrationSettingsMinOrderByAggregateInput = {
   smtpFromAddress?: Prisma.SortOrder
   smtpFromName?: Prisma.SortOrder
   imapEnabled?: Prisma.SortOrder
+  incomingMessagesSince?: Prisma.SortOrder
   imapConnectionName?: Prisma.SortOrder
   imapHost?: Prisma.SortOrder
   imapPort?: Prisma.SortOrder
@@ -1478,6 +1500,7 @@ export type IntegrationSettingsSelect<ExtArgs extends runtime.Types.Extensions.I
   smtpFromAddress?: boolean
   smtpFromName?: boolean
   imapEnabled?: boolean
+  incomingMessagesSince?: boolean
   imapConnectionName?: boolean
   imapHost?: boolean
   imapPort?: boolean
@@ -1535,6 +1558,7 @@ export type IntegrationSettingsSelectScalar = {
   smtpFromAddress?: boolean
   smtpFromName?: boolean
   imapEnabled?: boolean
+  incomingMessagesSince?: boolean
   imapConnectionName?: boolean
   imapHost?: boolean
   imapPort?: boolean
@@ -1568,7 +1592,7 @@ export type IntegrationSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IntegrationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "responseFastMinutes" | "responseNormalMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor" | "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "smtpEnabled" | "smtpHost" | "smtpPort" | "smtpSecure" | "smtpUser" | "smtpPassword" | "smtpFromAddress" | "smtpFromName" | "imapEnabled" | "imapConnectionName" | "imapHost" | "imapPort" | "imapSecure" | "imapAuthType" | "imapUser" | "imapPassword" | "imapMailbox" | "imapPollIntervalSeconds" | "imapCreateTickets" | "imapCreateReplies" | "imapDepartmentId" | "smsEnabled" | "smsApiUser" | "smsApiPassword" | "smsSender" | "smsVirtualNumber" | "smsWebhookSecret" | "smsDepartmentId" | "whatsappEnabled" | "whatsappAppId" | "whatsappAppSecret" | "whatsappPhoneNumberId" | "whatsappAccessToken" | "whatsappVerifyToken" | "whatsappDepartmentId" | "lastTestChannel" | "lastTestSuccess" | "lastTestMessage" | "lastTestedAt" | "updatedAt", ExtArgs["result"]["integrationSettings"]>
+export type IntegrationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "responseFastMinutes" | "responseNormalMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor" | "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "smtpEnabled" | "smtpHost" | "smtpPort" | "smtpSecure" | "smtpUser" | "smtpPassword" | "smtpFromAddress" | "smtpFromName" | "imapEnabled" | "incomingMessagesSince" | "imapConnectionName" | "imapHost" | "imapPort" | "imapSecure" | "imapAuthType" | "imapUser" | "imapPassword" | "imapMailbox" | "imapPollIntervalSeconds" | "imapCreateTickets" | "imapCreateReplies" | "imapDepartmentId" | "smsEnabled" | "smsApiUser" | "smsApiPassword" | "smsSender" | "smsVirtualNumber" | "smsWebhookSecret" | "smsDepartmentId" | "whatsappEnabled" | "whatsappAppId" | "whatsappAppSecret" | "whatsappPhoneNumberId" | "whatsappAccessToken" | "whatsappVerifyToken" | "whatsappDepartmentId" | "lastTestChannel" | "lastTestSuccess" | "lastTestMessage" | "lastTestedAt" | "updatedAt", ExtArgs["result"]["integrationSettings"]>
 
 export type $IntegrationSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "IntegrationSettings"
@@ -1595,6 +1619,7 @@ export type $IntegrationSettingsPayload<ExtArgs extends runtime.Types.Extensions
     smtpFromAddress: string
     smtpFromName: string
     imapEnabled: boolean
+    incomingMessagesSince: Date | null
     imapConnectionName: string
     imapHost: string
     imapPort: number
@@ -2016,6 +2041,7 @@ export interface IntegrationSettingsFieldRefs {
   readonly smtpFromAddress: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly smtpFromName: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly imapEnabled: Prisma.FieldRef<"IntegrationSettings", 'Boolean'>
+  readonly incomingMessagesSince: Prisma.FieldRef<"IntegrationSettings", 'DateTime'>
   readonly imapConnectionName: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly imapHost: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly imapPort: Prisma.FieldRef<"IntegrationSettings", 'Int'>

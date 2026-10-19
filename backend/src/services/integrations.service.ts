@@ -6,8 +6,9 @@ import { AppError } from "../utils/errors.js";
 import { notifyConversation, publishChange } from "./events.service.js";
 import type { ConversationChannel } from "../generated/prisma/enums.js";
 import { withStoredUploads, discardStoredUploads, type StoredUpload } from './uploads.service.js';
-import { downloadWhatsappImage } from './whatsapp-media.service.js';
+import { downloadWhatsappImage, downloadWhatsappDocument, uploadWhatsappMedia, whatsappFileKind } from './whatsapp-media.service.js';
 import { whatsappReplyTarget, whatsappOutboundProvider } from './whatsapp-routing.service.js';
+import { acceptsIncomingDate } from './inbound-start-date.js';
 
 type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null; attachments?: StoredUpload[]; replyToExternalId?: string };
 type NetgsmResponse = { code?: string; description?: string; jobid?: string; msgheaders?: string[] };
@@ -132,7 +133,7 @@ export async function persistInboundMessage(input: InboundMessage) {
           status: "OPEN", closedAt: null, resolvedAt: null,
           ...(input.channel === "WHATSAPP" && target.channel === 'TICKET' && target.replyChannels == null ? { channel: "WHATSAPP" } : {}),
         } });
-        await tx.activityLog.create({ data: { userId: customer.id, action: "conversation." + input.channel.toLowerCase() + "_received", entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId } } });
+        await tx.activityLog.create({ data: { userId: customer.id, action: "conversation." + input.channel.toLowerCase() + "_received", entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId, attachmentCount: input.attachments?.length ?? 0, ...(input.attachments?.length === 1 ? { originalName: input.attachments[0].originalName } : {}) } } });
         const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
         await notifyConversation(tx, actor, { ...target, customer }, "MESSAGE_RECEIVED", "Yeni " + channelNames[input.channel] + " mesajı");
         return { conversationId: target.id, attachmentsStored: true };
@@ -155,6 +156,7 @@ const equalsSecret = (provided: string | undefined, expected: string) => {
 export async function receiveNetgsmMessage(body: Record<string, unknown>, secret?: string) {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
   if (!settings?.smsEnabled || !equalsSecret(secret, settings.smsWebhookSecret)) throw new AppError(401, "INVALID_WEBHOOK", "Netgsm webhook doğrulaması başarısız.");
+  if (!acceptsIncomingDate(settings.incomingMessagesSince, body.messageDateTime ?? body.timestamp)) return null;
   const phone = String(body.sourceNumber ?? body.msisdn ?? body.from ?? body.sender ?? "");
   const text = String(body.message ?? body.text ?? body.content ?? "").trim();
   const externalId = String(body.messageId ?? body.id ?? `${phone}:${body.messageDateTime ?? body.timestamp ?? text}`);
@@ -175,18 +177,20 @@ export async function receiveMetaWebhook(payload: any, signature?: string, rawBo
     const value = change.value ?? {}; const contacts = new Map<string, string | undefined>((value.contacts ?? []).map((contact: any): [string, string | undefined] => [String(contact.wa_id), typeof contact.profile?.name === "string" ? contact.profile.name : undefined]));
     for (const status of value.statuses ?? []) await recordWhatsappStatus(status);
     for (const message of value.messages ?? []) {
+      if (!acceptsIncomingDate(settings.incomingMessagesSince, message.timestamp)) continue;
       const image = message.type === 'image' && typeof message.image?.id === 'string' ? message.image : undefined;
-      const text = message.text?.body ?? message.button?.text ?? message.interactive?.button_reply?.title ?? image?.caption;
-      if (!message.id || !message.from || (!text && !image)) continue;
+      const document = message.type === 'document' && typeof message.document?.id === 'string' ? message.document : undefined;
+      const text = message.text?.body ?? message.button?.text ?? message.interactive?.button_reply?.title ?? image?.caption ?? document?.caption;
+      if (!message.id || !message.from || (!text && !image && !document)) continue;
       const known = await db.externalMessage.findUnique({ where: { provider_externalId: { provider: 'meta-whatsapp', externalId: message.id } } });
       if (known) { ids.push(known.conversationId); continue; }
-      const files = image ? [await downloadWhatsappImage(image.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId)] : [];
-      ids.push(await withStoredUploads(files, attachments => persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", sender: { phone: message.from, name: contacts.get(message.from) }, body: text || 'Fotoğraf', subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId, attachments, replyToExternalId: typeof message.context?.id === "string" ? message.context.id : undefined })));
+      const files = image ? [await downloadWhatsappImage(image.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId)] : document ? [await downloadWhatsappDocument(document.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId, typeof document.filename === 'string' ? document.filename : undefined)] : [];
+      ids.push(await withStoredUploads(files, attachments => persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", sender: { phone: message.from, name: contacts.get(message.from) }, body: text || (document ? 'Belge' : 'Fotoğraf'), subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId, attachments, replyToExternalId: typeof message.context?.id === "string" ? message.context.id : undefined })));
     }
   }
   return ids;
 }
-export async function sendChannelReply(channel: ConversationChannel, recipient: { email?: string | null; phone?: string | null }, text: string, callbackId?: string) {
+export async function sendChannelReply(channel: ConversationChannel, recipient: { email?: string | null; phone?: string | null }, text: string, callbackId?: string, file?: StoredUpload) {
   const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
   if (channel === "SMS") {
     if (!settings?.smsEnabled || !recipient.phone) throw new Error("SMS gönderim ayarı veya alıcı telefonu eksik.");
@@ -196,25 +200,43 @@ export async function sendChannelReply(channel: ConversationChannel, recipient: 
     if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !recipient.phone) throw new Error("WhatsApp gönderim ayarı veya alıcı telefonu eksik.");
     const to = whatsappRecipient(recipient.phone);
     if (!/^\d{10,15}$/.test(to)) throw new Error("WhatsApp alıcısının telefon numarası ülke koduyla birlikte geçerli değil.");
+    const media = file ? await uploadWhatsappMedia(file, settings.whatsappAccessToken, settings.whatsappPhoneNumberId) : undefined;
+    const message = media ? { type: media.kind, [media.kind]: { id: media.id, ...(text ? { caption: text } : {}), ...(media.kind === 'document' ? { filename: file!.originalName } : {}) } } : { type: 'text', text: { preview_url: false, body: text } };
     const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, type: "text", text: { preview_url: false, body: text }, ...(callbackId ? { biz_opaque_callback_data: callbackId } : {}) }),
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to, ...message, ...(callbackId ? { biz_opaque_callback_data: callbackId } : {}) }),
       signal: AbortSignal.timeout(15_000),
     });
     const data = await responseJson<MetaResponse>(response);
-    if (!response.ok || !data.messages?.[0]?.id) throw new Error(providerMessage("WhatsApp mesajı gönderilemedi", response, data));
+    if (!response.ok || !data.messages?.[0]?.id) throw Object.assign(new Error(providerMessage("WhatsApp mesajı gönderilemedi", response, data)), { statusCode: response.status, providerCode: data.error?.code });
     return data.messages[0].id;
   }
 }
 
 // Create correlation before the HTTP request: a webhook may arrive before its response.
-export async function sendConversationChannelReply(channel: "SMS" | "WHATSAPP", recipient: { phone?: string | null }, text: string, context: { conversationId: string; userId: string; messageId?: string }) {
-  const metadata = { channel, recipient: recipient.phone ?? "", ...(context.messageId ? { messageId: context.messageId } : {}) };
+export async function sendConversationChannelReply(channel: "SMS" | "WHATSAPP", recipient: { phone?: string | null }, text: string, context: { conversationId: string; userId: string; messageId?: string }, files: StoredUpload[] = []) {
+  if (channel === 'WHATSAPP' && files.length) return sendConversationWhatsappFiles(recipient, text, context, files);
+  return sendTrackedChannelReply(channel, recipient, text, context);
+}
+
+async function sendConversationWhatsappFiles(recipient: { phone?: string | null }, text: string, context: { conversationId: string; userId: string; messageId?: string }, files: StoredUpload[]) {
+  files.forEach(whatsappFileKind);
+  // A media caption is limited to 1024 characters. Keep longer text intact in
+  // its own message; every attachment gets its own delivery correlation ID.
+  if (!files.length || text.length > 1024) {
+    const characters = Array.from(text);
+    for (let offset = 0; offset < characters.length; offset += 4096) await sendTrackedChannelReply('WHATSAPP', recipient, characters.slice(offset, offset + 4096).join(''), context);
+  }
+  for (const [index, file] of files.entries()) await sendTrackedChannelReply('WHATSAPP', recipient, index === 0 && text.length <= 1024 ? text : '', context, file);
+}
+
+async function sendTrackedChannelReply(channel: "SMS" | "WHATSAPP", recipient: { phone?: string | null }, text: string, context: { conversationId: string; userId: string; messageId?: string }, file?: StoredUpload) {
+  const metadata = { channel, recipient: recipient.phone ?? "", ...(context.messageId ? { messageId: context.messageId } : {}), ...(file ? { originalName: file.originalName, attachmentCount: 1 } : {}) };
   const log = await db.activityLog.create({ data: { userId: context.userId, entityId: context.conversationId, action: "conversation.channel_reply_requested", metadata } });
   let providerMessageId: string | undefined;
   try {
-    providerMessageId = await sendChannelReply(channel, recipient, text, log.id);
+    providerMessageId = await sendChannelReply(channel, recipient, text, log.id, file);
   } catch (error) {
     await db.activityLog.update({ where: { id: log.id }, data: { action: "conversation.channel_reply_failed", metadata: { ...metadata, reason: error instanceof Error ? error.message : String(error) } } });
     publishChange(context.conversationId);
@@ -254,8 +276,18 @@ async function recordWhatsappStatus(status: any) {
     await db.$transaction(async tx => {
       // The unique provider/externalId key makes webhook retries idempotent.
       await tx.externalMessage.create({ data: { provider: "meta-whatsapp-status", externalId: `${status.id}:${status.status}`, channel: "WHATSAPP", conversationId: source.entityId } });
+      const sourceMetadata = source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata) ? source.metadata : {};
+      if (sourceMetadata.outboundJobId === source.id && ['sent', 'delivered', 'read'].includes(status.status)) {
+        await tx.outboundMessage.updateMany({ where: { id: source.id, channel: 'WHATSAPP', status: { in: ['PENDING', 'PROCESSING'] } }, data: { status: 'SENT', providerMessageId: status.id, lastError: null, leaseToken: null, leaseUntil: null } });
+        await tx.activityLog.update({ where: { id: source.id }, data: { action: 'conversation.channel_reply_sent', metadata: { ...sourceMetadata, providerMessageId: status.id } } });
+        if (typeof sourceMetadata.recipient === 'string') {
+          const provider = whatsappOutboundProvider(sourceMetadata.recipient);
+          await tx.externalMessage.upsert({ where: { provider_externalId: { provider, externalId: status.id } }, create: { provider, externalId: status.id, channel: 'WHATSAPP', conversationId: source.entityId }, update: {} });
+        }
+      }
       await tx.activityLog.create({ data: { userId: source.userId, entityId: source.entityId, action: `conversation.whatsapp_${status.status}`, metadata: {
         channel: "WHATSAPP", providerMessageId: status.id, status: status.status,
+        ...(source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata) && typeof source.metadata.originalName === 'string' ? { originalName: source.metadata.originalName, attachmentCount: 1 } : {}),
         recipient: typeof status.recipient_id === "string" ? status.recipient_id : "",
         ...(providerTimestamp ? { providerTimestamp } : {}), ...(reason ? { reason, errors } : {}),
       } } });

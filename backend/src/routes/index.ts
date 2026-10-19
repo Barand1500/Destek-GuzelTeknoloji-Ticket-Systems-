@@ -1,4 +1,7 @@
+import { formsRouter } from './forms.js';
 import { searchQuery } from '../validators/management.js';
+import { emailSchema } from '../utils/email.js';
+import { publicAuthSecurity, verifyTurnstile } from '../services/turnstile.service.js';
 import { managementOrder } from '../services/management-sorting.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { permissionScope } from "../services/permissions.js";
@@ -59,7 +62,7 @@ const authLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   // Oturum yenileme sayfa açılışında otomatik çalışır; bunu giriş denemesi gibi sayma.
-  skip: (req) => env.NODE_ENV === "test" || req.path === "/refresh" || req.path === "/logout",
+  skip: (req) => env.NODE_ENV === "test" || req.path === "/refresh" || req.path === "/logout" || (req.method === 'GET' && req.path === '/security'),
   message: {
     success: false,
     error: {
@@ -81,17 +84,24 @@ router.use("/auth", authLimiter, (req, _res, next) => {
     );
   next();
 });
-router.post("/auth/register", async (req, res) =>
-  sendSession(res, await auth.register(registerSchema.parse(req.body)), 201),
-);
-router.post("/auth/login", async (req, res) =>
-  sendSession(res, await auth.login(loginSchema.parse(req.body))),
-);
-const resetEmail = z.string().trim().toLowerCase().pipe(z.email());
+const turnstileTokenSchema = z.string().trim().max(2048).optional();
+router.get('/auth/security', (_req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: publicAuthSecurity() }));
+router.post("/auth/register", async (req, res) => {
+  const { turnstileToken, ...input } = registerSchema.extend({ turnstileToken: turnstileTokenSchema }).parse(req.body);
+  await verifyTurnstile(turnstileToken, 'register', req.ip);
+  sendSession(res, await auth.register(input), 201);
+});
+router.post("/auth/login", async (req, res) => {
+  const { turnstileToken, ...input } = loginSchema.extend({ turnstileToken: turnstileTokenSchema }).parse(req.body);
+  await verifyTurnstile(turnstileToken, 'login', req.ip);
+  sendSession(res, await auth.login(input));
+});
+const resetEmail = emailSchema;
 const resetLimiter = rateLimit({ windowMs: 10 * 60_000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false,
   message: { success: false, error: { code: "RATE_LIMITED", message: "Çok fazla deneme. Lütfen daha sonra tekrar deneyin." } } });
 router.post("/auth/forgot-password", resetLimiter, async (req, res) => {
-  const { email } = z.object({ email: resetEmail }).strict().parse(req.body);
+  const { email, turnstileToken } = z.object({ email: resetEmail, turnstileToken: turnstileTokenSchema }).strict().parse(req.body);
+  await verifyTurnstile(turnstileToken, 'forgot_password', req.ip);
   await passwordReset.requestPasswordReset(email);
   res.json({ success: true, data: { message: "E-posta bir giriş hesabına aitse doğrulama kodu gönderildi." } });
 });
@@ -145,6 +155,7 @@ router.post('/webhooks/whatsapp', async (req, res) => {
     throw error;
   }
 });
+router.use('/public/form', formsRouter);
 router.use(authenticate);
 router.get('/communication-channels', async (req, res) => {
   const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { imapDepartmentId: true, smsEnabled: true, whatsappEnabled: true, smtpEnabled: true, smtpHost: true, smtpFromAddress: true, smtpUser: true, smtpPassword: true } });
@@ -155,7 +166,7 @@ router.get('/communication-channels', async (req, res) => {
   const defaultDepartment = settings?.imapDepartmentId && req.actor.role !== 'CUSTOMER'
     && (permissionScope(req.actor) === 'ALL' || req.actor.departmentIds.includes(settings.imapDepartmentId))
     ? await db.department.findFirst({ where: { id: settings.imapDepartmentId, isActive: true, deletedAt: null }, select: { id: true, name: true } }) : null;
-  res.json({ success: true, data: { defaultDepartment, EMAIL: emailEnabled, SMS: Boolean(settings?.smsEnabled), WHATSAPP: Boolean(settings?.whatsappEnabled) } });
+  res.json({ success: true, data: { defaultDepartment, EMAIL: emailEnabled, SMS: Boolean(settings?.smsEnabled), FORM: Boolean((await db.formSettings.findUnique({ where: { id: 'default' } }))?.enabled) && emailEnabled, WHATSAPP: Boolean(settings?.whatsappEnabled) } });
 });
 // Keep saved links and API clients working while Conversation is the canonical resource.
 router.use((req, _res, next) => {

@@ -1,28 +1,32 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { api, errorText } from "../../services/api";
+import { displayEmail } from '../../utils/email';
+import { TurnstileField, useTurnstile } from './Turnstile';
 
 export function PasswordResetForm({ email, onBack, onSaved }: { email: string; onBack: () => void; onSaved: () => void }) {
+  const captcha = useTurnstile('forgot_password');
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [resetToken, setResetToken] = useState("");
-  const [pending, setPending] = useState(true);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [sent, setSent] = useState(false);
   const requested = useRef(false);
   async function sendCode() {
+    if (!captcha.ready || pending) return;
     setPending(true); setError(""); setMessage(""); setResetToken(""); setCode(""); setSent(false);
     try {
-      await api.post("/auth/forgot-password", { email });
+      await api.post("/auth/forgot-password", { email, ...captcha.payload });
       setSent(true);
     } catch (e) { setError(errorText(e)); }
-    finally { setPending(false); }
+    finally { setPending(false); captcha.reset(); }
   }
   useEffect(() => {
-    if (!requested.current) { requested.current = true; void sendCode(); }
-  }, []);
+    if (!requested.current && captcha.ready) { requested.current = true; void sendCode(); }
+  }, [captcha.ready]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setPending(true); setError("");
     try {
@@ -40,14 +44,15 @@ export function PasswordResetForm({ email, onBack, onSaved }: { email: string; o
     <form className="auth-form auth-slide-forward" onSubmit={submit}>
       <button type="button" className="auth-back" onClick={onBack} disabled={pending}><ArrowLeft size={16} /> Geri</button>
       <h2>Şifrenizi Yenileyin</h2>
-      <label><span className="field-label">E-Posta Adresi</span><input type="email" value={email} readOnly /></label>
+      <label><span className="field-label">E-Posta Adresi</span><input type="text" inputMode="email" value={displayEmail(email)} readOnly /></label>
+      {!resetToken && <TurnstileField captcha={captcha} />}
       <label><span className="field-label">Doğrulama Kodu</span><input name="code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="E-Postanıza gönderilen 6 haneli kod" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>
       {!resetToken && <button className="button primary" disabled={pending || !sent || code.length !== 6}>{pending ? "Lütfen Bekleyin…" : "Doğrula"}</button>}
       <label><span className="field-label">Yeni Şifre</span><span className="password-field"><input name="newPassword" value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? "text" : "password"} minLength={5} maxLength={72} autoComplete="new-password" placeholder="En az 5 karakter" required={Boolean(resetToken)} disabled={!resetToken || pending} /><button type="button" className="password-toggle" onClick={() => setShowPassword(v => !v)} disabled={!resetToken} aria-label={showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
       {message && <p className="auth-notice" role="status">{message}</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <button className="button primary" disabled={pending || !resetToken}>{pending && resetToken ? "Kaydediliyor…" : "Kaydet"}</button>
-      {!resetToken && <button type="button" className="auth-forgot" disabled={pending} onClick={() => void sendCode()}>Kodu Tekrar Gönder</button>}
+      {!resetToken && <button type="button" className="auth-forgot" disabled={pending || !captcha.ready} onClick={() => void sendCode()}>{sent ? 'Kodu Tekrar Gönder' : 'Kodu Gönder'}</button>}
     </form>
   );
 }

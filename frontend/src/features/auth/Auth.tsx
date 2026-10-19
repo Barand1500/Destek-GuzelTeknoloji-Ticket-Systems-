@@ -16,6 +16,7 @@ import { roleHome } from "../../router/paths";
 import { permissionHome } from './permissions';
 import { EmailInput } from "../../components/EmailInput";
 import { PasswordResetForm } from "./PasswordResetForm";
+import { TurnstileField, useTurnstile } from './Turnstile';
 type AuthState = {
   user: User | null;
   loading: boolean;
@@ -77,6 +78,7 @@ export function useAuth() {
   return value;
 }
 export function AuthPage() {
+  const captcha = useTurnstile('login');
   const { user, loading, accept } = useAuth();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -94,16 +96,18 @@ export function AuthPage() {
   if (user) return <Navigate to={permissionHome(user) ?? roleHome(user.role)} replace />;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending || !captcha.ready) return;
     setPending(true);
     setError("");
     const form = new FormData(event.currentTarget);
     try {
-      const result = await api.post("/auth/login", { email: form.get("email"), password: form.get("password") });
+      const result = await api.post("/auth/login", { email: form.get("email"), password: form.get("password"), ...captcha.payload });
       accept(result.data.data);
     } catch (e) {
       setError(errorText(e));
     } finally {
       setPending(false);
+      captcha.reset();
     }
   }
   return (
@@ -130,7 +134,8 @@ export function AuthPage() {
           <label><span className="field-label">Şifre</span><span className="password-field"><input name="password" required type={showPassword ? "text" : "password"} minLength={1} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
           {saved && <p className="auth-notice" role="status">Şifreniz yenilendi. Yeni şifrenizle giriş yapabilirsiniz.</p>}
           {error && <p className="error" role="alert">{error}</p>}
-          <button className="button primary" disabled={pending}>{pending ? "Lütfen Bekleyin…" : "Giriş Yap"}<ArrowRight size={17} /></button>
+          <TurnstileField captcha={captcha} />
+          <button className="button primary" disabled={pending || !captcha.ready}>{pending ? "Lütfen Bekleyin…" : "Giriş Yap"}<ArrowRight size={17} /></button>
         </form>}
         </div>
       </section>

@@ -10,10 +10,16 @@ import type { Actor } from "../types/express.js";
 import { matchesSender, selectEmailCustomer } from './inbound-email-matching.js';
 import { hasTicketReplyTag, replyAddressTicket } from './email-reply-address.js';
 import { conversationChannelFilter } from './reply-channels.js';
+import { discardStoredUploads, withStoredUploads, type StoredUpload } from './uploads.service.js';
+import { prepareInboundEmailAttachments } from './inbound-email-attachments.js';
+import { drainImapMailbox, imapSyncKey } from './imap-sync.service.js';
+import { acceptsIncomingDate } from './inbound-start-date.js';
 
 let running = false;
 let timer: NodeJS.Timeout | undefined;
 let lastStoredPollAt = 0;
+let stopRequested = false;
+let activePoll: Promise<unknown> | undefined;
 
 const htmlReplyQuote = /<(?:div|section|table|blockquote)\b[^>]*(?:\b(?:class|id)\s*=\s*["'][^"']*\b(?:gmail_quote(?:_container)?|gmail_attr|moz-cite-prefix|yandex_quoted|mail-quote-collapse|divRplyFwdMsg)\b[^"']*["']|\btype\s*=\s*["']cite["'])[^>]*>/i;
 const emailDate = /\b\d{1,2}\s+(?:oca|şub|sub|mar|nis|may|haz|tem|ağu|agu|eyl|eki|kas|ara|jan|feb|apr|jun|jul|aug|sep|oct|nov|dec)[a-zçğıöşü]*(?:\s+\d{4})?\b/i;
@@ -121,13 +127,15 @@ export async function persistInboundEmail(input: {
   departmentId?: string | null;
   createTickets?: boolean;
   createReplies?: boolean;
+  attachments?: StoredUpload[];
+  skippedAttachments?: string[];
 }) {
   const known = await db.incomingEmail.findFirst({ where: { OR: [{ mailbox: input.mailbox, uid: input.uid }, ...(input.messageId ? [{ messageId: input.messageId }] : [])] } });
-  if (known) return known.conversationId;
+  if (known) { await discardStoredUploads(input.attachments ?? []); return known.conversationId; }
 
   const email = canonicalEmail(input.from.address);
   const matchingCustomers = (await db.user.findMany({ where: { role: "CUSTOMER", deletedAt: null, OR: [{ email }, { extraEmails: { contains: email } }] }, orderBy: { createdAt: "asc" } })).filter(customer => matchesSender(customer, email));
-  const senderScope = { customerId: { in: matchingCustomers.map(customer => customer.id) }, deletedAt: null, status: { not: 'CLOSED' }, AND: [conversationChannelFilter('EMAIL')] };
+  const senderScope = { OR: [{ customerId: { in: matchingCustomers.map(customer => customer.id) } }, { formRequest: { is: { email } } }], deletedAt: null, status: { not: 'CLOSED' }, AND: [{ OR: [conversationChannelFilter('EMAIL'), conversationChannelFilter('FORM')] }] };
 
   const ticketNumber = replyAddressTicket(input.recipients ?? [], env.JWT_ACCESS_SECRET) ?? /#(?:TK-)?0*(\d{1,10})\b|\[(?:TK-)?0*(\d{1,10})\]/i.exec(input.subject)?.slice(1).find(Boolean);
   let conversation = ticketNumber
@@ -136,27 +144,27 @@ export async function persistInboundEmail(input: {
   // Gmail preserves these headers even when a reply's subject is edited.
   const references = [...new Set([input.inReplyTo, ...(input.references ?? []).slice().reverse()].filter((value): value is string => Boolean(value)))].slice(0, 20);
   for (const messageId of references) {
-    if (conversation || !matchingCustomers.length) break;
+    if (conversation) break;
     const incoming = await db.incomingEmail.findFirst({ where: { messageId, conversation: senderScope } });
     if (incoming) conversation = await db.conversation.findFirst({ where: { ...senderScope, id: incoming.conversationId } });
     if (conversation) break;
     const outgoing = await db.activityLog.findFirst({ where: { action: 'conversation.email_sent', entityType: 'Conversation', metadata: { path: '$.messageId', equals: messageId } }, orderBy: { createdAt: 'desc' } });
     if (outgoing) conversation = await db.conversation.findFirst({ where: { ...senderScope, id: outgoing.entityId } });
   }
-  let customer = conversation ? matchingCustomers.find(item => item.id === conversation!.customerId) : selectEmailCustomer(matchingCustomers, email, input.from.name);
+  let customer = conversation ? matchingCustomers.find(item => item.id === conversation!.customerId) ?? await db.user.findUnique({ where: { id: conversation.customerId } }) ?? undefined : selectEmailCustomer(matchingCustomers, email, input.from.name);
   // Some clients send a fresh message to the general mailbox with no threading
   // information. Continue only an unambiguous, already answered active request.
   // Never override an explicit (possibly foreign) ticket/reference with a guess.
   if (!conversation && customer && !ticketNumber && !references.length && !hasTicketReplyTag(input.recipients ?? [])) {
     const active = await db.conversation.findMany({
-      where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, AND: [conversationChannelFilter('EMAIL')], messages: { some: { type: 'AGENT_REPLY' } } },
+      where: { customerId: customer.id, deletedAt: null, status: { in: ['OPEN', 'PENDING'] }, AND: [{ OR: [conversationChannelFilter('EMAIL'), conversationChannelFilter('FORM')] }], messages: { some: { type: 'AGENT_REPLY' } } },
       take: 2,
       include: { messages: { where: { type: 'AGENT_REPLY' }, select: { id: true }, take: 1 } },
     });
     if (active.length === 1 && active[0].messages.length) conversation = active[0];
   }
-  if (conversation && input.createReplies === false) return conversation.id;
-  if (!conversation && input.createTickets === false) return null;
+  if (conversation && input.createReplies === false) { await discardStoredUploads(input.attachments ?? []); return conversation.id; }
+  if (!conversation && input.createTickets === false) { await discardStoredUploads(input.attachments ?? []); return null; }
   if (!customer) {
     const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
     customer = await db.user.create({
@@ -180,10 +188,12 @@ export async function persistInboundEmail(input: {
         },
       });
     }
-    await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body, type: "CUSTOMER_MESSAGE" } });
+    const skippedNotice = input.skippedAttachments?.length ? `\n\nAlınamayan e-posta ekleri (desteklenmeyen tür, boyut veya dosya sayısı): ${input.skippedAttachments.slice(0, 10).join(', ')}${input.skippedAttachments.length > 10 ? ` ve ${input.skippedAttachments.length - 10} dosya daha` : ''}` : '';
+    const body = input.body || (input.attachments?.length ? 'Ek dosya gönderildi.' : 'E-posta alındı.');
+    await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: body.slice(0, 10_000 - skippedNotice.length) + skippedNotice, type: "CUSTOMER_MESSAGE", attachments: { create: (input.attachments ?? []).map(file => ({ ...file, uploaderId: customer.id })) } } });
     await tx.incomingEmail.create({ data: { mailbox: input.mailbox, uid: input.uid, messageId: input.messageId, conversationId: target.id } });
     await tx.conversation.update({ where: { id: target.id }, data: { status: "OPEN" } });
-    await tx.activityLog.create({ data: { userId: customer.id, action: "conversation.email_received", entityType: "Conversation", entityId: target.id, metadata: { mailbox: input.mailbox, uid: input.uid, senderEmail: email, subject: target.subject, number: target.number, messageId: input.messageId ?? null, inReplyTo: input.inReplyTo ?? null } } });
+    await tx.activityLog.create({ data: { userId: customer.id, action: "conversation.email_received", entityType: "Conversation", entityId: target.id, metadata: { mailbox: input.mailbox, uid: input.uid, senderEmail: email, subject: target.subject, number: target.number, messageId: input.messageId ?? null, inReplyTo: input.inReplyTo ?? null, attachmentCount: input.attachments?.length ?? 0, skippedAttachments: input.skippedAttachments ?? [] } } });
     await notifyConversation(tx, customerActor, target, "EMAIL_RECEIVED", "Yeni e-posta mesajı");
     return target.id;
   });
@@ -198,6 +208,9 @@ export async function syncInboundEmail() {
   if (hasStored && !integration!.imapEnabled) return { configured: false, processed: 0 };
   const config = { host: integration?.imapHost || env.IMAP_HOST, port: hasStored ? integration!.imapPort : env.IMAP_PORT, secure: hasStored ? integration!.imapSecure : (env.IMAP_SECURE || env.IMAP_PORT === 993), authType: hasStored ? integration!.imapAuthType : "BASIC", user: integration?.imapUser || env.IMAP_USER, password: integration?.imapPassword || env.IMAP_PASSWORD || env.IMAP_PASS, mailbox: hasStored ? integration!.imapMailbox : env.IMAP_MAILBOX, interval: hasStored ? integration!.imapPollIntervalSeconds : env.IMAP_POLL_INTERVAL_SECONDS, departmentId: integration?.imapDepartmentId || null, createTickets: hasStored ? integration!.imapCreateTickets : true, createReplies: hasStored ? integration!.imapCreateReplies : true };
   const configured = Boolean(config.host && config.user && config.password);
+  const ownAddresses = [config.user, integration?.smtpFromAddress, env.SMTP_FROM]
+    .filter((value): value is string => Boolean(value))
+    .map(value => canonicalEmail(/<([^<>]+)>/.exec(value)?.[1] ?? value));
   if (!configured || running) return { configured, processed: 0 };
   if (useStored && Date.now() - lastStoredPollAt < config.interval * 1000) return { configured, processed: 0 };
   if (useStored) lastStoredPollAt = Date.now();
@@ -217,47 +230,66 @@ export async function syncInboundEmail() {
   let processed = 0;
   try {
     await client.connect();
-      const lock = await client.getMailboxLock(config.mailbox);
+    const lock = await client.getMailboxLock(config.mailbox);
     try {
-        const since = new Date(Date.now() - env.IMAP_LOOKBACK_HOURS * 60 * 60 * 1000);
-      const uids = (await client.search({ since }, { uid: true })) || [];
-      if (!uids.length) return { configured, processed };
-      for (const uid of uids.slice(-20)) {
-        const message = await client.fetchOne(uid, { uid: true, source: true }, { uid: true });
-        if (!message || !message.source || !message.uid) continue;
-        const parsed = await simpleParser(message.source);
-        const sender = parsed.from?.value.find((value) => value.address)?.address;
-        const body = await parsedEmailReplyText(parsed);
-        if (!sender || !body) continue;
-        const emailSubject = parsed.subject || '';
-        const websiteRequest = parseTahsilatSupportRequest(emailSubject, body);
-        const isOwnSender = sender.trim().toLowerCase() === config.user!.trim().toLowerCase();
-        if (!websiteRequest && isOwnSender) {
-          if (/^\s*\[Tahsilat Destek\]/i.test(emailSubject)) {
-            console.warn('[IMAP] Tahsilat Destek bildirimi tanınmadı; konu/gövde biçimi beklenen kalıpla eşleşmedi.');
+      if (!client.mailbox) throw new Error('IMAP posta kutusu açılamadı.');
+      const uidValidity = String(client.mailbox.uidValidity);
+      const upperUid = client.mailbox.uidNext - 1;
+      const result = await drainImapMailbox({
+        id: imapSyncKey(config.host!, config.port, config.user!, config.mailbox, uidValidity),
+        mailbox: config.mailbox, uidValidity, upperUid,
+        shouldContinue: () => !stopRequested,
+        listUids: async (after, through) => {
+          const uids = await client.search({ uid: `${after + 1}:${through}` }, { uid: true });
+          if (!Array.isArray(uids)) throw new Error('IMAP mesaj listesi alınamadı; tarama konumu ilerletilmedi.');
+          return uids;
+        },
+        process: async (uid, storageMailbox) => {
+          const known = await db.incomingEmail.findUnique({ where: { mailbox_uid: { mailbox: storageMailbox, uid } } });
+          if (known) return false;
+          const message = await client.fetchOne(uid, { uid: true, source: true, internalDate: true }, { uid: true });
+          if (!message) return false; // Expunged since SEARCH: that UID cannot return.
+          if (!acceptsIncomingDate(integration?.incomingMessagesSince, message.internalDate)) return false;
+          if (!message.source || message.uid !== uid) throw new Error('IMAP mesaj içeriği tam alınamadı.');
+          const parsed = await simpleParser(message.source);
+          const sender = parsed.from?.value.find((value) => value.address)?.address;
+          const body = await parsedEmailReplyText(parsed);
+          if (!sender || (!body && !parsed.attachments.length)) return false;
+          const emailSubject = parsed.subject || '';
+          const websiteRequest = parseTahsilatSupportRequest(emailSubject, body);
+          const isOwnSender = ownAddresses.includes(canonicalEmail(sender));
+          if (!websiteRequest && isOwnSender) {
+            if (/^\s*\[Tahsilat Destek\]/i.test(emailSubject)) {
+              console.warn('[IMAP] Tahsilat Destek bildirimi tanınmadı; konu/gövde biçimi beklenen kalıpla eşleşmedi.');
+            }
+            return false;
           }
-          continue;
-        }
-        const conversationId = await persistInboundEmail({
-          mailbox: config.mailbox,
-          uid: message.uid,
-          messageId: parsed.messageId || undefined,
-          inReplyTo: parsed.inReplyTo || undefined,
-          references: typeof parsed.references === 'string' ? [parsed.references] : parsed.references,
-          recipients: (Array.isArray(parsed.to) ? parsed.to : parsed.to ? [parsed.to] : []).flatMap(group => group.value.map(recipient => recipient.address ?? '')),
-          from: websiteRequest
-            ? { address: websiteRequest.email, name: websiteRequest.name }
-            : { address: sender, name: parsed.from?.value.find((value) => value.address)?.name },
-          subject: websiteRequest?.subject || parsed.subject || "E-posta desteği",
-          body: websiteRequest?.body || body,
-          departmentId: config.departmentId,
-          createTickets: config.createTickets,
-          createReplies: config.createReplies,
-        });
-        if (websiteRequest && conversationId) console.log('[IMAP] Tahsilat Destek bildirimi içeri alındı.', { conversationId });
-        await client.messageFlagsAdd(message.uid, ["\\Seen"], { uid: true });
-        processed++;
-      }
+          const preparedAttachments = await prepareInboundEmailAttachments(parsed.attachments);
+          const conversationId = await withStoredUploads(preparedAttachments.files, attachments => persistInboundEmail({
+            mailbox: storageMailbox,
+            uid: message.uid,
+            messageId: parsed.messageId || undefined,
+            inReplyTo: parsed.inReplyTo || undefined,
+            references: typeof parsed.references === 'string' ? [parsed.references] : parsed.references,
+            recipients: (Array.isArray(parsed.to) ? parsed.to : parsed.to ? [parsed.to] : []).flatMap(group => group.value.map(recipient => recipient.address ?? '')),
+            from: websiteRequest
+              ? { address: websiteRequest.email, name: websiteRequest.name }
+              : { address: sender, name: parsed.from?.value.find((value) => value.address)?.name },
+            subject: websiteRequest?.subject || parsed.subject || "E-posta desteği",
+            body: websiteRequest?.body || body,
+            departmentId: config.departmentId,
+            createTickets: config.createTickets,
+            createReplies: config.createReplies,
+            attachments,
+            skippedAttachments: preparedAttachments.skipped,
+          }));
+          if (websiteRequest && conversationId) console.log('[IMAP] Tahsilat Destek bildirimi içeri alındı.', { conversationId });
+          // A flag failure must not turn an already saved message into a failed import.
+          await client.messageFlagsAdd(message.uid, ["\\Seen"], { uid: true }).catch(error => console.warn('[IMAP] Okundu işareti güncellenemedi.', { uid, reason: error instanceof Error ? error.message : String(error) }));
+          return Boolean(conversationId);
+          },
+      });
+      processed = result.processed;
     } finally {
       lock.release();
     }
@@ -273,13 +305,19 @@ export async function syncInboundEmail() {
 
 export function startInboundEmailPolling() {
   if (timer) return;
-  const poll = () => { void syncInboundEmail().catch(error => console.error('E-posta taraması başarısız:', error instanceof Error ? error.message : String(error))); };
+  stopRequested = false;
+  const poll = () => {
+    if (activePoll) return;
+    activePoll = syncInboundEmail().catch(error => console.error('E-posta taraması başarısız:', error instanceof Error ? error.message : String(error))).finally(() => { activePoll = undefined; });
+  };
   poll();
   timer = setInterval(poll, 15_000);
   timer.unref();
 }
 
-export function stopInboundEmailPolling() {
+export async function stopInboundEmailPolling() {
+  stopRequested = true;
   if (timer) clearInterval(timer);
   timer = undefined;
+  await activePoll;
 }

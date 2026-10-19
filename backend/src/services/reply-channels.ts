@@ -2,10 +2,10 @@
 import { AppError } from '../utils/errors.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { ConversationChannel } from '../generated/prisma/enums.js';
-export type ReplyChannel = 'TICKET' | 'EMAIL' | 'SMS' | 'WHATSAPP';
+export type ReplyChannel = 'TICKET' | 'EMAIL' | 'SMS' | 'WHATSAPP' | 'FORM';
 export function selectedReplyChannels(value: unknown, original: string): ReplyChannel[] {
-  if (Array.isArray(value) && value.length && value.every(item => ['TICKET','EMAIL','SMS','WHATSAPP'].includes(item))) return [...new Set(value)] as ReplyChannel[];
-  return [['TICKET','EMAIL','SMS','WHATSAPP'].includes(original) ? original : 'TICKET'] as ReplyChannel[];
+  if (Array.isArray(value) && value.length && value.every(item => ['TICKET','EMAIL','SMS','WHATSAPP','FORM'].includes(item))) return [...new Set(value)] as ReplyChannel[];
+  return [['TICKET','EMAIL','SMS','WHATSAPP','FORM'].includes(original) ? original : 'TICKET'] as ReplyChannel[];
 }
 export function conversationChannelFilter(channel: ConversationChannel): Prisma.ConversationWhereInput {
   return { OR: [
@@ -20,8 +20,8 @@ export function validateReplyChannels(channels: ReplyChannel[], customer: { emai
   const stored = Boolean(settings && (settings.smtpHost || settings.smtpFromAddress || settings.smtpUser || settings.smtpPassword));
   for (const channel of channels) {
     if (channel === 'TICKET') continue;
-    const enabled = channel === 'EMAIL' ? (stored ? settings?.smtpEnabled : true) && Boolean(settings?.smtpHost || env.SMTP_HOST) && Boolean(settings?.smtpFromAddress || env.SMTP_FROM) : channel === 'SMS' ? settings?.smsEnabled : settings?.whatsappEnabled;
-    if (!enabled) throw new AppError(400, 'CHANNEL_DISABLED', `${channel === 'EMAIL' ? 'E-Posta' : channel === 'SMS' ? 'SMS' : 'WhatsApp'} kanalı etkin değil.`);
-    if (channel === 'EMAIL' ? !customer.email : !customer.phone) throw new AppError(400, 'RECIPIENT_REQUIRED', channel === 'EMAIL' ? 'Müşterinin E-Posta adresi eksik.' : 'Müşterinin telefon numarası eksik.');
+    const enabled = (channel === 'EMAIL' || channel === 'FORM') ? (stored ? settings?.smtpEnabled : true) && Boolean(settings?.smtpHost || env.SMTP_HOST) && Boolean(settings?.smtpFromAddress || env.SMTP_FROM) : channel === 'SMS' ? settings?.smsEnabled : settings?.whatsappEnabled;
+    if (!enabled) throw new AppError(400, 'CHANNEL_DISABLED', `${(channel === 'EMAIL' || channel === 'FORM') ? 'E-Posta' : channel === 'SMS' ? 'SMS' : 'WhatsApp'} kanalı etkin değil.`);
+    if ((channel === 'EMAIL' || channel === 'FORM') ? !customer.email : !customer.phone) throw new AppError(400, 'RECIPIENT_REQUIRED', (channel === 'EMAIL' || channel === 'FORM') ? 'Müşterinin E-Posta adresi eksik.' : 'Müşterinin telefon numarası eksik.');
   }
 }

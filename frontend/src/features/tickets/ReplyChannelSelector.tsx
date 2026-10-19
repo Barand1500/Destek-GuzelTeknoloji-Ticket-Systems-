@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '../../services/api';
 import { channels, type Conversation } from '../../types';
 import { contactChannels } from '../../utils/contact-channels';
-type Channel = 'TICKET'|'EMAIL'|'SMS'|'WHATSAPP';
+type Channel = 'TICKET'|'EMAIL'|'SMS'|'WHATSAPP'|'FORM';
 export function ReplyChannelSelector({ conversation, editable }: { conversation: Conversation; editable: boolean }) {
   const client=useQueryClient();
   const root=useRef<HTMLDivElement>(null);
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState<Channel[]>([]);
-  const available=useQuery({queryKey:['communication-channels'],enabled:editable,queryFn:async()=>(await api.get<{data:{EMAIL:boolean;SMS:boolean;WHATSAPP:boolean}}>('/communication-channels')).data.data});
+  const available=useQuery({queryKey:['communication-channels'],enabled:editable,queryFn:async()=>(await api.get<{data:{EMAIL:boolean;SMS:boolean;WHATSAPP:boolean;FORM:boolean}}>('/communication-channels')).data.data});
   const saved=conversation.replyChannels?.length?conversation.replyChannels:[conversation.channel==='LIVE_CHAT'?'TICKET':conversation.channel];
   const names=saved.map(value=>channels[value]).join(', ');
   const text=`Bu talep ${names} ${saved.length>1?'kanalları':'kanalı'} tercih edilerek açıldı.`;

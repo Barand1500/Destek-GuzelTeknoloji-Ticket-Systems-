@@ -23,6 +23,13 @@ export function Realtime(){
     if(!user)return;
     let active=true,renewing=false;let pending:ReturnType<typeof setTimeout>|undefined;
     const socket=io({auth:callback=>callback({token:getToken()}),transports:['websocket','polling']});
+    const watchTyping = (event: Event) => { if (socket.connected) socket.emit('conversation:typing:watch', (event as CustomEvent).detail); };
+    const sendTyping = (event: Event) => { if (socket.connected) socket.emit('conversation:typing:update', (event as CustomEvent).detail); };
+    window.addEventListener('typing:watch', watchTyping);
+    window.addEventListener('typing:send', sendTyping);
+    socket.on('conversation:typing', data => window.dispatchEvent(new CustomEvent('typing:received', { detail: data })));
+    socket.on('connect', () => window.dispatchEvent(new Event('typing:connected')));
+    socket.on('disconnect', () => window.dispatchEvent(new Event('typing:disconnected')));
     let lastActivityAt=Date.now();let activityTimer:ReturnType<typeof setTimeout>|undefined;
     const emitPresence=()=>socket.connected&&socket.emit('presence:update',{path:window.location.pathname,page:presencePage(window.location.pathname),visible:document.visibilityState==='visible',lastActivityAt});
     emitPresenceRef.current=emitPresence;
@@ -48,7 +55,7 @@ export function Realtime(){
     document.addEventListener('visibilitychange',activity);
     const presenceTimer=setInterval(emitPresence,30_000);
     const timer=setInterval(()=>void renew(),12*60*1000);
-    return()=>{active=false;emitPresenceRef.current=null;clearInterval(timer);clearInterval(presenceTimer);clearTimeout(pending);clearTimeout(activityTimer);window.removeEventListener('token-changed',changed);for(const event of ['pointerdown','keydown','scroll'] as const)window.removeEventListener(event,activity);document.removeEventListener('visibilitychange',activity);socket.disconnect();};
+    return()=>{window.removeEventListener('typing:watch',watchTyping);window.removeEventListener('typing:send',sendTyping);window.dispatchEvent(new Event('typing:disconnected'));active=false;emitPresenceRef.current=null;clearInterval(timer);clearInterval(presenceTimer);clearTimeout(pending);clearTimeout(activityTimer);window.removeEventListener('token-changed',changed);for(const event of ['pointerdown','keydown','scroll'] as const)window.removeEventListener(event,activity);document.removeEventListener('visibilitychange',activity);socket.disconnect();};
   },[user?.id,client]);
   useEffect(()=>{emitPresenceRef.current?.();},[pathname]);
   return null;

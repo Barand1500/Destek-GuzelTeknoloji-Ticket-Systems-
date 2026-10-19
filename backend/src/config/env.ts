@@ -11,6 +11,9 @@ export const env = z
     DATABASE_URL: z.string().min(1),
     JWT_ACCESS_SECRET: z.string().min(32),
     FRONTEND_URL: z.url().default("http://localhost:5173"),
+    TURNSTILE_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
+    TURNSTILE_SITE_KEY: z.string().trim().default(''),
+    TURNSTILE_SECRET_KEY: z.string().trim().default(''),
     // Extra development origins are deliberately fixed; production accepts only FRONTEND_URL.
     DEV_FRONTEND_URLS: z.string().default("http://localhost:5173,http://127.0.0.1:5173"),
     UPLOAD_DIR: z.string().default('uploads'),
@@ -34,6 +37,12 @@ export const env = z
     IMAP_MAILBOX: z.string().trim().min(1).default("INBOX"),
     IMAP_POLL_INTERVAL_SECONDS: z.coerce.number().int().min(15).max(3600).default(15),
     IMAP_LOOKBACK_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+  })
+  .refine(value => !value.TURNSTILE_ENABLED || Boolean(value.TURNSTILE_SITE_KEY && value.TURNSTILE_SECRET_KEY), {
+    message: 'Turnstile açıkken TURNSTILE_SITE_KEY ve TURNSTILE_SECRET_KEY zorunludur.', path: ['TURNSTILE_ENABLED'],
+  })
+  .refine(value => value.NODE_ENV !== 'production' || !value.TURNSTILE_ENABLED || ![value.TURNSTILE_SITE_KEY, value.TURNSTILE_SECRET_KEY].some(key => /^[123]x0{10}/.test(key)), {
+    message: 'Canlı ortamda Turnstile test anahtarı kullanılamaz.', path: ['TURNSTILE_SITE_KEY'],
   })
   .parse(process.env);
 

@@ -11,6 +11,9 @@ export type ActivityLog = {
   metadata?: { providerMessageId?: string; providerTimestamp?: string; name?: string; customerName?: string | null; title?: string; subject?: string; number?: number; code?: string; phone?: string | null; email?: string | null; company?: string | null; fields?: string[]; details?: string[]; changes?: Record<string, { from?: unknown; to?: unknown }>; originalName?: string; recipient?: string; reason?: string; attachmentCount?: number; deletedConversationCount?: number; recipientCount?: number; channels?: string[]; channel?: string; senderEmail?: string } | null;
 };
 export const actionLabels: Record<string, string> = {
+  'conversation.email_queued': 'E-Posta gönderim kuyruğuna alındı',
+  'conversation.channel_reply_queued': 'Kanal mesajı gönderim kuyruğuna alındı',
+  'conversation.delivery_cancelled': 'Gönderim iptal edildi',
   "conversation.channel_reply_requested": "Kanal gönderimi başlatıldı",
   "conversation.channel_reply_sent": "Kanal gönderimi sağlayıcı tarafından kabul edildi",
   "conversation.whatsapp_sent": "WhatsApp mesajı gönderildi",
@@ -140,6 +143,7 @@ export function richDescriptionFor(log: ActivityLog) {
       metadata?.subject && `Konu: ${metadata.subject}`,
       metadata?.number && `Talep no: #TK-${String(metadata.number).padStart(5, "0")}`,
       metadata?.recipient && `Alıcı: ${metadata.recipient}`,
+      metadata?.originalName && `Dosya: ${metadata.originalName}`,
       metadata?.providerMessageId && `Sağlayıcı mesaj no: ${metadata.providerMessageId}`,
       metadata?.providerTimestamp && `WhatsApp bildirim zamanı: ${new Date(metadata.providerTimestamp).toLocaleString('tr-TR')}`,
     ].filter(Boolean).join(" · ");
@@ -166,7 +170,7 @@ export function richDescriptionFor(log: ActivityLog) {
     metadata?.originalName && `Dosya: ${metadata.originalName}`,
     metadata?.recipient && `Alıcı: ${metadata.recipient}`,
     metadata?.senderEmail && `Gönderen: ${metadata.senderEmail}`,
-    metadata?.reason && `Hata: ${metadata.reason}`,
+    metadata?.reason && `${log.action === 'conversation.email_sent' ? 'İşlem' : 'Hata'}: ${metadata.reason}`,
     metadata?.attachmentCount && `Ek dosya sayısı: ${metadata.attachmentCount}`,
     metadata?.deletedConversationCount !== undefined && `Silinen talep sayısı: ${metadata.deletedConversationCount}`,
   ].filter(Boolean).join(" · ");

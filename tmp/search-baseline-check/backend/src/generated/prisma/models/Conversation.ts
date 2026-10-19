@@ -336,12 +336,17 @@ export type ConversationWhereInput = {
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   department?: Prisma.XOR<Prisma.DepartmentScalarRelationFilter, Prisma.DepartmentWhereInput>
   assignedAgent?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  assignees?: Prisma.ConversationAssigneeListRelationFilter
   messages?: Prisma.ConversationMessageListRelationFilter
   incomingEmails?: Prisma.IncomingEmailListRelationFilter
+  outboundMessages?: Prisma.OutboundMessageListRelationFilter
   tags?: Prisma.ConversationTagListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   externalMessages?: Prisma.ExternalMessageListRelationFilter
   participants?: Prisma.ConversationParticipantListRelationFilter
+  formRequest?: Prisma.XOR<Prisma.FormRequestNullableScalarRelationFilter, Prisma.FormRequestWhereInput> | null
+  formAccess?: Prisma.FormAccessListRelationFilter
+  formLogin?: Prisma.XOR<Prisma.FormLoginChallengeNullableScalarRelationFilter, Prisma.FormLoginChallengeWhereInput> | null
 }
 
 export type ConversationOrderByWithRelationInput = {
@@ -369,12 +374,17 @@ export type ConversationOrderByWithRelationInput = {
   customer?: Prisma.UserOrderByWithRelationInput
   department?: Prisma.DepartmentOrderByWithRelationInput
   assignedAgent?: Prisma.UserOrderByWithRelationInput
+  assignees?: Prisma.ConversationAssigneeOrderByRelationAggregateInput
   messages?: Prisma.ConversationMessageOrderByRelationAggregateInput
   incomingEmails?: Prisma.IncomingEmailOrderByRelationAggregateInput
+  outboundMessages?: Prisma.OutboundMessageOrderByRelationAggregateInput
   tags?: Prisma.ConversationTagOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   externalMessages?: Prisma.ExternalMessageOrderByRelationAggregateInput
   participants?: Prisma.ConversationParticipantOrderByRelationAggregateInput
+  formRequest?: Prisma.FormRequestOrderByWithRelationInput
+  formAccess?: Prisma.FormAccessOrderByRelationAggregateInput
+  formLogin?: Prisma.FormLoginChallengeOrderByWithRelationInput
   _relevance?: Prisma.ConversationOrderByRelevanceInput
 }
 
@@ -406,12 +416,17 @@ export type ConversationWhereUniqueInput = Prisma.AtLeast<{
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   department?: Prisma.XOR<Prisma.DepartmentScalarRelationFilter, Prisma.DepartmentWhereInput>
   assignedAgent?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  assignees?: Prisma.ConversationAssigneeListRelationFilter
   messages?: Prisma.ConversationMessageListRelationFilter
   incomingEmails?: Prisma.IncomingEmailListRelationFilter
+  outboundMessages?: Prisma.OutboundMessageListRelationFilter
   tags?: Prisma.ConversationTagListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   externalMessages?: Prisma.ExternalMessageListRelationFilter
   participants?: Prisma.ConversationParticipantListRelationFilter
+  formRequest?: Prisma.XOR<Prisma.FormRequestNullableScalarRelationFilter, Prisma.FormRequestWhereInput> | null
+  formAccess?: Prisma.FormAccessListRelationFilter
+  formLogin?: Prisma.XOR<Prisma.FormLoginChallengeNullableScalarRelationFilter, Prisma.FormLoginChallengeWhereInput> | null
 }, "id" | "number">
 
 export type ConversationOrderByWithAggregationInput = {
@@ -489,12 +504,17 @@ export type ConversationCreateInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateInput = {
@@ -518,12 +538,17 @@ export type ConversationUncheckedCreateInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUpdateInput = {
@@ -546,12 +571,17 @@ export type ConversationUpdateInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateInput = {
@@ -575,12 +605,17 @@ export type ConversationUncheckedUpdateInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateManyInput = {
@@ -878,6 +913,62 @@ export type EnumConversationChannelFieldUpdateOperationsInput = {
   set?: $Enums.ConversationChannel
 }
 
+export type ConversationCreateNestedOneWithoutFormRequestInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormRequestInput, Prisma.ConversationUncheckedCreateWithoutFormRequestInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormRequestInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutFormRequestNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormRequestInput, Prisma.ConversationUncheckedCreateWithoutFormRequestInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormRequestInput
+  upsert?: Prisma.ConversationUpsertWithoutFormRequestInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutFormRequestInput, Prisma.ConversationUpdateWithoutFormRequestInput>, Prisma.ConversationUncheckedUpdateWithoutFormRequestInput>
+}
+
+export type ConversationCreateNestedOneWithoutFormAccessInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormAccessInput, Prisma.ConversationUncheckedCreateWithoutFormAccessInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormAccessInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutFormAccessNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormAccessInput, Prisma.ConversationUncheckedCreateWithoutFormAccessInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormAccessInput
+  upsert?: Prisma.ConversationUpsertWithoutFormAccessInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutFormAccessInput, Prisma.ConversationUpdateWithoutFormAccessInput>, Prisma.ConversationUncheckedUpdateWithoutFormAccessInput>
+}
+
+export type ConversationCreateNestedOneWithoutFormLoginInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormLoginInput, Prisma.ConversationUncheckedCreateWithoutFormLoginInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormLoginInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutFormLoginNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutFormLoginInput, Prisma.ConversationUncheckedCreateWithoutFormLoginInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutFormLoginInput
+  upsert?: Prisma.ConversationUpsertWithoutFormLoginInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutFormLoginInput, Prisma.ConversationUpdateWithoutFormLoginInput>, Prisma.ConversationUncheckedUpdateWithoutFormLoginInput>
+}
+
+export type ConversationCreateNestedOneWithoutAssigneesInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutAssigneesInput, Prisma.ConversationUncheckedCreateWithoutAssigneesInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutAssigneesInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutAssigneesNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutAssigneesInput, Prisma.ConversationUncheckedCreateWithoutAssigneesInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutAssigneesInput
+  upsert?: Prisma.ConversationUpsertWithoutAssigneesInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutAssigneesInput, Prisma.ConversationUpdateWithoutAssigneesInput>, Prisma.ConversationUncheckedUpdateWithoutAssigneesInput>
+}
+
 export type ConversationCreateNestedOneWithoutMessagesInput = {
   create?: Prisma.XOR<Prisma.ConversationCreateWithoutMessagesInput, Prisma.ConversationUncheckedCreateWithoutMessagesInput>
   connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutMessagesInput
@@ -918,6 +1009,22 @@ export type ConversationUpdateOneRequiredWithoutIncomingEmailsNestedInput = {
   upsert?: Prisma.ConversationUpsertWithoutIncomingEmailsInput
   connect?: Prisma.ConversationWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutIncomingEmailsInput, Prisma.ConversationUpdateWithoutIncomingEmailsInput>, Prisma.ConversationUncheckedUpdateWithoutIncomingEmailsInput>
+}
+
+export type ConversationCreateNestedOneWithoutOutboundMessagesInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedCreateWithoutOutboundMessagesInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutOutboundMessagesInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneWithoutOutboundMessagesNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedCreateWithoutOutboundMessagesInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutOutboundMessagesInput
+  upsert?: Prisma.ConversationUpsertWithoutOutboundMessagesInput
+  disconnect?: Prisma.ConversationWhereInput | boolean
+  delete?: Prisma.ConversationWhereInput | boolean
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutOutboundMessagesInput, Prisma.ConversationUpdateWithoutOutboundMessagesInput>, Prisma.ConversationUncheckedUpdateWithoutOutboundMessagesInput>
 }
 
 export type ConversationCreateNestedManyWithoutWebsiteInput = {
@@ -1026,12 +1133,17 @@ export type ConversationCreateWithoutCustomerInput = {
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutCustomerInput = {
@@ -1054,12 +1166,17 @@ export type ConversationUncheckedCreateWithoutCustomerInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutCustomerInput = {
@@ -1092,12 +1209,17 @@ export type ConversationCreateWithoutAssignedAgentInput = {
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutAssignedAgentInput = {
@@ -1120,12 +1242,17 @@ export type ConversationUncheckedCreateWithoutAssignedAgentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutAssignedAgentInput = {
@@ -1216,12 +1343,17 @@ export type ConversationCreateWithoutDepartmentInput = {
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutDepartmentInput = {
@@ -1244,12 +1376,17 @@ export type ConversationUncheckedCreateWithoutDepartmentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutDepartmentInput = {
@@ -1278,6 +1415,594 @@ export type ConversationUpdateManyWithWhereWithoutDepartmentInput = {
   data: Prisma.XOR<Prisma.ConversationUpdateManyMutationInput, Prisma.ConversationUncheckedUpdateManyWithoutDepartmentInput>
 }
 
+export type ConversationCreateWithoutFormRequestInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutFormRequestInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutFormRequestInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormRequestInput, Prisma.ConversationUncheckedCreateWithoutFormRequestInput>
+}
+
+export type ConversationUpsertWithoutFormRequestInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutFormRequestInput, Prisma.ConversationUncheckedUpdateWithoutFormRequestInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormRequestInput, Prisma.ConversationUncheckedCreateWithoutFormRequestInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutFormRequestInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutFormRequestInput, Prisma.ConversationUncheckedUpdateWithoutFormRequestInput>
+}
+
+export type ConversationUpdateWithoutFormRequestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutFormRequestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutFormAccessInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutFormAccessInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutFormAccessInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormAccessInput, Prisma.ConversationUncheckedCreateWithoutFormAccessInput>
+}
+
+export type ConversationUpsertWithoutFormAccessInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutFormAccessInput, Prisma.ConversationUncheckedUpdateWithoutFormAccessInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormAccessInput, Prisma.ConversationUncheckedCreateWithoutFormAccessInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutFormAccessInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutFormAccessInput, Prisma.ConversationUncheckedUpdateWithoutFormAccessInput>
+}
+
+export type ConversationUpdateWithoutFormAccessInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutFormAccessInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutFormLoginInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutFormLoginInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutFormLoginInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormLoginInput, Prisma.ConversationUncheckedCreateWithoutFormLoginInput>
+}
+
+export type ConversationUpsertWithoutFormLoginInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutFormLoginInput, Prisma.ConversationUncheckedUpdateWithoutFormLoginInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutFormLoginInput, Prisma.ConversationUncheckedCreateWithoutFormLoginInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutFormLoginInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutFormLoginInput, Prisma.ConversationUncheckedUpdateWithoutFormLoginInput>
+}
+
+export type ConversationUpdateWithoutFormLoginInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutFormLoginInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutAssigneesInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutAssigneesInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutAssigneesInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutAssigneesInput, Prisma.ConversationUncheckedCreateWithoutAssigneesInput>
+}
+
+export type ConversationUpsertWithoutAssigneesInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutAssigneesInput, Prisma.ConversationUncheckedUpdateWithoutAssigneesInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutAssigneesInput, Prisma.ConversationUncheckedCreateWithoutAssigneesInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutAssigneesInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutAssigneesInput, Prisma.ConversationUncheckedUpdateWithoutAssigneesInput>
+}
+
+export type ConversationUpdateWithoutAssigneesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutAssigneesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
+}
+
 export type ConversationCreateWithoutMessagesInput = {
   id?: string
   number?: number
@@ -1299,11 +2024,16 @@ export type ConversationCreateWithoutMessagesInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutMessagesInput = {
@@ -1327,11 +2057,16 @@ export type ConversationUncheckedCreateWithoutMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutMessagesInput = {
@@ -1370,11 +2105,16 @@ export type ConversationUpdateWithoutMessagesInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutMessagesInput = {
@@ -1398,11 +2138,16 @@ export type ConversationUncheckedUpdateWithoutMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateWithoutParticipantsInput = {
@@ -1426,11 +2171,16 @@ export type ConversationCreateWithoutParticipantsInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutParticipantsInput = {
@@ -1454,11 +2204,16 @@ export type ConversationUncheckedCreateWithoutParticipantsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutParticipantsInput = {
@@ -1497,11 +2252,16 @@ export type ConversationUpdateWithoutParticipantsInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutParticipantsInput = {
@@ -1525,11 +2285,16 @@ export type ConversationUncheckedUpdateWithoutParticipantsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateWithoutIncomingEmailsInput = {
@@ -1553,11 +2318,16 @@ export type ConversationCreateWithoutIncomingEmailsInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutIncomingEmailsInput = {
@@ -1581,11 +2351,16 @@ export type ConversationUncheckedCreateWithoutIncomingEmailsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutIncomingEmailsInput = {
@@ -1624,11 +2399,16 @@ export type ConversationUpdateWithoutIncomingEmailsInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutIncomingEmailsInput = {
@@ -1652,11 +2432,163 @@ export type ConversationUncheckedUpdateWithoutIncomingEmailsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutOutboundMessagesInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutOutboundMessagesInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutOutboundMessagesInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedCreateWithoutOutboundMessagesInput>
+}
+
+export type ConversationUpsertWithoutOutboundMessagesInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedUpdateWithoutOutboundMessagesInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedCreateWithoutOutboundMessagesInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutOutboundMessagesInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutOutboundMessagesInput, Prisma.ConversationUncheckedUpdateWithoutOutboundMessagesInput>
+}
+
+export type ConversationUpdateWithoutOutboundMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutOutboundMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateWithoutWebsiteInput = {
@@ -1679,12 +2611,17 @@ export type ConversationCreateWithoutWebsiteInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutWebsiteInput = {
@@ -1707,12 +2644,17 @@ export type ConversationUncheckedCreateWithoutWebsiteInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutWebsiteInput = {
@@ -1762,11 +2704,16 @@ export type ConversationCreateWithoutTagsInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutTagsInput = {
@@ -1790,11 +2737,16 @@ export type ConversationUncheckedCreateWithoutTagsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutTagsInput = {
@@ -1833,11 +2785,16 @@ export type ConversationUpdateWithoutTagsInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutTagsInput = {
@@ -1861,11 +2818,16 @@ export type ConversationUncheckedUpdateWithoutTagsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateWithoutNotificationsInput = {
@@ -1889,11 +2851,16 @@ export type ConversationCreateWithoutNotificationsInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutNotificationsInput = {
@@ -1917,11 +2884,16 @@ export type ConversationUncheckedCreateWithoutNotificationsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutNotificationsInput = {
@@ -1960,11 +2932,16 @@ export type ConversationUpdateWithoutNotificationsInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutNotificationsInput = {
@@ -1988,11 +2965,16 @@ export type ConversationUncheckedUpdateWithoutNotificationsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateWithoutExternalMessagesInput = {
@@ -2016,11 +2998,16 @@ export type ConversationCreateWithoutExternalMessagesInput = {
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutExternalMessagesInput = {
@@ -2044,11 +3031,16 @@ export type ConversationUncheckedCreateWithoutExternalMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
   tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
   participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutExternalMessagesInput = {
@@ -2087,11 +3079,16 @@ export type ConversationUpdateWithoutExternalMessagesInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutExternalMessagesInput = {
@@ -2115,11 +3112,16 @@ export type ConversationUncheckedUpdateWithoutExternalMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationCreateManyCustomerInput = {
@@ -2185,12 +3187,17 @@ export type ConversationUpdateWithoutCustomerInput = {
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutCustomerInput = {
@@ -2213,12 +3220,17 @@ export type ConversationUncheckedUpdateWithoutCustomerInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateManyWithoutCustomerInput = {
@@ -2262,12 +3274,17 @@ export type ConversationUpdateWithoutAssignedAgentInput = {
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutAssignedAgentInput = {
@@ -2290,12 +3307,17 @@ export type ConversationUncheckedUpdateWithoutAssignedAgentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateManyWithoutAssignedAgentInput = {
@@ -2361,12 +3383,17 @@ export type ConversationUpdateWithoutDepartmentInput = {
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutDepartmentInput = {
@@ -2389,12 +3416,17 @@ export type ConversationUncheckedUpdateWithoutDepartmentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateManyWithoutDepartmentInput = {
@@ -2460,12 +3492,17 @@ export type ConversationUpdateWithoutWebsiteInput = {
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutWebsiteInput = {
@@ -2488,12 +3525,17 @@ export type ConversationUncheckedUpdateWithoutWebsiteInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
   externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateManyWithoutWebsiteInput = {
@@ -2524,21 +3566,27 @@ export type ConversationUncheckedUpdateManyWithoutWebsiteInput = {
  */
 
 export type ConversationCountOutputType = {
+  assignees: number
   messages: number
   incomingEmails: number
+  outboundMessages: number
   tags: number
   notifications: number
   externalMessages: number
   participants: number
+  formAccess: number
 }
 
 export type ConversationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  assignees?: boolean | ConversationCountOutputTypeCountAssigneesArgs
   messages?: boolean | ConversationCountOutputTypeCountMessagesArgs
   incomingEmails?: boolean | ConversationCountOutputTypeCountIncomingEmailsArgs
+  outboundMessages?: boolean | ConversationCountOutputTypeCountOutboundMessagesArgs
   tags?: boolean | ConversationCountOutputTypeCountTagsArgs
   notifications?: boolean | ConversationCountOutputTypeCountNotificationsArgs
   externalMessages?: boolean | ConversationCountOutputTypeCountExternalMessagesArgs
   participants?: boolean | ConversationCountOutputTypeCountParticipantsArgs
+  formAccess?: boolean | ConversationCountOutputTypeCountFormAccessArgs
 }
 
 /**
@@ -2554,6 +3602,13 @@ export type ConversationCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
 /**
  * ConversationCountOutputType without action
  */
+export type ConversationCountOutputTypeCountAssigneesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ConversationAssigneeWhereInput
+}
+
+/**
+ * ConversationCountOutputType without action
+ */
 export type ConversationCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ConversationMessageWhereInput
 }
@@ -2563,6 +3618,13 @@ export type ConversationCountOutputTypeCountMessagesArgs<ExtArgs extends runtime
  */
 export type ConversationCountOutputTypeCountIncomingEmailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.IncomingEmailWhereInput
+}
+
+/**
+ * ConversationCountOutputType without action
+ */
+export type ConversationCountOutputTypeCountOutboundMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OutboundMessageWhereInput
 }
 
 /**
@@ -2593,6 +3655,13 @@ export type ConversationCountOutputTypeCountParticipantsArgs<ExtArgs extends run
   where?: Prisma.ConversationParticipantWhereInput
 }
 
+/**
+ * ConversationCountOutputType without action
+ */
+export type ConversationCountOutputTypeCountFormAccessArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FormAccessWhereInput
+}
+
 
 export type ConversationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2619,12 +3688,17 @@ export type ConversationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   department?: boolean | Prisma.DepartmentDefaultArgs<ExtArgs>
   assignedAgent?: boolean | Prisma.Conversation$assignedAgentArgs<ExtArgs>
+  assignees?: boolean | Prisma.Conversation$assigneesArgs<ExtArgs>
   messages?: boolean | Prisma.Conversation$messagesArgs<ExtArgs>
   incomingEmails?: boolean | Prisma.Conversation$incomingEmailsArgs<ExtArgs>
+  outboundMessages?: boolean | Prisma.Conversation$outboundMessagesArgs<ExtArgs>
   tags?: boolean | Prisma.Conversation$tagsArgs<ExtArgs>
   notifications?: boolean | Prisma.Conversation$notificationsArgs<ExtArgs>
   externalMessages?: boolean | Prisma.Conversation$externalMessagesArgs<ExtArgs>
   participants?: boolean | Prisma.Conversation$participantsArgs<ExtArgs>
+  formRequest?: boolean | Prisma.Conversation$formRequestArgs<ExtArgs>
+  formAccess?: boolean | Prisma.Conversation$formAccessArgs<ExtArgs>
+  formLogin?: boolean | Prisma.Conversation$formLoginArgs<ExtArgs>
   _count?: boolean | Prisma.ConversationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["conversation"]>
 
@@ -2659,12 +3733,17 @@ export type ConversationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   department?: boolean | Prisma.DepartmentDefaultArgs<ExtArgs>
   assignedAgent?: boolean | Prisma.Conversation$assignedAgentArgs<ExtArgs>
+  assignees?: boolean | Prisma.Conversation$assigneesArgs<ExtArgs>
   messages?: boolean | Prisma.Conversation$messagesArgs<ExtArgs>
   incomingEmails?: boolean | Prisma.Conversation$incomingEmailsArgs<ExtArgs>
+  outboundMessages?: boolean | Prisma.Conversation$outboundMessagesArgs<ExtArgs>
   tags?: boolean | Prisma.Conversation$tagsArgs<ExtArgs>
   notifications?: boolean | Prisma.Conversation$notificationsArgs<ExtArgs>
   externalMessages?: boolean | Prisma.Conversation$externalMessagesArgs<ExtArgs>
   participants?: boolean | Prisma.Conversation$participantsArgs<ExtArgs>
+  formRequest?: boolean | Prisma.Conversation$formRequestArgs<ExtArgs>
+  formAccess?: boolean | Prisma.Conversation$formAccessArgs<ExtArgs>
+  formLogin?: boolean | Prisma.Conversation$formLoginArgs<ExtArgs>
   _count?: boolean | Prisma.ConversationCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -2675,12 +3754,17 @@ export type $ConversationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     customer: Prisma.$UserPayload<ExtArgs>
     department: Prisma.$DepartmentPayload<ExtArgs>
     assignedAgent: Prisma.$UserPayload<ExtArgs> | null
+    assignees: Prisma.$ConversationAssigneePayload<ExtArgs>[]
     messages: Prisma.$ConversationMessagePayload<ExtArgs>[]
     incomingEmails: Prisma.$IncomingEmailPayload<ExtArgs>[]
+    outboundMessages: Prisma.$OutboundMessagePayload<ExtArgs>[]
     tags: Prisma.$ConversationTagPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     externalMessages: Prisma.$ExternalMessagePayload<ExtArgs>[]
     participants: Prisma.$ConversationParticipantPayload<ExtArgs>[]
+    formRequest: Prisma.$FormRequestPayload<ExtArgs> | null
+    formAccess: Prisma.$FormAccessPayload<ExtArgs>[]
+    formLogin: Prisma.$FormLoginChallengePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3047,12 +4131,17 @@ export interface Prisma__ConversationClient<T, Null = never, ExtArgs extends run
   customer<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   department<T extends Prisma.DepartmentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DepartmentDefaultArgs<ExtArgs>>): Prisma.Prisma__DepartmentClient<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   assignedAgent<T extends Prisma.Conversation$assignedAgentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$assignedAgentArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  assignees<T extends Prisma.Conversation$assigneesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$assigneesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationAssigneePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.Conversation$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomingEmails<T extends Prisma.Conversation$incomingEmailsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$incomingEmailsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IncomingEmailPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  outboundMessages<T extends Prisma.Conversation$outboundMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$outboundMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OutboundMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tags<T extends Prisma.Conversation$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.Conversation$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   externalMessages<T extends Prisma.Conversation$externalMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$externalMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExternalMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   participants<T extends Prisma.Conversation$participantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  formRequest<T extends Prisma.Conversation$formRequestArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$formRequestArgs<ExtArgs>>): Prisma.Prisma__FormRequestClient<runtime.Types.Result.GetResult<Prisma.$FormRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  formAccess<T extends Prisma.Conversation$formAccessArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$formAccessArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormAccessPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  formLogin<T extends Prisma.Conversation$formLoginArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$formLoginArgs<ExtArgs>>): Prisma.Prisma__FormLoginChallengeClient<runtime.Types.Result.GetResult<Prisma.$FormLoginChallengePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3488,6 +4577,30 @@ export type Conversation$assignedAgentArgs<ExtArgs extends runtime.Types.Extensi
 }
 
 /**
+ * Conversation.assignees
+ */
+export type Conversation$assigneesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ConversationAssignee
+   */
+  select?: Prisma.ConversationAssigneeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ConversationAssignee
+   */
+  omit?: Prisma.ConversationAssigneeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationAssigneeInclude<ExtArgs> | null
+  where?: Prisma.ConversationAssigneeWhereInput
+  orderBy?: Prisma.ConversationAssigneeOrderByWithRelationInput | Prisma.ConversationAssigneeOrderByWithRelationInput[]
+  cursor?: Prisma.ConversationAssigneeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ConversationAssigneeScalarFieldEnum | Prisma.ConversationAssigneeScalarFieldEnum[]
+}
+
+/**
  * Conversation.messages
  */
 export type Conversation$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3533,6 +4646,30 @@ export type Conversation$incomingEmailsArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.IncomingEmailScalarFieldEnum | Prisma.IncomingEmailScalarFieldEnum[]
+}
+
+/**
+ * Conversation.outboundMessages
+ */
+export type Conversation$outboundMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OutboundMessage
+   */
+  select?: Prisma.OutboundMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OutboundMessage
+   */
+  omit?: Prisma.OutboundMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OutboundMessageInclude<ExtArgs> | null
+  where?: Prisma.OutboundMessageWhereInput
+  orderBy?: Prisma.OutboundMessageOrderByWithRelationInput | Prisma.OutboundMessageOrderByWithRelationInput[]
+  cursor?: Prisma.OutboundMessageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OutboundMessageScalarFieldEnum | Prisma.OutboundMessageScalarFieldEnum[]
 }
 
 /**
@@ -3629,6 +4766,68 @@ export type Conversation$participantsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.ConversationParticipantScalarFieldEnum | Prisma.ConversationParticipantScalarFieldEnum[]
+}
+
+/**
+ * Conversation.formRequest
+ */
+export type Conversation$formRequestArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FormRequest
+   */
+  select?: Prisma.FormRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FormRequest
+   */
+  omit?: Prisma.FormRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FormRequestInclude<ExtArgs> | null
+  where?: Prisma.FormRequestWhereInput
+}
+
+/**
+ * Conversation.formAccess
+ */
+export type Conversation$formAccessArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FormAccess
+   */
+  select?: Prisma.FormAccessSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FormAccess
+   */
+  omit?: Prisma.FormAccessOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FormAccessInclude<ExtArgs> | null
+  where?: Prisma.FormAccessWhereInput
+  orderBy?: Prisma.FormAccessOrderByWithRelationInput | Prisma.FormAccessOrderByWithRelationInput[]
+  cursor?: Prisma.FormAccessWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FormAccessScalarFieldEnum | Prisma.FormAccessScalarFieldEnum[]
+}
+
+/**
+ * Conversation.formLogin
+ */
+export type Conversation$formLoginArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FormLoginChallenge
+   */
+  select?: Prisma.FormLoginChallengeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FormLoginChallenge
+   */
+  omit?: Prisma.FormLoginChallengeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FormLoginChallengeInclude<ExtArgs> | null
+  where?: Prisma.FormLoginChallengeWhereInput
 }
 
 /**

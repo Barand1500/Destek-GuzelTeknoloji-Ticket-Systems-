@@ -18,6 +18,7 @@ enum ConversationChannel {
   SMS
   WHATSAPP
   LIVE_CHAT
+  FORM
 }
 enum MessageType {
   CUSTOMER_MESSAGE
@@ -67,9 +68,11 @@ model User {
   skills UserSkill[]
   customerConversations Conversation[] @relation("CustomerConversations")
   assignedConversations Conversation[] @relation("AssignedConversations")
+  conversationAssignments ConversationAssignee[]
   messages ConversationMessage[]
   sessions Session[]
   passwordResets PasswordReset[]
+  outboundMessages OutboundMessage[]
   logs ActivityLog[]
   notifications Notification[]
   savedReplies SavedReply[]
@@ -166,6 +169,7 @@ model Conversation {
   department Department @relation(fields: [departmentId], references: [id])
   assignedAgentId String?
   assignedAgent User? @relation("AssignedConversations", fields: [assignedAgentId], references: [id])
+  assignees ConversationAssignee[]
   status String @default("OPEN")
   priority String @default("NORMAL")
   createdAt DateTime @default(now())
@@ -176,16 +180,59 @@ model Conversation {
   deletedAt DateTime?
   messages ConversationMessage[]
   incomingEmails IncomingEmail[]
+  outboundMessages OutboundMessage[]
   tags ConversationTag[]
   notifications Notification[]
   externalMessages ExternalMessage[]
   participants ConversationParticipant[]
+  formRequest FormRequest?
+  formAccess FormAccess[]
+  formLogin FormLoginChallenge?
   @@index([customerId, deletedAt, updatedAt])
   @@index([assignedAgentId, deletedAt, updatedAt])
   @@index([departmentId, status])
   @@index([deletedAt, updatedAt])
   @@index([channel, status])
   @@index([websiteId])
+}
+model FormSettings {
+  id String @id @default("default")
+  enabled Boolean @default(false)
+  departmentId String?
+  title String @default("Destek Talebi") @db.VarChar(100)
+  updatedAt DateTime @updatedAt
+}
+model FormRequest {
+  conversationId String @id
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  email String @db.VarChar(254)
+  name String @db.VarChar(100)
+  phone String? @db.VarChar(30)
+  company String? @db.VarChar(150)
+  createdAt DateTime @default(now())
+  @@index([email, createdAt])
+}
+model FormAccess {
+  tokenHash String @id @db.VarChar(64)
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  email String @db.VarChar(254)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([conversationId, expiresAt])
+}
+model FormLoginChallenge {
+  id String @id @default(uuid())
+  conversationId String @unique
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  email String @db.VarChar(254)
+  codeHash String @db.VarChar(64)
+  attempts Int @default(0)
+  requests Int @default(1)
+  requestWindowAt DateTime @default(now())
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
 }
 model StatusOption {
   id String @id @default(uuid())
@@ -210,6 +257,15 @@ model PriorityOption {
   updatedAt DateTime @updatedAt
   @@index([isActive, sortOrder])
   @@index([name])
+}
+model ConversationAssignee {
+  conversationId String
+  userId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([conversationId, userId])
+  @@index([userId, conversationId])
 }
 model ConversationMessage {
   id String @id @default(uuid())
@@ -252,6 +308,49 @@ model IncomingEmail {
   @@unique([mailbox, uid])
   @@unique([messageId])
   @@index([conversationId])
+}
+model ImapSyncState {
+  id String @id @db.VarChar(64)
+  mailbox String
+  uidValidity String @db.VarChar(32)
+  lastUid Int @default(0)
+  leaseToken String? @db.VarChar(36)
+  leaseUntil DateTime?
+  updatedAt DateTime @updatedAt
+  retries ImapSyncRetry[]
+}
+model OutboundMessage {
+  id String @id @default(uuid())
+  dedupeKey String? @unique
+  channel String @db.VarChar(16)
+  payload Json
+  conversationId String?
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status String @default("PENDING") @db.VarChar(16)
+  sequence Int @default(0)
+  attempts Int @default(0)
+  availableAt DateTime @default(now())
+  leaseToken String? @db.VarChar(36)
+  leaseUntil DateTime?
+  lastError String? @db.Text
+  providerMessageId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, availableAt])
+  @@index([conversationId, channel, status])
+  @@index([userId])
+}
+model ImapSyncRetry {
+  syncId String @db.VarChar(64)
+  sync ImapSyncState @relation(fields: [syncId], references: [id], onDelete: Cascade)
+  uid Int
+  attempts Int @default(1)
+  nextAttemptAt DateTime
+  lastError String @db.Text
+  @@id([syncId, uid])
+  @@index([syncId, nextAttemptAt])
 }
 model ActivityLog {
   id String @id @default(uuid())
@@ -404,6 +503,7 @@ model IntegrationSettings {
   smtpFromAddress String @default("")
   smtpFromName String @default("")
   imapEnabled Boolean @default(false)
+  incomingMessagesSince DateTime?
   imapConnectionName String @default("")
   imapHost String @default("")
   imapPort Int @default(993)

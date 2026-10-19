@@ -7,7 +7,7 @@ import { can } from './permissions.js';
 import type { createSurveySchema, surveyAnswersSchema } from "../validators/surveys.js";
 import { announcementDirectory } from "./announcements.service.js";
 import { publishChange } from "./events.service.js";
-import { sendChannelReply } from "./integrations.service.js";
+import { enqueueChannelReply } from "./outbound-queue.store.js";
 import { queueSupportEmail } from "./mailer.service.js";
 import { surveyCompletionRate } from "./survey-completion.js";
 
@@ -56,20 +56,23 @@ export async function createSurvey(actor: Actor, input: z.infer<typeof createSur
   if (input.channels.includes("SMS") && !directory.smsEnabled) throw new AppError(400, "SMS_NOT_CONFIGURED", "SMS entegrasyonu etkin değil.");
   if (input.channels.includes("EMAIL") && !directory.emailEnabled) throw new AppError(400, "EMAIL_NOT_CONFIGURED", "E-posta entegrasyonu etkin değil.");
   const endsAt = new Date(Date.now() + input.durationDays * 86400000);
-  const row = await db.survey.create({
-    data: {
-      authorId: actor.id, authorName: actor.name, title: input.title, description: input.description,
-      anonymous: input.anonymous, endsAt, questions: input.questions, channels: input.channels,
-      recipients: { create: recipients.map((person) => ({ userId: person.id, recipientName: person.name, deliveryStatus: Object.fromEntries(input.channels.map((channel) => [channel, channel === "NOTIFICATION" ? "SENT" : "QUEUED"])) })) },
-    }, include,
-  });
-  const surveyUrl = `${env.FRONTEND_URL}/agent/surveys`;
-  for (const person of recipients) {
-    if (input.channels.includes("NOTIFICATION")) await db.notification.create({ data: { userId: person.id, type: "SURVEY", title: `Yeni anket: ${input.title}`, message: `${input.description || "Katılımınızı bekleyen yeni bir anket var."} Son tarih: ${endsAt.toLocaleDateString("tr-TR")}`.slice(0, 180) } });
-    if (input.channels.includes("EMAIL") && person.email) queueSupportEmail(person.email, `Yeni anket: ${input.title}`, `${input.description}\n\nAnketi yanıtla: ${surveyUrl}`, "Anket bildirimi");
-    if (input.channels.includes("SMS") && person.phone) void sendChannelReply("SMS", { phone: person.phone }, `${input.title}: ${input.description} ${surveyUrl}`).catch(() => undefined);
-  }
-  await db.activityLog.create({ data: { userId: actor.id, action: "survey.created", entityType: "Survey", entityId: row.id, metadata: { title: row.title, recipientCount: recipients.length, channels: input.channels }, ipAddress: actor.ipAddress } });
+  const row = await db.$transaction(async tx => {
+    const row = await tx.survey.create({
+      data: {
+        authorId: actor.id, authorName: actor.name, title: input.title, description: input.description,
+        anonymous: input.anonymous, endsAt, questions: input.questions, channels: input.channels,
+        recipients: { create: recipients.map((person) => ({ userId: person.id, recipientName: person.name, deliveryStatus: Object.fromEntries(input.channels.map((channel) => [channel, channel === "NOTIFICATION" ? "SENT" : "QUEUED"])) })) },
+      }, include,
+    });
+    const surveyUrl = `${env.FRONTEND_URL}/agent/surveys`;
+    for (const person of recipients) {
+      if (input.channels.includes("NOTIFICATION")) await tx.notification.create({ data: { userId: person.id, type: "SURVEY", title: `Yeni anket: ${input.title}`, message: `${input.description || "Katılımınızı bekleyen yeni bir anket var."} Son tarih: ${endsAt.toLocaleDateString("tr-TR")}`.slice(0, 180) } });
+      if (input.channels.includes("EMAIL") && person.email) await queueSupportEmail(person.email, `Yeni anket: ${input.title}`, `${input.description}\n\nAnketi yanıtla: ${surveyUrl}`, "Anket bildirimi", { userId: actor.id, messageId: `survey:${row.id}:${person.id}` }, [], tx);
+      if (input.channels.includes("SMS") && person.phone) await enqueueChannelReply("SMS", { phone: person.phone }, `${input.title}: ${input.description} ${surveyUrl}`, { userId: actor.id, messageId: `survey:${row.id}:${person.id}` }, [], tx);
+    }
+    await tx.activityLog.create({ data: { userId: actor.id, action: "survey.created", entityType: "Survey", entityId: row.id, metadata: { title: row.title, recipientCount: recipients.length, channels: input.channels }, ipAddress: actor.ipAddress } });
+    return row;
+  }, { timeout: 30_000 });
   publishChange();
   return publicSurvey(row, actor);
 }

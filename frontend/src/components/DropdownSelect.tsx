@@ -20,7 +20,7 @@ export function DropdownSelect({ label, value, options, onChange, ariaLabel }: {
   </div>;
 }
 
-export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel, emptyLabel = "Etiket seçin", selectionSuffix = "etiket", className = "", selectionLabel = "Seçili kişiler", showVisibleToggle = false, defaultOpen = false }: { label?: string; value: string[]; options: Array<{ value: string; label: string }>; onChange: (value: string[]) => void; ariaLabel: string; emptyLabel?: string; selectionSuffix?: string; className?: string; selectionLabel?: string; showVisibleToggle?: boolean; defaultOpen?: boolean }) {
+export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel, emptyLabel = "Etiket seçin", selectionSuffix = "etiket", className = "", selectionLabel = "Seçili kişiler", showVisibleToggle = false, defaultOpen = false, disabled = false }: { label?: string; value: string[]; options: DropdownOption[]; onChange: (value: string[]) => void; ariaLabel: string; emptyLabel?: string; selectionSuffix?: string; className?: string; selectionLabel?: string; showVisibleToggle?: boolean; defaultOpen?: boolean; disabled?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const [search, setSearch] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -47,10 +47,10 @@ export function MultiDropdownSelect({ label, value, options, onChange, ariaLabel
   };
   return <div ref={ref} className={`styled-dropdown${open ? " open" : ""}${className ? ` ${className}` : ""}`}>
     {label && <span className="styled-dropdown-label">{label}</span>}
-    <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((currentOpen) => !currentOpen)}><span>{current}</span><ChevronDown size={15} /></button>
+    <button type="button" className="styled-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((currentOpen) => !currentOpen)}><span>{current}</span><ChevronDown size={15} /></button>
     {open && <div className="styled-dropdown-menu" role="listbox" aria-multiselectable="true"><input className="styled-dropdown-search" aria-label={`${ariaLabel} ara`} placeholder="Ara..." value={search} onChange={(event) => setSearch(event.target.value)} />{showVisibleToggle && <button type="button" className="styled-dropdown-visible-toggle" onClick={toggleVisible}>{allVisibleSelected ? "Seçimi Kaldır" : "Görünenleri Seç"}</button>}{filteredOptions.map((option) => {
       const checked = value.includes(option.value);
-      return <button type="button" role="option" aria-selected={checked} key={option.value} onClick={() => onChange(checked ? value.filter((id) => id !== option.value) : [...value, option.value])}><span className={`styled-dropdown-check${checked ? " checked" : ""}`}>{checked ? "✓" : ""}</span>{option.label}</button>;
+      return <button type="button" role="option" aria-selected={checked} key={option.value} disabled={disabled} onClick={() => onChange(checked ? value.filter((id) => id !== option.value) : [...value, option.value])}><span className={`styled-dropdown-check${checked ? " checked" : ""}`}>{checked ? "✓" : ""}</span><span className="dropdown-option-label" title={option.label}>{option.label}</span>{(option.presence || option.openConversationCount !== undefined) && <span className="dropdown-option-details">{option.openConversationCount !== undefined && <span className="assignee-open-count">{option.openConversationCount} açık talep</span>}{option.presence && <span className={`presence-option-status presence-${option.presence}`}><i />{presenceLabels[option.presence]}</span>}</span>}</button>;
     })}</div>}
   </div>;
 }

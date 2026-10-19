@@ -240,6 +240,7 @@ export const integrationSettingsSchema = z
     ]),
     smtpFromName: integrationText,
     imapEnabled: z.boolean(),
+    incomingMessagesSince: z.iso.datetime().transform(value => new Date(value)).nullable().optional(),
     imapConnectionName: integrationText,
     imapHost: integrationText,
     imapPort: z.number().int().min(1).max(65535),

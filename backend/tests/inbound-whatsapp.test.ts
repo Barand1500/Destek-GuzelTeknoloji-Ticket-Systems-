@@ -74,6 +74,24 @@ test('WhatsApp reuses customers and tickets, switches on new requests, and handl
         assert.equal(fetches, beforeReplay);
         assert.equal(await db.conversationAttachment.count({ where: { messageId: photo.id } }), 1);
       }
+      const pdf = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF');
+      globalThis.fetch = async () => {
+        fetches++;
+        return fetches % 2 === 1 ? Response.json({ url: 'https://lookaside.fbsbx.com/whatsapp_business/attachments/pdf', mime_type: 'application/pdf', file_size: pdf.length }) : new Response(pdf);
+      };
+      for (const caption of [undefined, 'Document caption']) {
+        const payload = { entry: [{ changes: [{ value: { messages: [{ id: randomUUID(), from: canonicalPhone(phone), type: 'document', document: { id: 'pdf', filename: 'çalışma.pdf', caption } }] } }] }] };
+        const raw = Buffer.from(JSON.stringify(payload));
+        const signature = `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
+        assert.deepEqual(await receiveMetaWebhook(payload, signature, raw), [first]);
+        const message = await db.conversationMessage.findFirstOrThrow({ where: { conversationId: first, body: caption ?? 'Belge' }, include: { attachments: true } });
+        assert.equal(message.attachments[0].originalName, 'çalışma.pdf');
+        assert.deepEqual(await readFile(path.join(uploadRoot, message.attachments[0].storageKey)), pdf);
+        const previousFetches = fetches;
+        assert.deepEqual(await receiveMetaWebhook(payload, signature, raw), [first]);
+        assert.equal(fetches, previousFetches);
+        assert.equal(await db.conversationAttachment.count({ where: { messageId: message.id } }), 1);
+      }
     } finally {
       db.integrationSettings.findUnique = originalSettings;
       globalThis.fetch = originalFetch;
