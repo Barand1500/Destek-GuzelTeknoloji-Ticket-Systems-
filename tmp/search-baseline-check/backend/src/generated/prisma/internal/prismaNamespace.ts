@@ -3641,6 +3641,7 @@ export const ConversationMessageScalarFieldEnum = {
   authorId: 'authorId',
   body: 'body',
   type: 'type',
+  visibleInForm: 'visibleInForm',
   createdAt: 'createdAt'
 } as const
 

@@ -237,14 +237,15 @@ export function TicketList() {
   function moveTab(key: string, direction: -1 | 1) {
     setTabOrder((current) => { const index = current.indexOf(key); const target = index + direction; if (index < 0 || target < 0 || target >= current.length) return current; const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; window.localStorage.setItem(`helpdesk-inbox-tabs-${user?.id}`, JSON.stringify({ labels: tabLabels, custom: customTabs, order: next, enabled: tabEnabled })); return next; });
   }
-  type SortColumn = 'number' | 'subject' | 'department' | 'assignedAgent';
+  type SortColumn = 'number' | 'subject' | 'department' | 'assignedAgent' | 'responseTime';
   const sortBy = params.get('sortBy');
   const sortDirection = params.get('sortDirection') ?? 'asc';
   function toggleSort(column: SortColumn) {
     setParams(current => {
       const next = new URLSearchParams(current);
-      if (current.get('sortBy') !== column) { next.set('sortBy', column); next.set('sortDirection', 'asc'); }
-      else if ((current.get('sortDirection') ?? 'asc') === 'asc') next.set('sortDirection', 'desc');
+      const first = 'asc';
+      if (current.get('sortBy') !== column) { next.set('sortBy', column); next.set('sortDirection', first); }
+      else if ((current.get('sortDirection') ?? first) === first) next.set('sortDirection', first === 'asc' ? 'desc' : 'asc');
       else { next.delete('sortBy'); next.delete('sortDirection'); }
       next.delete('page');
       return next;
@@ -252,7 +253,7 @@ export function TicketList() {
   }
   function sortHeader(column: SortColumn, label: string) {
     const active = sortBy === column;
-    return <th className={column === 'number' ? 'inbox-number-cell' : undefined} aria-sort={active ? sortDirection === 'desc' ? 'descending' : 'ascending' : 'none'}><button className="inbox-sort-button" type="button" onClick={() => toggleSort(column)} title={active && sortDirection === 'desc' ? 'Varsayılan sıralamaya dön' : column === 'number' ? active ? 'Büyükten küçüğe sırala' : 'Küçükten büyüğe sırala' : active ? 'Z → A sırala' : 'A → Z sırala'}>{label}<span aria-hidden="true">{active ? sortDirection === 'asc' ? '↑' : '↓' : '↕'}</span></button></th>;
+    return <th className={column === 'number' ? 'inbox-number-cell' : undefined} aria-sort={active ? sortDirection === 'desc' ? 'descending' : 'ascending' : 'none'}><button className="inbox-sort-button" type="button" onClick={() => toggleSort(column)} title={column === 'responseTime' ? active ? sortDirection === 'asc' ? 'En uzun süreden en kısaya sırala' : 'Varsayılan sıralamaya dön' : 'En kısa süreden en uzuna sırala' : active && sortDirection === 'desc' ? 'Varsayılan sıralamaya dön' : column === 'number' ? active ? 'Büyükten küçüğe sırala' : 'Küçükten büyüğe sırala' : active ? 'Z → A sırala' : 'A → Z sırala'}>{label}<span aria-hidden="true">{active ? sortDirection === 'asc' ? '↑' : '↓' : '↕'}</span></button></th>;
   }
   const query = useQuery({
     queryKey: ["conversations", params.toString()],
@@ -436,7 +437,7 @@ export function TicketList() {
                   {sortHeader('department', 'DEPARTMAN')}
                   {sortHeader('assignedAgent', 'ATANAN')}
                   <th>AÇILIŞ</th>
-                  <th>YANIT SÜRESİ</th>
+                  {sortHeader('responseTime', 'YANIT SÜRESİ')}
                   <th>SON GÜNCELLEME</th>
                   <th className="inbox-sort-reset-cell"><button className="inbox-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setParams(current => { const next = new URLSearchParams(current); next.delete('sortBy'); next.delete('sortDirection'); next.delete('page'); return next; }); void query.refetch(); }}><RotateCcw size={15}/></button></th>
                 </tr>

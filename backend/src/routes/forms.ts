@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { z } from 'zod';
 import path from 'node:path';
+import type { Prisma } from '../generated/prisma/client.js';
 import { db } from '../config/db.js';
 import { env } from '../config/env.js';
 import { allowedOrigins } from '../config/env.js';
@@ -16,6 +17,10 @@ import { addMessage } from '../services/conversations.service.js';
 import { requestFormLogin, verifyFormLogin } from '../services/form-login.service.js';
 
 export const formsRouter = Router();
+// Shared by messages, pagination cursors and attachment downloads.
+const formMessageVisibility = {
+  AND: [{ OR: [{ type: 'CUSTOMER_MESSAGE' }, { type: 'AGENT_REPLY', visibleInForm: true }] }],
+} satisfies Prisma.ConversationMessageWhereInput;
 const limitMessage = { success: false, error: { code: 'RATE_LIMITED', message: 'Çok fazla deneme. Lütfen daha sonra yeniden deneyin.' } };
 const writes = rateLimit({ windowMs: 10 * 60_000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const reads = rateLimit({ windowMs: 60_000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
@@ -76,10 +81,10 @@ formsRouter.get('/conversation', async (req, res) => {
   const before = z.uuid().optional().parse(req.query.before), after = z.uuid().optional().parse(req.query.after);
   if (before && after) throw new AppError(400, 'INVALID_CURSOR', 'Geçersiz mesaj aralığı.');
   const cursorId = before ?? after;
-  const cursor = cursorId ? await db.conversationMessage.findFirst({ where: { id: cursorId, conversationId: conversation.id, type: { in: ['CUSTOMER_MESSAGE', 'AGENT_REPLY'] } }, select: { id: true, createdAt: true } }) : null;
+  const cursor = cursorId ? await db.conversationMessage.findFirst({ where: { id: cursorId, conversationId: conversation.id, ...formMessageVisibility }, select: { id: true, createdAt: true } }) : null;
   if (cursorId && !cursor) throw new AppError(400, 'INVALID_CURSOR', 'Mesaj bulunamadı.');
   const order = after ? 'asc' : 'desc';
-  const messages = await db.conversationMessage.findMany({ where: { conversationId: conversation.id, type: { in: ['CUSTOMER_MESSAGE', 'AGENT_REPLY'] }, ...(cursor ? { OR: [{ createdAt: after ? { gt: cursor.createdAt } : { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: after ? { gt: cursor.id } : { lt: cursor.id } }] } : {}) }, select: { id: true, body: true, type: true, createdAt: true, author: { select: { name: true } }, attachments: { select: { id: true, originalName: true, size: true } } }, orderBy: [{ createdAt: order }, { id: order }], take: 51 });
+  const messages = await db.conversationMessage.findMany({ where: { conversationId: conversation.id, ...formMessageVisibility, ...(cursor ? { OR: [{ createdAt: after ? { gt: cursor.createdAt } : { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: after ? { gt: cursor.id } : { lt: cursor.id } }] } : {}) }, select: { id: true, body: true, type: true, createdAt: true, author: { select: { name: true } }, attachments: { select: { id: true, originalName: true, size: true } } }, orderBy: [{ createdAt: order }, { id: order }], take: 51 });
   const status = await db.statusOption.findUnique({ where: { code: conversation.status }, select: { name: true } });
   res.json({ success: true, data: { number: conversation.number, subject: conversation.subject, status: status?.name ?? conversation.status, closed: conversation.status === 'CLOSED', messages: after ? messages.slice(0, 50) : messages.slice(0, 50).reverse(), hasMore: messages.length > 50, direction: after ? 'after' : before ? 'before' : 'latest' } });
 });
@@ -89,7 +94,7 @@ formsRouter.post('/conversation/messages', replies, attachments, async (req, res
   res.status(201).json({ success: true });
 });
 formsRouter.get('/conversation/attachments/:id', async (req, res) => {
-  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: res.locals.formConversation.id, type: { in: ['CUSTOMER_MESSAGE', 'AGENT_REPLY'] } } } });
+  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: res.locals.formConversation.id, ...formMessageVisibility } } });
   if (!file) throw new AppError(404, 'FILE_NOT_FOUND', 'Dosya bulunamadı.');
   res.download(path.join(uploadRoot, file.storageKey), file.originalName);
 });

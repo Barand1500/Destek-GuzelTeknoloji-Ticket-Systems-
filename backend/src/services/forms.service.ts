@@ -55,6 +55,13 @@ export async function submitForm(input: z.infer<typeof formSubmissionSchema>, fi
   const result = await db.$transaction(async tx => {
     if (!await tx.department.findFirst({ where: { id: input.departmentId, isActive: true, deletedAt: null }, select: { id: true } })) throw new AppError(400, 'INVALID_DEPARTMENT', 'Lütfen aktif bir departman seçin.');
     const person = customer ?? await tx.user.create({ data: { name: input.name, email: input.email, phone: input.phone || null, company: input.company || null, passwordHash, role: 'CUSTOMER' } });
+    // Complete missing company details without overwriting an existing customer profile.
+    if (customer && input.company) {
+      await tx.user.updateMany({
+        where: { id: customer.id, OR: [{ company: null }, { company: '' }] },
+        data: { company: input.company },
+      });
+    }
     const conversation = await tx.conversation.create({ data: {
       subject: input.subject, searchSubject: input.subject.normalize('NFKC').toLocaleLowerCase('tr-TR'), customerId: person.id,
       channel: 'FORM', replyChannels: ['FORM'], source: 'FORM', departmentId: input.departmentId,

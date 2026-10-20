@@ -330,7 +330,7 @@ export async function createCustomer(
           normalizeCustomerName(customer.name) ===
             normalizeCustomerName(input.name) &&
           normalizeCustomerPhone(customer.phone ?? "") ===
-            normalizeCustomerPhone(input.phone) &&
+            normalizeCustomerPhone(input.phone ?? '') &&
           customer.email?.trim().toLocaleLowerCase("tr-TR") ===
             input.email?.trim().toLocaleLowerCase("tr-TR"),
       );

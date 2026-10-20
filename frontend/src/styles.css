@@ -7478,10 +7478,10 @@ html[data-theme="dark"] .conversation-page > .ticket-customer-summary .ticket-nu
 .composer-channel-control { position: relative; margin-left: auto; min-width: 0; max-width: 100%; }
 .composer-channel-control .composer-channel-pill { margin-left: 0; }
 .composer-channel-popover {
-  position: absolute;
-  z-index: 50;
-  top: calc(100% + 6px);
-  right: 0;
+  position: fixed;
+  z-index: 1000;
+  box-sizing: border-box;
+  overflow-y: auto;
   width: 250px;
   max-width: min(300px, calc(100vw - 48px));
   padding: 8px;

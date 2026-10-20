@@ -1,7 +1,7 @@
 import { issueFormLink } from './form-access.service.js';
 import { conversationSearch } from "./conversation-search.js";
 import { internationalEmailSearchIds } from './email-search.js';
-import { conversationListOrder } from "./conversation-sorting.js";
+import { conversationListOrder, responseTimePage } from "./conversation-sorting.js";
 import { conversationChannelFilter, selectedReplyChannels, validateReplyChannels, type ReplyChannel } from "./reply-channels.js";
 import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -150,13 +150,18 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   };
   const [data, total] = await db.$transaction(
     async (tx) => {
+      const responseIds = q.sortBy === 'responseTime' ? await responseTimePage(tx, where, q.sortDirection ?? 'asc', q.page, q.limit) : null;
       const data = await tx.conversation.findMany({
-        where,
+        where: responseIds ? { AND: [where, { id: { in: responseIds } }] } : where,
         include: conversationInclude,
-        orderBy: conversationListOrder(q.sortBy, q.sortDirection),
-        skip: (q.page - 1) * q.limit,
+        orderBy: conversationListOrder(q.sortBy === 'responseTime' ? undefined : q.sortBy, q.sortDirection),
+        skip: responseIds ? 0 : (q.page - 1) * q.limit,
         take: q.limit,
       });
+      if (responseIds) {
+        const positions = new Map(responseIds.map((id, index) => [id, index]));
+        data.sort((a, b) => positions.get(a.id)! - positions.get(b.id)!);
+      }
       const total = await tx.conversation.count({ where });
       const messageStats = data.length ? await tx.conversationMessage.groupBy({
         by: ["conversationId", "authorId", "type"],
@@ -289,7 +294,7 @@ export async function createConversation(
         priority: input.priority,
         customerId,
         ...(input.tagIds ? { tags: { create: input.tagIds.map(tagId => ({ tagId })) } } : {}),
-        messages: { create: { id: initialMessageId, authorId: customerInitiatedMessage ? customerId : actor.id, body: input.message,type: customerInitiatedMessage ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
+        messages: { create: { id: initialMessageId, authorId: customerInitiatedMessage ? customerId : actor.id, body: input.message,type: customerInitiatedMessage ? 'CUSTOMER_MESSAGE' : 'AGENT_REPLY',visibleInForm: !customerInitiatedMessage && creationChannels.includes('FORM'),attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))} } },
       },
       include: conversationInclude,
     });
@@ -425,7 +430,7 @@ export async function addMessage(
     if (mentionedUsers.length !== mentionUserIds.length)
       throw new AppError(400, "INVALID_MENTIONS", "Etiketlenen personel bu talebin departmanında aktif olarak görev yapmalıdır.");
     const message = await tx.conversationMessage.create({
-      data: { conversationId: id, authorId: actor.id, body:input.body,type,attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))},mentions:{create:mentionedUsers.map(user=>({userId:user.id}))} },
+      data: { conversationId: id, authorId: actor.id, body:input.body,type,visibleInForm: type === 'AGENT_REPLY' && deliveryChannels.includes('FORM'),attachments:{create:files.map(file=>({...file,uploaderId:actor.id}))},mentions:{create:mentionedUsers.map(user=>({userId:user.id}))} },
       include: { author: { select: person },attachments:{select:{id:true,originalName:true,mimeType:true,size:true}},mentions:{select:{user:{select:{id:true,name:true}}}} },
     });
     if (mentionedUsers.length) {

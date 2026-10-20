@@ -50,6 +50,13 @@ bağımsızdır. E-Posta (SMTP) gönderimi ayarlanmış olmalıdır.
   e-postaya yanıt vererek devam eder. E-posta yanıtları için IMAP bağlantısı açık
   olmalı ve **Mevcut Talebe Yanıt Ekle** etkin olmalıdır.
 - E-posta yanıtı yeni bir talep oluşturmaz; Form talebine eklenir. Kanal Form kalır.
+- Takip ekranı yalnız gönderilirken **Form** kanalı seçilmiş personel yanıtlarını
+  ve bunların dosyalarını gösterir. Yalnız E-Posta/SMS/WhatsApp/Telefon seçilen
+  yanıtlar burada görünmez. Sonradan kanal değiştirmek eski yanıtları açmaz veya
+  gizlemez. Müşteri mesajları görünmeye devam eder.
+- `20261019160000_form_message_visibility` migration'ı eski personel yanıtlarının
+  Form görünürlüğünü kayıtlı gönderim işindeki takip bağlantısından belirler.
+  Canlıda backend'i açmadan önce `npm run db:migrate` ve `npm run build` çalıştırın.
 - Müşteri yalnız açık mesajları ve bunların dosyalarını görür; dahili notları,
   işlem geçmişini, personel iletişim bilgilerini ve diğer talepleri göremez.
 - Form/takip ekranında en fazla 3 dosya; her biri en fazla 5 MB veya sunucunun

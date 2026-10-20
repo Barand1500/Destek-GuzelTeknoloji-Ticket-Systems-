@@ -17,6 +17,9 @@ const queryBoolean = z
   .transform((v) => v === "true")
   .optional();
 const nonempty = (v: object) => Object.keys(v).length > 0;
+const customerPhone = z.string().trim()
+  .pipe(z.union([z.literal(''), z.string().min(7).max(30)]))
+  .transform(value => value || null).optional();
 const sorting = {
   sortBy: z.enum(['name', 'code', 'roleDepartments', 'url', 'title', 'label', 'body', 'author', 'createdAt', 'user', 'action', 'description', 'message', 'isRead', 'isActive']).optional(),
   sortDirection: z.enum(['asc', 'desc']).optional(),
@@ -57,7 +60,7 @@ export const createCustomerSchema = z
         typeof value === "string" && !value.trim() ? undefined : value,
       emailSchema.optional(),
     ),
-    phone: z.string().trim().min(7).max(30),
+    phone: customerPhone,
     company: z.string().trim().min(2).max(120).optional(),
     staffNote: z.string().trim().min(1).max(2000).optional(),
     extraPhones: z.string().trim().max(500).optional(),
@@ -71,7 +74,7 @@ export const updateCustomerSchema = z
       .union([z.literal(""), emailSchema])
       .transform((value) => value || null)
       .optional(),
-    phone: z.string().trim().min(7).max(30).optional(),
+    phone: customerPhone,
     company: z
       .union([z.literal(""), z.string().trim().min(2).max(120)])
       .transform((value) => value || null)

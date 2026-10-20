@@ -275,6 +275,7 @@ model ConversationMessage {
   author User @relation(fields: [authorId], references: [id])
   body String @db.Text
   type MessageType @default(CUSTOMER_MESSAGE)
+  visibleInForm Boolean @default(false)
   createdAt DateTime @default(now())
   attachments ConversationAttachment[]
   mentions ConversationMessageMention[]

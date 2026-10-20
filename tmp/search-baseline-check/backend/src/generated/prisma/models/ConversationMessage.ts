@@ -30,6 +30,7 @@ export type ConversationMessageMinAggregateOutputType = {
   authorId: string | null
   body: string | null
   type: $Enums.MessageType | null
+  visibleInForm: boolean | null
   createdAt: Date | null
 }
 
@@ -39,6 +40,7 @@ export type ConversationMessageMaxAggregateOutputType = {
   authorId: string | null
   body: string | null
   type: $Enums.MessageType | null
+  visibleInForm: boolean | null
   createdAt: Date | null
 }
 
@@ -48,6 +50,7 @@ export type ConversationMessageCountAggregateOutputType = {
   authorId: number
   body: number
   type: number
+  visibleInForm: number
   createdAt: number
   _all: number
 }
@@ -59,6 +62,7 @@ export type ConversationMessageMinAggregateInputType = {
   authorId?: true
   body?: true
   type?: true
+  visibleInForm?: true
   createdAt?: true
 }
 
@@ -68,6 +72,7 @@ export type ConversationMessageMaxAggregateInputType = {
   authorId?: true
   body?: true
   type?: true
+  visibleInForm?: true
   createdAt?: true
 }
 
@@ -77,6 +82,7 @@ export type ConversationMessageCountAggregateInputType = {
   authorId?: true
   body?: true
   type?: true
+  visibleInForm?: true
   createdAt?: true
   _all?: true
 }
@@ -159,6 +165,7 @@ export type ConversationMessageGroupByOutputType = {
   authorId: string
   body: string
   type: $Enums.MessageType
+  visibleInForm: boolean
   createdAt: Date
   _count: ConversationMessageCountAggregateOutputType | null
   _min: ConversationMessageMinAggregateOutputType | null
@@ -189,6 +196,7 @@ export type ConversationMessageWhereInput = {
   authorId?: Prisma.StringFilter<"ConversationMessage"> | string
   body?: Prisma.StringFilter<"ConversationMessage"> | string
   type?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFilter<"ConversationMessage"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -202,6 +210,7 @@ export type ConversationMessageOrderByWithRelationInput = {
   authorId?: Prisma.SortOrder
   body?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  visibleInForm?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   conversation?: Prisma.ConversationOrderByWithRelationInput
   author?: Prisma.UserOrderByWithRelationInput
@@ -219,6 +228,7 @@ export type ConversationMessageWhereUniqueInput = Prisma.AtLeast<{
   authorId?: Prisma.StringFilter<"ConversationMessage"> | string
   body?: Prisma.StringFilter<"ConversationMessage"> | string
   type?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFilter<"ConversationMessage"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -232,6 +242,7 @@ export type ConversationMessageOrderByWithAggregationInput = {
   authorId?: Prisma.SortOrder
   body?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  visibleInForm?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ConversationMessageCountOrderByAggregateInput
   _max?: Prisma.ConversationMessageMaxOrderByAggregateInput
@@ -247,6 +258,7 @@ export type ConversationMessageScalarWhereWithAggregatesInput = {
   authorId?: Prisma.StringWithAggregatesFilter<"ConversationMessage"> | string
   body?: Prisma.StringWithAggregatesFilter<"ConversationMessage"> | string
   type?: Prisma.EnumMessageTypeWithAggregatesFilter<"ConversationMessage"> | $Enums.MessageType
+  visibleInForm?: Prisma.BoolWithAggregatesFilter<"ConversationMessage"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ConversationMessage"> | Date | string
 }
 
@@ -254,6 +266,7 @@ export type ConversationMessageCreateInput = {
   id?: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   author: Prisma.UserCreateNestedOneWithoutMessagesInput
@@ -267,6 +280,7 @@ export type ConversationMessageUncheckedCreateInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutMessageInput
   mentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutMessageInput
@@ -276,6 +290,7 @@ export type ConversationMessageUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
@@ -289,6 +304,7 @@ export type ConversationMessageUncheckedUpdateInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutMessageNestedInput
   mentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutMessageNestedInput
@@ -300,6 +316,7 @@ export type ConversationMessageCreateManyInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
 }
 
@@ -307,6 +324,7 @@ export type ConversationMessageUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -316,6 +334,7 @@ export type ConversationMessageUncheckedUpdateManyInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -341,6 +360,7 @@ export type ConversationMessageCountOrderByAggregateInput = {
   authorId?: Prisma.SortOrder
   body?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  visibleInForm?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -350,6 +370,7 @@ export type ConversationMessageMaxOrderByAggregateInput = {
   authorId?: Prisma.SortOrder
   body?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  visibleInForm?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -359,6 +380,7 @@ export type ConversationMessageMinOrderByAggregateInput = {
   authorId?: Prisma.SortOrder
   body?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  visibleInForm?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -487,6 +509,7 @@ export type ConversationMessageCreateWithoutAuthorInput = {
   id?: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutMessageInput
@@ -498,6 +521,7 @@ export type ConversationMessageUncheckedCreateWithoutAuthorInput = {
   conversationId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutMessageInput
   mentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutMessageInput
@@ -538,6 +562,7 @@ export type ConversationMessageScalarWhereInput = {
   authorId?: Prisma.StringFilter<"ConversationMessage"> | string
   body?: Prisma.StringFilter<"ConversationMessage"> | string
   type?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFilter<"ConversationMessage"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
 }
 
@@ -545,6 +570,7 @@ export type ConversationMessageCreateWithoutConversationInput = {
   id?: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   author: Prisma.UserCreateNestedOneWithoutMessagesInput
   attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutMessageInput
@@ -556,6 +582,7 @@ export type ConversationMessageUncheckedCreateWithoutConversationInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutMessageInput
   mentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutMessageInput
@@ -591,6 +618,7 @@ export type ConversationMessageCreateWithoutMentionsInput = {
   id?: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   author: Prisma.UserCreateNestedOneWithoutMessagesInput
@@ -603,6 +631,7 @@ export type ConversationMessageUncheckedCreateWithoutMentionsInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutMessageInput
 }
@@ -627,6 +656,7 @@ export type ConversationMessageUpdateWithoutMentionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
@@ -639,6 +669,7 @@ export type ConversationMessageUncheckedUpdateWithoutMentionsInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutMessageNestedInput
 }
@@ -647,6 +678,7 @@ export type ConversationMessageCreateWithoutAttachmentsInput = {
   id?: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   author: Prisma.UserCreateNestedOneWithoutMessagesInput
@@ -659,6 +691,7 @@ export type ConversationMessageUncheckedCreateWithoutAttachmentsInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
   mentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutMessageInput
 }
@@ -683,6 +716,7 @@ export type ConversationMessageUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
@@ -695,6 +729,7 @@ export type ConversationMessageUncheckedUpdateWithoutAttachmentsInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutMessageNestedInput
 }
@@ -704,6 +739,7 @@ export type ConversationMessageCreateManyAuthorInput = {
   conversationId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
 }
 
@@ -711,6 +747,7 @@ export type ConversationMessageUpdateWithoutAuthorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   attachments?: Prisma.ConversationAttachmentUpdateManyWithoutMessageNestedInput
@@ -722,6 +759,7 @@ export type ConversationMessageUncheckedUpdateWithoutAuthorInput = {
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutMessageNestedInput
   mentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutMessageNestedInput
@@ -732,6 +770,7 @@ export type ConversationMessageUncheckedUpdateManyWithoutAuthorInput = {
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -740,6 +779,7 @@ export type ConversationMessageCreateManyConversationInput = {
   authorId: string
   body: string
   type?: $Enums.MessageType
+  visibleInForm?: boolean
   createdAt?: Date | string
 }
 
@@ -747,6 +787,7 @@ export type ConversationMessageUpdateWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   author?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   attachments?: Prisma.ConversationAttachmentUpdateManyWithoutMessageNestedInput
@@ -758,6 +799,7 @@ export type ConversationMessageUncheckedUpdateWithoutConversationInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutMessageNestedInput
   mentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutMessageNestedInput
@@ -768,6 +810,7 @@ export type ConversationMessageUncheckedUpdateManyWithoutConversationInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
+  visibleInForm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -817,6 +860,7 @@ export type ConversationMessageSelect<ExtArgs extends runtime.Types.Extensions.I
   authorId?: boolean
   body?: boolean
   type?: boolean
+  visibleInForm?: boolean
   createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -833,10 +877,11 @@ export type ConversationMessageSelectScalar = {
   authorId?: boolean
   body?: boolean
   type?: boolean
+  visibleInForm?: boolean
   createdAt?: boolean
 }
 
-export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "authorId" | "body" | "type" | "createdAt", ExtArgs["result"]["conversationMessage"]>
+export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "authorId" | "body" | "type" | "visibleInForm" | "createdAt", ExtArgs["result"]["conversationMessage"]>
 export type ConversationMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -859,6 +904,7 @@ export type $ConversationMessagePayload<ExtArgs extends runtime.Types.Extensions
     authorId: string
     body: string
     type: $Enums.MessageType
+    visibleInForm: boolean
     createdAt: Date
   }, ExtArgs["result"]["conversationMessage"]>
   composites: {}
@@ -1238,6 +1284,7 @@ export interface ConversationMessageFieldRefs {
   readonly authorId: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly body: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly type: Prisma.FieldRef<"ConversationMessage", 'MessageType'>
+  readonly visibleInForm: Prisma.FieldRef<"ConversationMessage", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
 }
     

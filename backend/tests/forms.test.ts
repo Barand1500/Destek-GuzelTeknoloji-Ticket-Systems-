@@ -61,6 +61,15 @@ test('Form submissions, private guest access, replies, attachments and email thr
     assert.equal(ticket.channel, 'FORM'); assert.deepEqual(ticket.replyChannels, ['FORM']);
     assert.equal(ticket.formRequest?.company, 'Submitted company');
     assert.equal((await db.user.findUniqueOrThrow({ where: { id: customer.id } })).company, 'Original company');
+    const blankCompany = await db.user.create({ data: { name: 'Missing company', email: `blank-${email}`, role: 'CUSTOMER', passwordHash: 'test' } });
+    extraUsers.push(blankCompany.id);
+    for (const company of ['Submitted company', 'Replacement company', '']) {
+      const submitted = await submitForm({ ...input, email: blankCompany.email!, company });
+      const created = await db.conversation.findUniqueOrThrow({ where: { number: submitted.number } });
+      ids.push(created.id);
+      assert.equal(created.customerId, blankCompany.id);
+      assert.equal((await db.user.findUniqueOrThrow({ where: { id: blankCompany.id } })).company, 'Submitted company');
+    }
     assert.equal((await listConversations(actor, { page: 1, limit: 10, view: 'all', category: 'FORM', customerId: customer.id })).data[0].id, ticket.id);
     assert.equal((await listConversations(actor, { page: 1, limit: 10, view: 'all', category: 'FORM', customerId: customer.id, search: 'Submitted company' })).data[0].id, ticket.id);
     const ack = await db.outboundMessage.findFirstOrThrow({ where: { conversationId: ticket.id } });
@@ -70,6 +79,18 @@ test('Form submissions, private guest access, replies, attachments and email thr
     assert.equal(await db.formAccess.count({ where: { tokenHash: formTokenHash(link) } }), 1);
     await addMessage(actor, ticket.id, { body: 'INTERNAL SECRET', type: 'INTERNAL_NOTE' });
     await addMessage(actor, ticket.id, { body: 'Staff answer' });
+    await db.conversation.update({ where: { id: ticket.id }, data: { replyChannels: ['EMAIL'] } });
+    const emailOnly = await addMessage(actor, ticket.id, { body: 'EMAIL ONLY PRIVATE TO THAT CHANNEL' });
+    assert.equal(emailOnly.visibleInForm, false);
+    const emailJob = await db.outboundMessage.findFirstOrThrow({ where: { dedupeKey: `${emailOnly.id}:EMAIL` } });
+    assert(String((emailJob.payload as { text: string }).text).includes('EMAIL ONLY PRIVATE TO THAT CHANNEL'));
+    const emailFile = await db.conversationAttachment.create({ data: { uploaderId: staff.id, messageId: emailOnly.id, storageKey: randomUUID(), originalName: 'email-only.txt', mimeType: 'text/plain', size: 1 } });
+    await db.conversation.update({ where: { id: ticket.id }, data: { replyChannels: ['TICKET'] } });
+    await addMessage(actor, ticket.id, { body: 'PHONE ONLY' });
+    await db.conversation.update({ where: { id: ticket.id }, data: { replyChannels: ['EMAIL', 'FORM'] } });
+    const shared = await addMessage(actor, ticket.id, { body: 'FORM AND EMAIL' });
+    assert.equal(shared.visibleInForm, true);
+    await db.conversation.update({ where: { id: ticket.id }, data: { replyChannels: ['EMAIL'] } });
     const header = { 'x-form-token': link };
     const read = await fetch(`${url}/conversation`, { headers: header });
     assert.equal(read.status, 200);
@@ -78,6 +99,20 @@ test('Form submissions, private guest access, replies, attachments and email thr
     assert(!JSON.stringify(body).includes('passwordHash'));
     assert(!JSON.stringify(body).includes('staffNote'));
     assert(body.data.messages.some((item: { body: string }) => item.body === 'Staff answer'));
+    assert(body.data.messages.some((item: { body: string }) => item.body === 'FORM AND EMAIL'));
+    assert(!JSON.stringify(body).includes('EMAIL ONLY PRIVATE TO THAT CHANNEL'));
+    assert(!JSON.stringify(body).includes('PHONE ONLY'));
+    assert(!JSON.stringify(body).includes('email-only.txt'));
+    assert.equal((await fetch(`${url}/conversation/attachments/${emailFile.id}`, { headers: header })).status, 404);
+    assert.equal((await fetch(`${url}/conversation?before=${emailOnly.id}`, { headers: header })).status, 400);
+    assert.equal((await fetch(`${url}/conversation?after=${emailOnly.id}`, { headers: header })).status, 400);
+    const visibleFirst = body.data.messages[0].id;
+    const incremental = await (await fetch(`${url}/conversation?after=${visibleFirst}`, { headers: header })).json();
+    assert(!JSON.stringify(incremental).includes('EMAIL ONLY PRIVATE TO THAT CHANNEL'));
+    assert(incremental.data.messages.some((item: { body: string }) => item.body === 'FORM AND EMAIL'));
+    // Switching back to Form must not reveal old email-only messages.
+    await db.conversation.update({ where: { id: ticket.id }, data: { replyChannels: ['FORM'] } });
+    assert(!JSON.stringify(await (await fetch(`${url}/conversation`, { headers: header })).json()).includes('EMAIL ONLY PRIVATE TO THAT CHANNEL'));
     const message = new FormData(); message.set('body', 'Guest answer');
     message.append('files', new Blob(['Form attachment'], { type: 'text/plain' }), 'form-test.txt');
     const reply = await fetch(`${url}/conversation/messages`, { method: 'POST', headers: header, body: message });
