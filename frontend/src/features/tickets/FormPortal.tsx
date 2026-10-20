@@ -128,6 +128,7 @@ function FormThread({ token, maxSize }: { token: string; maxSize?: number }) {
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (pending) return;
     const form = event.currentTarget, data = formData(form);
+    if (!String(data.get('body') ?? '').trim() && !data.getAll('files').some(file => file instanceof File && file.size > 0)) return;
     setPending(true); setError('');
     try { await guest.post('/conversation/messages', data, { headers }); form.reset(); pin.current = true; await query.refetch(); }
     catch (e) { setError(errorText(e)); } finally { setPending(false); }
@@ -144,7 +145,11 @@ function FormThread({ token, maxSize }: { token: string; maxSize?: number }) {
       {hasMore && <button className="button secondary" type="button" disabled={older} onClick={() => void previous()}>{older ? 'Yükleniyor…' : 'Önceki Mesajları Göster'}</button>}
       {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" onClick={() => void download(file)}>{file.originalName}</button>)}</article>)}
     </section>
-    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form className="public-form-fields" onSubmit={send}><label><span>Yanıtınız</span><textarea name="body" maxLength={10000} rows={4} /></label><Files maxSize={maxSize} /><button className="button primary" disabled={pending}>{pending ? 'Gönderiliyor…' : 'Yanıt Gönder'}</button></form>}
+    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form className="public-form-fields" onSubmit={send}><label><span>Yanıtınız</span><textarea name="body" maxLength={10000} rows={4} disabled={pending} onKeyDown={event => {
+      if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.nativeEvent.isComposing || event.keyCode === 229) return;
+      event.preventDefault();
+      if (!pending && !event.repeat) event.currentTarget.form?.requestSubmit();
+    }} /></label><Files maxSize={maxSize} /><button className="button primary" disabled={pending}>{pending ? 'Gönderiliyor…' : 'Yanıt Gönder'}</button></form>}
     {error && <p role="alert" className="error">{error}</p>}
   </>;
 }

@@ -111,7 +111,17 @@ test('guest tracking displays public messages, posts to its scoped endpoint and 
   await expect(page.getByText('Destek yanıtı', { exact: true })).toBeVisible();
   await expect(page.getByText('Sayfa 1', { exact: true })).toHaveCount(0);
   await page.getByLabel('Yanıtınız', { exact: true }).fill('Teşekkürler');
-  await page.getByRole('button', { name: 'Yanıt Gönder' }).click();
+  const reply = page.locator('textarea[name="body"]');
+  await reply.press('Shift+Enter');
+  await expect(reply).toHaveValue('Teşekkürler\n');
+  expect(sent).toHaveLength(0);
+  await reply.dispatchEvent('keydown', { key: 'Enter', repeat: true, bubbles: true });
+  expect(sent).toHaveLength(0);
+  await reply.fill('   ');
+  await reply.press('Enter');
+  expect(sent).toHaveLength(0);
+  await reply.fill('Teşekkürler');
+  await reply.press('Enter');
   await expect(page.getByText('Teşekkürler', { exact: true })).toBeVisible();
   expect(sent).toHaveLength(1);
   await page.screenshot({ path: '.local/form-thread.png', fullPage: true });
