@@ -1,0 +1,5 @@
+ALTER TABLE `FormSettings`
+  ADD COLUMN `requirePhone` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `requireCompany` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `requireSubject` BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN `requireMessage` BOOLEAN NOT NULL DEFAULT true;

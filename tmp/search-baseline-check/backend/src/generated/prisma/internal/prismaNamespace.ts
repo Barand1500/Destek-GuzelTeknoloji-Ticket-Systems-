@@ -430,6 +430,7 @@ export const ModelName = {
   ConversationTag: 'ConversationTag',
   Notification: 'Notification',
   SavedReply: 'SavedReply',
+  TurnstileSettings: 'TurnstileSettings',
   SystemSettings: 'SystemSettings',
   ResponseTimeSettings: 'ResponseTimeSettings',
   NotificationSettings: 'NotificationSettings',
@@ -456,7 +457,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2638,6 +2639,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TurnstileSettings: {
+      payload: Prisma.$TurnstileSettingsPayload<ExtArgs>
+      fields: Prisma.TurnstileSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TurnstileSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TurnstileSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.TurnstileSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TurnstileSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.TurnstileSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.TurnstileSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.TurnstileSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.TurnstileSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        update: {
+          args: Prisma.TurnstileSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.TurnstileSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TurnstileSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.TurnstileSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TurnstileSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.TurnstileSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTurnstileSettings>
+        }
+        groupBy: {
+          args: Prisma.TurnstileSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TurnstileSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TurnstileSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TurnstileSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
     SystemSettings: {
       payload: Prisma.$SystemSettingsPayload<ExtArgs>
       fields: Prisma.SystemSettingsFieldRefs
@@ -3553,6 +3620,11 @@ export const FormSettingsScalarFieldEnum = {
   enabled: 'enabled',
   departmentId: 'departmentId',
   title: 'title',
+  requirePhone: 'requirePhone',
+  requireCompany: 'requireCompany',
+  requireSubject: 'requireSubject',
+  requireMessage: 'requireMessage',
+  fieldOrder: 'fieldOrder',
   updatedAt: 'updatedAt'
 } as const
 
@@ -3832,6 +3904,17 @@ export const SavedReplyScalarFieldEnum = {
 } as const
 
 export type SavedReplyScalarFieldEnum = (typeof SavedReplyScalarFieldEnum)[keyof typeof SavedReplyScalarFieldEnum]
+
+
+export const TurnstileSettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  siteKey: 'siteKey',
+  secretCiphertext: 'secretCiphertext',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TurnstileSettingsScalarFieldEnum = (typeof TurnstileSettingsScalarFieldEnum)[keyof typeof TurnstileSettingsScalarFieldEnum]
 
 
 export const SystemSettingsScalarFieldEnum = {
@@ -4429,6 +4512,15 @@ export const SavedReplyOrderByRelevanceFieldEnum = {
 export type SavedReplyOrderByRelevanceFieldEnum = (typeof SavedReplyOrderByRelevanceFieldEnum)[keyof typeof SavedReplyOrderByRelevanceFieldEnum]
 
 
+export const TurnstileSettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  siteKey: 'siteKey',
+  secretCiphertext: 'secretCiphertext'
+} as const
+
+export type TurnstileSettingsOrderByRelevanceFieldEnum = (typeof TurnstileSettingsOrderByRelevanceFieldEnum)[keyof typeof TurnstileSettingsOrderByRelevanceFieldEnum]
+
+
 export const SystemSettingsOrderByRelevanceFieldEnum = {
   id: 'id',
   companyName: 'companyName',
@@ -4834,6 +4926,7 @@ export type GlobalOmitConfig = {
   conversationTag?: Prisma.ConversationTagOmit
   notification?: Prisma.NotificationOmit
   savedReply?: Prisma.SavedReplyOmit
+  turnstileSettings?: Prisma.TurnstileSettingsOmit
   systemSettings?: Prisma.SystemSettingsOmit
   responseTimeSettings?: Prisma.ResponseTimeSettingsOmit
   notificationSettings?: Prisma.NotificationSettingsOmit

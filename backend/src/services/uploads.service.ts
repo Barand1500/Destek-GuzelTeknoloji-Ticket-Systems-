@@ -13,10 +13,10 @@ export async function discardStoredUploads(files:StoredUpload[]){
   await Promise.allSettled(files.map(file=>unlink(path.join(uploadRoot,file.storageKey))));
 }
 const mimeByExtension:Record<string,string>={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.pdf':'application/pdf','.docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.txt':'text/plain','.zip':'application/zip'};
-export async function validateFile(file:Express.Multer.File):Promise<Omit<StoredUpload,'storageKey'>>{
+export async function validateFile(file:Express.Multer.File,maxFileSize=env.MAX_FILE_SIZE):Promise<Omit<StoredUpload,'storageKey'>>{
   const originalName=path.basename(file.originalname.replaceAll('\\','/')).replace(/[\u0000-\u001f\u007f]/g,'').slice(-180);
   const mime=mimeByExtension[path.extname(originalName).toLowerCase()];
-  if(!mime||!file.size||file.size>env.MAX_FILE_SIZE)throw new AppError(400,'INVALID_FILE','Dosya türü veya boyutu desteklenmiyor.');
+  if(!mime||!file.size||file.size>maxFileSize)throw new AppError(400,'INVALID_FILE','Dosya türü veya boyutu desteklenmiyor.');
   if(file.mimetype!==mime&&file.mimetype!=='application/octet-stream')throw new AppError(400,'INVALID_FILE','Dosyanın MIME türü uzantısıyla uyuşmuyor.');
   let actual:string|undefined;
   if(mime==='text/plain'){
@@ -25,9 +25,9 @@ export async function validateFile(file:Express.Multer.File):Promise<Omit<Stored
   if(actual!==mime)throw new AppError(400,'INVALID_FILE','Dosya içeriği belirtilen dosya türüyle uyuşmuyor.');
   return {originalName,mimeType:mime,size:file.size};
 }
-export async function withStoredUploads<T>(files:Express.Multer.File[]|undefined,work:(stored:StoredUpload[])=>Promise<T>):Promise<T>{
+export async function withStoredUploads<T>(files:Express.Multer.File[]|undefined,work:(stored:StoredUpload[])=>Promise<T>,options?:{maxFileSize:number}):Promise<T>{
   const items=files??[];
-  const metadata=await Promise.all(items.map(validateFile));
+  const metadata=await Promise.all(items.map(file=>validateFile(file,options?.maxFileSize)));
   const stored:StoredUpload[]=[];
   try{
     if(items.length)await mkdir(uploadRoot,{recursive:true});

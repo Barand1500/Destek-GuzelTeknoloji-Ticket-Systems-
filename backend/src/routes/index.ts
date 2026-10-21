@@ -85,7 +85,7 @@ router.use("/auth", authLimiter, (req, _res, next) => {
   next();
 });
 const turnstileTokenSchema = z.string().trim().max(2048).optional();
-router.get('/auth/security', (_req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: publicAuthSecurity() }));
+router.get('/auth/security', async (_req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await publicAuthSecurity() }));
 router.post("/auth/register", async (req, res) => {
   const { turnstileToken, ...input } = registerSchema.extend({ turnstileToken: turnstileTokenSchema }).parse(req.body);
   await verifyTurnstile(turnstileToken, 'register', req.ip);

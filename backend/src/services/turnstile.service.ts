@@ -1,20 +1,23 @@
-import { env, allowedOrigins } from '../config/env.js';
+import { allowedOrigins } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
+import { effectiveTurnstileSettings } from './turnstile-settings.service.js';
 
 export type TurnstileAction = 'login' | 'register' | 'forgot_password' | 'form_submit' | 'form_access';
-export function publicAuthSecurity() {
-  return { enabled: env.TURNSTILE_ENABLED, siteKey: env.TURNSTILE_ENABLED ? env.TURNSTILE_SITE_KEY : null };
+export async function publicAuthSecurity() {
+  const settings = await effectiveTurnstileSettings();
+  return { enabled: settings.enabled, siteKey: settings.enabled ? settings.siteKey : null };
 }
 
 export async function verifyTurnstile(token: string | undefined, action: TurnstileAction, ip?: string) {
-  if (!env.TURNSTILE_ENABLED) return;
-  if (!env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_SITE_KEY) throw new AppError(503, 'CAPTCHA_UNAVAILABLE', 'Güvenlik doğrulaması şu anda kullanılamıyor.');
+  const settings = await effectiveTurnstileSettings();
+  if (!settings.enabled) return;
+  if (!settings.secretKey || !settings.siteKey) throw new AppError(503, 'CAPTCHA_UNAVAILABLE', 'Güvenlik doğrulaması şu anda kullanılamıyor.');
   if (!token?.trim() || token.length > 2048) throw new AppError(400, 'CAPTCHA_REQUIRED', 'Lütfen güvenlik doğrulamasını tamamlayın.');
   let result: { success?: boolean; hostname?: string; action?: string };
   try {
     const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: env.TURNSTILE_SECRET_KEY, response: token, ...(ip ? { remoteip: ip } : {}) }),
+      body: JSON.stringify({ secret: settings.secretKey, response: token, ...(ip ? { remoteip: ip } : {}) }),
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) throw new Error('Provider unavailable');

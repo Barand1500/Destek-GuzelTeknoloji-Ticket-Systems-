@@ -5,10 +5,66 @@ async function publicMocks(page: Page) {
   await page.route('**/api/v1/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/auth/security')) return route.fulfill({ json: { success: true, data: { enabled: false, siteKey: null } } });
-    if (path.endsWith('/public/form/settings')) return route.fulfill({ json: { success: true, data: { enabled: true, title: 'Destek Talebi', maxFileSize: 5242880, departments: [{ id: 'dept-1', name: 'Genel Destek' }, { id: 'dept-2', name: 'Teknik Destek' }] } } });
+    if (path.endsWith('/public/form/settings')) return route.fulfill({ json: { success: true, data: { enabled: true, title: 'Destek Talebi', maxFileSize: 31457280, maxTotalFileSize: 31457280, fieldOrder: ['files', 'message', 'subject', 'email', 'phone', 'name', 'company'] } } });
     return route.fulfill({ status: 401, json: { success: false } });
   });
 }
+
+test('Form layout, GSM validation, aggregate uploads and top navigation work together', async ({ page }) => {
+  await publicMocks(page);
+  const submissions: string[] = [];
+  await page.route('**/public/form/requests', route => {
+    submissions.push(route.request().postData() ?? '');
+    return route.fulfill({ status: 201, json: { success: true, data: { number: 456 } } });
+  });
+  await page.goto('/form/destek');
+  const company = page.getByLabel('Firma / Şirket (isteğe bağlı)', { exact: true });
+  const name = page.getByLabel('Ad Soyad', { exact: true });
+  const phone = page.getByLabel('Telefon (isteğe bağlı)', { exact: true });
+  const email = page.getByLabel('E-Posta Adresi', { exact: true });
+  await expect(company).toBeVisible();
+  expect((await company.boundingBox())!.y).toBeLessThan((await name.boundingBox())!.y);
+  expect((await name.boundingBox())!.y).toBeLessThan((await phone.boundingBox())!.y);
+  expect((await phone.boundingBox())!.y).toBeCloseTo((await email.boundingBox())!.y, 0);
+  await expect(page.getByRole('button', { name: 'Departman', exact: true })).toHaveCount(0);
+  const nav = page.getByRole('button', { name: 'Mevcut Talebimi Takip Et', exact: true });
+  expect((await nav.boundingBox())!.x).toBeGreaterThan((await page.getByRole('heading', { name: 'Destek Talebi' }).boundingBox())!.x);
+  await company.fill('Güzel Teknoloji'); await name.fill('Test Müşteri'); await email.fill('customer@example.test');
+  await page.getByLabel('Konu', { exact: true }).fill('Vega');
+  await page.getByLabel('Açıklama', { exact: true }).fill('Test');
+  await phone.fill('2121234567');
+  await page.getByRole('button', { name: 'Talebi Gönder' }).click();
+  expect(submissions).toHaveLength(0);
+  expect(await phone.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(false);
+  await phone.fill('5304112150');
+  const files = page.locator('input[type=file]');
+  await files.setInputFiles([
+    { name: 'one.txt', mimeType: 'text/plain', buffer: Buffer.alloc(16 * 1024 * 1024, 'a') },
+    { name: 'two.txt', mimeType: 'text/plain', buffer: Buffer.alloc(15 * 1024 * 1024, 'a') },
+  ]);
+  expect(await files.evaluate((element: HTMLInputElement) => element.validationMessage)).toContain('toplam');
+  await page.getByRole('button', { name: 'Talebi Gönder' }).click();
+  expect(submissions).toHaveLength(0);
+  await files.setInputFiles(Array.from({ length: 12 }, (_, n) => ({ name: `${n}.txt`, mimeType: 'text/plain', buffer: Buffer.from(`File ${n}`) })));
+  await expect(page.getByText(/En fazla 3 dosya/)).toHaveCount(0);
+  await page.screenshot({ path: '.local/form-create-updated.png', fullPage: true });
+  await nav.click();
+  await expect(page.getByRole('heading', { name: 'Talebimi Takip Et' })).toBeVisible();
+  const newRequest = page.getByRole('button', { name: 'Yeni Talep Aç', exact: true });
+  await expect(newRequest).toBeVisible();
+  expect((await newRequest.boundingBox())!.y).toBeLessThan((await page.getByLabel('Talep No', { exact: true }).boundingBox())!.y);
+  await page.screenshot({ path: '.local/form-tracking-updated.png', fullPage: true });
+  await newRequest.click();
+  await company.fill('Güzel Teknoloji'); await name.fill('Test Müşteri'); await email.fill('customer@example.test');
+  await phone.fill('5304112150');
+  await page.getByLabel('Konu', { exact: true }).fill('Vega'); await page.getByLabel('Açıklama', { exact: true }).fill('Test');
+  await files.setInputFiles(Array.from({ length: 12 }, (_, n) => ({ name: `${n}.txt`, mimeType: 'text/plain', buffer: Buffer.from(`File ${n}`) })));
+  await page.getByRole('button', { name: 'Talebi Gönder' }).click();
+  await expect(page.getByRole('status')).toContainText('#TK-00456');
+  expect(submissions).toHaveLength(1);
+  expect(submissions[0].match(/filename=/g)).toHaveLength(12);
+  expect(submissions[0]).not.toContain('name="departmentId"');
+});
 
 test('Cloudflare-enabled Form sends one explicit token with and without a file', async ({ page }) => {
   await publicMocks(page);
@@ -35,10 +91,8 @@ test('Cloudflare-enabled Form sends one explicit token with and without a file',
     await page.goto('/form/destek');
     await page.getByLabel('Ad Soyad', { exact: true }).fill('Form Müşteri');
     await page.getByLabel('E-Posta Adresi', { exact: true }).fill('customer@example.test');
-    await page.getByLabel('Telefon (isteğe bağlı)', { exact: true }).fill('0530 411 21 50');
+    await page.getByLabel('Telefon (isteğe bağlı)', { exact: true }).fill('5304112150');
     await page.getByLabel('Firma / Şirket (isteğe bağlı)', { exact: true }).fill('Test Şirket');
-    await page.getByRole('button', { name: 'Departman', exact: true }).click();
-    await page.getByRole('option', { name: 'Teknik Destek', exact: true }).click();
     await page.getByLabel('Konu', { exact: true }).fill('Form testi');
     await page.getByLabel('Açıklama', { exact: true }).fill('Test mesajı');
     if (withFile) await page.locator('input[type=file]').setInputFiles({ name: 'test.txt', mimeType: 'text/plain', buffer: Buffer.from('Test file') });
@@ -72,16 +126,11 @@ test('guest can submit a short subject in an embedded Form and request an email 
   expect(submissions).toHaveLength(0);
   await page.getByLabel('Konu', { exact: true }).fill('x');
   await page.getByRole('button', { name: 'Talebi Gönder' }).click();
-  await expect(page.getByRole('alert')).toHaveText('Lütfen departman seçin.');
-  expect(submissions).toHaveLength(0);
-  await page.getByRole('button', { name: 'Departman', exact: true }).click();
-  await page.getByRole('option', { name: 'Teknik Destek', exact: true }).click();
-  await page.getByRole('button', { name: 'Talebi Gönder' }).click();
   await expect(page.getByRole('status')).toContainText('#TK-00123');
   expect(submissions[0]).toContain('customer@example.test');
   expect(submissions[0]).toContain('name="subject"');
-  expect(submissions[0]).toContain('name="departmentId"');
-  expect(submissions[0]).toContain('dept-2');
+  expect(submissions[0]).not.toContain('name="departmentId"');
+  await page.screenshot({ path: '.local/form-create-updated.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Talebimi Takip Et', exact: true }).click();
   await expect(page.getByLabel('Talep No', { exact: true })).toHaveValue('TK-00123');
@@ -125,7 +174,7 @@ test('guest tracking displays public messages, posts to its scoped endpoint and 
   await expect(page.getByText('Teşekkürler', { exact: true })).toBeVisible();
   expect(sent).toHaveLength(1);
   await page.screenshot({ path: '.local/form-thread.png', fullPage: true });
-  await page.getByRole('link', { name: 'Talep Açma Ekranına Dön', exact: true }).click();
+  await page.getByRole('link', { name: 'Yeni Talep Aç', exact: true }).click();
   await expect(page).toHaveURL('/form/destek');
   await expect(page.getByRole('heading', { name: 'Destek Talebi', exact: true })).toBeVisible();
 });
@@ -149,7 +198,10 @@ test('Form settings save independently and provide a shareable link and iframe c
   await page.goto('/admin/integrations/channels');
   await page.getByRole('tab', { name: 'Form', exact: true }).click();
   await page.getByLabel('Formu Etkinleştir').check();
-  await expect(page.getByRole('button', { name: 'Taleplerin Düşeceği Departman', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /alanını (yukarı|aşağı) taşı/ })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Zorunlu alanlar', exact: true }).getByRole('checkbox')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Taleplerin Düşeceği Departman', exact: true }).click();
+  await page.getByRole('option', { name: 'Teknik Destek', exact: true }).click();
   const save = page.getByRole('button', { name: 'Kaydet', exact: true });
   await expect(save).toBeEnabled();
   const buttonBox = await save.boundingBox(), cardBox = await page.getByRole('region', { name: 'Form Ayarları' }).boundingBox();
@@ -159,7 +211,7 @@ test('Form settings save independently and provide a shareable link and iframe c
   await save.click();
   await expect(page.getByRole('status')).toContainText('Form ayarları kaydedildi.');
   expect(formWrites).toBe(1); expect(otherWrites).toBe(0);
-  expect(form).toEqual({ enabled: true, title: 'Destek Talebi' });
+  expect(form).toEqual({ enabled: true, title: 'Destek Talebi', departmentId: 'dept-1', requirePhone: false, requireCompany: false, requireSubject: true, requireMessage: true, fieldOrder: ['company', 'name', 'phone', 'email', 'subject', 'message', 'files'] });
   await expect(page.getByLabel('Form Bağlantısı', { exact: true })).toHaveValue('http://localhost:5173/form/destek');
   await expect(page.getByLabel('Siteye Gömme Kodu (iframe)')).toHaveValue(/<iframe.*embed=1/);
   await page.screenshot({ path: '.local/form-settings.png', fullPage: true });

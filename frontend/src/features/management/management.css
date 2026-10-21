@@ -1281,6 +1281,11 @@ html[data-theme="dark"] .incoming-start-warning { background: #3c341c; border-co
   font-size: 17px;
   color: #263a36;
 }
+.integration-card .turnstile-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
 .integration-card p {
   color: var(--ui-text-secondary);
   font-size: 12px;
@@ -1295,6 +1300,23 @@ html[data-theme="dark"] .incoming-start-warning { background: #3c341c; border-co
   color: #176b58;
   overflow-wrap: anywhere;
 }
+.form-required-fields {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #dce5df;
+  border-radius: 8px;
+}
+.form-required-fields legend {
+  padding: 0 5px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.form-required-fields > p {
+  margin: 0 0 4px;
+}
+.form-required-options { display: flex; flex-wrap: wrap; gap: 12px 24px; }
 .integration-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

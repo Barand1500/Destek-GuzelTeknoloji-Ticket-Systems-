@@ -5,7 +5,6 @@ import { z } from 'zod';
 import path from 'node:path';
 import type { Prisma } from '../generated/prisma/client.js';
 import { db } from '../config/db.js';
-import { env } from '../config/env.js';
 import { allowedOrigins } from '../config/env.js';
 import { emailSchema } from '../utils/email.js';
 import { AppError } from '../utils/errors.js';
@@ -15,6 +14,7 @@ import { verifyTurnstile, publicAuthSecurity } from '../services/turnstile.servi
 import { withStoredUploads, uploadRoot } from '../services/uploads.service.js';
 import { addMessage } from '../services/conversations.service.js';
 import { requestFormLogin, verifyFormLogin } from '../services/form-login.service.js';
+import { FORM_UPLOAD_BYTES, formUploadStorage } from '../services/form-uploads.js';
 
 export const formsRouter = Router();
 // Shared by messages, pagination cursors and attachment downloads.
@@ -25,13 +25,12 @@ const limitMessage = { success: false, error: { code: 'RATE_LIMITED', message: '
 const writes = rateLimit({ windowMs: 10 * 60_000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const reads = rateLimit({ windowMs: 60_000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const replies = rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
-const formFileSize = Math.min(env.MAX_FILE_SIZE, 5 * 1024 * 1024);
+const formFileSize = FORM_UPLOAD_BYTES;
 // Eight application fields, plus the hidden field sent by older Turnstile clients.
-const parseAttachments = multer({ storage: multer.memoryStorage(), limits: { files: 3, fileSize: formFileSize, fields: 9, parts: 13, fieldSize: 40000 } }).array('files', 3);
+const parseAttachments = multer({ storage: formUploadStorage(), limits: { fileSize: formFileSize, fields: 9, fieldSize: 40000 } }).array('files');
 const attachments: RequestHandler = (req, res, next) => parseAttachments(req, res, error => {
   if (!(error instanceof multer.MulterError)) { next(error); return; }
   const message = error.code === 'LIMIT_FILE_SIZE' ? `Dosya başına sınır ${Number((formFileSize / 1024 / 1024).toFixed(2))} MB.`
-    : error.code === 'LIMIT_FILE_COUNT' || (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === 'files') ? 'En fazla 3 dosya ekleyebilirsiniz.'
     : error.code === 'LIMIT_FIELD_COUNT' || error.code === 'LIMIT_PART_COUNT' ? 'Formda çok fazla alan gönderildi. Sayfayı yenileyip yeniden deneyin.'
     : error.code === 'LIMIT_FIELD_VALUE' ? 'Formdaki bir alan çok uzun.'
     : 'Dosya alanı geçersiz. Sayfayı yenileyip yeniden deneyin.';
@@ -45,14 +44,13 @@ formsRouter.use((req, res, next) => {
 });
 formsRouter.get('/settings', reads, async (_req, res) => {
   const settings = await getFormSettings();
-  const departments = settings.enabled ? await db.department.findMany({ where: { isActive: true, deletedAt: null }, select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] }) : [];
-  res.json({ success: true, data: { enabled: settings.enabled, title: settings.title, departments, security: publicAuthSecurity(), maxFiles: 3, maxFileSize: Math.min(env.MAX_FILE_SIZE, 5 * 1024 * 1024) } });
+  res.json({ success: true, data: { enabled: settings.enabled, title: settings.title, fieldOrder: settings.fieldOrder, requirePhone: settings.requirePhone, requireCompany: settings.requireCompany, requireSubject: settings.requireSubject, requireMessage: settings.requireMessage, security: await publicAuthSecurity(), maxFileSize: formFileSize, maxTotalFileSize: FORM_UPLOAD_BYTES } });
 });
 formsRouter.post('/requests', writes, async (_req, _res, next) => { await requireOpenForm(); next(); }, attachments, async (req, res) => {
   const { 'cf-turnstile-response': widgetToken, ...body } = req.body;
   const input = formSubmissionSchema.parse({ ...body, turnstileToken: body.turnstileToken ?? widgetToken });
   await verifyTurnstile(input.turnstileToken, 'form_submit', req.ip);
-  const result = await withStoredUploads(req.files as Express.Multer.File[], files => submitForm(input, files, req.ip));
+  const result = await withStoredUploads(req.files as Express.Multer.File[], files => submitForm(input, files, req.ip), { maxFileSize: formFileSize });
   res.status(201).json({ success: true, data: result });
 });
 formsRouter.post('/access', writes, async (req, res) => {
@@ -90,7 +88,7 @@ formsRouter.get('/conversation', async (req, res) => {
 });
 formsRouter.post('/conversation/messages', replies, attachments, async (req, res) => {
   const input = z.object({ body: z.string().trim().max(10000) }).strict().parse(req.body);
-  await withStoredUploads(req.files as Express.Multer.File[], files => addMessage(req.actor, res.locals.formConversation.id, input, files));
+  await withStoredUploads(req.files as Express.Multer.File[], files => addMessage(req.actor, res.locals.formConversation.id, input, files), { maxFileSize: formFileSize });
   res.status(201).json({ success: true });
 });
 formsRouter.get('/conversation/attachments/:id', async (req, res) => {

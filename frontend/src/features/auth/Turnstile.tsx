@@ -35,7 +35,7 @@ export function useTurnstile(action: Action) {
       if (typeof data?.enabled !== 'boolean' || (data.enabled && !data.siteKey)) throw new Error('Invalid auth security settings');
       return data;
     },
-    staleTime: 5 * 60_000, retry: 1,
+    staleTime: 0, refetchInterval: 30_000, refetchOnWindowFocus: 'always', retry: 1,
   });
   const reset = useCallback(() => { setToken(''); setVersion(value => value + 1); }, []);
   return { action, settings, token, setToken, version, reset,

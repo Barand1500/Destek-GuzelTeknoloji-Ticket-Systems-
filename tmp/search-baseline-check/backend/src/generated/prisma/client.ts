@@ -207,6 +207,11 @@ export type Notification = Prisma.NotificationModel
  */
 export type SavedReply = Prisma.SavedReplyModel
 /**
+ * Model TurnstileSettings
+ * 
+ */
+export type TurnstileSettings = Prisma.TurnstileSettingsModel
+/**
  * Model SystemSettings
  * 
  */

@@ -29,6 +29,10 @@ export type FormSettingsMinAggregateOutputType = {
   enabled: boolean | null
   departmentId: string | null
   title: string | null
+  requirePhone: boolean | null
+  requireCompany: boolean | null
+  requireSubject: boolean | null
+  requireMessage: boolean | null
   updatedAt: Date | null
 }
 
@@ -37,6 +41,10 @@ export type FormSettingsMaxAggregateOutputType = {
   enabled: boolean | null
   departmentId: string | null
   title: string | null
+  requirePhone: boolean | null
+  requireCompany: boolean | null
+  requireSubject: boolean | null
+  requireMessage: boolean | null
   updatedAt: Date | null
 }
 
@@ -45,6 +53,11 @@ export type FormSettingsCountAggregateOutputType = {
   enabled: number
   departmentId: number
   title: number
+  requirePhone: number
+  requireCompany: number
+  requireSubject: number
+  requireMessage: number
+  fieldOrder: number
   updatedAt: number
   _all: number
 }
@@ -55,6 +68,10 @@ export type FormSettingsMinAggregateInputType = {
   enabled?: true
   departmentId?: true
   title?: true
+  requirePhone?: true
+  requireCompany?: true
+  requireSubject?: true
+  requireMessage?: true
   updatedAt?: true
 }
 
@@ -63,6 +80,10 @@ export type FormSettingsMaxAggregateInputType = {
   enabled?: true
   departmentId?: true
   title?: true
+  requirePhone?: true
+  requireCompany?: true
+  requireSubject?: true
+  requireMessage?: true
   updatedAt?: true
 }
 
@@ -71,6 +92,11 @@ export type FormSettingsCountAggregateInputType = {
   enabled?: true
   departmentId?: true
   title?: true
+  requirePhone?: true
+  requireCompany?: true
+  requireSubject?: true
+  requireMessage?: true
+  fieldOrder?: true
   updatedAt?: true
   _all?: true
 }
@@ -152,6 +178,11 @@ export type FormSettingsGroupByOutputType = {
   enabled: boolean
   departmentId: string | null
   title: string
+  requirePhone: boolean
+  requireCompany: boolean
+  requireSubject: boolean
+  requireMessage: boolean
+  fieldOrder: runtime.JsonValue | null
   updatedAt: Date
   _count: FormSettingsCountAggregateOutputType | null
   _min: FormSettingsMinAggregateOutputType | null
@@ -181,6 +212,11 @@ export type FormSettingsWhereInput = {
   enabled?: Prisma.BoolFilter<"FormSettings"> | boolean
   departmentId?: Prisma.StringNullableFilter<"FormSettings"> | string | null
   title?: Prisma.StringFilter<"FormSettings"> | string
+  requirePhone?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireCompany?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireSubject?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireMessage?: Prisma.BoolFilter<"FormSettings"> | boolean
+  fieldOrder?: Prisma.JsonNullableFilter<"FormSettings">
   updatedAt?: Prisma.DateTimeFilter<"FormSettings"> | Date | string
 }
 
@@ -189,6 +225,11 @@ export type FormSettingsOrderByWithRelationInput = {
   enabled?: Prisma.SortOrder
   departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
+  requirePhone?: Prisma.SortOrder
+  requireCompany?: Prisma.SortOrder
+  requireSubject?: Prisma.SortOrder
+  requireMessage?: Prisma.SortOrder
+  fieldOrder?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _relevance?: Prisma.FormSettingsOrderByRelevanceInput
 }
@@ -201,6 +242,11 @@ export type FormSettingsWhereUniqueInput = Prisma.AtLeast<{
   enabled?: Prisma.BoolFilter<"FormSettings"> | boolean
   departmentId?: Prisma.StringNullableFilter<"FormSettings"> | string | null
   title?: Prisma.StringFilter<"FormSettings"> | string
+  requirePhone?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireCompany?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireSubject?: Prisma.BoolFilter<"FormSettings"> | boolean
+  requireMessage?: Prisma.BoolFilter<"FormSettings"> | boolean
+  fieldOrder?: Prisma.JsonNullableFilter<"FormSettings">
   updatedAt?: Prisma.DateTimeFilter<"FormSettings"> | Date | string
 }, "id">
 
@@ -209,6 +255,11 @@ export type FormSettingsOrderByWithAggregationInput = {
   enabled?: Prisma.SortOrder
   departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
+  requirePhone?: Prisma.SortOrder
+  requireCompany?: Prisma.SortOrder
+  requireSubject?: Prisma.SortOrder
+  requireMessage?: Prisma.SortOrder
+  fieldOrder?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FormSettingsCountOrderByAggregateInput
   _max?: Prisma.FormSettingsMaxOrderByAggregateInput
@@ -223,6 +274,11 @@ export type FormSettingsScalarWhereWithAggregatesInput = {
   enabled?: Prisma.BoolWithAggregatesFilter<"FormSettings"> | boolean
   departmentId?: Prisma.StringNullableWithAggregatesFilter<"FormSettings"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"FormSettings"> | string
+  requirePhone?: Prisma.BoolWithAggregatesFilter<"FormSettings"> | boolean
+  requireCompany?: Prisma.BoolWithAggregatesFilter<"FormSettings"> | boolean
+  requireSubject?: Prisma.BoolWithAggregatesFilter<"FormSettings"> | boolean
+  requireMessage?: Prisma.BoolWithAggregatesFilter<"FormSettings"> | boolean
+  fieldOrder?: Prisma.JsonNullableWithAggregatesFilter<"FormSettings">
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"FormSettings"> | Date | string
 }
 
@@ -231,6 +287,11 @@ export type FormSettingsCreateInput = {
   enabled?: boolean
   departmentId?: string | null
   title?: string
+  requirePhone?: boolean
+  requireCompany?: boolean
+  requireSubject?: boolean
+  requireMessage?: boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
@@ -239,6 +300,11 @@ export type FormSettingsUncheckedCreateInput = {
   enabled?: boolean
   departmentId?: string | null
   title?: string
+  requirePhone?: boolean
+  requireCompany?: boolean
+  requireSubject?: boolean
+  requireMessage?: boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
@@ -247,6 +313,11 @@ export type FormSettingsUpdateInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  requirePhone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireCompany?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSubject?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireMessage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -255,6 +326,11 @@ export type FormSettingsUncheckedUpdateInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  requirePhone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireCompany?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSubject?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireMessage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -263,6 +339,11 @@ export type FormSettingsCreateManyInput = {
   enabled?: boolean
   departmentId?: string | null
   title?: string
+  requirePhone?: boolean
+  requireCompany?: boolean
+  requireSubject?: boolean
+  requireMessage?: boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
@@ -271,6 +352,11 @@ export type FormSettingsUpdateManyMutationInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  requirePhone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireCompany?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSubject?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireMessage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -279,6 +365,11 @@ export type FormSettingsUncheckedUpdateManyInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  requirePhone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireCompany?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireSubject?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  requireMessage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fieldOrder?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -293,6 +384,11 @@ export type FormSettingsCountOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   departmentId?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  requirePhone?: Prisma.SortOrder
+  requireCompany?: Prisma.SortOrder
+  requireSubject?: Prisma.SortOrder
+  requireMessage?: Prisma.SortOrder
+  fieldOrder?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -301,6 +397,10 @@ export type FormSettingsMaxOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   departmentId?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  requirePhone?: Prisma.SortOrder
+  requireCompany?: Prisma.SortOrder
+  requireSubject?: Prisma.SortOrder
+  requireMessage?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -309,6 +409,10 @@ export type FormSettingsMinOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   departmentId?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  requirePhone?: Prisma.SortOrder
+  requireCompany?: Prisma.SortOrder
+  requireSubject?: Prisma.SortOrder
+  requireMessage?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -319,6 +423,11 @@ export type FormSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   enabled?: boolean
   departmentId?: boolean
   title?: boolean
+  requirePhone?: boolean
+  requireCompany?: boolean
+  requireSubject?: boolean
+  requireMessage?: boolean
+  fieldOrder?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["formSettings"]>
 
@@ -329,10 +438,15 @@ export type FormSettingsSelectScalar = {
   enabled?: boolean
   departmentId?: boolean
   title?: boolean
+  requirePhone?: boolean
+  requireCompany?: boolean
+  requireSubject?: boolean
+  requireMessage?: boolean
+  fieldOrder?: boolean
   updatedAt?: boolean
 }
 
-export type FormSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "enabled" | "departmentId" | "title" | "updatedAt", ExtArgs["result"]["formSettings"]>
+export type FormSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "enabled" | "departmentId" | "title" | "requirePhone" | "requireCompany" | "requireSubject" | "requireMessage" | "fieldOrder" | "updatedAt", ExtArgs["result"]["formSettings"]>
 
 export type $FormSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "FormSettings"
@@ -342,6 +456,11 @@ export type $FormSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     enabled: boolean
     departmentId: string | null
     title: string
+    requirePhone: boolean
+    requireCompany: boolean
+    requireSubject: boolean
+    requireMessage: boolean
+    fieldOrder: runtime.JsonValue | null
     updatedAt: Date
   }, ExtArgs["result"]["formSettings"]>
   composites: {}
@@ -716,6 +835,11 @@ export interface FormSettingsFieldRefs {
   readonly enabled: Prisma.FieldRef<"FormSettings", 'Boolean'>
   readonly departmentId: Prisma.FieldRef<"FormSettings", 'String'>
   readonly title: Prisma.FieldRef<"FormSettings", 'String'>
+  readonly requirePhone: Prisma.FieldRef<"FormSettings", 'Boolean'>
+  readonly requireCompany: Prisma.FieldRef<"FormSettings", 'Boolean'>
+  readonly requireSubject: Prisma.FieldRef<"FormSettings", 'Boolean'>
+  readonly requireMessage: Prisma.FieldRef<"FormSettings", 'Boolean'>
+  readonly fieldOrder: Prisma.FieldRef<"FormSettings", 'Json'>
   readonly updatedAt: Prisma.FieldRef<"FormSettings", 'DateTime'>
 }
     

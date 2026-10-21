@@ -84,6 +84,7 @@ export const ModelName = {
   ConversationTag: 'ConversationTag',
   Notification: 'Notification',
   SavedReply: 'SavedReply',
+  TurnstileSettings: 'TurnstileSettings',
   SystemSettings: 'SystemSettings',
   ResponseTimeSettings: 'ResponseTimeSettings',
   NotificationSettings: 'NotificationSettings',
@@ -263,6 +264,11 @@ export const FormSettingsScalarFieldEnum = {
   enabled: 'enabled',
   departmentId: 'departmentId',
   title: 'title',
+  requirePhone: 'requirePhone',
+  requireCompany: 'requireCompany',
+  requireSubject: 'requireSubject',
+  requireMessage: 'requireMessage',
+  fieldOrder: 'fieldOrder',
   updatedAt: 'updatedAt'
 } as const
 
@@ -542,6 +548,17 @@ export const SavedReplyScalarFieldEnum = {
 } as const
 
 export type SavedReplyScalarFieldEnum = (typeof SavedReplyScalarFieldEnum)[keyof typeof SavedReplyScalarFieldEnum]
+
+
+export const TurnstileSettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  siteKey: 'siteKey',
+  secretCiphertext: 'secretCiphertext',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TurnstileSettingsScalarFieldEnum = (typeof TurnstileSettingsScalarFieldEnum)[keyof typeof TurnstileSettingsScalarFieldEnum]
 
 
 export const SystemSettingsScalarFieldEnum = {
@@ -1137,6 +1154,15 @@ export const SavedReplyOrderByRelevanceFieldEnum = {
 } as const
 
 export type SavedReplyOrderByRelevanceFieldEnum = (typeof SavedReplyOrderByRelevanceFieldEnum)[keyof typeof SavedReplyOrderByRelevanceFieldEnum]
+
+
+export const TurnstileSettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  siteKey: 'siteKey',
+  secretCiphertext: 'secretCiphertext'
+} as const
+
+export type TurnstileSettingsOrderByRelevanceFieldEnum = (typeof TurnstileSettingsOrderByRelevanceFieldEnum)[keyof typeof TurnstileSettingsOrderByRelevanceFieldEnum]
 
 
 export const SystemSettingsOrderByRelevanceFieldEnum = {

@@ -200,6 +200,11 @@ model FormSettings {
   enabled Boolean @default(false)
   departmentId String?
   title String @default("Destek Talebi") @db.VarChar(100)
+  requirePhone Boolean @default(false)
+  requireCompany Boolean @default(false)
+  requireSubject Boolean @default(true)
+  requireMessage Boolean @default(true)
+  fieldOrder Json?
   updatedAt DateTime @updatedAt
 }
 model FormRequest {
@@ -451,6 +456,13 @@ model SavedReply {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([authorId])
+}
+model TurnstileSettings {
+  id String @id @default("default")
+  enabled Boolean @default(false)
+  siteKey String @default("") @db.VarChar(256)
+  secretCiphertext String @db.Text
+  updatedAt DateTime @updatedAt
 }
 model SystemSettings {
   id String @id @default("default")

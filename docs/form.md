@@ -22,17 +22,24 @@ işlemleri de aynı widget ile doğrulanır.
 
 **Entegrasyonlar → Form** bölümünden formu etkinleştirin ve sol alttaki
 **Kaydet** düğmesine basın. Bu kaydetme diğer kanal ayarlarından
-bağımsızdır. E-Posta (SMTP) gönderimi ayarlanmış olmalıdır.
+bağımsızdır. E-Posta (SMTP) gönderimi ayarlanmış olmalıdır. Aynı bölümde
+form alanlarının zorunluluğunu ve destek talebi ekranındaki sırasını
+ayarlayabilirsiniz. Ad Soyad ve E-Posta Adresi talep takibi için her zaman
+zorunludur; firma, telefon, konu ve açıklama alanları isteğe bağlı yapılabilir.
 
 ## Kullanım
 
-- Alanlar: ad soyad, e-posta, telefon, firma/şirket, departman, konu, açıklama, dosyalar.
-  Telefon, şirket ve dosyalar isteğe bağlıdır. Kısa konu kabul edilir; boş konu edilmez.
+- Alanlar: firma/şirket, ad soyad, aynı satırda telefon ve e-posta, konu, açıklama, dosyalar.
+  Dosyalar isteğe bağlıdır. Telefon, şirket, konu ve açıklama zorunluluğu
+  Form ayarlarına göre uygulanır.
+  Telefon girilirse 5 ile başlayan 10 haneli GSM numarası olmalıdır.
 - Entegrasyonlar'dan bağlantı veya iframe kodunu kopyalayın.
 - Talep gelen kutusunda **Form** kanalında görünür.
-- Departmanı müşteri formda seçer. Yalnız aktif ve silinmemiş departmanlar gösterilir.
-  Departman seçimi zorunludur; pasif, silinmiş veya bulunmayan departmana talep açılamaz.
-  Entegrasyon ayarındaki eski sabit departman alanı kullanılmaz. Bu düzeltme için ek migration gerekmez.
+- Departman Entegrasyonlar → Form → Taleplerin Düşeceği Departman alanından belirlenir.
+  Müşteri departman seçmez; eski istemcilerin gönderdiği departman değeri dikkate alınmaz.
+  İlk Aktif Departman seçilirse aktif ve silinmemiş departmanlar ad sırasıyla değerlendirilir.
+  Sabit seçilen departman pasifleşmiş veya silinmişse başka departmana sessizce yönlendirilmez.
+  Var olan `FormSettings.departmentId` kullanılır; bu düzenleme için ek migration gerekmez.
 - E-posta eşleşirse mevcut müşteri kullanılır; profil bilgileri üzerine yazılmaz.
   Formda verilen bilgiler talebe ayrıca kaydedilir. Konuşmada mevcut müşteri bilgi satırı kullanılır.
   Paylaşılan adres belirsizse rastgele bir müşterinin kaydı seçilmez.
@@ -59,8 +66,13 @@ bağımsızdır. E-Posta (SMTP) gönderimi ayarlanmış olmalıdır.
   Canlıda backend'i açmadan önce `npm run db:migrate` ve `npm run build` çalıştırın.
 - Müşteri yalnız açık mesajları ve bunların dosyalarını görür; dahili notları,
   işlem geçmişini, personel iletişim bilgilerini ve diğer talepleri göremez.
-- Form/takip ekranında en fazla 3 dosya; her biri en fazla 5 MB veya sunucunun
-  daha düşük dosya sınırı kabul edilir. Dosya türü ve gerçek içeriği doğrulanır.
+- Form ve takip ekranında dosya adedi sınırı yoktur; bir gönderimde seçilen dosyaların
+  toplamı en fazla 30 MB olabilir. Backend bu bütçeyi yükleme sırasında denetler.
+  Diğer yükleme ekranlarının limitleri değişmez. Dosya türü ve gerçek içeriği doğrulanır.
+  Ters proxy'nin istek boyutu sınırı multipart ek yüküyle birlikte yeterli olmalıdır
+  (örneğin Nginx için `client_max_body_size 32m;`).
+- Takip ve Yeni Talep Aç düğmeleri sayfa başlığının sağındadır; iframe görünümü de
+  aynı yerleşimi kullanır.
 - Talep, dosyalar ve e-posta işi işlem içinde kaydedilir; gönderimler mevcut
   kalıcı kuyruktan devam eder. Sunucu yeniden başlasa da takip bağlantıları korunur.
 - Formu kapatmak yeni gönderimleri durdurur; mevcut takip bağlantıları çalışır.

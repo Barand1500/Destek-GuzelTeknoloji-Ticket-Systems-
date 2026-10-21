@@ -1,3 +1,4 @@
+import { getTurnstileSettings, revealTurnstileSecret, saveTurnstileSettings, turnstileSettingsSchema } from '../services/turnstile-settings.service.js';
 import { getFormSettings, saveFormSettings, formSettingsSchema } from '../services/forms.service.js';
 import { Router } from "express";
 import { mergeCustomers, mergeCustomersInput, duplicateCustomers, duplicateCustomersQuery } from '../services/customer-merge.service.js';
@@ -112,6 +113,9 @@ managementRouter.put("/staff-presence/settings", admin, async (req, res) => {
   res.json({ success: true, data: await updatePresenceSettings(idleMinutes) });
 });
 managementRouter.delete("/activity-logs", staff, async (req, res) => res.json({ success: true, data: await service.deleteActivityLogs(req.actor, schema.activityDeleteQuery.parse(req.query).period) }));
+managementRouter.get('/integrations/turnstile', staff, async (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await getTurnstileSettings(req.actor) }));
+managementRouter.get('/integrations/turnstile/secret', staff, async (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await revealTurnstileSecret(req.actor) }));
+managementRouter.put('/integrations/turnstile', staff, async (req, res) => res.json({ success: true, data: await saveTurnstileSettings(req.actor, turnstileSettingsSchema.parse(req.body)) }));
 managementRouter.get('/integrations/form', staff, async (_req, res) => res.json({ success: true, data: await getFormSettings() }));
 managementRouter.put('/integrations/form', staff, async (req, res) => res.json({ success: true, data: await saveFormSettings(req.actor, formSettingsSchema.parse(req.body)) }));
 managementRouter.get("/integrations", staff, async (req, res) => res.json({ success: true, data: await service.integrationSettings(req.actor) }));

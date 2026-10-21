@@ -2,6 +2,9 @@
 .public-form-page.embedded{min-height:0;padding:12px;background:transparent}
 .public-form-card{width:100%;max-width:780px;margin:0 auto;background:var(--surface,#fff);border:1px solid var(--border,#dbe5df);border-radius:16px;padding:28px;overflow-wrap:anywhere}
 .public-form-card h1{font-size:26px;margin:0 0 12px}.public-form-card>p{line-height:1.6}
+.public-form-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}.public-form-heading h1{margin:0;min-width:0}.public-form-heading>.button{flex-shrink:0;margin:0;white-space:normal;text-align:center}
+.form-settings-department{border:0;margin:20px 0 0;padding:0;max-width:480px;min-width:0}
+@media(max-width:540px){.public-form-heading{align-items:flex-start;gap:10px}.public-form-heading>.button{max-width:48%;padding:9px 12px;font-size:12px}}
 .public-form-fields{display:grid;gap:20px;margin-top:24px}.public-form-fields label{display:grid;gap:8px;min-width:0;font-size:14px}.public-form-fields input,.public-form-fields textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--border,#b9cec4);border-radius:8px;padding:12px;background:var(--surface,#fff);color:inherit;font:inherit}.public-form-fields textarea{resize:none;overflow:auto}
 .form-back-link{display:inline-flex;align-items:center;gap:7px;margin-bottom:20px;color:var(--ui-text-navigation,#166b5c);font-size:13px;text-decoration:none}
 .form-back-link:hover{text-decoration:underline}

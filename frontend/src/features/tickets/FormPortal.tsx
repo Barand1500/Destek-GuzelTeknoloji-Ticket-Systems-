@@ -4,27 +4,29 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { TurnstileField, useTurnstile } from '../auth/Turnstile';
 import { EmailInput } from '../../components/EmailInput';
-import { DropdownSelect } from '../../components/DropdownSelect';
 import { errorText } from '../../services/api';
 import './form.css';
-import { ArrowLeft } from 'lucide-react';
 
 // Guest credentials must never replace staff credentials or trigger staff-session refresh.
 const guest = axios.create({ baseURL: '/api/v1/public/form', withCredentials: false });
 type Message = { id: string; body: string; type: string; createdAt: string; author: { name: string }; attachments: { id: string; originalName: string; size: number }[] };
 type Thread = { number: number; subject: string; status: string; closed: boolean; messages: Message[]; hasMore: boolean; direction: 'latest' | 'after' | 'before' };
-function Files({ maxSize = 5 * 1024 * 1024 }: { maxSize?: number }) {
+type FormFieldId = 'company' | 'name' | 'phone' | 'email' | 'subject' | 'message' | 'files';
+const defaultFieldOrder: FormFieldId[] = ['company', 'name', 'phone', 'email', 'subject', 'message', 'files'];
+function Files({ maxSize = 30 * 1024 * 1024 }: { maxSize?: number }) {
   return <label className="form-files"><span>Dosya Ekle (isteğe bağlı)</span><input name="files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={event => {
     const files = Array.from(event.currentTarget.files ?? []);
-    event.currentTarget.setCustomValidity(files.length > 3 ? 'En fazla 3 dosya seçebilirsiniz.' : files.some(file => file.size > maxSize) ? `Her dosya en fazla ${Math.floor(maxSize / 1024 / 1024)} MB olabilir.` : '');
+    event.currentTarget.setCustomValidity(files.reduce((sum, file) => sum + file.size, 0) > maxSize ? `Dosyaların toplam boyutu en fazla ${Math.floor(maxSize / 1024 / 1024)} MB olabilir.` : '');
     event.currentTarget.reportValidity();
-  }} /><small>En fazla 3 dosya, dosya başına {Math.floor(maxSize / 1024 / 1024)} MB.</small></label>;
+  }} /><small>Dosyaların toplam boyutu en fazla {Math.floor(maxSize / 1024 / 1024)} MB olabilir.</small></label>;
 }
 function formData(form: HTMLFormElement) {
   const data = new FormData(form);
   // The callback token is sent explicitly; do not submit an extra widget field.
   data.delete('cf-turnstile-response');
-  for (const [key, value] of [...data.entries()]) if (value instanceof File && !value.size) data.delete(key);
+  const files = data.getAll('files').filter((value): value is File => value instanceof File && value.size > 0);
+  data.delete('files');
+  for (const file of files) data.append('files', file);
   return data;
 }
 export function FormPortal() {
@@ -33,8 +35,7 @@ export function FormPortal() {
   const [tracking, setTracking] = useState(location.pathname === '/form/talep');
   const token = /^[a-f0-9]{64}$/.test(location.hash.slice(1)) ? location.hash.slice(1) : '';
   const captcha = useTurnstile(tracking ? 'form_access' : 'form_submit');
-  const settings = useQuery({ queryKey: ['public-form'], queryFn: async () => (await guest.get('/settings')).data.data as { enabled: boolean; title: string; maxFileSize: number; departments: { id: string; name: string }[] } });
-  const [departmentId, setDepartmentId] = useState('');
+  const settings = useQuery({ queryKey: ['public-form'], queryFn: async () => (await guest.get('/settings')).data.data as { enabled: boolean; title: string; fieldOrder?: FormFieldId[]; requirePhone: boolean; requireCompany: boolean; requireSubject: boolean; requireMessage: boolean; maxTotalFileSize?: number } });
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const [created, setCreated] = useState<number>();
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -46,7 +47,6 @@ export function FormPortal() {
   }, []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (pending || !captcha.ready) return;
-    if (!tracking && !departmentId) { setError('Lütfen departman seçin.'); return; }
     const data = formData(event.currentTarget);
     setPending(true); setError(''); setNotice('');
     try {
@@ -56,7 +56,6 @@ export function FormPortal() {
         if (login) { setChallengeId(result.data.data.challengeId); setCode(''); }
         setNotice(result.data.data.message);
       } else {
-        data.set('departmentId', departmentId);
         if (captcha.payload.turnstileToken) data.set('turnstileToken', captcha.payload.turnstileToken);
         const result = await guest.post('/requests', data);
         setCreated(result.data.data.number);
@@ -75,10 +74,19 @@ export function FormPortal() {
     finally { setPending(false); }
   }
   const embedded = new URLSearchParams(location.search).get('embed') === '1';
+  const fieldOrder = defaultFieldOrder;
+  const renderField = (field: FormFieldId) => {
+    if (field === 'company') return <label><span>Firma / Şirket{settings.data?.requireCompany === true ? '' : ' (isteğe bağlı)'}</span><input name="company" autoComplete="organization" maxLength={150} required={settings.data?.requireCompany === true} /></label>;
+    if (field === 'name') return <label><span>Ad Soyad</span><input name="name" autoComplete="name" required maxLength={100} /></label>;
+    if (field === 'phone') return <label><span>Telefon{settings.data?.requirePhone === true ? '' : ' (isteğe bağlı)'}</span><input name="phone" autoComplete="tel-national" type="tel" inputMode="numeric" maxLength={10} pattern="5[0-9]{9}" placeholder="5XXXXXXXXX" required={settings.data?.requirePhone === true} onInput={event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, ''); event.currentTarget.setCustomValidity(''); }} onInvalid={event => event.currentTarget.setCustomValidity('Telefon 5 ile başlayan 10 haneli GSM numarası olmalıdır.')} /></label>;
+    if (field === 'email') return <label><span>E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label>;
+    if (field === 'subject') return <label><span>Konu{settings.data?.requireSubject !== false ? '' : ' (isteğe bağlı)'}</span><input name="subject" required={settings.data?.requireSubject !== false} pattern={settings.data?.requireSubject !== false ? '.*\\S.*' : undefined} maxLength={200} onInvalid={e => e.currentTarget.setCustomValidity('Konu boş bırakılamaz.')} onInput={e => e.currentTarget.setCustomValidity('')} /></label>;
+    if (field === 'message') return <label><span>Açıklama{settings.data?.requireMessage !== false ? '' : ' (isteğe bağlı)'}</span><textarea name="message" required={settings.data?.requireMessage !== false} maxLength={10000} rows={6} /></label>;
+    return <Files maxSize={settings.data?.maxTotalFileSize} />;
+  };
   return <main className={`public-form-page${embedded ? ' embedded' : ''}`}><section className="public-form-card">
-    {token && <Link className="form-back-link" to={embedded ? '/form/destek?embed=1' : '/form/destek'}><ArrowLeft size={16} aria-hidden="true" />Talep Açma Ekranına Dön</Link>}
-    {token ? <FormThread key={token} token={token} maxSize={settings.data?.maxFileSize} /> : <>
-      <h1>{tracking ? 'Talebimi Takip Et' : settings.data?.title ?? 'Destek Talebi'}</h1>
+    {token ? <FormThread key={token} token={token} maxSize={settings.data?.maxTotalFileSize} newRequestHref={embedded ? '/form/destek?embed=1' : '/form/destek'} /> : <>
+      <div className="public-form-heading"><h1>{tracking ? 'Talebimi Takip Et' : settings.data?.title ?? 'Destek Talebi'}</h1><button type="button" className="button secondary" onClick={() => { setTracking(created ? false : !tracking); setCreated(undefined); setChallengeId(''); setCode(''); setError(''); setNotice(''); captcha.reset(); }}>{tracking || created ? 'Yeni Talep Aç' : 'Mevcut Talebimi Takip Et'}</button></div>
       {created ? <div role="status"><h2>Talebiniz alındı.</h2><p>Talep numaranız: <strong>#TK-{String(created).padStart(5, '0')}</strong></p><p>Mesajları görmek ve yanıtlamak için e-postanıza gönderilen bağlantıyı açın. Gelen kutunuza düşmediyse spam klasörünü kontrol edin.</p><button type="button" className="button secondary" onClick={() => { setTrackingNumber(`TK-${String(created).padStart(5, '0')}`); setCreated(undefined); setTracking(true); }}>Talebimi Takip Et</button></div> : <>
         <p>{tracking ? challengeId ? 'E-postanıza gönderilen 6 haneli kodu girin. Kod 10 dakika geçerlidir.' : 'Talep numaranızı ve e-posta adresinizi yazın. Takip bağlantısı isteyin veya e-posta koduyla giriş yapın.' : 'Talebinizi iletin. Yanıtları e-postanızdan veya size göndereceğimiz takip bağlantısından görebilirsiniz.'}</p>
         {settings.isPending && <p role="status">Form yükleniyor…</p>}
@@ -88,25 +96,21 @@ export function FormPortal() {
           <button className="button primary" disabled={pending || code.length !== 6}>{pending ? 'Doğrulanıyor…' : 'Doğrula ve Giriş Yap'}</button>
           <button type="button" className="auth-forgot" disabled={pending} onClick={() => { setChallengeId(''); setCode(''); setNotice(''); setError(''); }}>Bilgileri Değiştir / Yeni Kod İste</button>
         </form> : (tracking || settings.data?.enabled) && <form onSubmit={submit} className="public-form-fields">
-          {tracking ? <label key="tracking-number"><span>Talep No</span><input name="number" value={trackingNumber} onChange={event => setTrackingNumber(event.target.value)} required placeholder="TK-00123" maxLength={20} /></label> : <label key="requester-name"><span>Ad Soyad</span><input name="name" autoComplete="name" required maxLength={100} /></label>}
-          <label><span>E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label>
-          {!tracking && <>
-            <div className="public-form-columns"><label><span>Telefon (isteğe bağlı)</span><input name="phone" autoComplete="tel" type="tel" maxLength={30} /></label><label><span>Firma / Şirket (isteğe bağlı)</span><input name="company" autoComplete="organization" maxLength={150} /></label></div>
-            <DropdownSelect label="Departman" ariaLabel="Departman" value={departmentId} onChange={value => { setDepartmentId(value); setError(''); }} options={[{ value: '', label: 'Departman Seçin' }, ...(settings.data?.departments ?? []).map(item => ({ value: item.id, label: item.name }))]} />
-            <label><span>Konu</span><input name="subject" required pattern={'.*\\S.*'} maxLength={200} onInvalid={e => e.currentTarget.setCustomValidity('Konu boş bırakılamaz.')} onInput={e => e.currentTarget.setCustomValidity('')} /></label>
-            <label><span>Açıklama</span><textarea name="message" required maxLength={10000} rows={6} /></label><Files maxSize={settings.data?.maxFileSize} />
-          </>}
+          {tracking ? <><label key="tracking-number"><span>Talep No</span><input name="number" value={trackingNumber} onChange={event => setTrackingNumber(event.target.value)} required placeholder="TK-00123" maxLength={20} /></label><label><span>E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label></> : fieldOrder.map((field, index) => {
+            if (field === 'email' && fieldOrder[index - 1] === 'phone') return null;
+            if (field === 'phone' && fieldOrder[index + 1] === 'email') return <div className="public-form-columns" key={`${field}-email`}>{renderField(field)}{renderField('email')}</div>;
+            return <div key={field}>{renderField(field)}</div>;
+          })}
           <TurnstileField captcha={captcha} />
           {tracking ? <div className="form-tracking-actions"><button className="button secondary" name="intent" value="link" disabled={pending || !captcha.ready}>Takip Bağlantısı Gönder</button><button className="button primary" name="intent" value="login" disabled={pending || !captcha.ready}>{pending ? 'Gönderiliyor…' : 'Giriş Yap'}</button></div> : <button className="button primary" disabled={pending || !captcha.ready}>{pending ? 'Gönderiliyor…' : 'Talebi Gönder'}</button>}
         </form>}
         {!tracking && settings.data && !settings.data.enabled && <p role="status">Form şu anda talep kabul etmiyor.</p>}
         {error && <p role="alert" className="error">{error}</p>}{notice && <p role="status">{notice}</p>}
-        <button type="button" className="auth-forgot" onClick={() => { setTracking(!tracking); setChallengeId(''); setCode(''); setError(''); setNotice(''); captcha.reset(); }}>{tracking ? 'Yeni Talep Aç' : 'Mevcut Talebimi Takip Et'}</button>
       </>}
     </>}
   </section></main>;
 }
-function FormThread({ token, maxSize }: { token: string; maxSize?: number }) {
+function FormThread({ token, maxSize, newRequestHref }: { token: string; maxSize?: number; newRequestHref: string }) {
   const headers = { 'x-form-token': token };
   const latest = useRef(''), timeline = useRef<HTMLElement>(null), pin = useRef(true), prepend = useRef<{ top: number; height: number } | null>(null);
   const query = useQuery({ queryKey: ['form-thread', token], queryFn: async () => (await guest.get('/conversation', { headers, params: latest.current ? { after: latest.current } : undefined })).data.data as Thread, retry: false, refetchInterval: state => state.state.data?.direction === 'after' && state.state.data.hasMore ? 500 : 5000 });
@@ -140,7 +144,7 @@ function FormThread({ token, maxSize }: { token: string; maxSize?: number }) {
   if (query.isPending) return <p role="status">Talep yükleniyor…</p>;
   if (query.isError) return <><h1>Talep açılamadı</h1><p role="alert" className="error">{errorText(query.error)}</p><Link to="/form/talep">Yeni takip bağlantısı iste</Link></>;
   const thread = query.data;
-  return <><h1>{thread.subject}</h1><p><strong>#TK-{String(thread.number).padStart(5, '0')}</strong> · {thread.status}</p>
+  return <><div className="public-form-heading"><h1>{thread.subject}</h1><Link className="button secondary" to={newRequestHref}>Yeni Talep Aç</Link></div><p><strong>#TK-{String(thread.number).padStart(5, '0')}</strong> · {thread.status}</p>
     <section className="form-thread" aria-label="Konuşma" ref={timeline} onScroll={event => { const el = event.currentTarget; pin.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; if (el.scrollTop < 40 && hasMore && !older) void previous(); }}>
       {hasMore && <button className="button secondary" type="button" disabled={older} onClick={() => void previous()}>{older ? 'Yükleniyor…' : 'Önceki Mesajları Göster'}</button>}
       {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" onClick={() => void download(file)}>{file.originalName}</button>)}</article>)}
