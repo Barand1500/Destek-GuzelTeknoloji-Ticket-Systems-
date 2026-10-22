@@ -200,7 +200,8 @@
   min-width: 0;
 }
 .management-table-wrap {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   margin-inline: -24px;
 }
 :is(.management-table-wrap, .activity-log-scroll) {
@@ -236,6 +237,10 @@ html[data-theme="dark"] :is(.management-table-wrap, .activity-log-scroll) {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+}
+.management-table.customer-list-table {
+  border-collapse: separate;
+  border-spacing: 0;
 }
 .management-sort-heading {
   display: flex;
@@ -292,8 +297,24 @@ html[data-theme="dark"] :is(.management-table-wrap, .activity-log-scroll) {
 .management-table th,
 .management-table td {
   padding: 14px 24px;
-  border-bottom: 1px solid #edf0ed;
+  border-bottom: 1px solid #dce7e0;
   vertical-align: middle;
+}
+.management-table thead th:first-child {
+  border-left: 1px solid #dce7e0;
+}
+.management-table thead th:last-child {
+  border-right: 1px solid #dce7e0;
+}
+.customer-list-table thead th:first-child {
+  border-left: 1px solid #dce7e0;
+}
+.customer-list-table thead th:last-child {
+  border-right: 1px solid #dce7e0;
+}
+.management-table thead {
+  border-top: 1px solid #d7e3dc;
+  border-bottom: 1px solid #cbdcd2;
 }
 .management-table td {
   font-size: 13px;
@@ -4973,7 +4994,7 @@ html[data-theme="dark"] .presence-metrics > div {
 .customer-merge-modal .styled-dropdown-menu { max-height: 240px; }
 .customer-merge-modal .customer-merge-groups {
   min-height: 0;
-  height: 338px;
+  height: auto;
   max-height: 338px;
   grid-auto-rows: 48px;
   align-content: start;
@@ -5029,7 +5050,7 @@ html[data-theme="dark"] .customer-merge-modal, html[data-theme="dark"] .customer
 .customer-sort-reset:hover { background: #e2f1e7; }
 html[data-theme="dark"] .customer-sort-reset:hover { background: #304b3f; }
 /* Staff columns fit their panel; long values are readable through their title. */
-.users-management-grid .users-table-wrap { overflow-x: hidden; }
+.users-management-grid .users-table-wrap { overflow-x: auto; }
 .users-management-grid .users-table { width: 100%; min-width: 0; table-layout: fixed; }
 .users-table .users-column-name { width: 30%; }
 .users-table .users-column-status { width: 104px; }
@@ -5054,4 +5075,10 @@ html[data-theme="dark"] .customer-sort-reset:hover { background: #304b3f; }
   .users-management-grid .users-table :is(th, td) { padding-inline: 8px; }
   .users-table .management-actions { gap: 4px; }
   .users-table .management-actions .icon-button { width: 32px; min-width: 32px; height: 32px; }
+}
+@media (max-width: 1000px) {
+  .users-table { min-width: 680px !important; }
+  .customer-list-table { min-width: 760px; }
+  .projects-table { min-width: 700px; }
+  .catalog-table { min-width: 560px; }
 }

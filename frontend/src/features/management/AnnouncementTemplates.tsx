@@ -68,10 +68,10 @@ export function AnnouncementTemplates() {
             <table className="management-table saved-content-table announcement-templates-table" aria-label="Hazır Şablonlar">
               <SortableTableHead sorting={list} columns={[{label:'Şablon Adı',field:'label'},{label:'Duyuru Başlığı',field:'title'},{label:'İçerik',field:'body'},{label:'İşlemler'}]} />
               <tbody>{visible.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}>
-                <td><strong>{item.label}</strong></td>
-                <td>{item.title}</td>
-                <td><p className="saved-content-preview">{item.body}</p></td>
-                <td><div className="management-actions announcement-template-actions">
+                <td data-label="Şablon Adı"><strong>{item.label}</strong></td>
+                <td data-label="Duyuru Başlığı">{item.title}</td>
+                <td data-label="İçerik"><p className="saved-content-preview">{item.body}</p></td>
+                <td data-label="İşlemler"><div className="management-actions announcement-template-actions">
                   <button type="button" className="button secondary saved-reply-action saved-reply-action-edit" aria-label={`${item.label} şablonunu düzenle`} title="Düzenle" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} /></button>
                   <button type="button" className="button management-danger saved-reply-action saved-reply-action-delete" aria-label={`${item.label} şablonunu sil`} title="Sil" onClick={() => { remove.reset(); setDeleting(item); }}><Trash2 size={15} /></button>
                 </div></td>

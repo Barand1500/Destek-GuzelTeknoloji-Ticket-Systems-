@@ -14,7 +14,7 @@ type Thread = { number: number; subject: string; status: string; closed: boolean
 type FormFieldId = 'company' | 'name' | 'phone' | 'email' | 'subject' | 'message' | 'files';
 const defaultFieldOrder: FormFieldId[] = ['company', 'name', 'phone', 'email', 'subject', 'message', 'files'];
 function Files({ maxSize = 30 * 1024 * 1024 }: { maxSize?: number }) {
-  return <label className="form-files"><span>Dosya Ekle (isteğe bağlı)</span><input name="files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={event => {
+  return <label className="form-files"><span className="field-label">Dosya Ekle (isteğe bağlı)</span><input name="files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip" onChange={event => {
     const files = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.setCustomValidity(files.reduce((sum, file) => sum + file.size, 0) > maxSize ? `Dosyaların toplam boyutu en fazla ${Math.floor(maxSize / 1024 / 1024)} MB olabilir.` : '');
     event.currentTarget.reportValidity();
@@ -76,12 +76,12 @@ export function FormPortal() {
   const embedded = new URLSearchParams(location.search).get('embed') === '1';
   const fieldOrder = defaultFieldOrder;
   const renderField = (field: FormFieldId) => {
-    if (field === 'company') return <label><span>Firma / Şirket{settings.data?.requireCompany === true ? '' : ' (isteğe bağlı)'}</span><input name="company" autoComplete="organization" maxLength={150} required={settings.data?.requireCompany === true} /></label>;
-    if (field === 'name') return <label><span>Ad Soyad</span><input name="name" autoComplete="name" required maxLength={100} /></label>;
-    if (field === 'phone') return <label><span>Telefon{settings.data?.requirePhone === true ? '' : ' (isteğe bağlı)'}</span><input name="phone" autoComplete="tel-national" type="tel" inputMode="numeric" maxLength={10} pattern="5[0-9]{9}" placeholder="5XXXXXXXXX" required={settings.data?.requirePhone === true} onInput={event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, ''); event.currentTarget.setCustomValidity(''); }} onInvalid={event => event.currentTarget.setCustomValidity('Telefon 5 ile başlayan 10 haneli GSM numarası olmalıdır.')} /></label>;
-    if (field === 'email') return <label><span>E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label>;
-    if (field === 'subject') return <label><span>Konu{settings.data?.requireSubject !== false ? '' : ' (isteğe bağlı)'}</span><input name="subject" required={settings.data?.requireSubject !== false} pattern={settings.data?.requireSubject !== false ? '.*\\S.*' : undefined} maxLength={200} onInvalid={e => e.currentTarget.setCustomValidity('Konu boş bırakılamaz.')} onInput={e => e.currentTarget.setCustomValidity('')} /></label>;
-    if (field === 'message') return <label><span>Açıklama{settings.data?.requireMessage !== false ? '' : ' (isteğe bağlı)'}</span><textarea name="message" required={settings.data?.requireMessage !== false} maxLength={10000} rows={6} /></label>;
+    if (field === 'company') return <label><span className="field-label">Firma / Şirket{settings.data?.requireCompany === true ? '' : ' (isteğe bağlı)'}</span><input name="company" autoComplete="organization" maxLength={150} required={settings.data?.requireCompany === true} /></label>;
+    if (field === 'name') return <label><span className="field-label">Ad Soyad</span><input name="name" autoComplete="name" required maxLength={100} /></label>;
+    if (field === 'phone') return <label><span className="field-label">Telefon{settings.data?.requirePhone === true ? '' : ' (isteğe bağlı)'}</span><input name="phone" autoComplete="tel-national" type="tel" inputMode="numeric" maxLength={10} pattern="5[0-9]{9}" placeholder="5XXXXXXXXX" required={settings.data?.requirePhone === true} onInput={event => { const digits = event.currentTarget.value.replace(/\D/g, '').slice(0, 10); event.currentTarget.value = digits.startsWith('5') ? digits : '';  event.currentTarget.setCustomValidity(''); }} onInvalid={event => event.currentTarget.setCustomValidity('Telefon 5 ile başlayan 10 haneli GSM numarası olmalıdır.')} /></label>;
+    if (field === 'email') return <label><span className="field-label">E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label>;
+    if (field === 'subject') return <label><span className="field-label">Konu{settings.data?.requireSubject !== false ? '' : ' (isteğe bağlı)'}</span><input name="subject" required={settings.data?.requireSubject !== false} pattern={settings.data?.requireSubject !== false ? '.*\\S.*' : undefined} maxLength={200} onInvalid={e => e.currentTarget.setCustomValidity('Konu boş bırakılamaz.')} onInput={e => e.currentTarget.setCustomValidity('')} /></label>;
+    if (field === 'message') return <label><span className="field-label">Açıklama{settings.data?.requireMessage !== false ? '' : ' (isteğe bağlı)'}</span><textarea name="message" required={settings.data?.requireMessage !== false} maxLength={10000} rows={6} /></label>;
     return <Files maxSize={settings.data?.maxTotalFileSize} />;
   };
   return <main className={`public-form-page${embedded ? ' embedded' : ''}`}><section className="public-form-card">
@@ -92,11 +92,11 @@ export function FormPortal() {
         {settings.isPending && <p role="status">Form yükleniyor…</p>}
         {settings.isError && <p role="alert" className="error">{errorText(settings.error)}</p>}
         {tracking && challengeId ? <form onSubmit={verify} className="public-form-fields">
-          <label><span>Giriş Kodu</span><input autoFocus name="code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>
+          <label><span className="field-label">Giriş Kodu</span><input autoFocus name="code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>
           <button className="button primary" disabled={pending || code.length !== 6}>{pending ? 'Doğrulanıyor…' : 'Doğrula ve Giriş Yap'}</button>
           <button type="button" className="auth-forgot" disabled={pending} onClick={() => { setChallengeId(''); setCode(''); setNotice(''); setError(''); }}>Bilgileri Değiştir / Yeni Kod İste</button>
         </form> : (tracking || settings.data?.enabled) && <form onSubmit={submit} className="public-form-fields">
-          {tracking ? <><label key="tracking-number"><span>Talep No</span><input name="number" value={trackingNumber} onChange={event => setTrackingNumber(event.target.value)} required placeholder="TK-00123" maxLength={20} /></label><label><span>E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label></> : fieldOrder.map((field, index) => {
+          {tracking ? <><label key="tracking-number"><span className="field-label">Talep No</span><input name="number" value={trackingNumber} onChange={event => setTrackingNumber(event.target.value)} required placeholder="TK-00123" maxLength={20} /></label><label><span className="field-label">E-Posta Adresi</span><EmailInput name="email" required autoComplete="email" /></label></> : fieldOrder.map((field, index) => {
             if (field === 'email' && fieldOrder[index - 1] === 'phone') return null;
             if (field === 'phone' && fieldOrder[index + 1] === 'email') return <div className="public-form-columns" key={`${field}-email`}>{renderField(field)}{renderField('email')}</div>;
             return <div key={field}>{renderField(field)}</div>;
@@ -149,7 +149,7 @@ function FormThread({ token, maxSize, newRequestHref }: { token: string; maxSize
       {hasMore && <button className="button secondary" type="button" disabled={older} onClick={() => void previous()}>{older ? 'Yükleniyor…' : 'Önceki Mesajları Göster'}</button>}
       {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" onClick={() => void download(file)}>{file.originalName}</button>)}</article>)}
     </section>
-    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form className="public-form-fields" onSubmit={send}><label><span>Yanıtınız</span><textarea name="body" maxLength={10000} rows={4} disabled={pending} onKeyDown={event => {
+    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form className="public-form-fields" onSubmit={send}><label><span className="field-label">Yanıtınız</span><textarea name="body" maxLength={10000} rows={4} disabled={pending} onKeyDown={event => {
       if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.nativeEvent.isComposing || event.keyCode === 229) return;
       event.preventDefault();
       if (!pending && !event.repeat) event.currentTarget.form?.requestSubmit();

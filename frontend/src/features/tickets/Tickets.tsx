@@ -666,6 +666,7 @@ export function NewTicket() {
   );
 }
 export function TicketDetail() {
+  const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
   const { startNewRequest, forgetConversation } = useWorkSession();
   const navigate=useNavigate();
   const [files,setFiles]=useState<File[]>([]),[fileKey,setFileKey]=useState(0),[deleteConfirm,setDeleteConfirm]=useState(false);
@@ -975,7 +976,8 @@ export function TicketDetail() {
             </div>
           </form>
         </section>
-        <aside className="ticket-properties">
+        <aside className={`ticket-properties${mobilePropertiesOpen ? ' mobile-properties-open' : ''}`}>
+          <button className="mobile-properties-toggle" type="button" aria-expanded={mobilePropertiesOpen} onClick={() => setMobilePropertiesOpen(value => !value)}>Talep Bilgileri <span aria-hidden="true">{mobilePropertiesOpen ? '−' : '+'}</span></button>
           <h2>Talep Bilgileri</h2>
           {(canEditProject || t.website) && <div className="property-editor">
             {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</label>}

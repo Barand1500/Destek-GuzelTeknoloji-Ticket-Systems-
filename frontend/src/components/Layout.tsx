@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { PermissionNavLink as NavLink, PermissionScreen } from './PermissionNavigation';
 import { hasPermission, screenPermission } from '../features/auth/permissions';
 import {
   Inbox,
+  Menu,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -105,12 +106,51 @@ export function Layout() {
   return <WorkSessionProvider key={user.id} user={user}><WorkspaceLayout /></WorkSessionProvider>;
 }
 function WorkspaceLayout() {
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  useEffect(() => { setMobileMenuOpen(false); }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    sidebar.current?.querySelector<HTMLButtonElement>('.mobile-menu-close')?.focus();
+    const close = () => { setMobileMenuOpen(false); menuButton.current?.focus(); };
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+      if (event.key === 'Tab') {
+        const items = Array.from(sidebar.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)') ?? []).filter(item => item.getClientRects().length);
+        const first = items[0], last = items.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    };
+    const viewport = window.matchMedia('(max-width: 1000px)');
+    const resize = () => { if (!viewport.matches) close(); };
+    document.addEventListener('keydown', keyboard);
+    viewport.addEventListener('change', resize);
+    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keyboard); viewport.removeEventListener('change', resize); };
+  }, [mobileMenuOpen]);
   const { user, loading, logout } = useAuth();
   const { startNewRequest } = useWorkSession();
   const [error, setError] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
+  useEffect(() => {
+    if (
+      !notificationsOpen ||
+      !window.matchMedia("(max-width: 1000px)").matches
+    ) {
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [notificationsOpen]);
   const [announcementsTab, setAnnouncementsTab] = useState<"new" | "history">(
     "new",
   );
@@ -302,8 +342,11 @@ function WorkspaceLayout() {
     ["websites.view", "tags.view", "reports.view", "integrations.view", "response.view", "guide.view", "surveys.view", "skills.view"].some(permission => hasPermission(user, permission))
   );
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div className={`app-shell${mobileMenuOpen ? ' mobile-menu-open' : ''}`}>
+      <div className="mobile-workspace-bar"><button ref={menuButton} type="button" aria-label="Çalışma Alanı Menüsünü Aç" aria-expanded={mobileMenuOpen} aria-controls="workspace-navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={22} /></button><img src="/images/brand-mark.png" alt="" /><strong>destek.</strong></div>
+      {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Menüyü Kapat" onClick={() => { setMobileMenuOpen(false); menuButton.current?.focus(); }} />}
+      <aside ref={sidebar} id="workspace-navigation" className="sidebar" role={mobileMenuOpen ? 'dialog' : undefined} aria-modal={mobileMenuOpen ? true : undefined} aria-label="Çalışma Alanı" onClick={event => { if ((event.target as HTMLElement).closest('a')) setMobileMenuOpen(false); }}>
+        <button className="mobile-menu-close" type="button" aria-label="Çalışma Alanı Menüsünü Kapat" onClick={() => { setMobileMenuOpen(false); menuButton.current?.focus(); }}><X size={22} /></button>
         <div className="brand">
           <img src="/images/brand-mark.png" alt="" /> destek
           <span className="brand-dot">.</span>
@@ -454,7 +497,7 @@ function WorkspaceLayout() {
           )}
         </div>
       </aside>
-      <div className="main-shell">
+      <div className="main-shell" inert={mobileMenuOpen}>
         <header className="topbar">
           <div className="global-search-wrap">
             <Search size={16} aria-hidden="true" />

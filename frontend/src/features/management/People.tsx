@@ -157,6 +157,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
 }
 
 export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
+  const [createExpanded, setCreateExpanded] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -421,7 +422,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             alwaysVisible
           />
         </section>
-        {(editing ? canUpdateUsers : canCreateUsers) && <section className="management-panel users-editor-panel">
+        {(editing ? canUpdateUsers : canCreateUsers) && <section className={`management-panel users-editor-panel${createExpanded || editing ? ' users-editor-open' : ''}${editing ? ' users-editor-editing' : ''}`}>
+          {!editing && <button type="button" className="users-create-toggle" aria-expanded={createExpanded} onClick={() => setCreateExpanded(value => !value)}>Kullanıcı Oluştur <span aria-hidden="true">{createExpanded ? '−' : '+'}</span></button>}
           <h2>{editing ? "Kullanıcıyı Düzenle" : "Kullanıcı Oluştur"}</h2>
           <form key={formVersion} className="management-form" onSubmit={submit}>
             <label>

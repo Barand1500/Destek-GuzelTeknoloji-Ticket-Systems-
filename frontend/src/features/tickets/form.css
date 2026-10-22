@@ -16,6 +16,16 @@
 .public-form-fields .email-field{width:100%;min-width:0}
 .public-form-fields .email-field>input{display:block;min-height:44px;padding:12px;border:1px solid var(--border,#b9cec4);border-radius:8px;background:var(--surface,#fff);color:inherit}
 .public-form-fields .email-field>input:focus{border:1px solid #167766;outline:0;box-shadow:0 0 0 3px rgba(22,119,102,.12)}
+.public-form-fields label:has(>.field-label){display:block;position:relative;padding:8px 12px 7px;border:1px solid #b8c6d5;border-radius:8px;background:var(--surface,#fff);font-weight:400}
+.public-form-fields label:has(>.field-label)>.field-label{background:var(--surface,#fff)}
+.public-form-fields label:has(>.field-label)>input,.public-form-fields label:has(>.field-label)>textarea,.public-form-fields label:has(>.field-label)>.email-field>input{display:block;width:100%;min-height:28px;padding:4px 0 1px;margin:0;border:0;border-radius:0;background:transparent;color:inherit;box-shadow:none;outline:0}
+.public-form-fields label:has(>.field-label)>textarea{padding-top:9px}
+.public-form-fields label:has(>.field-label):focus-within{border-color:#218675;box-shadow:0 0 0 3px #21867517}
+.public-form-fields .form-files{margin-bottom:22px}
+.public-form-fields .form-files>small{position:absolute;left:0;top:calc(100% + 6px);font-size:12px;font-weight:400}
+html[data-theme=dark] .public-form-fields label:has(>.field-label){background:#1e3029;border-color:#466356}
+html[data-theme=dark] .public-form-fields label:has(>.field-label)>.field-label{background:#1e3029}
+html[data-theme=dark] .public-form-fields label:has(>.field-label)>.email-field>input{background:transparent;border:0;box-shadow:none}
 html[data-theme=dark] .public-form-fields .email-field>input{background:#1e3029;border-color:#466356;color:#e5eee9}
 html[data-theme=dark] .public-form-fields .email-field>input:focus{border-color:#8dd0b8;box-shadow:0 0 0 3px rgba(141,208,184,.15)}
 .form-thread{display:grid;gap:16px;margin:24px 0;max-height:60dvh;overflow:auto;scrollbar-width:thin;scrollbar-color:#9bb5a8 transparent}

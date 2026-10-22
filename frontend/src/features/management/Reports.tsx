@@ -830,7 +830,7 @@ export function ReportsPage() {
               {tab === "general" && (
                 <Panel title="Ekip Performansı">
                   <div className="management-table-wrap">
-                    <table className="management-table">
+                    <table className="management-table report-team-table">
                       <thead>
                         <tr>
                           <th>Çalışan</th>
@@ -843,7 +843,7 @@ export function ReportsPage() {
                       <tbody>
                         {data.staff.map((person) => (
                           <tr key={person.id}>
-                            <td>
+                            <td data-label="Çalışan">
                               <button
                                 type="button"
                                 className="report-name-button"
@@ -853,12 +853,12 @@ export function ReportsPage() {
                               </button>
                               <small>{displayEmail(person.email)}</small>
                             </td>
-                            <td>{person.assigned}</td>
-                            <td>{person.resolved}</td>
-                            <td>
+                            <td data-label="Atanan Talep">{person.assigned}</td>
+                            <td data-label="Tamamlanan">{person.resolved}</td>
+                            <td data-label="Tamamlanma">
                               %{percent(person.resolved, person.assigned)}
                             </td>
-                            <td>{duration(person.firstResponseMinutes)}</td>
+                            <td data-label="Ortalama İlk Yanıt">{duration(person.firstResponseMinutes)}</td>
                           </tr>
                         ))}
                       </tbody>

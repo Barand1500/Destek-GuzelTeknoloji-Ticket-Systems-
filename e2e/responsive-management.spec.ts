@@ -1,0 +1,89 @@
+import { test, expect } from '@playwright/test';
+
+test('populated presence, reports, saved templates and audit records fit mobile screens', async ({ page }) => {
+  const name = 'Uzun İsimli Destek Personeli';
+  const date = '2026-10-22T10:35:46Z';
+  const staff = Array.from({ length: 6 }, (_, index) => ({ id: `staff-${index}`, name: `${name} ${index + 1}`, role: 'ADMIN', email: 'uzunepostaadresi@example.test', departments: ['Eğitim Destek', 'ARGE', 'Muhaberat'], state: index === 0 ? 'ONLINE' : index === 1 ? 'IDLE' : 'OFFLINE', page: 'Uzun Başlıklı Destek Talebinin Konuşma Ekranı', path: '/admin/conversations/test', lastActivityAt: date, lastSeenAt: date, openAssigned: 12, answeredToday: 2, answeredTotal: 145, resolvedToday: 1, averageFirstResponseMinutes: 25, lastReplyAt: date }));
+  const employee = { id: 'staff-0', name, email: 'uzunepostaadresi@example.test', departmentIds: ['dept'], assigned: 18, resolved: 12, statuses: { OPEN: 6, RESOLVED: 12 }, firstResponseMinutes: 25 };
+  await page.route('**/socket.io/**', route => route.abort());
+  await page.route('**/api/v1/**', route => {
+    const path = new URL(route.request().url()).pathname.replace('/api/v1', '');
+    const data = { success: true, data: [], pagination: { page: 1, limit: 15, total: 0, totalPages: 1 } };
+    if (path === '/auth/refresh') return route.fulfill({ json: { data: { accessToken: 'test', user: { id: 'admin', role: 'ADMIN', name: 'Test Yönetici' } } } });
+    if (path === '/announcements/directory') return route.fulfill({ json: { data: { people: [], departments: [], smsEnabled: false, emailEnabled: false, maxFileSize: 10485760 } } });
+    if (path === '/staff-presence') return route.fulfill({ json: { data: { idleMinutes: 15, updatedAt: date, staff } } });
+    if (path === '/reports') return route.fulfill({ json: { data: { period: { from: date, to: date }, total: 18, statuses: { OPEN: 6, RESOLVED: 12 }, priorities: { NORMAL: 18 }, daily: Array.from({ length: 30 }, (_, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, created: 3, resolved: 2 })), firstResponseMinutes: 25, resolutionMinutes: 120, staff: [employee], departments: [{ id: 'dept', name: 'Uzun Başlıklı Muhaberat ve Eğitim Destek Departmanı', count: 18, statuses: { OPEN: 6, RESOLVED: 12 }, employees: [employee] }] } } });
+    if (path === '/announcement-templates') return route.fulfill({ json: { ...data, data: [{ id: 'template', label: 'Toplantı hatırlatma ve bilgilendirme', title: 'Önemli toplantı duyurusu ve hazırlık bilgileri', body: 'Merhaba {isim}, yaklaşan toplantımızı hatırlatmak isteriz. Uzun duyuru içeriği alan içinde okunabilir olmalıdır.' }], pagination: { page: 1, limit: 3, total: 1, totalPages: 1 } } });
+    if (path === '/activity-logs') return route.fulfill({ json: { ...data, data: [{ id: 'log', createdAt: date, user: { name, email: 'uzunepostaadresi@example.test' }, action: 'integrations.updated', description: 'E-Posta entegrasyon ayarları güncellendi. Uzun işlem açıklaması mobilde rahat okunmalıdır.', metadata: { channel: 'EMAIL' } }], pagination: { page: 1, limit: 15, total: 1, totalPages: 1 } } });
+    return route.fulfill({ json: data });
+  });
+  const fit = async (selector: string, width: number) => {
+    for (const element of await page.locator(selector).all()) {
+      const box = await element.boundingBox();
+      if (!box) continue;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width + 1);
+      const dimensions = await element.evaluate(node => ({ selector: node.className, client: node.clientWidth, scroll: node.scrollWidth }));
+      expect(dimensions.scroll, `${selector} at ${width}: ${JSON.stringify(dimensions)}`).toBeLessThanOrEqual(dimensions.client + 1);
+    }
+  };
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/admin/staff-presence');
+    await expect(page.locator('.presence-card')).toHaveCount(6);
+    await fit('.presence-card,.presence-current,.presence-metrics,.presence-summary>button', width);
+    await page.screenshot({ path: `.local/presence-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.goto('/admin/reports');
+    await expect(page.locator('.report-stats')).toBeVisible();
+    await fit('.report-tab-row,.report-period-control,.report-panel,.report-team-table', width);
+    const period = page.getByRole('button', { name: 'Trend ve Süre Dönemi', exact: true });
+    await period.click();
+    await page.getByRole('option', { name: 'Son 7 Gün', exact: true }).click();
+    await expect(period).toContainText('Son 7 Gün');
+    await page.screenshot({ path: `.local/reports-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.getByRole('tab', { name: 'Departman Raporu', exact: true }).click();
+    await expect(page.locator('.report-department-card')).toBeVisible();
+    await fit('.report-department-card', width);
+    await page.getByRole('tab', { name: 'Kişi Raporu', exact: true }).click();
+    await page.getByRole('button', { name: 'Çalışan Seçin', exact: true }).click();
+    await page.getByRole('option', { name, exact: true }).click();
+    await expect(page.locator('.report-person-header')).toBeVisible();
+    await fit('.report-person-header,.report-panel', width);
+    await page.goto('/admin/saved-replies?tab=templates');
+    await expect(page.locator('.announcement-templates-table tbody tr')).toHaveCount(1);
+    await fit('.announcement-templates-table,.announcement-templates-table td', width);
+    await page.screenshot({ path: `.local/templates-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.getByRole('button', { name: 'Toplantı hatırlatma ve bilgilendirme şablonunu düzenle', exact: true }).click();
+    await expect(page.locator('input[name=label]')).toHaveValue('Toplantı hatırlatma ve bilgilendirme');
+    await page.goto('/admin/activity-logs');
+    await expect(page.locator('.activity-history-table tbody tr')).toHaveCount(1);
+    await fit('.activity-log-toolbar', width);
+    expect(await page.locator('.activity-history-table').evaluate(node => getComputedStyle(node).display)).toBe('table');
+    expect(await page.locator('.activity-log-scroll').evaluate(node => node.scrollWidth > node.clientWidth)).toBe(true);
+    await page.getByRole('searchbox', { name: 'İşlem Geçmişinde Ara', exact: true }).fill('Test');
+    await page.screenshot({ path: `.local/history-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.goto('/admin/users');
+    const create = page.getByRole('button', { name: 'Kullanıcı Oluştur', exact: true });
+    await expect(page.locator('.users-editor-panel form')).toBeHidden();
+    await create.click();
+    await page.locator('.users-editor-panel input[name=name]').fill('Mobil taslak');
+    await create.click();
+    await expect(page.locator('.users-editor-panel form')).toBeHidden();
+    await create.click();
+    await expect(page.locator('.users-editor-panel input[name=name]')).toHaveValue('Mobil taslak');
+    await page.screenshot({ path: `.local/users-accordion-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.getByRole('button', { name: 'Duyurular', exact: true }).click();
+    await page.getByRole('button', { name: 'Duyuru Geçmişi', exact: true }).click();
+    const search = page.getByRole('searchbox', { name: 'Geçmiş Duyurularda Ara', exact: true });
+    await expect(search).toBeVisible();
+    await search.fill('Deneme');
+    await fit('.announcement-history-search,.announcement-history-delete', width);
+    await page.getByRole('button', { name: 'Duyuruları sil', exact: true }).click();
+    await expect(page.getByRole('menuitem', { name: 'Tüm duyuruları sil', exact: true })).toBeVisible();
+    await page.screenshot({ path: `.local/announcement-history-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.keyboard.press('Escape');
+  }
+  await page.goto('/admin/activity-logs');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  expect(await page.locator('.activity-history-table').evaluate(node => getComputedStyle(node).display)).toBe('table');
+});

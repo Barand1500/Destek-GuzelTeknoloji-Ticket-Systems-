@@ -26,7 +26,7 @@ export function ActivityLogsPage() {
   const remove = useMutation({ mutationFn: (period: string) => api.delete("/activity-logs", { params: { period } }), onSuccess: () => void client.invalidateQueries({ queryKey: ["/activity-logs"] }) });
   const deleteLabels = { day: "Son 24 saatteki kayıtları sil", week: "Son 7 gündeki kayıtları sil", month: "Son 30 gündeki kayıtları sil", all: "Tüm işlem geçmişini sil" };
   return (
-    <main className="page">
+    <main className="page activity-history-page">
       <Heading
         title="İşlem Geçmişi"
         description="Sistemdeki değişiklikleri ve işlemi yapan kullanıcıları inceleyin."
@@ -45,18 +45,18 @@ export function ActivityLogsPage() {
         />
         {!!list.data?.data.length && (
           <div className="management-table-wrap activity-log-scroll">
-            <table className="management-table">
+            <table className="management-table activity-history-table">
 <SortableTableHead sorting={list} columns={[{label:'Tarih',field:'createdAt',date:true},{label:'Kullanıcı',field:'user'},{label:'İşlem',field:'action'},{label:'Açıklama',field:'description'}]} />
               <tbody>
                 {list.data.data.map((log) => (
                   <tr key={log.id}>
-                    <td>{formatDate(log.createdAt)}</td>
-                    <td>
+                    <td data-label="Tarih">{formatDate(log.createdAt)}</td>
+                    <td data-label="Kullanıcı">
                       {log.user?.name ?? log.actor?.name ?? "Sistem"}
                       <small>{displayEmail(log.user?.email ?? log.actor?.email)}</small>
                     </td>
-                    <td>{activityActionLabel(log.action, log.metadata)}</td>
-                    <td>
+                    <td data-label="İşlem">{activityActionLabel(log.action, log.metadata)}</td>
+                    <td data-label="Açıklama">
                       <span>{richDescriptionFor(log)}</span>
                       {log.conversationId && (
                         <Link

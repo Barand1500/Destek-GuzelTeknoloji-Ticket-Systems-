@@ -49,6 +49,7 @@ import {
 import "./styles.css";
 import { CalendarPage } from "./features/announcements/CalendarModal";
 import "./readability.css";
+import "./responsive.css";
 const client = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15000 } },
 });

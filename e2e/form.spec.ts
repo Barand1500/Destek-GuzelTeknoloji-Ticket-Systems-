@@ -33,6 +33,9 @@ test('Form layout, GSM validation, aggregate uploads and top navigation work tog
   await page.getByLabel('Konu', { exact: true }).fill('Vega');
   await page.getByLabel('Açıklama', { exact: true }).fill('Test');
   await phone.fill('2121234567');
+  await expect(phone).toHaveValue('');
+  await phone.fill('53abc');
+  await expect(phone).toHaveValue('53');
   await page.getByRole('button', { name: 'Talebi Gönder' }).click();
   expect(submissions).toHaveLength(0);
   expect(await phone.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(false);
