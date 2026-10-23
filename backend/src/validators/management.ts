@@ -269,6 +269,8 @@ export const integrationSettingsSchema = z
     whatsappPhoneNumberId: integrationText,
     whatsappAccessToken: z.string().trim().max(8192),
     whatsappVerifyToken: integrationText,
+    whatsappAuthTemplateName: z.string().trim().max(60),
+    whatsappAuthTemplateLanguage: z.string().trim().min(2).max(20),
     whatsappDepartmentId: integrationDepartment,
     emailNotifications: notificationSettingsSchema.optional(),
   })

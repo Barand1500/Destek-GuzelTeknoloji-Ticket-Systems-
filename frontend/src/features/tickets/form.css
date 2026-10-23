@@ -30,14 +30,39 @@ html[data-theme=dark] .public-form-fields .email-field>input{background:#1e3029;
 html[data-theme=dark] .public-form-fields .email-field>input:focus{border-color:#8dd0b8;box-shadow:0 0 0 3px rgba(141,208,184,.15)}
 .form-thread{display:grid;gap:16px;margin:24px 0;max-height:60dvh;overflow:auto;scrollbar-width:thin;scrollbar-color:#9bb5a8 transparent}
 .form-message{padding:16px;border:1px solid var(--border,#dbe5df);border-radius:12px;background:var(--bg,#f6f9f7)}.form-message.staff{background:#e5f3ec}.form-message header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.form-message time{font-size:12px}.form-message p{white-space:pre-wrap;overflow-wrap:anywhere}.form-message .button{max-width:100%;white-space:normal;overflow-wrap:anywhere;margin:4px}
+.form-thread-reply{display:grid;gap:6px;margin-top:16px}.form-thread-compose{display:flex;align-items:center;gap:8px;min-width:0;padding:6px;border:1px solid var(--border,#dbe5df);border-radius:14px;background:var(--bg,#f6f9f7)}.form-thread-compose-message{display:block;flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;border:0!important;background:transparent!important}.form-thread-compose-message textarea{display:block;width:100%;min-width:0;height:44px;min-height:44px;max-height:44px;box-sizing:border-box;padding:10px!important;border:0!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;outline:0!important;font:inherit;resize:none!important;overflow-y:auto}.form-thread-attach,.form-thread-send{display:grid!important;flex:0 0 44px;place-items:center;align-self:center;width:44px;height:44px;margin:0!important;padding:0!important;border:0!important;border-radius:50%;box-sizing:border-box;cursor:pointer}.form-thread-attach{position:relative;overflow:hidden;color:var(--ui-text-secondary,#456157);background:#e5f3ec!important;border:1px solid var(--border,#dbe5df)!important}.form-thread-attach input{position:absolute;inset:0;width:100%;height:100%;padding:0!important;opacity:0;cursor:pointer}.form-thread-send{color:#fff;background:#167766}.form-thread-send:disabled{opacity:.55;cursor:default}.form-thread-file-limit{display:block;padding:2px 6px 0;color:var(--muted,#587066);font-size:11px;line-height:1.4}.form-thread-compose-message .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 [data-theme=dark] .public-form-card,[data-theme=dark] .public-form-fields input,[data-theme=dark] .public-form-fields textarea{background:#1e3029;color:#e5eee9;border-color:#466356}[data-theme=dark] .public-form-page{background:#15241e;color:#e5eee9}[data-theme=dark] .form-message{background:#20362c;border-color:#466356}[data-theme=dark] .form-message.staff{background:#224c3e}
 .form-settings-links{display:grid;gap:14px;margin-top:24px}.form-settings-panel .form-settings-links textarea{width:100%;box-sizing:border-box;height:95px;min-height:95px;max-height:95px;resize:none;overflow:auto}.form-settings-links input{width:100%;box-sizing:border-box}.form-settings-links button{justify-self:start}
 @media(max-width:540px){.public-form-card{padding:20px}.public-form-columns{grid-template-columns:1fr}.public-form-page{padding:12px}.public-form-card h1{font-size:22px}}
 
+.public-form-page:not(.embedded):has(.form-thread){display:flex;height:100dvh;min-height:0;justify-content:center;overflow:hidden;box-sizing:border-box;padding:16px}
+.public-form-page:not(.embedded):has(.form-thread)>.public-form-card{display:flex;height:100%;max-height:100%;min-height:0;flex-direction:column;overflow:hidden;box-sizing:border-box}
+.public-form-page:not(.embedded):has(.form-thread) .public-form-heading,.public-form-page:not(.embedded):has(.form-thread)>.public-form-card>p{flex:0 0 auto}
+.public-form-page:not(.embedded):has(.form-thread) .form-thread{flex:1 1 0;width:100%;min-height:0;max-height:none;overflow:auto;overscroll-behavior:contain;align-content:start;grid-auto-rows:max-content;box-sizing:border-box}
+.public-form-page:not(.embedded):has(.form-thread) .form-message{justify-self:end;width:fit-content;max-width:88%;min-width:0;box-sizing:border-box;overflow-wrap:anywhere}
+.public-form-page:not(.embedded):has(.form-thread) .form-message.staff{justify-self:start;background:var(--bg,#f6f9f7)}
+.public-form-page:not(.embedded):has(.form-thread) .form-message:not(.staff){background:#e5f3ec}
+.public-form-page:not(.embedded):has(.form-thread) .form-message header{align-items:flex-start}
+html[data-theme="dark"] .public-form-page:not(.embedded):has(.form-thread) .form-message:not(.staff){background:#224c3e}
+.form-account-ticket-list{display:grid;gap:10px;margin-top:20px}.form-account-ticket{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;padding:14px 16px;border:1px solid var(--border,#dbe5df);border-radius:12px;background:var(--surface,#fff);color:inherit;text-align:left;cursor:pointer}.form-account-ticket:hover{background:var(--bg,#f6f9f7)}.form-account-ticket-main{display:grid;gap:6px;min-width:0}.form-account-ticket-main strong,.form-account-ticket time{overflow-wrap:anywhere}.form-account-ticket-main small,.form-account-ticket time{color:var(--muted,#587066);font-size:12px}.form-thread-heading-main{display:grid;gap:8px;min-width:0}.form-thread-heading-main h1{overflow-wrap:anywhere}.form-account-back{color:var(--ui-text-navigation,#166b5c);font-size:13px;text-decoration:none;white-space:nowrap}.form-account-back:hover{text-decoration:underline}
+
 .form-integration-active > :not(.integration-tabs-row):not(.form-settings-slot){display:none!important}
+.public-form-page.form-account-page{display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden}
+.form-account-page>.public-form-card{display:flex;flex-direction:column;min-height:0;max-height:100%;flex:1 1 0;overflow:hidden}
+.form-account-page .public-form-heading{flex-shrink:0}
+.form-account-page .form-account-ticket-list{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#9bb5a8 transparent;align-content:start;grid-auto-rows:max-content;padding:2px;margin-inline:-2px}
+@media(max-width:767px){.form-account-page .form-account-ticket-list{scrollbar-width:none}.form-account-page .form-account-ticket-list::-webkit-scrollbar{display:none}}
 .form-settings-intro{display:grid;gap:18px;width:max-content;max-width:100%}
 .form-settings-panel .form-settings-fields{grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;min-width:0}
 .form-settings-fields>.management-check{white-space:nowrap;align-self:center}
 .form-settings-actions{display:flex;justify-content:flex-start;margin-top:20px}
 .form-settings-actions>.button{width:auto;min-width:105px;flex:0 0 auto}
+.form-selected-files{display:flex;flex-wrap:wrap;gap:8px;min-width:0;max-height:160px;overflow-y:auto;list-style:none;margin:0 0 8px;padding:0}
+.form-selected-files li{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border,#dbe5df);border-radius:10px;background:var(--bg,#f6f9f7);font-size:12px}
+.form-selected-files li>svg{flex-shrink:0}
+.form-selected-files li>span{min-width:0;overflow-wrap:anywhere}
+.form-selected-files small{display:block;margin-top:2px;color:var(--muted,#587066);font-size:11px}
+.form-selected-files button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}
+.form-selected-files button:hover{background:#16776618}
+.form-selected-files button:focus-visible{outline:2px solid #167766;outline-offset:2px}
 @media(max-width:600px){.form-settings-panel .form-settings-fields{grid-template-columns:1fr}}

@@ -112,6 +112,11 @@ export type FormAccess = Prisma.FormAccessModel
  */
 export type FormLoginChallenge = Prisma.FormLoginChallengeModel
 /**
+ * Model FormEmailSession
+ * 
+ */
+export type FormEmailSession = Prisma.FormEmailSessionModel
+/**
  * Model StatusOption
  * 
  */

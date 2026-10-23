@@ -102,6 +102,8 @@ export type IntegrationSettingsMinAggregateOutputType = {
   whatsappPhoneNumberId: string | null
   whatsappAccessToken: string | null
   whatsappVerifyToken: string | null
+  whatsappAuthTemplateName: string | null
+  whatsappAuthTemplateLanguage: string | null
   whatsappDepartmentId: string | null
   lastTestChannel: string | null
   lastTestSuccess: boolean | null
@@ -158,6 +160,8 @@ export type IntegrationSettingsMaxAggregateOutputType = {
   whatsappPhoneNumberId: string | null
   whatsappAccessToken: string | null
   whatsappVerifyToken: string | null
+  whatsappAuthTemplateName: string | null
+  whatsappAuthTemplateLanguage: string | null
   whatsappDepartmentId: string | null
   lastTestChannel: string | null
   lastTestSuccess: boolean | null
@@ -214,6 +218,8 @@ export type IntegrationSettingsCountAggregateOutputType = {
   whatsappPhoneNumberId: number
   whatsappAccessToken: number
   whatsappVerifyToken: number
+  whatsappAuthTemplateName: number
+  whatsappAuthTemplateLanguage: number
   whatsappDepartmentId: number
   lastTestChannel: number
   lastTestSuccess: number
@@ -300,6 +306,8 @@ export type IntegrationSettingsMinAggregateInputType = {
   whatsappPhoneNumberId?: true
   whatsappAccessToken?: true
   whatsappVerifyToken?: true
+  whatsappAuthTemplateName?: true
+  whatsappAuthTemplateLanguage?: true
   whatsappDepartmentId?: true
   lastTestChannel?: true
   lastTestSuccess?: true
@@ -356,6 +364,8 @@ export type IntegrationSettingsMaxAggregateInputType = {
   whatsappPhoneNumberId?: true
   whatsappAccessToken?: true
   whatsappVerifyToken?: true
+  whatsappAuthTemplateName?: true
+  whatsappAuthTemplateLanguage?: true
   whatsappDepartmentId?: true
   lastTestChannel?: true
   lastTestSuccess?: true
@@ -412,6 +422,8 @@ export type IntegrationSettingsCountAggregateInputType = {
   whatsappPhoneNumberId?: true
   whatsappAccessToken?: true
   whatsappVerifyToken?: true
+  whatsappAuthTemplateName?: true
+  whatsappAuthTemplateLanguage?: true
   whatsappDepartmentId?: true
   lastTestChannel?: true
   lastTestSuccess?: true
@@ -555,6 +567,8 @@ export type IntegrationSettingsGroupByOutputType = {
   whatsappPhoneNumberId: string
   whatsappAccessToken: string
   whatsappVerifyToken: string
+  whatsappAuthTemplateName: string
+  whatsappAuthTemplateLanguage: string
   whatsappDepartmentId: string | null
   lastTestChannel: string | null
   lastTestSuccess: boolean | null
@@ -634,6 +648,8 @@ export type IntegrationSettingsWhereInput = {
   whatsappPhoneNumberId?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappAccessToken?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappVerifyToken?: Prisma.StringFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateName?: Prisma.StringFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappDepartmentId?: Prisma.StringNullableFilter<"IntegrationSettings"> | string | null
   lastTestChannel?: Prisma.StringNullableFilter<"IntegrationSettings"> | string | null
   lastTestSuccess?: Prisma.BoolNullableFilter<"IntegrationSettings"> | boolean | null
@@ -690,6 +706,8 @@ export type IntegrationSettingsOrderByWithRelationInput = {
   whatsappPhoneNumberId?: Prisma.SortOrder
   whatsappAccessToken?: Prisma.SortOrder
   whatsappVerifyToken?: Prisma.SortOrder
+  whatsappAuthTemplateName?: Prisma.SortOrder
+  whatsappAuthTemplateLanguage?: Prisma.SortOrder
   whatsappDepartmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTestChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTestSuccess?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -750,6 +768,8 @@ export type IntegrationSettingsWhereUniqueInput = Prisma.AtLeast<{
   whatsappPhoneNumberId?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappAccessToken?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappVerifyToken?: Prisma.StringFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateName?: Prisma.StringFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFilter<"IntegrationSettings"> | string
   whatsappDepartmentId?: Prisma.StringNullableFilter<"IntegrationSettings"> | string | null
   lastTestChannel?: Prisma.StringNullableFilter<"IntegrationSettings"> | string | null
   lastTestSuccess?: Prisma.BoolNullableFilter<"IntegrationSettings"> | boolean | null
@@ -806,6 +826,8 @@ export type IntegrationSettingsOrderByWithAggregationInput = {
   whatsappPhoneNumberId?: Prisma.SortOrder
   whatsappAccessToken?: Prisma.SortOrder
   whatsappVerifyToken?: Prisma.SortOrder
+  whatsappAuthTemplateName?: Prisma.SortOrder
+  whatsappAuthTemplateLanguage?: Prisma.SortOrder
   whatsappDepartmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTestChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTestSuccess?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -870,6 +892,8 @@ export type IntegrationSettingsScalarWhereWithAggregatesInput = {
   whatsappPhoneNumberId?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   whatsappAccessToken?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   whatsappVerifyToken?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateName?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
+  whatsappAuthTemplateLanguage?: Prisma.StringWithAggregatesFilter<"IntegrationSettings"> | string
   whatsappDepartmentId?: Prisma.StringNullableWithAggregatesFilter<"IntegrationSettings"> | string | null
   lastTestChannel?: Prisma.StringNullableWithAggregatesFilter<"IntegrationSettings"> | string | null
   lastTestSuccess?: Prisma.BoolNullableWithAggregatesFilter<"IntegrationSettings"> | boolean | null
@@ -926,6 +950,8 @@ export type IntegrationSettingsCreateInput = {
   whatsappPhoneNumberId?: string
   whatsappAccessToken?: string
   whatsappVerifyToken?: string
+  whatsappAuthTemplateName?: string
+  whatsappAuthTemplateLanguage?: string
   whatsappDepartmentId?: string | null
   lastTestChannel?: string | null
   lastTestSuccess?: boolean | null
@@ -982,6 +1008,8 @@ export type IntegrationSettingsUncheckedCreateInput = {
   whatsappPhoneNumberId?: string
   whatsappAccessToken?: string
   whatsappVerifyToken?: string
+  whatsappAuthTemplateName?: string
+  whatsappAuthTemplateLanguage?: string
   whatsappDepartmentId?: string | null
   lastTestChannel?: string | null
   lastTestSuccess?: boolean | null
@@ -1038,6 +1066,8 @@ export type IntegrationSettingsUpdateInput = {
   whatsappPhoneNumberId?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappAccessToken?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappVerifyToken?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateName?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappDepartmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestSuccess?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1094,6 +1124,8 @@ export type IntegrationSettingsUncheckedUpdateInput = {
   whatsappPhoneNumberId?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappAccessToken?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappVerifyToken?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateName?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappDepartmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestSuccess?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1150,6 +1182,8 @@ export type IntegrationSettingsCreateManyInput = {
   whatsappPhoneNumberId?: string
   whatsappAccessToken?: string
   whatsappVerifyToken?: string
+  whatsappAuthTemplateName?: string
+  whatsappAuthTemplateLanguage?: string
   whatsappDepartmentId?: string | null
   lastTestChannel?: string | null
   lastTestSuccess?: boolean | null
@@ -1206,6 +1240,8 @@ export type IntegrationSettingsUpdateManyMutationInput = {
   whatsappPhoneNumberId?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappAccessToken?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappVerifyToken?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateName?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappDepartmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestSuccess?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1262,6 +1298,8 @@ export type IntegrationSettingsUncheckedUpdateManyInput = {
   whatsappPhoneNumberId?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappAccessToken?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappVerifyToken?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateName?: Prisma.StringFieldUpdateOperationsInput | string
+  whatsappAuthTemplateLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   whatsappDepartmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastTestSuccess?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1324,6 +1362,8 @@ export type IntegrationSettingsCountOrderByAggregateInput = {
   whatsappPhoneNumberId?: Prisma.SortOrder
   whatsappAccessToken?: Prisma.SortOrder
   whatsappVerifyToken?: Prisma.SortOrder
+  whatsappAuthTemplateName?: Prisma.SortOrder
+  whatsappAuthTemplateLanguage?: Prisma.SortOrder
   whatsappDepartmentId?: Prisma.SortOrder
   lastTestChannel?: Prisma.SortOrder
   lastTestSuccess?: Prisma.SortOrder
@@ -1394,6 +1434,8 @@ export type IntegrationSettingsMaxOrderByAggregateInput = {
   whatsappPhoneNumberId?: Prisma.SortOrder
   whatsappAccessToken?: Prisma.SortOrder
   whatsappVerifyToken?: Prisma.SortOrder
+  whatsappAuthTemplateName?: Prisma.SortOrder
+  whatsappAuthTemplateLanguage?: Prisma.SortOrder
   whatsappDepartmentId?: Prisma.SortOrder
   lastTestChannel?: Prisma.SortOrder
   lastTestSuccess?: Prisma.SortOrder
@@ -1450,6 +1492,8 @@ export type IntegrationSettingsMinOrderByAggregateInput = {
   whatsappPhoneNumberId?: Prisma.SortOrder
   whatsappAccessToken?: Prisma.SortOrder
   whatsappVerifyToken?: Prisma.SortOrder
+  whatsappAuthTemplateName?: Prisma.SortOrder
+  whatsappAuthTemplateLanguage?: Prisma.SortOrder
   whatsappDepartmentId?: Prisma.SortOrder
   lastTestChannel?: Prisma.SortOrder
   lastTestSuccess?: Prisma.SortOrder
@@ -1526,6 +1570,8 @@ export type IntegrationSettingsSelect<ExtArgs extends runtime.Types.Extensions.I
   whatsappPhoneNumberId?: boolean
   whatsappAccessToken?: boolean
   whatsappVerifyToken?: boolean
+  whatsappAuthTemplateName?: boolean
+  whatsappAuthTemplateLanguage?: boolean
   whatsappDepartmentId?: boolean
   lastTestChannel?: boolean
   lastTestSuccess?: boolean
@@ -1584,6 +1630,8 @@ export type IntegrationSettingsSelectScalar = {
   whatsappPhoneNumberId?: boolean
   whatsappAccessToken?: boolean
   whatsappVerifyToken?: boolean
+  whatsappAuthTemplateName?: boolean
+  whatsappAuthTemplateLanguage?: boolean
   whatsappDepartmentId?: boolean
   lastTestChannel?: boolean
   lastTestSuccess?: boolean
@@ -1592,7 +1640,7 @@ export type IntegrationSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IntegrationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "responseFastMinutes" | "responseNormalMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor" | "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "smtpEnabled" | "smtpHost" | "smtpPort" | "smtpSecure" | "smtpUser" | "smtpPassword" | "smtpFromAddress" | "smtpFromName" | "imapEnabled" | "incomingMessagesSince" | "imapConnectionName" | "imapHost" | "imapPort" | "imapSecure" | "imapAuthType" | "imapUser" | "imapPassword" | "imapMailbox" | "imapPollIntervalSeconds" | "imapCreateTickets" | "imapCreateReplies" | "imapDepartmentId" | "smsEnabled" | "smsApiUser" | "smsApiPassword" | "smsSender" | "smsVirtualNumber" | "smsWebhookSecret" | "smsDepartmentId" | "whatsappEnabled" | "whatsappAppId" | "whatsappAppSecret" | "whatsappPhoneNumberId" | "whatsappAccessToken" | "whatsappVerifyToken" | "whatsappDepartmentId" | "lastTestChannel" | "lastTestSuccess" | "lastTestMessage" | "lastTestedAt" | "updatedAt", ExtArgs["result"]["integrationSettings"]>
+export type IntegrationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "responseFastMinutes" | "responseNormalMinutes" | "responseFastColor" | "responseNormalColor" | "responseLateColor" | "responseFastFromMinutes" | "responseFastToMinutes" | "responseNormalFromMinutes" | "responseNormalToMinutes" | "responseLateFromMinutes" | "responseLateToMinutes" | "smtpEnabled" | "smtpHost" | "smtpPort" | "smtpSecure" | "smtpUser" | "smtpPassword" | "smtpFromAddress" | "smtpFromName" | "imapEnabled" | "incomingMessagesSince" | "imapConnectionName" | "imapHost" | "imapPort" | "imapSecure" | "imapAuthType" | "imapUser" | "imapPassword" | "imapMailbox" | "imapPollIntervalSeconds" | "imapCreateTickets" | "imapCreateReplies" | "imapDepartmentId" | "smsEnabled" | "smsApiUser" | "smsApiPassword" | "smsSender" | "smsVirtualNumber" | "smsWebhookSecret" | "smsDepartmentId" | "whatsappEnabled" | "whatsappAppId" | "whatsappAppSecret" | "whatsappPhoneNumberId" | "whatsappAccessToken" | "whatsappVerifyToken" | "whatsappAuthTemplateName" | "whatsappAuthTemplateLanguage" | "whatsappDepartmentId" | "lastTestChannel" | "lastTestSuccess" | "lastTestMessage" | "lastTestedAt" | "updatedAt", ExtArgs["result"]["integrationSettings"]>
 
 export type $IntegrationSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "IntegrationSettings"
@@ -1645,6 +1693,8 @@ export type $IntegrationSettingsPayload<ExtArgs extends runtime.Types.Extensions
     whatsappPhoneNumberId: string
     whatsappAccessToken: string
     whatsappVerifyToken: string
+    whatsappAuthTemplateName: string
+    whatsappAuthTemplateLanguage: string
     whatsappDepartmentId: string | null
     lastTestChannel: string | null
     lastTestSuccess: boolean | null
@@ -2067,6 +2117,8 @@ export interface IntegrationSettingsFieldRefs {
   readonly whatsappPhoneNumberId: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly whatsappAccessToken: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly whatsappVerifyToken: Prisma.FieldRef<"IntegrationSettings", 'String'>
+  readonly whatsappAuthTemplateName: Prisma.FieldRef<"IntegrationSettings", 'String'>
+  readonly whatsappAuthTemplateLanguage: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly whatsappDepartmentId: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly lastTestChannel: Prisma.FieldRef<"IntegrationSettings", 'String'>
   readonly lastTestSuccess: Prisma.FieldRef<"IntegrationSettings", 'Boolean'>

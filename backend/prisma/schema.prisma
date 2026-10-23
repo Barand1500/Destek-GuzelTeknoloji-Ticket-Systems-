@@ -230,7 +230,9 @@ model FormLoginChallenge {
   id String @id @default(uuid())
   conversationId String @unique
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  email String @db.VarChar(254)
+  email String? @db.VarChar(254)
+  deliveryChannel String @default("EMAIL") @db.VarChar(16)
+  phone String? @db.VarChar(20)
   codeHash String @db.VarChar(64)
   attempts Int @default(0)
   requests Int @default(1)
@@ -238,6 +240,15 @@ model FormLoginChallenge {
   expiresAt DateTime
   consumedAt DateTime?
   createdAt DateTime @default(now())
+}
+model FormEmailSession {
+  tokenHash String @id @db.VarChar(64)
+  email String? @db.VarChar(254)
+  phone String? @db.VarChar(20)
+  deliveryChannel String @default("EMAIL") @db.VarChar(16)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([email, expiresAt])
 }
 model StatusOption {
   id String @id @default(uuid())
@@ -542,6 +553,8 @@ model IntegrationSettings {
   whatsappPhoneNumberId String @default("")
   whatsappAccessToken String @default("") @db.VarChar(8192)
   whatsappVerifyToken String @default("")
+  whatsappAuthTemplateName String @default("") @db.VarChar(60)
+  whatsappAuthTemplateLanguage String @default("en") @db.VarChar(20)
   whatsappDepartmentId String?
   lastTestChannel String?
   lastTestSuccess Boolean?

@@ -40,6 +40,8 @@ export type FormLoginChallengeMinAggregateOutputType = {
   id: string | null
   conversationId: string | null
   email: string | null
+  deliveryChannel: string | null
+  phone: string | null
   codeHash: string | null
   attempts: number | null
   requests: number | null
@@ -53,6 +55,8 @@ export type FormLoginChallengeMaxAggregateOutputType = {
   id: string | null
   conversationId: string | null
   email: string | null
+  deliveryChannel: string | null
+  phone: string | null
   codeHash: string | null
   attempts: number | null
   requests: number | null
@@ -66,6 +70,8 @@ export type FormLoginChallengeCountAggregateOutputType = {
   id: number
   conversationId: number
   email: number
+  deliveryChannel: number
+  phone: number
   codeHash: number
   attempts: number
   requests: number
@@ -91,6 +97,8 @@ export type FormLoginChallengeMinAggregateInputType = {
   id?: true
   conversationId?: true
   email?: true
+  deliveryChannel?: true
+  phone?: true
   codeHash?: true
   attempts?: true
   requests?: true
@@ -104,6 +112,8 @@ export type FormLoginChallengeMaxAggregateInputType = {
   id?: true
   conversationId?: true
   email?: true
+  deliveryChannel?: true
+  phone?: true
   codeHash?: true
   attempts?: true
   requests?: true
@@ -117,6 +127,8 @@ export type FormLoginChallengeCountAggregateInputType = {
   id?: true
   conversationId?: true
   email?: true
+  deliveryChannel?: true
+  phone?: true
   codeHash?: true
   attempts?: true
   requests?: true
@@ -216,7 +228,9 @@ export type FormLoginChallengeGroupByArgs<ExtArgs extends runtime.Types.Extensio
 export type FormLoginChallengeGroupByOutputType = {
   id: string
   conversationId: string
-  email: string
+  email: string | null
+  deliveryChannel: string
+  phone: string | null
   codeHash: string
   attempts: number
   requests: number
@@ -252,7 +266,9 @@ export type FormLoginChallengeWhereInput = {
   NOT?: Prisma.FormLoginChallengeWhereInput | Prisma.FormLoginChallengeWhereInput[]
   id?: Prisma.StringFilter<"FormLoginChallenge"> | string
   conversationId?: Prisma.StringFilter<"FormLoginChallenge"> | string
-  email?: Prisma.StringFilter<"FormLoginChallenge"> | string
+  email?: Prisma.StringNullableFilter<"FormLoginChallenge"> | string | null
+  deliveryChannel?: Prisma.StringFilter<"FormLoginChallenge"> | string
+  phone?: Prisma.StringNullableFilter<"FormLoginChallenge"> | string | null
   codeHash?: Prisma.StringFilter<"FormLoginChallenge"> | string
   attempts?: Prisma.IntFilter<"FormLoginChallenge"> | number
   requests?: Prisma.IntFilter<"FormLoginChallenge"> | number
@@ -266,7 +282,9 @@ export type FormLoginChallengeWhereInput = {
 export type FormLoginChallengeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryChannel?: Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   codeHash?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   requests?: Prisma.SortOrder
@@ -284,7 +302,9 @@ export type FormLoginChallengeWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.FormLoginChallengeWhereInput | Prisma.FormLoginChallengeWhereInput[]
   OR?: Prisma.FormLoginChallengeWhereInput[]
   NOT?: Prisma.FormLoginChallengeWhereInput | Prisma.FormLoginChallengeWhereInput[]
-  email?: Prisma.StringFilter<"FormLoginChallenge"> | string
+  email?: Prisma.StringNullableFilter<"FormLoginChallenge"> | string | null
+  deliveryChannel?: Prisma.StringFilter<"FormLoginChallenge"> | string
+  phone?: Prisma.StringNullableFilter<"FormLoginChallenge"> | string | null
   codeHash?: Prisma.StringFilter<"FormLoginChallenge"> | string
   attempts?: Prisma.IntFilter<"FormLoginChallenge"> | number
   requests?: Prisma.IntFilter<"FormLoginChallenge"> | number
@@ -298,7 +318,9 @@ export type FormLoginChallengeWhereUniqueInput = Prisma.AtLeast<{
 export type FormLoginChallengeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryChannel?: Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
   codeHash?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   requests?: Prisma.SortOrder
@@ -319,7 +341,9 @@ export type FormLoginChallengeScalarWhereWithAggregatesInput = {
   NOT?: Prisma.FormLoginChallengeScalarWhereWithAggregatesInput | Prisma.FormLoginChallengeScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"FormLoginChallenge"> | string
   conversationId?: Prisma.StringWithAggregatesFilter<"FormLoginChallenge"> | string
-  email?: Prisma.StringWithAggregatesFilter<"FormLoginChallenge"> | string
+  email?: Prisma.StringNullableWithAggregatesFilter<"FormLoginChallenge"> | string | null
+  deliveryChannel?: Prisma.StringWithAggregatesFilter<"FormLoginChallenge"> | string
+  phone?: Prisma.StringNullableWithAggregatesFilter<"FormLoginChallenge"> | string | null
   codeHash?: Prisma.StringWithAggregatesFilter<"FormLoginChallenge"> | string
   attempts?: Prisma.IntWithAggregatesFilter<"FormLoginChallenge"> | number
   requests?: Prisma.IntWithAggregatesFilter<"FormLoginChallenge"> | number
@@ -331,7 +355,9 @@ export type FormLoginChallengeScalarWhereWithAggregatesInput = {
 
 export type FormLoginChallengeCreateInput = {
   id?: string
-  email: string
+  email?: string | null
+  deliveryChannel?: string
+  phone?: string | null
   codeHash: string
   attempts?: number
   requests?: number
@@ -345,7 +371,9 @@ export type FormLoginChallengeCreateInput = {
 export type FormLoginChallengeUncheckedCreateInput = {
   id?: string
   conversationId: string
-  email: string
+  email?: string | null
+  deliveryChannel?: string
+  phone?: string | null
   codeHash: string
   attempts?: number
   requests?: number
@@ -357,7 +385,9 @@ export type FormLoginChallengeUncheckedCreateInput = {
 
 export type FormLoginChallengeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -371,7 +401,9 @@ export type FormLoginChallengeUpdateInput = {
 export type FormLoginChallengeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -384,7 +416,9 @@ export type FormLoginChallengeUncheckedUpdateInput = {
 export type FormLoginChallengeCreateManyInput = {
   id?: string
   conversationId: string
-  email: string
+  email?: string | null
+  deliveryChannel?: string
+  phone?: string | null
   codeHash: string
   attempts?: number
   requests?: number
@@ -396,7 +430,9 @@ export type FormLoginChallengeCreateManyInput = {
 
 export type FormLoginChallengeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -409,7 +445,9 @@ export type FormLoginChallengeUpdateManyMutationInput = {
 export type FormLoginChallengeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -434,6 +472,8 @@ export type FormLoginChallengeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  deliveryChannel?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   codeHash?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   requests?: Prisma.SortOrder
@@ -452,6 +492,8 @@ export type FormLoginChallengeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  deliveryChannel?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   codeHash?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   requests?: Prisma.SortOrder
@@ -465,6 +507,8 @@ export type FormLoginChallengeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  deliveryChannel?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
   codeHash?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   requests?: Prisma.SortOrder
@@ -513,7 +557,9 @@ export type FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput =
 
 export type FormLoginChallengeCreateWithoutConversationInput = {
   id?: string
-  email: string
+  email?: string | null
+  deliveryChannel?: string
+  phone?: string | null
   codeHash: string
   attempts?: number
   requests?: number
@@ -525,7 +571,9 @@ export type FormLoginChallengeCreateWithoutConversationInput = {
 
 export type FormLoginChallengeUncheckedCreateWithoutConversationInput = {
   id?: string
-  email: string
+  email?: string | null
+  deliveryChannel?: string
+  phone?: string | null
   codeHash: string
   attempts?: number
   requests?: number
@@ -553,7 +601,9 @@ export type FormLoginChallengeUpdateToOneWithWhereWithoutConversationInput = {
 
 export type FormLoginChallengeUpdateWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -565,7 +615,9 @@ export type FormLoginChallengeUpdateWithoutConversationInput = {
 
 export type FormLoginChallengeUncheckedUpdateWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryChannel?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   codeHash?: Prisma.StringFieldUpdateOperationsInput | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   requests?: Prisma.IntFieldUpdateOperationsInput | number
@@ -581,6 +633,8 @@ export type FormLoginChallengeSelect<ExtArgs extends runtime.Types.Extensions.In
   id?: boolean
   conversationId?: boolean
   email?: boolean
+  deliveryChannel?: boolean
+  phone?: boolean
   codeHash?: boolean
   attempts?: boolean
   requests?: boolean
@@ -597,6 +651,8 @@ export type FormLoginChallengeSelectScalar = {
   id?: boolean
   conversationId?: boolean
   email?: boolean
+  deliveryChannel?: boolean
+  phone?: boolean
   codeHash?: boolean
   attempts?: boolean
   requests?: boolean
@@ -606,7 +662,7 @@ export type FormLoginChallengeSelectScalar = {
   createdAt?: boolean
 }
 
-export type FormLoginChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "email" | "codeHash" | "attempts" | "requests" | "requestWindowAt" | "expiresAt" | "consumedAt" | "createdAt", ExtArgs["result"]["formLoginChallenge"]>
+export type FormLoginChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "email" | "deliveryChannel" | "phone" | "codeHash" | "attempts" | "requests" | "requestWindowAt" | "expiresAt" | "consumedAt" | "createdAt", ExtArgs["result"]["formLoginChallenge"]>
 export type FormLoginChallengeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
 }
@@ -619,7 +675,9 @@ export type $FormLoginChallengePayload<ExtArgs extends runtime.Types.Extensions.
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     conversationId: string
-    email: string
+    email: string | null
+    deliveryChannel: string
+    phone: string | null
     codeHash: string
     attempts: number
     requests: number
@@ -1000,6 +1058,8 @@ export interface FormLoginChallengeFieldRefs {
   readonly id: Prisma.FieldRef<"FormLoginChallenge", 'String'>
   readonly conversationId: Prisma.FieldRef<"FormLoginChallenge", 'String'>
   readonly email: Prisma.FieldRef<"FormLoginChallenge", 'String'>
+  readonly deliveryChannel: Prisma.FieldRef<"FormLoginChallenge", 'String'>
+  readonly phone: Prisma.FieldRef<"FormLoginChallenge", 'String'>
   readonly codeHash: Prisma.FieldRef<"FormLoginChallenge", 'String'>
   readonly attempts: Prisma.FieldRef<"FormLoginChallenge", 'Int'>
   readonly requests: Prisma.FieldRef<"FormLoginChallenge", 'Int'>

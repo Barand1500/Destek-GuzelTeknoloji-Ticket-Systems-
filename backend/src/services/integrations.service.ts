@@ -72,6 +72,18 @@ async function sendNetgsm(settings: { smsApiUser: string; smsApiPassword: string
   return data.jobid;
 }
 
+export async function sendFormLoginSmsCode(phone: string, code: string) {
+  const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
+  if (!settings?.smsEnabled || !settings.smsApiUser || !settings.smsApiPassword || !settings.smsSender) {
+    throw new AppError(503, "SMS_OTP_NOT_CONFIGURED", "SMS doğrulaması için Netgsm entegrasyon ayarları gerekli.");
+  }
+  try {
+    await sendNetgsm(settings, phone, `Destek taleplerinize giriş kodunuz: ${code}. Kod 10 dakika geçerlidir.`);
+  } catch {
+    throw new AppError(502, "SMS_OTP_DELIVERY_FAILED", "SMS doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.");
+  }
+}
+
 export async function testWhatsappConnection(settings: { whatsappPhoneNumberId: string; whatsappAccessToken: string }) {
   const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}?fields=id,display_phone_number,verified_name`, {
     headers: { Authorization: `Bearer ${settings.whatsappAccessToken}` },
@@ -80,6 +92,33 @@ export async function testWhatsappConnection(settings: { whatsappPhoneNumberId: 
   const data = await responseJson<MetaResponse>(response);
   if (!response.ok || !data.id) throw new Error(providerMessage("Meta WhatsApp bağlantısı doğrulanamadı", response, data));
   return data;
+}
+
+export async function sendWhatsappAuthenticationCode(phone: string, code: string) {
+  const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
+  if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !settings.whatsappAuthTemplateName) {
+    throw new AppError(503, "WHATSAPP_OTP_NOT_CONFIGURED", "WhatsApp doğrulaması için etkin Meta bağlantısı ve onaylı kimlik doğrulama şablonu gerekli.");
+  }
+  const to = whatsappRecipient(phone);
+  if (!/^\d{10,15}$/.test(to)) throw new AppError(400, "INVALID_PHONE", "WhatsApp telefon numarası geçerli değil.");
+  const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messaging_product: "whatsapp", recipient_type: "individual", to, type: "template",
+      template: {
+        name: settings.whatsappAuthTemplateName,
+        language: { code: settings.whatsappAuthTemplateLanguage },
+        components: [
+          { type: "body", parameters: [{ type: "text", text: code }] },
+          { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: code }] },
+        ],
+      },
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await responseJson<MetaResponse>(response);
+  if (!response.ok || !data.messages?.[0]?.id) throw new AppError(502, "WHATSAPP_OTP_DELIVERY_FAILED", providerMessage("WhatsApp doğrulama kodu gönderilemedi", response, data));
 }
 
 export async function persistInboundMessage(input: InboundMessage) {

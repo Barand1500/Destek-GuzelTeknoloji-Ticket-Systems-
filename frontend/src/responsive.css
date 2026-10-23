@@ -108,6 +108,19 @@
   .tabs-modal-custom-row{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 28px 28px}
   .tabs-modal-row>small{grid-column:auto}
 }
+@media(max-width:600px){
+  .public-form-page:not(.embedded):has(.form-thread){height:100dvh;min-height:0;overflow:hidden;padding:0;box-sizing:border-box}
+  .public-form-page:not(.embedded):has(.form-thread)>.public-form-card{display:flex;width:100%;height:100%;max-height:100%;max-width:none;min-height:0;flex-direction:column;gap:0;margin:0;padding:12px 14px;border-radius:0;box-sizing:border-box;overflow:hidden}
+  .public-form-page:not(.embedded):has(.form-thread) .public-form-heading{flex:0 0 auto;align-items:center;flex-direction:row;gap:8px;margin:0 0 8px}
+  .public-form-page:not(.embedded):has(.form-thread) .public-form-heading h1{font-size:20px;line-height:1.2}
+  .public-form-page:not(.embedded):has(.form-thread) .public-form-heading>.button{align-self:center;max-width:46%;padding:8px 10px;font-size:11px}
+  .public-form-page:not(.embedded):has(.form-thread)>.public-form-card>p{flex:0 0 auto;margin:0 0 8px;font-size:12px}
+  .public-form-page:not(.embedded):has(.form-thread) .form-thread{flex:1 1 0;width:100%;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;margin:0 0 8px;padding:4px 2px;gap:10px;box-sizing:border-box}
+  .public-form-page:not(.embedded):has(.form-thread) .form-thread-reply{position:static;flex:0 0 auto;margin:0;padding:6px}
+  .public-form-page:not(.embedded):has(.form-thread) .form-thread-compose{align-items:center;padding:3px}
+  .public-form-page:not(.embedded):has(.form-thread) .form-thread-compose-message textarea{height:44px;min-height:44px;max-height:44px;resize:none;overflow-y:auto}
+  .public-form-page:not(.embedded):has(.form-thread) .form-thread-file-limit{padding-top:4px;font-size:10px}
+}
 @media(max-width:1000px){
   .ticket-panel>.tabs{flex-wrap:wrap;gap:0 18px;padding:8px 16px}
   .ticket-panel>.tabs>button{flex:0 0 auto;min-height:44px;padding:12px 1px;white-space:nowrap}
@@ -224,13 +237,81 @@
   .public-form-card{box-sizing:border-box;min-width:0;padding:24px 18px}
   .public-form-fields label>.field-label{max-width:calc(100% - 24px);white-space:normal;font-size:11px}
   .public-form-fields .form-files>small{line-height:1.4}
-  .public-form-fields .form-files{margin-bottom:32px}
+  .public-form-fields .form-files{margin-bottom:0}
   .form-message{padding:14px}
   .form-message header{flex-direction:column;align-items:flex-start;gap:6px}
+  .public-form-card:has(.form-thread){padding:18px 14px}
+  .public-form-card:has(.form-thread) .form-thread{width:100%;min-width:0;max-height:none;overflow:visible;gap:12px;margin:18px 0 14px;box-sizing:border-box}
+  .public-form-card:has(.form-thread) .form-message{justify-self:end;width:fit-content;max-width:90%;min-width:0;padding:12px;border-radius:16px;box-sizing:border-box;overflow-wrap:anywhere}
+  .public-form-card:has(.form-thread) .form-message.staff{justify-self:start;background:var(--bg,#f6f9f7)}
+  .public-form-card:has(.form-thread) .form-message:not(.staff){background:#e5f3ec}
+  .public-form-card:has(.form-thread) .form-message header{flex-direction:row;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .public-form-card:has(.form-thread) .form-message header strong{min-width:0;overflow-wrap:anywhere}
+  .public-form-card:has(.form-thread) .form-message time{flex:0 0 auto;font-size:10px}
+  .public-form-card:has(.form-thread) .form-message p{margin:8px 0 0;overflow-wrap:anywhere}
+  .public-form-card:has(.form-thread) .form-message .button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+  .form-thread-reply{position:sticky;bottom:8px;z-index:2;display:block;margin:12px 0 0;padding:8px;border:1px solid var(--border,#dbe5df);border-radius:16px;background:var(--surface,#fff);box-shadow:0 4px 16px #17372b18}
+  .form-thread-compose{display:flex;align-items:center;gap:8px;min-width:0;padding:4px;border-radius:12px;background:var(--bg,#f6f9f7)}
+  .form-thread-compose-message{display:block;flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+  .form-thread-compose-message textarea{display:block;width:100%;min-width:0;height:44px!important;min-height:44px!important;max-height:44px!important;box-sizing:border-box;padding:10px 8px!important;border:0!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;outline:0!important;font-size:16px!important;line-height:1.4;resize:none!important;overflow-y:auto}
+  .form-thread-attach,.form-thread-send{display:grid!important;flex:0 0 44px;place-items:center;align-self:center;width:44px;height:44px;margin:0!important;padding:0!important;border:0!important;border-radius:50%;box-sizing:border-box;cursor:pointer}
+  .form-thread-attach{position:relative;color:var(--ui-text-secondary,#456157);background:#e5f3ec!important;border:1px solid var(--border,#dbe5df)!important;overflow:hidden}
+  .form-thread-attach input{position:absolute;inset:0;width:100%;height:100%;padding:0!important;opacity:0;cursor:pointer}
+  .form-thread-send{color:#fff;background:#167766;border:0!important}
+  .form-thread-send:disabled{opacity:.55;cursor:default}
+  .form-thread-file-limit{display:block;padding:6px 6px 0;color:var(--muted,#587066);font-size:11px;line-height:1.4}
+  html[data-theme=dark] .public-form-card:has(.form-thread) .form-message:not(.staff){background:#224c3e}
   .files-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .files-actions .button{justify-content:center;padding:11px;font-size:12px;white-space:normal}
   .files-toolbar{align-items:stretch;gap:14px}
   .files-breadcrumb{flex-wrap:wrap}
   .notification-popover{position:fixed;left:12px;right:12px;top:120px;width:auto;max-height:calc(100dvh - 140px);overflow:auto}
   .modal{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box}
+}
+
+/* Integration panels must shrink with the viewport, including intrinsic fieldset widths. */
+@media(max-width:1000px){
+  .integrations-page .integration-shell,
+  .integrations-page .integration-email-panel,
+  .integrations-page .form-settings-slot,
+  .integrations-page .form-settings-panel,
+  .integrations-page .integration-card{min-width:0;max-width:100%;box-sizing:border-box}
+  .integrations-page .integration-shell,
+  .integrations-page .integration-card{grid-template-columns:minmax(0,1fr)}
+  .integrations-page .integration-card>*{min-width:0;max-width:100%;box-sizing:border-box}
+  .integrations-page .form-settings-intro{width:100%;min-width:0}
+  .integrations-page fieldset{min-inline-size:0}
+  .integrations-page .integration-card p,
+  .integrations-page .integration-card small{white-space:normal;overflow-wrap:anywhere}
+  .integrations-page .integration-fields>*{min-width:0;max-width:100%}
+  .integrations-page .form-settings-links{min-width:0;grid-template-columns:minmax(0,1fr)}
+  .integrations-page .form-settings-links label{min-width:0;max-width:100%}
+  .integrations-page .form-settings-links input,
+  .integrations-page .form-settings-links textarea{min-width:0;max-width:100%}
+  .integrations-page .form-settings-links textarea{white-space:pre-wrap;overflow-wrap:anywhere}
+}
+@media(max-width:600px){
+  .integrations-page .integration-card{padding:20px 16px}
+  .integrations-page .integration-tabs-row{align-items:flex-start;gap:4px}
+  .integrations-page .integration-tabs-row .integration-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:4px 0}
+  .integrations-page .integration-tabs button{justify-content:center;min-width:0;padding:12px 4px;font-size:12px;gap:5px;white-space:normal}
+  .integrations-page .integration-tabs button svg{flex-shrink:0;width:16px;height:16px}
+  .integrations-page .integration-info-button{margin-top:5px}
+  .integrations-page .integration-subtabs{flex-wrap:wrap;min-width:0}
+  .integrations-page .integration-subtabs button{flex:1 1 140px;justify-content:center;white-space:normal}
+  .integrations-page .integration-fields,
+  .integrations-page .imap-card .integration-fields,
+  .integrations-page .form-settings-panel .form-settings-fields{grid-template-columns:minmax(0,1fr)}
+  .integrations-page .integration-fields>*{grid-column:auto;grid-row:auto}
+  .integrations-page .integration-card .integration-heading{flex-direction:column;align-items:stretch}
+  .integrations-page .integration-card .integration-heading .integration-toggle{width:100%;justify-content:space-between}
+  .integrations-page .integration-toggle span{min-width:0}
+  .integrations-page .integration-card .integration-heading .integration-toggle strong{white-space:normal}
+  .integrations-page .integration-card h2{overflow-wrap:anywhere}
+  .integrations-page .form-required-options{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+  .integrations-page .form-required-options .management-check{white-space:normal}
+  .integrations-page .form-settings-links .management-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .integrations-page .form-settings-links .button{width:100%;max-width:100%;box-sizing:border-box;justify-content:center;white-space:normal}
+  .integrations-page .integration-webhook-copy{min-width:0}
+  .integrations-page .integration-webhook-copy code{min-width:0;white-space:normal;overflow-wrap:anywhere}
 }

@@ -65,6 +65,7 @@ export const ModelName = {
   FormRequest: 'FormRequest',
   FormAccess: 'FormAccess',
   FormLoginChallenge: 'FormLoginChallenge',
+  FormEmailSession: 'FormEmailSession',
   StatusOption: 'StatusOption',
   PriorityOption: 'PriorityOption',
   ConversationAssignee: 'ConversationAssignee',
@@ -302,6 +303,8 @@ export const FormLoginChallengeScalarFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
   email: 'email',
+  deliveryChannel: 'deliveryChannel',
+  phone: 'phone',
   codeHash: 'codeHash',
   attempts: 'attempts',
   requests: 'requests',
@@ -312,6 +315,18 @@ export const FormLoginChallengeScalarFieldEnum = {
 } as const
 
 export type FormLoginChallengeScalarFieldEnum = (typeof FormLoginChallengeScalarFieldEnum)[keyof typeof FormLoginChallengeScalarFieldEnum]
+
+
+export const FormEmailSessionScalarFieldEnum = {
+  tokenHash: 'tokenHash',
+  email: 'email',
+  phone: 'phone',
+  deliveryChannel: 'deliveryChannel',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormEmailSessionScalarFieldEnum = (typeof FormEmailSessionScalarFieldEnum)[keyof typeof FormEmailSessionScalarFieldEnum]
 
 
 export const StatusOptionScalarFieldEnum = {
@@ -651,6 +666,8 @@ export const IntegrationSettingsScalarFieldEnum = {
   whatsappPhoneNumberId: 'whatsappPhoneNumberId',
   whatsappAccessToken: 'whatsappAccessToken',
   whatsappVerifyToken: 'whatsappVerifyToken',
+  whatsappAuthTemplateName: 'whatsappAuthTemplateName',
+  whatsappAuthTemplateLanguage: 'whatsappAuthTemplateLanguage',
   whatsappDepartmentId: 'whatsappDepartmentId',
   lastTestChannel: 'lastTestChannel',
   lastTestSuccess: 'lastTestSuccess',
@@ -957,10 +974,22 @@ export const FormLoginChallengeOrderByRelevanceFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
   email: 'email',
+  deliveryChannel: 'deliveryChannel',
+  phone: 'phone',
   codeHash: 'codeHash'
 } as const
 
 export type FormLoginChallengeOrderByRelevanceFieldEnum = (typeof FormLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof FormLoginChallengeOrderByRelevanceFieldEnum]
+
+
+export const FormEmailSessionOrderByRelevanceFieldEnum = {
+  tokenHash: 'tokenHash',
+  email: 'email',
+  phone: 'phone',
+  deliveryChannel: 'deliveryChannel'
+} as const
+
+export type FormEmailSessionOrderByRelevanceFieldEnum = (typeof FormEmailSessionOrderByRelevanceFieldEnum)[keyof typeof FormEmailSessionOrderByRelevanceFieldEnum]
 
 
 export const StatusOptionOrderByRelevanceFieldEnum = {
@@ -1224,6 +1253,8 @@ export const IntegrationSettingsOrderByRelevanceFieldEnum = {
   whatsappPhoneNumberId: 'whatsappPhoneNumberId',
   whatsappAccessToken: 'whatsappAccessToken',
   whatsappVerifyToken: 'whatsappVerifyToken',
+  whatsappAuthTemplateName: 'whatsappAuthTemplateName',
+  whatsappAuthTemplateLanguage: 'whatsappAuthTemplateLanguage',
   whatsappDepartmentId: 'whatsappDepartmentId',
   lastTestChannel: 'lastTestChannel',
   lastTestMessage: 'lastTestMessage'

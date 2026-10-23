@@ -8,7 +8,7 @@ import { db } from '../config/db.js';
 import { allowedOrigins } from '../config/env.js';
 import { emailSchema } from '../utils/email.js';
 import { AppError } from '../utils/errors.js';
-import { authorizeForm } from '../services/form-access.service.js';
+import { authorizeForm, authorizeFormEmailSession, listFormTickets } from '../services/form-access.service.js';
 import { getFormSettings, requireOpenForm, requestFormLink, submitForm, formSubmissionSchema } from '../services/forms.service.js';
 import { verifyTurnstile, publicAuthSecurity } from '../services/turnstile.service.js';
 import { withStoredUploads, uploadRoot } from '../services/uploads.service.js';
@@ -18,9 +18,9 @@ import { FORM_UPLOAD_BYTES, formUploadStorage } from '../services/form-uploads.j
 
 export const formsRouter = Router();
 // Shared by messages, pagination cursors and attachment downloads.
-const formMessageVisibility = {
-  AND: [{ OR: [{ type: 'CUSTOMER_MESSAGE' }, { type: 'AGENT_REPLY', visibleInForm: true }] }],
-} satisfies Prisma.ConversationMessageWhereInput;
+const formMessageVisibility = (channel: string): Prisma.ConversationMessageWhereInput => ({
+  AND: [{ OR: [{ type: 'CUSTOMER_MESSAGE' }, ...(channel === 'FORM' ? [{ type: 'AGENT_REPLY' as const, visibleInForm: true }] : [{ type: 'AGENT_REPLY' as const }])] }],
+});
 const limitMessage = { success: false, error: { code: 'RATE_LIMITED', message: 'Çok fazla deneme. Lütfen daha sonra yeniden deneyin.' } };
 const writes = rateLimit({ windowMs: 10 * 60_000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const reads = rateLimit({ windowMs: 60_000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
@@ -60,16 +60,22 @@ formsRouter.post('/access', writes, async (req, res) => {
   res.json({ success: true, data: { message: 'Bilgiler eşleşiyorsa takip bağlantısı e-posta adresinize gönderildi.' } });
 });
 formsRouter.post('/login', writes, async (req, res) => {
-  const input = z.object({ email: emailSchema, number: z.coerce.number().int().positive().max(2147483647), turnstileToken: z.string().max(2048).optional() }).strict().parse(req.body);
+  const input = z.object({ email: emailSchema.optional(), phone: z.string().trim().max(30).optional(), deliveryChannel: z.enum(['EMAIL', 'SMS', 'WHATSAPP']).default('EMAIL'), turnstileToken: z.string().max(2048).optional() }).strict().parse(req.body);
   await verifyTurnstile(input.turnstileToken, 'form_access', req.ip);
-  res.json({ success: true, data: { ...await requestFormLogin(input.email, input.number), message: 'Bilgiler eşleşiyorsa giriş kodu e-posta adresinize gönderildi.' } });
+  res.json({ success: true, data: await requestFormLogin(input.email, input.phone, input.deliveryChannel) });
 });
 formsRouter.post('/login/verify', writes, async (req, res) => {
   const input = z.object({ challengeId: z.uuid(), code: z.string().regex(/^\d{6}$/) }).strict().parse(req.body);
   res.json({ success: true, data: await verifyFormLogin(input.challengeId, input.code) });
 });
+formsRouter.get('/tickets', reads, async (req, res) => {
+  const session = await authorizeFormEmailSession(typeof req.headers['x-form-token'] === 'string' ? req.headers['x-form-token'] : undefined);
+  res.json({ success: true, data: await listFormTickets(session) });
+});
 formsRouter.use('/conversation', reads, async (req, _res, next) => {
-  const conversation = await authorizeForm(typeof req.headers['x-form-token'] === 'string' ? req.headers['x-form-token'] : undefined);
+  const token = typeof req.headers['x-form-token'] === 'string' ? req.headers['x-form-token'] : undefined;
+  const conversationId = typeof req.headers['x-form-conversation'] === 'string' ? z.uuid().parse(req.headers['x-form-conversation']) : undefined;
+  const conversation = await authorizeForm(token, conversationId);
   req.actor = { id: conversation.customerId, name: conversation.formRequest?.name ?? conversation.customer.name, email: conversation.formRequest?.email ?? conversation.customer.email ?? '', role: 'CUSTOMER', departmentIds: [], sessionId: '', ipAddress: req.ip };
   _res.locals.formConversation = conversation;
   next();
@@ -79,10 +85,11 @@ formsRouter.get('/conversation', async (req, res) => {
   const before = z.uuid().optional().parse(req.query.before), after = z.uuid().optional().parse(req.query.after);
   if (before && after) throw new AppError(400, 'INVALID_CURSOR', 'Geçersiz mesaj aralığı.');
   const cursorId = before ?? after;
-  const cursor = cursorId ? await db.conversationMessage.findFirst({ where: { id: cursorId, conversationId: conversation.id, ...formMessageVisibility }, select: { id: true, createdAt: true } }) : null;
+  const visibility = formMessageVisibility(conversation.channel);
+  const cursor = cursorId ? await db.conversationMessage.findFirst({ where: { id: cursorId, conversationId: conversation.id, ...visibility }, select: { id: true, createdAt: true } }) : null;
   if (cursorId && !cursor) throw new AppError(400, 'INVALID_CURSOR', 'Mesaj bulunamadı.');
   const order = after ? 'asc' : 'desc';
-  const messages = await db.conversationMessage.findMany({ where: { conversationId: conversation.id, ...formMessageVisibility, ...(cursor ? { OR: [{ createdAt: after ? { gt: cursor.createdAt } : { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: after ? { gt: cursor.id } : { lt: cursor.id } }] } : {}) }, select: { id: true, body: true, type: true, createdAt: true, author: { select: { name: true } }, attachments: { select: { id: true, originalName: true, size: true } } }, orderBy: [{ createdAt: order }, { id: order }], take: 51 });
+  const messages = await db.conversationMessage.findMany({ where: { conversationId: conversation.id, ...visibility, ...(cursor ? { OR: [{ createdAt: after ? { gt: cursor.createdAt } : { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: after ? { gt: cursor.id } : { lt: cursor.id } }] } : {}) }, select: { id: true, body: true, type: true, createdAt: true, author: { select: { name: true } }, attachments: { select: { id: true, originalName: true, size: true } } }, orderBy: [{ createdAt: order }, { id: order }], take: 51 });
   const status = await db.statusOption.findUnique({ where: { code: conversation.status }, select: { name: true } });
   res.json({ success: true, data: { number: conversation.number, subject: conversation.subject, status: status?.name ?? conversation.status, closed: conversation.status === 'CLOSED', messages: after ? messages.slice(0, 50) : messages.slice(0, 50).reverse(), hasMore: messages.length > 50, direction: after ? 'after' : before ? 'before' : 'latest' } });
 });
@@ -92,7 +99,8 @@ formsRouter.post('/conversation/messages', replies, attachments, async (req, res
   res.status(201).json({ success: true });
 });
 formsRouter.get('/conversation/attachments/:id', async (req, res) => {
-  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: res.locals.formConversation.id, ...formMessageVisibility } } });
+  const conversation = res.locals.formConversation;
+  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: conversation.id, ...formMessageVisibility(conversation.channel) } } });
   if (!file) throw new AppError(404, 'FILE_NOT_FOUND', 'Dosya bulunamadı.');
   res.download(path.join(uploadRoot, file.storageKey), file.originalName);
 });

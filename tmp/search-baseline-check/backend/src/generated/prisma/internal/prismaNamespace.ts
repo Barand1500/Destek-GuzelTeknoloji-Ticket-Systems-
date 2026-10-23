@@ -411,6 +411,7 @@ export const ModelName = {
   FormRequest: 'FormRequest',
   FormAccess: 'FormAccess',
   FormLoginChallenge: 'FormLoginChallenge',
+  FormEmailSession: 'FormEmailSession',
   StatusOption: 'StatusOption',
   PriorityOption: 'PriorityOption',
   ConversationAssignee: 'ConversationAssignee',
@@ -457,7 +458,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1382,6 +1383,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.FormLoginChallengeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.FormLoginChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
+    FormEmailSession: {
+      payload: Prisma.$FormEmailSessionPayload<ExtArgs>
+      fields: Prisma.FormEmailSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormEmailSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormEmailSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.FormEmailSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormEmailSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        findMany: {
+          args: Prisma.FormEmailSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>[]
+        }
+        create: {
+          args: Prisma.FormEmailSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        createMany: {
+          args: Prisma.FormEmailSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormEmailSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        update: {
+          args: Prisma.FormEmailSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.FormEmailSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormEmailSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormEmailSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormEmailSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.FormEmailSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormEmailSession>
+        }
+        groupBy: {
+          args: Prisma.FormEmailSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormEmailSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormEmailSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormEmailSessionCountAggregateOutputType> | number
         }
       }
     }
@@ -3658,6 +3725,8 @@ export const FormLoginChallengeScalarFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
   email: 'email',
+  deliveryChannel: 'deliveryChannel',
+  phone: 'phone',
   codeHash: 'codeHash',
   attempts: 'attempts',
   requests: 'requests',
@@ -3668,6 +3737,18 @@ export const FormLoginChallengeScalarFieldEnum = {
 } as const
 
 export type FormLoginChallengeScalarFieldEnum = (typeof FormLoginChallengeScalarFieldEnum)[keyof typeof FormLoginChallengeScalarFieldEnum]
+
+
+export const FormEmailSessionScalarFieldEnum = {
+  tokenHash: 'tokenHash',
+  email: 'email',
+  phone: 'phone',
+  deliveryChannel: 'deliveryChannel',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type FormEmailSessionScalarFieldEnum = (typeof FormEmailSessionScalarFieldEnum)[keyof typeof FormEmailSessionScalarFieldEnum]
 
 
 export const StatusOptionScalarFieldEnum = {
@@ -4007,6 +4088,8 @@ export const IntegrationSettingsScalarFieldEnum = {
   whatsappPhoneNumberId: 'whatsappPhoneNumberId',
   whatsappAccessToken: 'whatsappAccessToken',
   whatsappVerifyToken: 'whatsappVerifyToken',
+  whatsappAuthTemplateName: 'whatsappAuthTemplateName',
+  whatsappAuthTemplateLanguage: 'whatsappAuthTemplateLanguage',
   whatsappDepartmentId: 'whatsappDepartmentId',
   lastTestChannel: 'lastTestChannel',
   lastTestSuccess: 'lastTestSuccess',
@@ -4313,10 +4396,22 @@ export const FormLoginChallengeOrderByRelevanceFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
   email: 'email',
+  deliveryChannel: 'deliveryChannel',
+  phone: 'phone',
   codeHash: 'codeHash'
 } as const
 
 export type FormLoginChallengeOrderByRelevanceFieldEnum = (typeof FormLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof FormLoginChallengeOrderByRelevanceFieldEnum]
+
+
+export const FormEmailSessionOrderByRelevanceFieldEnum = {
+  tokenHash: 'tokenHash',
+  email: 'email',
+  phone: 'phone',
+  deliveryChannel: 'deliveryChannel'
+} as const
+
+export type FormEmailSessionOrderByRelevanceFieldEnum = (typeof FormEmailSessionOrderByRelevanceFieldEnum)[keyof typeof FormEmailSessionOrderByRelevanceFieldEnum]
 
 
 export const StatusOptionOrderByRelevanceFieldEnum = {
@@ -4580,6 +4675,8 @@ export const IntegrationSettingsOrderByRelevanceFieldEnum = {
   whatsappPhoneNumberId: 'whatsappPhoneNumberId',
   whatsappAccessToken: 'whatsappAccessToken',
   whatsappVerifyToken: 'whatsappVerifyToken',
+  whatsappAuthTemplateName: 'whatsappAuthTemplateName',
+  whatsappAuthTemplateLanguage: 'whatsappAuthTemplateLanguage',
   whatsappDepartmentId: 'whatsappDepartmentId',
   lastTestChannel: 'lastTestChannel',
   lastTestMessage: 'lastTestMessage'
@@ -4907,6 +5004,7 @@ export type GlobalOmitConfig = {
   formRequest?: Prisma.FormRequestOmit
   formAccess?: Prisma.FormAccessOmit
   formLoginChallenge?: Prisma.FormLoginChallengeOmit
+  formEmailSession?: Prisma.FormEmailSessionOmit
   statusOption?: Prisma.StatusOptionOmit
   priorityOption?: Prisma.PriorityOptionOmit
   conversationAssignee?: Prisma.ConversationAssigneeOmit

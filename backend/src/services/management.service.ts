@@ -1866,7 +1866,7 @@ export async function updateIntegrationSettings(
       smsVirtualNumber: "SMS sanal numarası", smsWebhookSecret: "SMS webhook anahtarı", smsDepartmentId: "SMS departmanı",
       whatsappEnabled: "WhatsApp etkinliği", whatsappAppId: "WhatsApp uygulama kimliği", whatsappAppSecret: "WhatsApp uygulama anahtarı",
       whatsappPhoneNumberId: "WhatsApp telefon numarası kimliği", whatsappAccessToken: "WhatsApp erişim anahtarı",
-      whatsappVerifyToken: "WhatsApp doğrulama anahtarı", whatsappDepartmentId: "WhatsApp departmanı",
+      whatsappVerifyToken: "WhatsApp doğrulama anahtarı", whatsappAuthTemplateName: "WhatsApp doğrulama şablonu", whatsappAuthTemplateLanguage: "WhatsApp şablon dili", whatsappDepartmentId: "WhatsApp departmanı",
     };
     const changedDetails: string[] = [];
     for (const [key, value] of Object.entries(integrationInput)) {
