@@ -1,6 +1,25 @@
 /* Mobile adaptations are isolated so the desktop workspace keeps its layout. */
 .mobile-workspace-bar,.mobile-menu-close,.mobile-menu-backdrop,.mobile-properties-toggle,.users-create-toggle{display:none}
 @media(max-width:1000px){
+  .management-panel>.management-table-wrap:not(:has(.announcement-templates-table)){
+    margin-inline:0;width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+    overflow:auto;isolation:isolate;scrollbar-width:thin;
+    --mobile-table-line:#dce7e0;
+  }
+  html[data-theme=dark] .management-panel>.management-table-wrap{--mobile-table-line:#31463d}
+  .management-table-wrap>.management-table:not(.announcement-templates-table){border-collapse:separate;border-spacing:0}
+  .management-table-wrap>.management-table:not(.announcement-templates-table) :is(th,td){
+    border-bottom:1px solid var(--mobile-table-line,#dce7e0);background-clip:padding-box;
+  }
+  .management-table-wrap>.management-table:not(.announcement-templates-table) thead{border:0}
+  .management-table-wrap>.management-table:not(.announcement-templates-table) thead th{border-top:1px solid var(--mobile-table-line,#dce7e0)}
+  .saved-content-table:not(.announcement-templates-table){min-width:680px;table-layout:fixed}
+  .saved-content-table:not(.announcement-templates-table) th:nth-child(1),.saved-content-table:not(.announcement-templates-table) td:nth-child(1){width:150px}
+  .saved-content-table:not(.announcement-templates-table) th:nth-child(2),.saved-content-table:not(.announcement-templates-table) td:nth-child(2){width:230px}
+  .saved-content-table:not(.announcement-templates-table) th:nth-child(3),.saved-content-table:not(.announcement-templates-table) td:nth-child(3){width:150px}
+  .saved-content-table:not(.announcement-templates-table) th:nth-child(4),.saved-content-table:not(.announcement-templates-table) td:nth-child(4){width:150px}
+  .saved-content-table:not(.announcement-templates-table) .management-sort-heading{gap:6px;min-width:0}
+  .saved-content-table:not(.announcement-templates-table) .management-sort-reset{flex:0 0 24px;width:24px;height:24px;margin-left:0}
   .users-editor-panel:not(.users-editor-editing)>h2{display:none}
   .users-editor-panel>.users-create-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;gap:14px;border:0;padding:0;min-height:32px;background:transparent;color:inherit;text-align:left;font-size:17px;font-weight:600;cursor:pointer}
   .users-create-toggle>span{font-size:24px}
@@ -67,20 +86,21 @@
   .activity-log-toolbar{flex-direction:column;align-items:stretch;gap:18px}
   .activity-log-toolbar .management-search,.activity-log-toolbar .notification-delete{flex:0 1 auto;width:100%;max-width:100%;min-width:0;margin:0;box-sizing:border-box}
   .activity-log-toolbar .notification-delete-menu{width:100%;min-width:0;box-sizing:border-box}
-  .saved-content-table-wrap{margin:18px 0 0;max-height:none;overflow:visible;width:100%;min-width:0}
-  .saved-content-table{display:block;table-layout:auto;min-width:0!important;width:100%;border:0}
-  .saved-content-table thead{display:block;width:100%}
-  .saved-content-table thead tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px 0 16px;background:transparent}
-  .saved-content-table thead th{display:block;width:auto!important;min-width:0;padding:8px 6px;border:0;font-size:10px;white-space:normal;text-align:left}
-  .saved-content-table thead th:last-child{display:none}
-  .saved-content-table tbody{display:grid;gap:14px;width:100%}
-  .saved-content-table tbody tr{display:block;min-width:0;width:100%;border:1px solid var(--border,#dce5df);border-radius:10px;padding:14px;box-sizing:border-box;overflow:hidden}
-  .saved-content-table tbody td{display:block;width:100%!important;min-width:0;box-sizing:border-box;padding:0 0 14px;border:0;white-space:normal;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
-  .saved-content-table tbody td:last-child{padding-bottom:0}
-  .saved-content-table td[data-label]::before{content:attr(data-label);display:block;font-size:11px;font-weight:600;color:var(--ui-text-secondary);margin-bottom:4px}
-  .saved-content-table .saved-content-preview{display:block;-webkit-line-clamp:unset;max-height:none;white-space:pre-wrap}
-  .saved-content-table .management-actions{justify-content:flex-start}
-  .saved-content-table .management-actions>.button{flex:0 0 40px;min-height:40px}
+  .saved-content-table-wrap:has(.announcement-templates-table){margin:18px 0 0;max-height:none;overflow:auto;width:100%;min-width:0;max-width:100%;box-sizing:border-box;scrollbar-width:thin;isolation:isolate;--mobile-table-line:#dce7e0}
+  html[data-theme=dark] .saved-content-table-wrap:has(.announcement-templates-table){--mobile-table-line:#31463d}
+  .announcement-templates-table{display:table;table-layout:fixed;min-width:870px!important;width:100%;border-collapse:separate;border-spacing:0}
+  .announcement-templates-table th,.announcement-templates-table td{border-bottom:1px solid var(--mobile-table-line);background-clip:padding-box}
+  .announcement-templates-table thead th{border-top:1px solid var(--mobile-table-line);white-space:nowrap}
+  .announcement-templates-table th:nth-child(1),.announcement-templates-table td:nth-child(1){width:170px}
+  .announcement-templates-table th:nth-child(2),.announcement-templates-table td:nth-child(2){width:190px}
+  .announcement-templates-table th:nth-child(3),.announcement-templates-table td:nth-child(3){width:360px}
+  .announcement-templates-table th:nth-child(4),.announcement-templates-table td:nth-child(4){width:150px}
+  .announcement-templates-table .management-sort-heading{gap:6px;min-width:0}
+  .announcement-templates-table .management-sort-reset{flex:0 0 24px;width:24px;height:24px;margin-left:0}
+  .announcement-templates-table td{white-space:normal;vertical-align:top;overflow-wrap:anywhere}
+  .announcement-templates-table .saved-content-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;max-height:6.4em;white-space:normal}
+  .announcement-templates-table .management-actions{justify-content:flex-start;flex-wrap:nowrap}
+  .announcement-templates-table .management-actions>.button{flex:0 0 40px;min-height:40px}
   .activity-history-table td small{overflow-wrap:anywhere;white-space:normal}
   .activity-history-table td>.button{display:inline-flex;max-width:100%;margin-top:10px;white-space:normal}
   .tabs-modal{max-height:calc(100dvh - 32px);overflow-y:auto}
