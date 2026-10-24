@@ -45,7 +45,7 @@ export function FormPortal() {
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const [created, setCreated] = useState<number>();
   const [challengeId, setChallengeId] = useState(''), [code, setCode] = useState('');
-  const [deliveryChannel, setDeliveryChannel] = useState<'EMAIL' | 'SMS' | 'WHATSAPP'>('EMAIL');
+  const [deliveryChannel, setDeliveryChannel] = useState<'EMAIL' | 'SMS'>('EMAIL');
   useEffect(() => { setTracking(location.pathname !== '/form/destek'); setCreated(undefined); setError(''); setNotice(''); }, [location.pathname]);
   useEffect(() => {
     const meta = document.createElement('meta'); meta.name = 'referrer'; meta.content = 'no-referrer'; document.head.appendChild(meta);
@@ -59,9 +59,9 @@ export function FormPortal() {
       if (tracking) {
         const identity = data.get('identity');
         const result = await guest.post('/login', { ...(deliveryChannel === 'EMAIL' ? { email: identity } : { phone: identity }), deliveryChannel, ...captcha.payload });
-        if (!result.data.data.found) { setError(deliveryChannel === 'EMAIL' ? 'Bu e-posta adresiyle eşleşen bir Form talebi bulunamadı.' : 'Bu telefon numarasıyla eşleşen bir talep bulunamadı.'); return; }
+        if (!result.data.data.found) { setError(deliveryChannel === 'EMAIL' ? 'Bu e-posta adresiyle eşleşen bir talep bulunamadı.' : 'Bu telefon numarasıyla eşleşen bir talep bulunamadı.'); return; }
         setChallengeId(result.data.data.challengeId); setCode('');
-        setNotice(deliveryChannel === 'EMAIL' ? 'Doğrulama kodu e-posta adresinize gönderildi.' : deliveryChannel === 'SMS' ? 'Doğrulama kodu telefon numaranıza SMS olarak gönderildi.' : 'Doğrulama kodu WhatsApp numaranıza gönderildi.');
+        setNotice(deliveryChannel === 'EMAIL' ? 'Doğrulama kodu e-posta adresinize gönderildi.' : 'Doğrulama kodu telefon numaranıza SMS olarak gönderildi.');
       } else {
         if (captcha.payload.turnstileToken) data.set('turnstileToken', captcha.payload.turnstileToken);
         const result = await guest.post('/requests', data);
@@ -96,11 +96,11 @@ export function FormPortal() {
       <div className="public-form-heading"><h1>Taleplerim</h1><Link className="button secondary" to="/form/destek">Yeni Talep Aç</Link></div>
       {accountTickets.isPending && <p role="status">Talepler yükleniyor…</p>}
       {accountTickets.isError && <div role="alert" className="error"><p>{errorText(accountTickets.error)}</p><button className="button secondary" type="button" onClick={() => navigate('/form/talep', { replace: true })}>E-posta ile yeniden giriş yap</button></div>}
-      {accountTickets.data && <section className="form-account-ticket-list" aria-label="Destek taleplerim">{accountTickets.data.filter(ticket => ticket.channel === 'FORM').length ? accountTickets.data.filter(ticket => ticket.channel === 'FORM').map(ticket => <button className="form-account-ticket" type="button" key={ticket.id} onClick={() => navigate(`/form/hesap/${ticket.id}#${accountToken}`)}><span className="form-account-ticket-main"><strong>{ticket.subject}</strong><small>#{`TK-${String(ticket.number).padStart(5, '0')}`} · {ticket.status}</small></span><time dateTime={ticket.updatedAt}>{new Date(ticket.updatedAt).toLocaleDateString('tr-TR')}</time></button>) : <p>Bu e-posta adresiyle eşleşen bir Form talebi bulunamadı.</p>}</section>}
+      {accountTickets.data && <section className="form-account-ticket-list" aria-label="Destek taleplerim">{accountTickets.data.length ? accountTickets.data.map(ticket => <button className="form-account-ticket" type="button" key={ticket.id} onClick={() => navigate(`/form/hesap/${ticket.id}#${accountToken}`)}><span className="form-account-ticket-main"><strong>{ticket.subject}</strong><small>#{`TK-${String(ticket.number).padStart(5, '0')}`} · {ticket.status}</small></span><time dateTime={ticket.updatedAt}>{new Date(ticket.updatedAt).toLocaleDateString('tr-TR')}</time></button>) : <p>Doğrulanan iletişim bilginizle eşleşen bir talep bulunamadı.</p>}</section>}
     </> : <>
       <div className="public-form-heading"><h1>{tracking ? 'Taleplerime Giriş' : settings.data?.title ?? 'Destek Talebi'}</h1><button type="button" className="button secondary" onClick={() => { setTracking(created ? false : !tracking); setCreated(undefined); setChallengeId(''); setCode(''); setError(''); setNotice(''); captcha.reset(); }}>{tracking || created ? 'Yeni Talep Aç' : 'Mevcut Talebimi Takip Et'}</button></div>
       {created ? <div role="status"><h2>Talebiniz alındı.</h2><p>Talep numaranız: <strong>#TK-{String(created).padStart(5, '0')}</strong></p><p>Mesajları görmek ve yanıtlamak için e-postanıza gönderilen bağlantıyı açın. Gelen kutunuza düşmediyse spam klasörünü kontrol edin.</p><button type="button" className="button secondary" onClick={() => { setCreated(undefined); setTracking(true); }}>Taleplerimi Gör</button></div> : <>
-        {tracking && <p>{challengeId ? 'E-posta, SMS veya WhatsApp ile g\u00f6nderilen 6 haneli kodu girin. Kod 10 dakika ge\u00e7erlidir.' : 'E-posta ile giri\u015f yapabilir veya telefonunuza SMS ya da WhatsApp kodu isteyebilirsiniz.'}</p>}
+        {tracking && <p>{challengeId ? 'E-posta veya SMS ile gönderilen 6 haneli kodu girin. Kod 10 dakika geçerlidir.' : 'E-posta ile giriş yapabilir veya telefonunuza SMS ile doğrulama kodu isteyebilirsiniz.'}</p>}
         {settings.isPending && <p role="status">Form yükleniyor…</p>}
         {settings.isError && <p role="alert" className="error">{errorText(settings.error)}</p>}
         {tracking && challengeId ? <form onSubmit={verify} className="public-form-fields">
@@ -108,7 +108,7 @@ export function FormPortal() {
           <button className="button primary" disabled={pending || code.length !== 6}>{pending ? 'Doğrulanıyor…' : 'Doğrula ve Taleplerimi Gör'}</button>
           <button type="button" className="auth-forgot" disabled={pending} onClick={() => { setChallengeId(''); setCode(''); setNotice(''); setError(''); }}>Bilgileri Değiştir / Yeni Kod İste</button>
         </form> : (tracking || settings.data?.enabled) && <form onSubmit={submit} className="public-form-fields">
-          {tracking ? <><DropdownSelect ariaLabel="Kod gönderme yöntemi" value={deliveryChannel} onChange={value => setDeliveryChannel(value as 'EMAIL' | 'SMS' | 'WHATSAPP')} options={[{ value: 'EMAIL', label: 'E-Posta' }, { value: 'SMS', label: 'SMS' }, { value: 'WHATSAPP', label: 'WhatsApp' }]} />{deliveryChannel === 'EMAIL' ? <label><span className="field-label">E-Posta Adresi</span><EmailInput name="identity" required autoComplete="email" /></label> : <label><span className="field-label">Telefon Numarası</span><input name="identity" type="tel" inputMode="tel" autoComplete="tel" required placeholder="+90 5XX XXX XX XX" /></label>}</> : fieldOrder.map((field, index) => {
+          {tracking ? <><DropdownSelect ariaLabel="Kod gönderme yöntemi" value={deliveryChannel} onChange={value => setDeliveryChannel(value as 'EMAIL' | 'SMS')} options={[{ value: 'EMAIL', label: 'E-Posta' }, { value: 'SMS', label: 'SMS' }]} />{deliveryChannel === 'EMAIL' ? <label><span className="field-label">E-Posta Adresi</span><EmailInput name="identity" required autoComplete="email" /></label> : <label><span className="field-label">Telefon Numarası</span><input name="identity" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="5XX XXX XX XX" maxLength={13} pattern="5[0-9]{2} [0-9]{3} [0-9]{2} [0-9]{2}" title="5 ile başlayan 10 haneli GSM numarası girin." onInput={event => { const input = event.currentTarget; const digits = input.value.replace(/\D/g, "").slice(0, 10); input.value = digits.startsWith("5") ? [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 8), digits.slice(8, 10)].filter(Boolean).join(" ") : ""; input.setCustomValidity(""); }} onInvalid={event => event.currentTarget.setCustomValidity("5 ile başlayan 10 haneli GSM numarası girin.")} /></label>}</> : fieldOrder.map((field, index) => {
             if (field === 'email' && fieldOrder[index - 1] === 'phone') return null;
             if (field === 'phone' && fieldOrder[index + 1] === 'email') return <div className="public-form-columns" key={`${field}-email`}>{renderField(field)}{renderField('email')}</div>;
             return <div key={field}>{renderField(field)}</div>;
@@ -168,6 +168,7 @@ function FormThread({ token, maxSize, newRequestHref, conversationId, backHref }
   if (query.isError) return <><h1>Talep açılamadı</h1><p role="alert" className="error">{errorText(query.error)}</p><Link to="/form/talep">Yeni takip bağlantısı iste</Link></>;
   const thread = query.data;
   return <><div className="public-form-heading"><div className="form-thread-heading-main"><Link className="form-account-back" to={backHref ?? '/form/talep'}>← Tüm Taleplerime Dön</Link><h1>{thread.subject}</h1></div><Link className="button secondary" to={newRequestHref}>Yeni Talep Aç</Link></div><p><strong>#TK-{String(thread.number).padStart(5, '0')}</strong> · {thread.status}</p>
+    <div className="form-thread-divider" aria-hidden="true" />
     <section className="form-thread" aria-label="Konuşma" ref={timeline} onScroll={event => { const el = event.currentTarget; pin.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; if (el.scrollTop < 40 && hasMore && !older) void previous(); }}>
       {hasMore && <button className="button secondary" type="button" disabled={older} onClick={() => void previous()}>{older ? 'Yükleniyor…' : 'Önceki Mesajları Göster'}</button>}
       {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" onClick={() => void download(file)}>{file.originalName}</button>)}</article>)}

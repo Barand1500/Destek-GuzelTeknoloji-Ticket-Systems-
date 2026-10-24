@@ -474,7 +474,7 @@ function SavedRepliesContent() {
     <>
       <div className="management-grid">
         <section className="management-panel">
-          <Search value={list.search} onChange={list.setSearch} />
+          <Search value={list.search} onChange={list.setSearch} limit={list.limit} onLimitChange={list.setLimit} />
           <ErrorMessage error={remove.error} />
           <ListState
             loading={list.isPending}

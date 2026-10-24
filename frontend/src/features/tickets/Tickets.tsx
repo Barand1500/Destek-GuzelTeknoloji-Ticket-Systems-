@@ -768,7 +768,10 @@ export function TicketDetail() {
   });
   const update = useMutation({
     mutationFn: async (input: unknown) => api.patch(`/conversations/${id}`, input),
-    onSuccess: invalidate,
+    onSuccess: result => {
+      queryClient.setQueryData<Conversation>(['conversation', id], current => current ? { ...current, ...result.data.data } : result.data.data);
+      invalidate();
+    },
   });
   const liveTyping = useConversationTyping(id, Boolean(ticket.data && !internal && !reply.isPending && ticket.data.status !== 'CLOSED' && hasPermission(user, 'conversations.reply')));
   const claim = useMutation({ mutationFn: () => api.post(`/conversations/${id}/assign-to-me`), onSuccess: invalidate });
@@ -926,6 +929,7 @@ export function TicketDetail() {
               )}
               <ReplyChannelSelector key={t.id} conversation={t} editable={hasPermission(user, "conversations.reply") && !internal} />
             </div>
+            {!internal && user?.role !== 'CUSTOMER' && <WhatsappWindowWarning conversation={t} />}
             {internal ? <MentionTextarea
               conversationId={t.id}
               value={body}
@@ -1000,7 +1004,7 @@ export function TicketDetail() {
           </div>
           <div className="ticket-assignee-property">
             {canAssignStaff ? (
-              <MultiDropdownSelect className="assignee-multi-select" label="Atanan Personeller" ariaLabel="Atanan Personeller" value={assignedPeople.map(person => person.id)} selectionLabel={assignedPeople.map(person => person.name).join(', ')} emptyLabel="Atanmamış" disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={assignedAgentIds => update.mutate({ assignedAgentIds })} options={assigneeOptions.filter(option => option.value)} />
+              <MultiDropdownSelect preserveOrderWhileOpen className="assignee-multi-select" label="Atanan Personeller" ariaLabel="Atanan Personeller" value={assignedPeople.map(person => person.id)} selectionLabel={assignedPeople.map(person => person.name).join(', ')} emptyLabel="Atanmamış" disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={assignedAgentIds => update.mutate({ assignedAgentIds })} options={assigneeOptions.filter(option => option.value)} />
             ) : (
               <label>Atanan personel<span>{assignedPeople.map(person => person.name).join(", ") || "Atanmamış"}</span></label>
             )}
@@ -1053,7 +1057,7 @@ export function ConversationLog() {
     if (entry.action === 'AGENT_REPLY' && latestCustomerMessage) responseDurations.set(entry.id, durationBetween(latestCustomerMessage.createdAt, entry.createdAt));
   }
   const labels: Record<string, string> = { INITIAL_MESSAGE: 'Talep Oluşturıklaması kaydedildi', CUSTOMER_MESSAGE: 'Müşteri mesajı', AGENT_REPLY: 'Personel yanıtı', INTERNAL_NOTE: 'Dahili not', SYSTEM: 'Sistem değişikliği' };
-  const fields: Record<string, string> = { subject: 'Konu', number: 'Talep numarası', status: 'Durum', priority: 'Öncelik', assignedAgentId: 'Personel', departmentId: 'Departman', websiteId: 'Web sitesi', tagIds: 'Etiketler', reason: 'Neden', responseCode: 'Sunucu kodu', recipient: 'E-Posta alıcısı', messageId: 'E-Posta mesaj kimliği', smtpResponse: 'E-Posta sunucusu yanıtı', accepted: 'Kabul edilen alıcı sayısı' };
+  const fields: Record<string, string> = { channel: 'Mesajın geldiği kanal', replyChannels: 'Yanıt kanalları', subject: 'Konu', number: 'Talep numarası', status: 'Durum', priority: 'Öncelik', assignedAgentId: 'Personel', departmentId: 'Departman', websiteId: 'Web sitesi', tagIds: 'Etiketler', reason: 'Neden', responseCode: 'Sunucu kodu', recipient: 'Alıcı', messageId: 'Mesaj kimliği', smtpResponse: 'E-Posta sunucusu yanıtı', accepted: 'Kabul edilen alıcı sayısı' };
   return (
     <main className="page conversation-log-page">
       <Link className="back-link" to={user && id ? conversationPath(user.role, id) : roleHome(user?.role ?? "CUSTOMER")}>
@@ -1073,15 +1077,16 @@ export function ConversationLog() {
         {!logs.isPending && !logs.isError && entries.length === 0 && <p className="muted conversation-log-state">Bu konuşma için henüz log kaydı yok.</p>}
         {entries.length > 0 && <div className="conversation-log-table-wrap">
           <table className="conversation-log-table" aria-label="Konuşma İşlem Geçmişi">
-            <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi Yapan</th><th scope="col">Tarih / Saat <small>Türkiye saati</small></th><th scope="col">Açıklama ve Dosyalar</th></tr></thead>
+            <thead><tr><th scope="col">İşlem</th><th scope="col">İşlemi Yapan</th><th scope="col">Tarih / Saat <small>Türkiye saati</small></th><th scope="col">Kanal</th><th scope="col">Açıklama ve Dosyalar</th></tr></thead>
             <tbody>{entries.map((entry) => <tr className={entry.type === 'INTERNAL_NOTE' ? 'conversation-log-note' : ''} key={entry.id}>
               <td><div className="conversation-log-action">{entry.type === 'INTERNAL_NOTE' ? <LockKeyhole size={16} /> : entry.type === 'SYSTEM' ? <History size={16} /> : <MessageSquare size={16} />}<strong>{labels[entry.action] ?? activityActionLabel(entry.action)}</strong></div></td>
               <td><strong>{entry.author?.name ?? 'Sistem'}</strong>{entry.author?.email && <small>{displayEmail(entry.author.email)}</small>}</td>
               <td><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></td>
+              <td>{entry.metadata?.channel ? channels[String(entry.metadata.channel) as keyof typeof channels] ?? String(entry.metadata.channel) : Array.isArray(entry.metadata?.replyChannels) ? entry.metadata.replyChannels.map(channel => channels[channel as keyof typeof channels] ?? String(channel)).join(', ') : '—'}</td>
               <td>
                 {labels[entry.action] && <p>{entry.body}</p>}
                 {entry.action === 'AGENT_REPLY' && <small className="conversation-log-response">Yanıt süresi: {responseDurations.get(entry.id) ?? 'hesaplanamadı'}</small>}
-                {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key]).map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? activityValueLabel(value)}</small>)}
+                {entry.metadata && Object.entries(entry.metadata).filter(([key]) => fields[key] && key !== 'channel' && key !== 'replyChannels').map(([key, value]) => <small key={key}>{fields[key]}: {value === null ? 'Yok' : statuses[String(value)] ?? priorities[String(value)] ?? activityValueLabel(value)}</small>)}
                 {entry.attachments.length > 0 && <AttachmentLinks attachments={entry.attachments} />}
               </td>
             </tr>)}</tbody>
@@ -1092,3 +1097,4 @@ export function ConversationLog() {
     </main>
   );
 }
+import { WhatsappWindowWarning } from './WhatsappWindowWarning';

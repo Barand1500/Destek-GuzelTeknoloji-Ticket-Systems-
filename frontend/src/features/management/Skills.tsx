@@ -1,11 +1,12 @@
 import { SortableTableHead, sortTableRows, useTableSort } from "../../components/TableSorting";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award, Pencil, Plus, Trash2 } from "lucide-react";
 import { api, errorText } from "../../services/api";
 import { DropdownSelect } from "../../components/DropdownSelect";
 import { DeleteModal } from "../../components/DeleteModal";
-import { Heading, ListState, Search } from "./shared";
+import { Heading, ListState, Pagination, Search } from "./shared";
+import { usePageSize } from '../../components/usePageSize';
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from "../auth/permissions";
 
@@ -36,9 +37,11 @@ const labels = {
 export function SkillsPage() {
   const { user } = useAuth();
   const catalog = useSkillCatalog();
-  const sorting = useTableSort();
+  const [page, setPage] = useState(1);
+  const sorting = useTableSort(() => setPage(1));
   const client = useQueryClient();
   const [kind, setKind] = useState<SkillDefinition["kind"]>("category");
+  const [limit, setLimit] = usePageSize(`skill-catalog:${kind}`);
   const [editing, setEditing] = useState<SkillDefinition | null>(null);
   const [name, setName] = useState(""),
     [categoryId, setCategoryId] = useState(""),
@@ -88,7 +91,10 @@ export function SkillsPage() {
       .toLocaleLowerCase("tr-TR")
       .includes(search.toLocaleLowerCase("tr-TR")),
   );
-  const visible = sortTableRows(filtered, sorting.sort, (item, field) => field === 'name' ? item.name : kind === 'skill' ? catalog.data?.categories.find(category => category.id === item.categoryId)?.name ?? '' : kind === 'level' ? item.rank : catalog.data?.skills.filter(skill => skill.categoryId === item.id).length ?? 0);
+  const sorted = sortTableRows(filtered, sorting.sort, (item, field) => field === 'name' ? item.name : kind === 'skill' ? catalog.data?.categories.find(category => category.id === item.categoryId)?.name ?? '' : kind === 'level' ? item.rank : catalog.data?.skills.filter(skill => skill.categoryId === item.id).length ?? 0);
+  const totalPages = Math.ceil(sorted.length / limit);
+  const visible = sorted.slice((page - 1) * limit, page * limit);
+  useEffect(() => { if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages)); }, [page, totalPages]);
   const edit = (item: SkillDefinition) => {
     setEditing(item);
     setName(item.name);
@@ -118,6 +124,7 @@ export function SkillsPage() {
             className={kind === tab ? "active" : ""}
             onClick={() => {
               setKind(tab);
+              setPage(1);
               sorting.resetSort();
               setSearch("");
               reset();
@@ -134,7 +141,9 @@ export function SkillsPage() {
             label={`${labels[kind]} içinde ara`}
             placeholder="Ad ile ara..."
             value={search}
-            onChange={setSearch}
+            onChange={value => { setSearch(value); setPage(1); }}
+            limit={limit}
+            onLimitChange={value => { setLimit(value); setPage(1); }}
           />
           <ListState
             loading={catalog.isPending}
@@ -195,7 +204,7 @@ export function SkillsPage() {
               </table>
             </div>
           )}
-          <p className="muted">{items.length} kayıt</p>
+          {!catalog.isPending && !catalog.isError && <Pagination pagination={{ page, limit, total: sorted.length, totalPages }} onChange={setPage} alwaysVisible />}
         </section>
         {(hasPermission(user, "skills.create") || editing) && (
           <section className="management-panel">

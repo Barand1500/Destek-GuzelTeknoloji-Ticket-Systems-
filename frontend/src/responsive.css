@@ -12,7 +12,6 @@
     border-bottom:1px solid var(--mobile-table-line,#dce7e0);background-clip:padding-box;
   }
   .management-table-wrap>.management-table:not(.announcement-templates-table) thead{border:0}
-  .management-table-wrap>.management-table:not(.announcement-templates-table) thead th{border-top:1px solid var(--mobile-table-line,#dce7e0)}
   .saved-content-table:not(.announcement-templates-table){min-width:680px;table-layout:fixed}
   .saved-content-table:not(.announcement-templates-table) th:nth-child(1),.saved-content-table:not(.announcement-templates-table) td:nth-child(1){width:150px}
   .saved-content-table:not(.announcement-templates-table) th:nth-child(2),.saved-content-table:not(.announcement-templates-table) td:nth-child(2){width:230px}
@@ -90,7 +89,7 @@
   html[data-theme=dark] .saved-content-table-wrap:has(.announcement-templates-table){--mobile-table-line:#31463d}
   .announcement-templates-table{display:table;table-layout:fixed;min-width:870px!important;width:100%;border-collapse:separate;border-spacing:0}
   .announcement-templates-table th,.announcement-templates-table td{border-bottom:1px solid var(--mobile-table-line);background-clip:padding-box}
-  .announcement-templates-table thead th{border-top:1px solid var(--mobile-table-line);white-space:nowrap}
+  .announcement-templates-table thead th{white-space:nowrap}
   .announcement-templates-table th:nth-child(1),.announcement-templates-table td:nth-child(1){width:170px}
   .announcement-templates-table th:nth-child(2),.announcement-templates-table td:nth-child(2){width:190px}
   .announcement-templates-table th:nth-child(3),.announcement-templates-table td:nth-child(3){width:360px}
@@ -315,3 +314,18 @@
   .integrations-page .integration-webhook-copy{min-width:0}
   .integrations-page .integration-webhook-copy code{min-width:0;white-space:normal;overflow-wrap:anywhere}
 }
+/* Keep conversation history readable without horizontal page scrolling. */
+.conversation-log-page{min-width:0;max-width:100%}
+.conversation-log-table-wrap{min-width:0;max-width:100%}
+.conversation-log-action{min-width:0;white-space:normal}
+.conversation-log-action strong{min-width:0;overflow-wrap:anywhere}
+.conversation-log-page .conversation-log-table small{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+@media(max-width:767px){
+  .conversation-log-table-wrap{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+  .conversation-log-table{min-width:900px;width:100%}
+  .conversation-log-table th,.conversation-log-table td{white-space:normal;overflow-wrap:anywhere;padding:12px 14px}
+  .conversation-log-table time,.conversation-log-table small,.conversation-log-table .attachment-list{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+  .conversation-log-panel>.pagination{flex-wrap:wrap;gap:10px}
+}
+.whatsapp-window-warning{display:grid;gap:6px;flex:0 0 auto;min-width:0;margin:12px 16px 0;padding:12px 14px;border:1px solid #e4bf55;border-radius:8px;background:#fff7d6;color:#795700;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+html[data-theme=dark] .whatsapp-window-warning{background:#3c3219;border-color:#8e7430;color:#ffe29a}

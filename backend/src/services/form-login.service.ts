@@ -15,17 +15,18 @@ const samePhone = (left?: string | null, right?: string | null) => Boolean(left 
 
 export async function requestFormLogin(rawEmail: string | undefined, rawPhone: string | undefined, deliveryChannel: DeliveryChannel) {
   const email = rawEmail ? canonicalEmail(rawEmail) : null;
+  if (deliveryChannel === 'SMS' && !/^5\d{9}$/.test((rawPhone ?? '').replace(/ /g, ''))) throw new AppError(400, 'INVALID_PHONE', '5 ile başlayan 10 haneli GSM numarası girin.');
   const phone = rawPhone ? canonicalPhone(rawPhone) : null;
   if (deliveryChannel === 'EMAIL' && !email) throw new AppError(400, 'EMAIL_REQUIRED', 'Geçerli bir e-posta adresi girin.');
   if (deliveryChannel !== 'EMAIL' && (!phone || !/^\d{10,15}$/.test(phone))) throw new AppError(400, 'INVALID_PHONE', 'Seçtiğiniz doğrulama yöntemi için geçerli bir telefon numarası girin.');
   const candidates = await db.conversation.findMany({
-    where: { channel: 'FORM', deletedAt: null, customer: { deletedAt: null, isActive: true }, ...(email ? { OR: [{ formRequest: { is: { email } } }, { customer: { email } }] } : {}) },
+    where: { deletedAt: null, customer: { deletedAt: null, isActive: true }, ...(email ? { OR: [{ formRequest: { is: { email } } }, { customer: { email } }] } : {}) },
     include: { formRequest: true, customer: { select: { id: true, email: true, phone: true } } },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
   });
   const conversation = candidates.find(item => deliveryChannel === 'EMAIL'
-    ? canonicalEmail(item.formRequest?.email ?? item.customer.email ?? '') === email
-    : samePhone(item.formRequest?.phone ?? item.customer.phone, phone));
+    ? [item.formRequest?.email, item.customer.email].some(value => value && canonicalEmail(value) === email)
+    : samePhone(item.formRequest?.phone, phone) || samePhone(item.customer.phone, phone));
   if (!conversation) return { found: false as const };
   const challengeId = randomUUID(), code = String(randomInt(100000, 1000000));
   await db.$transaction(async tx => {
@@ -50,14 +51,13 @@ export async function verifyFormLogin(challengeId: string, code: string) {
   if (!challenge) throw invalid();
   const token = await db.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM Conversation WHERE id = ${challenge.conversationId} FOR UPDATE`;
-    const allowedChannels = 'FORM';
-    const attempt = await tx.formLoginChallenge.updateMany({ where: { id: challengeId, attempts: { lt: 5 }, consumedAt: null, expiresAt: { gt: new Date() }, conversation: { channel: allowedChannels, deletedAt: null, customer: { deletedAt: null, isActive: true } } }, data: { attempts: { increment: 1 } } });
+    const attempt = await tx.formLoginChallenge.updateMany({ where: { id: challengeId, attempts: { lt: 5 }, consumedAt: null, expiresAt: { gt: new Date() }, conversation: { deletedAt: null, customer: { deletedAt: null, isActive: true } } }, data: { attempts: { increment: 1 } } });
     if (!attempt.count) return null;
     const current = await tx.formLoginChallenge.findUniqueOrThrow({ where: { id: challengeId }, include: { conversation: { include: { formRequest: true, customer: { select: { email: true, phone: true } } } } } });
-    const rawEmail = current.conversation.formRequest?.email ?? current.conversation.customer.email;
+    const rawEmail = [current.conversation.formRequest?.email, current.conversation.customer.email].find(value => value && current.email && canonicalEmail(value) === canonicalEmail(current.email));
     const currentEmail = rawEmail ? canonicalEmail(rawEmail) : null;
     const emailMatches = current.deliveryChannel !== 'EMAIL' || Boolean(current.email && currentEmail && canonicalEmail(current.email) === currentEmail);
-    const phoneMatches = current.deliveryChannel === 'EMAIL' || samePhone(current.phone, current.conversation.formRequest?.phone ?? current.conversation.customer.phone);
+    const phoneMatches = current.deliveryChannel === 'EMAIL' || samePhone(current.phone, current.conversation.formRequest?.phone) || samePhone(current.phone, current.conversation.customer.phone);
     if (!emailMatches || !phoneMatches || !timingSafeEqual(Buffer.from(current.codeHash), Buffer.from(hash(challengeId, code)))) return null;
     await tx.formLoginChallenge.update({ where: { id: challengeId }, data: { consumedAt: new Date() } });
     return issueFormEmailSession(tx, current.deliveryChannel === 'EMAIL' ? currentEmail : null, current.deliveryChannel === 'EMAIL' ? null : current.phone, current.deliveryChannel as DeliveryChannel);

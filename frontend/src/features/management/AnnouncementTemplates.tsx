@@ -18,7 +18,7 @@ import {
 } from "./shared";
 
 export function AnnouncementTemplates() {
-  const list = useList<AnnouncementTemplate>("/announcement-templates", { limit: 3 });
+  const list = useList<AnnouncementTemplate>("/announcement-templates");
   const [editing, setEditing] = useState<AnnouncementTemplate | null>(null);
   const [deleting, setDeleting] = useState<AnnouncementTemplate | null>(null);
   const [version, setVersion] = useState(0);
@@ -56,6 +56,8 @@ export function AnnouncementTemplates() {
           <Search
             value={list.search}
             onChange={list.setSearch}
+            limit={list.limit}
+            onLimitChange={list.setLimit}
             placeholder="Şablon adı veya içerik ara…"
           />
           <ErrorMessage error={remove.error} />

@@ -55,13 +55,9 @@ export const createUserSchema = registerSchema
 export const createCustomerSchema = z
   .object({
     name: z.string().trim().min(2).max(100),
-    email: z.preprocess(
-      (value) =>
-        typeof value === "string" && !value.trim() ? undefined : value,
-      emailSchema.optional(),
-    ),
-    phone: customerPhone,
-    company: z.string().trim().min(2).max(120).optional(),
+    email: emailSchema,
+    phone: z.string().trim().min(7).max(30).refine(value => value.replace(/\D/g, '').length >= 7, 'Geçerli bir telefon numarası girin.'),
+    company: z.string().trim().min(2).max(120),
     staffNote: z.string().trim().min(1).max(2000).optional(),
     extraPhones: z.string().trim().max(500).optional(),
     extraEmails: extraEmailsSchema.optional(),

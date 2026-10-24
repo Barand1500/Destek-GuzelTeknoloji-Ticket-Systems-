@@ -8,6 +8,7 @@ import { useAuth } from '../auth/Auth';
 import { hasPermission, screenPermission } from '../auth/permissions';
 import { useLocation } from 'react-router-dom';
 import { useTableSort, sortTableRows } from '../../components/TableSorting';
+import { usePageSize } from '../../components/usePageSize';
 
 export const formatDate = (value: string) =>
   new Date(value).toLocaleString("tr-TR");
@@ -65,7 +66,7 @@ export function useList<T>(
   const sortParams = sorting.sort ?? {};
   const localRecords = Array.isArray(leading) ? leading : undefined;
   const leadingRecords = Array.isArray(leading) ? leading.length : leading;
-  const [limit, setLimit] = useState(15);
+  const [limit, setLimit] = usePageSize(path);
   const [search, setSearch] = useState("");
   const deferredSearch = useDebouncedValue(search);
   const query = useQuery({

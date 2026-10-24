@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '../../services/api';
@@ -15,7 +15,7 @@ export function ReplyChannelSelector({ conversation, editable }: { conversation:
   const available=useQuery({queryKey:['communication-channels'],enabled:editable,queryFn:async()=>(await api.get<{data:{EMAIL:boolean;SMS:boolean;WHATSAPP:boolean;FORM:boolean}}>('/communication-channels')).data.data});
   const saved=conversation.replyChannels?.length?conversation.replyChannels:[conversation.channel==='LIVE_CHAT'?'TICKET':conversation.channel];
   const names=saved.map(value=>channels[value]).join(', ');
-  const text=`Bu talep ${names} ${saved.length>1?'kanalları':'kanalı'} tercih edilerek açıldı.`;
+  const text=`Bu talebin yanıt ${saved.length>1?'kanalları':'kanalı'}: ${names}.`;
   const options=contactChannels(conversation.customer,available.data).map(value=>({value,label:value==='TICKET'?'Telefon':channels[value]}));
   const validDraft=draft.filter(value=>options.some(option=>option.value===value));
   const save=useMutation({mutationFn:async(replyChannels:Channel[])=>api.patch(`/conversations/${conversation.id}`,{replyChannels}),onSuccess:(_,replyChannels)=>{

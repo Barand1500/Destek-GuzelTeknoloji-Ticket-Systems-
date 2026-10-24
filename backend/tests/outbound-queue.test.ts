@@ -66,6 +66,7 @@ test('persistent outbox commits with messages, resumes retries and expired work,
       assert.equal(sentMail[0].attachments[0].filename, 'test.txt');
       assert.equal(sentMeta[0].document.caption, 'First message');
       assert.equal(sentSms.length, 1);
+
       const count = await db.outboundMessage.count({ where: { userId: admin.id } });
       await addMessage(actor, conversation.id, { body: 'Internal', type: 'INTERNAL_NOTE' });
       assert.equal(await db.outboundMessage.count({ where: { userId: admin.id } }), count);
@@ -104,6 +105,23 @@ test('persistent outbox commits with messages, resumes retries and expired work,
       await processOutboundQueue(admin.id);
       assert.equal(sentMeta.length, receipts, 'an early signed delivery prevents resending after a lost HTTP response');
       assert.equal(await db.outboundMessage.count({ where: { userId: admin.id, status: { in: ['PENDING', 'PROCESSING'] } } }), 0);
+      earlyReceipt = false;
+      // Form is a portal destination, not an implicit email delivery channel.
+      await db.conversation.update({ where: { id: conversation.id }, data: { replyChannels: ['WHATSAPP', 'FORM'] } });
+      const formReply = await addMessage(actor, conversation.id, { body: 'WhatsApp and portal only', type: 'AGENT_REPLY' });
+      assert.equal(formReply.visibleInForm, true);
+      const replyJobs = await db.outboundMessage.findMany({ where: { dedupeKey: { startsWith: `${formReply.id}:` } } });
+      assert.deepEqual(replyJobs.map(job => job.channel), ['WHATSAPP']);
+      const metaCount = sentMeta.length, mailCount = sentMail.length;
+      await processOutboundQueue(admin.id);
+      assert.equal(sentMeta.length, metaCount + 1);
+      assert.equal(sentMail.length, mailCount);
+      assert.equal((await db.outboundMessage.findUniqueOrThrow({ where: { id: replyJobs[0].id } })).status, 'SENT');
+      await db.conversation.update({ where: { id: conversation.id }, data: { replyChannels: ['FORM'] } });
+      const portalOnly = await addMessage(actor, conversation.id, { body: 'Portal only', type: 'AGENT_REPLY' });
+      assert.equal(portalOnly.visibleInForm, true);
+      assert.equal(await db.outboundMessage.count({ where: { dedupeKey: { startsWith: `${portalOnly.id}:` } } }), 0);
+      await db.conversation.update({ where: { id: conversation.id }, data: { replyChannels: ['EMAIL', 'WHATSAPP', 'SMS'] } });
     });
   } finally {
     db.$transaction = originalTransaction;

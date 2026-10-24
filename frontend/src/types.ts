@@ -12,6 +12,8 @@ export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIV
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
 export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",FORM:"Form",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
+  firstMessage?: string | null;
+  whatsappServiceWindow?: { lastInboundAt: string | null; expiresAt: string | null; expired: boolean };
   formRequest?: { name: string; email: string; phone: string | null; company: string | null } | null;
   replyChannels?: Array<"TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "FORM"> | null;
   channel: ConversationChannel;

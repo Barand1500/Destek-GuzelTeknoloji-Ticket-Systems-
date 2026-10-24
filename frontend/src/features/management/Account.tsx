@@ -332,7 +332,7 @@ export function StaffPresencePage() {
       </section>
       <section className="presence-grid">
         {visibleStaff.map(person=><article className="presence-card" key={person.id}>
-          <header><div className="presence-avatar">{person.name.charAt(0)}</div><div><h2>{person.name}</h2><p>{roles[person.role]} · {person.departments.join(", ")||"Departman yok"}</p></div></header>
+          <header><div className="presence-avatar">{person.name.trim().charAt(0).toLocaleUpperCase("tr-TR")}</div><div><h2>{person.name}</h2><p>{roles[person.role]} · {person.departments.join(", ")||"Departman yok"}</p></div></header>
           <div className={`presence-current ${person.state.toLowerCase()}`}><Activity size={16}/><div><small>Şu an · {presenceState[person.state]}</small><strong>{person.page}</strong><span>{person.state==="OFFLINE"?(person.lastSeenAt?`Son görülme: ${formatDate(person.lastSeenAt)}`:"Henüz bağlantı yok"):(person.lastActivityAt?`Son hareket: ${formatDate(person.lastActivityAt)}`:"")}</span></div></div>
           <dl className="presence-metrics">
             <div><dt>Bugün cevaplanan</dt><dd>{person.answeredToday}</dd></div>
@@ -355,6 +355,7 @@ export function ProfilePage() {
   const [success, setSuccess] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
   const profile = useQuery({
     queryKey: ["/profile"],
     queryFn: async () => (await api.get("/profile")).data.data as User,
@@ -370,6 +371,8 @@ export function ProfilePage() {
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     const values = formValues(event);
+    validateSecurity(event.currentTarget);
+    if (!event.currentTarget.reportValidity()) return;
     setSuccess(false);
     const email = String(values.get("email"));
     save.mutate({
@@ -381,6 +384,15 @@ export function ProfilePage() {
         ? { currentPassword: values.get("currentPassword") }
         : {}),
     });
+  }
+  function validateSecurity(form: HTMLFormElement) {
+    const password = form.elements.namedItem('password') as HTMLInputElement;
+    const repeat = form.elements.namedItem('passwordRepeat') as HTMLInputElement;
+    const current = form.elements.namedItem('currentPassword') as HTMLInputElement;
+    const email = form.elements.namedItem('email') as HTMLInputElement;
+    repeat.required = Boolean(password.value);
+    repeat.setCustomValidity(repeat.value !== password.value ? 'Yeni şifreler eşleşmiyor.' : '');
+    current.required = Boolean(password.value) || email.value !== (profile.data?.email ?? '');
   }
   return (
     <main className="page profile-page">
@@ -402,7 +414,7 @@ export function ProfilePage() {
               </div>
               <span className="profile-role">{profile.data.accessRole?.name ?? roles[profile.data.role]}</span>
             </div>
-            <form key={formVersion} className="management-form profile-form" onSubmit={submit}>
+            <form key={formVersion} className="management-form profile-form" onSubmit={submit} onInput={event => validateSecurity(event.currentTarget)}>
             <section className="profile-info-card" aria-label="İletişim Bilgileri">
             <label>
               <span className="field-label">Ad Soyad</span>
@@ -427,12 +439,16 @@ export function ProfilePage() {
             <section className="profile-security" aria-labelledby="profile-security-title">
               <h2 id="profile-security-title">Güvenlik</h2>
             <label>
-              <span className="field-label">Yeni Şifre (İsteğe Bağlı)</span>
+              <span className="field-label">Mevcut Şifre</span>
+              <span className="password-field"><input name="currentPassword" type={showCurrentPassword ? "text" : "password"} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowCurrentPassword((visible) => !visible)} aria-label={showCurrentPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showCurrentPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
+            </label>
+            <label>
+              <span className="field-label">Yeni Şifre</span>
               <span className="password-field"><input name="password" type={showNewPassword ? "text" : "password"} minLength={5} maxLength={72} autoComplete="new-password" /><button className="password-toggle" type="button" onClick={() => setShowNewPassword((visible) => !visible)} aria-label={showNewPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
             </label>
             <label>
-              <span className="field-label">Mevcut Şifre</span>
-              <span className="password-field"><input name="currentPassword" type={showCurrentPassword ? "text" : "password"} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowCurrentPassword((visible) => !visible)} aria-label={showCurrentPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showCurrentPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
+              <span className="field-label">Yeni Şifre Tekrarı</span>
+              <span className="password-field"><input name="passwordRepeat" type={showRepeatPassword ? "text" : "password"} minLength={5} maxLength={72} autoComplete="new-password" /><button className="password-toggle" type="button" onClick={() => setShowRepeatPassword((visible) => !visible)} aria-label={showRepeatPassword ? "Şifre Tekrarını Gizle" : "Şifre Tekrarını Göster"}>{showRepeatPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
             </label>
             <p className="muted">
               E-Posta adresinizi veya şifrenizi değiştirmek için mevcut

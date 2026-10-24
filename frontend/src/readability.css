@@ -1,4 +1,36 @@
 /* Shared foreground tokens for both workspace themes. */
+/* Guide accents use dark surfaces only when the dark theme is active. */
+html[data-theme="dark"] .guide-page .guide-callout-list li{
+  background:#22342c;border-color:#3b5147;
+}
+html[data-theme="dark"] .guide-page .guide-callout-list li>span,
+html[data-theme="dark"] .guide-page .guide-hero-icon,
+html[data-theme="dark"] .project-guide-section-icon,
+html[data-theme="dark"] .project-guide-response-list li>span{
+  background:#29463a;color:#9ddfc7;
+}
+html[data-theme="dark"] .project-guide-tech-list span{
+  background:#29463a;border-color:#466056;color:#b5e6d3;
+}
+html[data-theme="dark"] .guide-page .guide-eyebrow,
+html[data-theme="dark"] .guide-page .guide-setting-number,
+html[data-theme="dark"] .project-guide-section-heading>div>span,
+html[data-theme="dark"] .project-guide-playbooks summary>span,
+html[data-theme="dark"] .project-guide-playbook-body h5{
+  color:#9ddfc7;
+}
+html[data-theme="dark"] .project-guide-security-note{
+  background:#243e32;border-color:#466056;color:#b5e6d3;
+}
+html[data-theme="dark"] .project-guide-escalate h5{color:#f1d397}
+.app-shell .pagination .icon-button,.app-shell .roles-template-actions>.icon-button{
+  background:var(--surface,#fff);border-color:var(--border,#dce7e0);color:var(--ui-text-navigation);cursor:pointer;
+}
+.app-shell .pagination .icon-button:hover:not(:disabled),.app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#eaf4ee;border-color:#9bbcad;color:#166b5c}
+.app-shell .pagination .icon-button:disabled,.app-shell .roles-template-actions>.icon-button:disabled{opacity:.45;cursor:default}
+html[data-theme="dark"] .app-shell .pagination .icon-button,html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button{background:#20332b;border-color:#466056;color:var(--ui-text-navigation)}
+html[data-theme="dark"] .app-shell .pagination .icon-button:hover:not(:disabled),html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#2a4236;border-color:#729886;color:var(--ui-tab-hover-text)}
+html[data-theme="dark"] .app-shell table th{border-color:#31463d}
 :root {
   --ui-text-primary: #203832;
   --ui-text-secondary: #496257;

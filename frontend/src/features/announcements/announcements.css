@@ -171,6 +171,18 @@ html[data-theme="dark"] .announcements-close:hover {
   color: #166b5c;
   outline: 0;
 }
+html[data-theme="dark"] .announcements-tabs .announcement-history-delete:hover,
+html[data-theme="dark"] .announcements-tabs .announcement-history-delete:focus-within,
+html[data-theme="dark"] .announcements-tabs .announcement-history-delete.open {
+  background: var(--ann-selected);
+  border-color: var(--ann-border);
+  color: var(--ann-accent);
+}
+html[data-theme="dark"] .announcements-tabs .announcement-history-delete .notification-delete-menu button:hover,
+html[data-theme="dark"] .announcements-tabs .announcement-history-delete .notification-delete-menu button:focus-visible {
+  background: var(--ann-selected);
+  color: var(--ann-accent);
+}
 .announcements-tabs button {
   display: flex;
   align-items: center;

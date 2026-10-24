@@ -42,5 +42,5 @@ export function EditableCustomerSummary({ customer, canEdit }: { customer: User;
     const props = { onDoubleClick: () => start(field), tabIndex: canEdit ? 0 : undefined, title: canEdit ? `${labels[field]}: çift tıklayarak düzenleyin; Enter ile kaydedin` : undefined, onKeyDown: (event: React.KeyboardEvent) => { if (canEdit && (event.key === 'Enter' || event.key === 'F2')) { event.preventDefault(); start(field); } }, className: canEdit ? 'customer-summary-editable' : undefined };
     return <span key={field} className="customer-summary-field"><span {...props}>{prefix}{formatField(field, current ?? '')}</span></span>;
   }
-  return <>{field('name')}{field('phone')}{field('email')}{field('company')}{field('extraPhones', 'Ek tel: ')}{field('extraEmails', 'Ek E-Posta: ')}{save.isError && <span className="error" role="alert">{errorText(save.error)}</span>}{save.isPending && <span role="status">Kaydediliyor…</span>}</>;
+  return <>{field('company')}{field('name')}{field('phone')}{field('email')}{field('extraPhones', 'Ek tel: ')}{field('extraEmails', 'Ek E-Posta: ')}{save.isError && <span className="error" role="alert">{errorText(save.error)}</span>}{save.isPending && <span role="status">Kaydediliyor…</span>}</>;
 }

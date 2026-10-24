@@ -10,7 +10,7 @@ import { downloadWhatsappImage, downloadWhatsappDocument, uploadWhatsappMedia, w
 import { whatsappReplyTarget, whatsappOutboundProvider } from './whatsapp-routing.service.js';
 import { acceptsIncomingDate } from './inbound-start-date.js';
 
-type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null; attachments?: StoredUpload[]; replyToExternalId?: string };
+type InboundMessage = { provider: string; externalId: string; channel: "EMAIL" | "SMS" | "WHATSAPP"; sender: { email?: string; phone?: string; name?: string }; subject?: string; body: string; departmentId?: string | null; attachments?: StoredUpload[]; replyToExternalId?: string; receivedAt?: Date };
 type NetgsmResponse = { code?: string; description?: string; jobid?: string; msgheaders?: string[] };
 type MetaResponse = { id?: string; display_phone_number?: string; verified_name?: string; messages?: Array<{ id?: string }>; error?: { message?: string; code?: number } };
 const NETGSM_API = "https://api.netgsm.com.tr/sms/rest/v2";
@@ -167,7 +167,7 @@ export async function persistInboundMessage(input: InboundMessage) {
           target = await tx.conversation.create({ data: { subject, searchSubject: subject.normalize("NFKC").toLocaleLowerCase("tr-TR"), channel: input.channel as ConversationChannel, customerId: customer.id, departmentId: department.id } });
         }
         await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE", attachments: { create: (input.attachments ?? []).map(file => ({ ...file, uploaderId: customer.id })) } } });
-        await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id } });
+        await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id, ...(input.receivedAt ? { createdAt: input.receivedAt } : {}) } });
         await tx.conversation.update({ where: { id: target.id }, data: {
           status: "OPEN", closedAt: null, resolvedAt: null,
           ...(input.channel === "WHATSAPP" && target.channel === 'TICKET' && target.replyChannels == null ? { channel: "WHATSAPP" } : {}),
@@ -224,7 +224,7 @@ export async function receiveMetaWebhook(payload: any, signature?: string, rawBo
       const known = await db.externalMessage.findUnique({ where: { provider_externalId: { provider: 'meta-whatsapp', externalId: message.id } } });
       if (known) { ids.push(known.conversationId); continue; }
       const files = image ? [await downloadWhatsappImage(image.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId)] : document ? [await downloadWhatsappDocument(document.id, settings.whatsappAccessToken, settings.whatsappPhoneNumberId, typeof document.filename === 'string' ? document.filename : undefined)] : [];
-      ids.push(await withStoredUploads(files, attachments => persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", sender: { phone: message.from, name: contacts.get(message.from) }, body: text || (document ? 'Belge' : 'Fotoğraf'), subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId, attachments, replyToExternalId: typeof message.context?.id === "string" ? message.context.id : undefined })));
+      ids.push(await withStoredUploads(files, attachments => persistInboundMessage({ provider: "meta-whatsapp", externalId: message.id, channel: "WHATSAPP", ...(Number.isFinite(Number(message.timestamp)) && Number(message.timestamp) > 0 && Number(message.timestamp) < 8.64e12 ? { receivedAt: new Date(Number(message.timestamp) * 1000) } : {}), sender: { phone: message.from, name: contacts.get(message.from) }, body: text || (document ? 'Belge' : 'Fotoğraf'), subject: "WhatsApp desteği", departmentId: settings.whatsappDepartmentId, attachments, replyToExternalId: typeof message.context?.id === "string" ? message.context.id : undefined })));
     }
   }
   return ids;

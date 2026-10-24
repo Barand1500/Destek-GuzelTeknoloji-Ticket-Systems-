@@ -66,3 +66,6 @@ html[data-theme="dark"] .public-form-page:not(.embedded):has(.form-thread) .form
 .form-selected-files button:hover{background:#16776618}
 .form-selected-files button:focus-visible{outline:2px solid #167766;outline-offset:2px}
 @media(max-width:600px){.form-settings-panel .form-settings-fields{grid-template-columns:1fr}}
+.form-thread-divider{flex:0 0 auto;width:calc(100% + 56px);margin-inline:-28px;border-top:2px solid var(--border,#dbe5df)}
+@media(max-width:600px){.form-thread-divider{width:calc(100% + 28px);margin-inline:-14px}}
+.public-form-page .public-form-card .form-thread-divider+section.form-thread{margin-top:3px;padding-top:0}

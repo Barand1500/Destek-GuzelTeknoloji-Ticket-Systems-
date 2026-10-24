@@ -1,4 +1,5 @@
 import { issueFormLink } from './form-access.service.js';
+import { whatsappWindow } from './whatsapp-window.js';
 import { conversationSearch } from "./conversation-search.js";
 import { internationalEmailSearchIds } from './email-search.js';
 import { conversationListOrder, responseTimePage } from "./conversation-sorting.js";
@@ -52,7 +53,7 @@ async function enqueueConversationMessages(tx: Prisma.TransactionClient, actor: 
   const context = { conversationId: conversation.id, userId: actor.id, messageId };
   const formRequest = channels.includes('FORM') ? await tx.formRequest.findUnique({ where: { conversationId: conversation.id } }) : null;
   const email = formRequest?.email ?? customer.email;
-  if ((channels.includes('EMAIL') || channels.includes('FORM')) && email) {
+  if ((channels.includes('EMAIL') || (mode !== 'reply' && channels.includes('FORM'))) && email) {
     const contact = await supportContact(actor.id, tx);
     const template = await tx.notificationSettings.upsert({ where: { id: 'default' }, create: { id: 'default', ticketCreatedSubject: 'Talebiniz oluşturuldu (#{number})', ticketCreatedBody: 'Merhaba {name},\n\n"{subject}" başlıklı talebiniz oluşturuldu. Destek ekibimiz en kısa sürede dönüş yapacaktır.', ticketReplySubject: 'Talebinize yeni yanıt geldi (#{number})', ticketReplyBody: 'Merhaba {name},\n\n{subject} başlıklı talebinize destek ekibimizin yanıtı:\n\n{reply}' }, update: {} });
     const replace = (value: string) => value.replaceAll('{name}', customer.name).replaceAll('{subject}', conversation.subject).replaceAll('{number}', String(conversation.number)).replaceAll('{reply}', body);
@@ -102,7 +103,14 @@ export async function getConversation(actor: Actor, id: string) {
     orderBy: { createdAt: "asc" },
     include: { user: { select: person } },
   });
-  return { ...conversation, createdBy: creation?.user ?? null, canAddInternalNote };
+  let whatsappServiceWindow;
+  if (actor.role !== 'CUSTOMER' && selectedReplyChannels(conversation.replyChannels, conversation.channel).includes('WHATSAPP')) {
+    const inbound = await db.externalMessage.findFirst({ where: { provider: 'meta-whatsapp', channel: 'WHATSAPP', conversation: { customerId: conversation.customerId } }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } });
+    whatsappServiceWindow = whatsappWindow(inbound?.createdAt ?? null);
+    const failure = await db.activityLog.findFirst({ where: { entityId: id, action: { in: ['conversation.whatsapp_failed', 'conversation.channel_reply_failed'] }, metadata: { path: '$.reason', string_contains: '131047' }, ...(inbound ? { createdAt: { gt: inbound.createdAt } } : {}) }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    if (failure) whatsappServiceWindow.expired = true;
+  }
+  return { ...conversation, createdBy: creation?.user ?? null, canAddInternalNote, whatsappServiceWindow };
 }
 export async function listConversations(actor: Actor, q: z.infer<typeof listSchema>) {
   const today = new Date();
@@ -153,7 +161,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
       const responseIds = q.sortBy === 'responseTime' ? await responseTimePage(tx, where, q.sortDirection ?? 'asc', q.page, q.limit) : null;
       const data = await tx.conversation.findMany({
         where: responseIds ? { AND: [where, { id: { in: responseIds } }] } : where,
-        include: conversationInclude,
+        include: { ...conversationInclude, messages: { where: { type: { in: ['CUSTOMER_MESSAGE', 'AGENT_REPLY'] } }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: 1, select: { body: true } } },
         orderBy: conversationListOrder(q.sortBy === 'responseTime' ? undefined : q.sortBy, q.sortDirection),
         skip: responseIds ? 0 : (q.page - 1) * q.limit,
         take: q.limit,
@@ -191,6 +199,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
         statsByConversation.set(stat.conversationId, current);
       }
       const enriched = data.map((conversation) => {
+        const { messages: initialMessages, ...details } = conversation;
         const stats = statsByConversation.get(conversation.id) ?? [];
         const customerStats = stats.filter((stat) => stat.type === "CUSTOMER_MESSAGE");
         const staffReplyStats = stats.filter((stat) => stat.type === "AGENT_REPLY");
@@ -199,7 +208,8 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
           : [];
         const responseTime = responseTimes.get(conversation.id);
         return {
-          ...conversation,
+          ...details,
+          firstMessage: initialMessages[0]?.body ?? null,
           assignees: conversation.assignees.map(item => ({ ...item, messageCount: staffReplyStats.filter(stat => stat.authorId === item.userId).reduce((sum, stat) => sum + stat._count._all, 0) })),
           responseTimeStartAt: responseTime?.start ?? null,
           responseTimeAt: responseTime?.end ?? null,
@@ -362,12 +372,13 @@ export async function history(actor: Actor, id: string, page: number, limit: num
   await getConversation(actor, id);
   const entries = await db.$transaction(async tx => {
     const messages = await tx.conversationMessage.findMany({ where: { conversationId: id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], include: { author: { select: person }, attachments: { select: { id: true, originalName: true, mimeType: true, size: true } } } });
-    const logs = await tx.activityLog.findMany({ where: { entityId: id, entityType: 'Conversation', action: { notIn: ['conversation.replied', 'conversation.note_added', 'conversation.email_received', 'conversation.email_sent'] } }, include: { user: { select: person } } });
+    const logs = await tx.activityLog.findMany({ where: { entityId: id, entityType: 'Conversation', action: { notIn: ['conversation.email_received', 'conversation.email_sent'] } }, include: { user: { select: person } } });
+    const messageMetadata = new Map(logs.filter(log => ['conversation.replied', 'conversation.note_added'].includes(log.action)).map(log => { const metadata = log.metadata as Record<string, unknown> | null; return [metadata?.messageId, metadata]; }));
     const labels: Record<string, string> = { 'conversation.created': 'Talep oluşturuldu', 'conversation.updated': 'Talep bilgileri güncellendi', 'conversation.claimed': 'Temsilci talebi üzerine aldı', 'conversation.email_failed': 'E-posta bildirimi gönderilemedi' };
     const creation = logs.find(log => log.action === 'conversation.created');
     return [
-      ...messages.map((message, index) => ({ ...message, author: index === 0 && creation ? creation.user : message.author, action: index === 0 && creation ? 'INITIAL_MESSAGE' : message.type, metadata: null })),
-      ...logs.map(log => ({ id: log.id, conversationId: id, type: 'SYSTEM' as const, action: log.action, body: labels[log.action] ?? log.action, createdAt: log.createdAt, author: log.user, attachments: [], metadata: log.metadata })),
+      ...messages.map((message, index) => ({ ...message, author: index === 0 && creation ? creation.user : message.author, action: index === 0 && creation ? 'INITIAL_MESSAGE' : message.type, metadata: messageMetadata.get(message.id) ? { channel: messageMetadata.get(message.id)?.channel, replyChannels: messageMetadata.get(message.id)?.replyChannels } : null })),
+      ...logs.filter(log => !['conversation.replied', 'conversation.note_added'].includes(log.action)).map(log => ({ id: log.id, conversationId: id, type: 'SYSTEM' as const, action: log.action, body: labels[log.action] ?? log.action, createdAt: log.createdAt, author: log.user, attachments: [], metadata: log.metadata })),
     ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id));
   }, { isolationLevel: 'RepeatableRead' });
   return { data: entries.slice((page - 1) * limit, page * limit), pagination: { page, limit, total: entries.length, totalPages: Math.ceil(entries.length / limit) } };
@@ -377,6 +388,7 @@ export async function addMessage(
   id: string,
   input: z.infer<typeof messageSchema>,
   files:StoredUpload[] = [],
+  context: { channel?: 'FORM' } = {},
 ) {
   if (!input.body.trim() && !files.length)
     throw new AppError(400, "MESSAGE_REQUIRED", "Mesaj veya dosya ekleyin.");
@@ -408,6 +420,14 @@ export async function addMessage(
         "Talep kapalı veya erişilemiyor.",
       );
     const conversation=await tx.conversation.findUniqueOrThrow({where:{id}});
+    if (actor.role === 'CUSTOMER' && context.channel === 'FORM') {
+      const currentChannels = selectedReplyChannels(conversation.replyChannels, conversation.channel);
+      if (!currentChannels.includes('FORM')) {
+        const replyChannels = [...currentChannels, 'FORM'];
+        await tx.conversation.update({ where: { id }, data: { replyChannels } });
+        await tx.activityLog.create({ data: { userId: actor.id, entityId: id, action: 'conversation.updated', metadata: { replyChannels, details: ['Müşteri Form portalından yanıtladığı için Form yanıt kanalı eklendi.'] }, ipAddress: actor.ipAddress } });
+      }
+    }
     if (type === 'AGENT_REPLY') {
       const ids = await assignmentIds(tx, id, conversation.assignedAgentId);
       if (!ids.includes(actor.id)) {
@@ -420,7 +440,7 @@ export async function addMessage(
         const recipient = await tx.user.findUniqueOrThrow({ where: { id: conversation.customerId }, select: { email: true, phone: true } });
         const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
         const request = deliveryChannels.includes('FORM') ? await tx.formRequest.findUnique({ where: { conversationId: id } }) : null;
-        validateReplyChannels(deliveryChannels, { ...recipient, email: request?.email ?? recipient.email }, settings);
+        validateReplyChannels(deliveryChannels.filter(channel => channel !== 'FORM'), { ...recipient, email: request?.email ?? recipient.email }, settings);
       }
     }
     const mentionedUsers = mentionUserIds.length ? await tx.user.findMany({
@@ -444,7 +464,7 @@ export async function addMessage(
         userId: actor.id,
         action: internal ? "conversation.note_added" : "conversation.replied",
         entityId: id,
-        metadata: { messageId: message.id, type, attachmentCount: files.length },
+        metadata: { messageId: message.id, type, attachmentCount: files.length, ...(!internal ? actor.role === 'CUSTOMER' ? { channel: context.channel ?? conversation.channel } : { replyChannels: deliveryChannels } : {}) },
         ipAddress:actor.ipAddress,
       },
     });

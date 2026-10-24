@@ -85,7 +85,7 @@ formsRouter.get('/conversation', async (req, res) => {
   const before = z.uuid().optional().parse(req.query.before), after = z.uuid().optional().parse(req.query.after);
   if (before && after) throw new AppError(400, 'INVALID_CURSOR', 'Geçersiz mesaj aralığı.');
   const cursorId = before ?? after;
-  const visibility = formMessageVisibility(conversation.channel);
+  const visibility = formMessageVisibility(conversation.accountPortal ? 'ACCOUNT' : conversation.channel);
   const cursor = cursorId ? await db.conversationMessage.findFirst({ where: { id: cursorId, conversationId: conversation.id, ...visibility }, select: { id: true, createdAt: true } }) : null;
   if (cursorId && !cursor) throw new AppError(400, 'INVALID_CURSOR', 'Mesaj bulunamadı.');
   const order = after ? 'asc' : 'desc';
@@ -95,12 +95,12 @@ formsRouter.get('/conversation', async (req, res) => {
 });
 formsRouter.post('/conversation/messages', replies, attachments, async (req, res) => {
   const input = z.object({ body: z.string().trim().max(10000) }).strict().parse(req.body);
-  await withStoredUploads(req.files as Express.Multer.File[], files => addMessage(req.actor, res.locals.formConversation.id, input, files), { maxFileSize: formFileSize });
+  await withStoredUploads(req.files as Express.Multer.File[], files => addMessage(req.actor, res.locals.formConversation.id, input, files, { channel: 'FORM' }), { maxFileSize: formFileSize });
   res.status(201).json({ success: true });
 });
 formsRouter.get('/conversation/attachments/:id', async (req, res) => {
   const conversation = res.locals.formConversation;
-  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: conversation.id, ...formMessageVisibility(conversation.channel) } } });
+  const file = await db.conversationAttachment.findFirst({ where: { id: z.uuid().parse(req.params.id), message: { conversationId: conversation.id, ...formMessageVisibility(conversation.accountPortal ? 'ACCOUNT' : conversation.channel) } } });
   if (!file) throw new AppError(404, 'FILE_NOT_FOUND', 'Dosya bulunamadı.');
   res.download(path.join(uploadRoot, file.storageKey), file.originalName);
 });
