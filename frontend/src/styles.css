@@ -5455,6 +5455,16 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
   background: #fff;
   box-shadow: 0 24px 70px rgba(12, 29, 21, 0.35);
 }
+.attachment-preview-modal.attachment-preview-compact {
+  width: min(520px, 100%);
+  height: auto;
+  min-height: 180px;
+  max-height: calc(100dvh - 48px);
+}
+.attachment-preview-compact .attachment-preview-content {
+  padding: 28px;
+  text-align: center;
+}
 .attachment-preview-modal header {
   display: flex;
   align-items: center;
@@ -5499,6 +5509,11 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
   color: #14745f;
   text-decoration: underline;
 }
+.attachment-preview-modal header strong.attachment-preview-name,
+.attachment-preview-modal header strong.attachment-preview-name:hover {
+  cursor: default;
+  text-decoration: none;
+}
 .attachment-preview-modal header button {
   display: grid;
   place-items: center;
@@ -5527,6 +5542,8 @@ html[data-theme="dark"] .composer-file-list button:not(.composer-file-preview) {
   line-height: 1.3;
   font-weight: 700;
   color: #263a36;
+  background: transparent;
+  box-shadow: none;
 }
 .attachment-preview-content {
   display: grid;

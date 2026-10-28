@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { TurnstileField, useTurnstile } from '../auth/Turnstile';
 import { EmailInput } from '../../components/EmailInput';
+import { FilePreviewModal, displayFileName } from './TicketExtras';
 import { errorText } from '../../services/api';
 import { Paperclip, Send, X } from 'lucide-react';
 import { DropdownSelect } from '../../components/DropdownSelect';
@@ -11,7 +12,7 @@ import './form.css';
 
 // Guest credentials must never replace staff credentials or trigger staff-session refresh.
 const guest = axios.create({ baseURL: '/api/v1/public/form', withCredentials: false });
-type Message = { id: string; body: string; type: string; createdAt: string; author: { name: string }; attachments: { id: string; originalName: string; size: number }[] };
+type Message = { id: string; body: string; type: string; createdAt: string; author: { name: string }; attachments: { id: string; originalName: string; size: number; mimeType: string }[] };
 type Thread = { number: number; subject: string; status: string; closed: boolean; messages: Message[]; hasMore: boolean; direction: 'latest' | 'after' | 'before' };
 type FormAccountTicket = { id: string; number: number; subject: string; status: string; channel: string; createdAt: string; updatedAt: string };
 type FormFieldId = 'company' | 'name' | 'phone' | 'email' | 'subject' | 'message' | 'files';
@@ -135,6 +136,9 @@ function FormThread({ token, maxSize, newRequestHref, conversationId, backHref }
   });
   const [messages, setMessages] = useState<Message[]>([]), [hasMore, setHasMore] = useState(false), [pending, setPending] = useState(false), [older, setOlder] = useState(false), [error, setError] = useState('');
   const [draftBody, setDraftBody] = useState(''), [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const composerFocus = useComposerFocus(pending, conversationId ?? token);
+  const [preview, setPreview] = useState<{ name: string; mimeType: string; data: Blob } | null>(null);
+  const [openingFile, setOpeningFile] = useState('');
   const hasDraft = Boolean(draftBody.trim()) || selectedFiles.length > 0;
   const merge = (incoming: Message[]) => setMessages(current => [...new Map([...current, ...incoming].map(item => [item.id, item])).values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)));
   useEffect(() => { if (query.data) { merge(query.data.messages); if (query.data.messages.length) latest.current = query.data.messages.at(-1)!.id; if (query.data.direction === 'latest') setHasMore(query.data.hasMore); } }, [query.data]);
@@ -156,13 +160,20 @@ function FormThread({ token, maxSize, newRequestHref, conversationId, backHref }
     data.delete('files');
     for (const file of selectedFiles) data.append('files', file);
     if (!String(data.get('body') ?? '').trim() && !data.getAll('files').some(file => file instanceof File && file.size > 0)) return;
+    composerFocus.restoreAfterSend();
     setPending(true); setError('');
     try { await guest.post('/conversation/messages', data, { headers }); form.reset(); setDraftBody(''); setSelectedFiles([]); pin.current = true; await query.refetch(); }
     catch (e) { setError(errorText(e)); } finally { setPending(false); }
   }
-  async function download(file: Message['attachments'][number]) {
-    try { const result = await guest.get(`/conversation/attachments/${file.id}`, { headers, responseType: 'blob' }); const url = URL.createObjectURL(result.data); const a = document.createElement('a'); a.href = url; a.download = file.originalName; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-    catch { setError('Dosya indirilemedi. Bağlantınızın süresi dolmuş olabilir.'); }
+  async function openAttachment(file: Message['attachments'][number]) {
+    setOpeningFile(file.id); setError('');
+    try {
+      const result = await guest.get<Blob>(`/conversation/attachments/${file.id}`, { headers, responseType: 'blob' });
+      const mimeType = file.mimeType || result.data.type;
+      setPreview({ name: file.originalName, mimeType, data: new Blob([result.data], { type: mimeType }) });
+    }
+    catch { setError('Dosya açılamadı. Bağlantınızın süresi dolmuş olabilir.'); }
+    finally { setOpeningFile(''); }
   }
   if (query.isPending) return <p role="status">Talep yükleniyor…</p>;
   if (query.isError) return <><h1>Talep açılamadı</h1><p role="alert" className="error">{errorText(query.error)}</p><Link to="/form/talep">Yeni takip bağlantısı iste</Link></>;
@@ -171,9 +182,9 @@ function FormThread({ token, maxSize, newRequestHref, conversationId, backHref }
     <div className="form-thread-divider" aria-hidden="true" />
     <section className="form-thread" aria-label="Konuşma" ref={timeline} onScroll={event => { const el = event.currentTarget; pin.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; if (el.scrollTop < 40 && hasMore && !older) void previous(); }}>
       {hasMore && <button className="button secondary" type="button" disabled={older} onClick={() => void previous()}>{older ? 'Yükleniyor…' : 'Önceki Mesajları Göster'}</button>}
-      {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" onClick={() => void download(file)}>{file.originalName}</button>)}</article>)}
+      {messages.map(message => <article key={message.id} className={`form-message ${message.type === 'AGENT_REPLY' ? 'staff' : ''}`}><header><strong>{message.author.name}</strong><time>{new Date(message.createdAt).toLocaleString('tr-TR')}</time></header><p>{message.body}</p>{message.attachments.map(file => <button className="button secondary" key={file.id} type="button" disabled={openingFile === file.id} onClick={() => void openAttachment(file)}>{openingFile === file.id ? "Açılıyor…" : file.originalName}</button>)}</article>)}
     </section>
-    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form className="form-thread-reply" onSubmit={send}>
+    {thread.closed ? <p>Bu talep kapatıldı. <Link to="/form/destek">Yeni talep açabilirsiniz.</Link></p> : <form ref={composerFocus.formRef} className="form-thread-reply" onSubmit={send}>
       {selectedFiles.length > 0 && <ul className="form-selected-files" aria-label="Gönderilecek dosyalar">{selectedFiles.map((file, index) => <li key={`${file.name}-${file.size}-${file.lastModified}`}><Paperclip size={16} aria-hidden="true"/><span title={file.name}>{file.name}<small>{file.size < 1024 * 1024 ? `${Math.ceil(file.size / 1024)} KB` : `${(file.size / 1024 / 1024).toFixed(1)} MB`}</small></span><button type="button" disabled={pending} aria-label={`${file.name} dosyasını kaldır`} title="Dosyayı kaldır" onClick={() => setSelectedFiles(current => current.filter((_, position) => position !== index))}><X size={16} aria-hidden="true"/></button></li>)}</ul>}
       <div className="form-thread-compose"><label className="form-thread-compose-message"><span className="sr-only">Yanıtınız</span><textarea name="body" placeholder="Yanıtınızı yazın..." maxLength={10000} rows={2} disabled={pending} value={draftBody} onChange={event => setDraftBody(event.currentTarget.value)} onKeyDown={event => {
       if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.nativeEvent.isComposing || event.keyCode === 229) return;
@@ -189,5 +200,7 @@ function FormThread({ token, maxSize, newRequestHref, conversationId, backHref }
       setSelectedFiles(combined); setError('');
     }} /></label>{hasDraft && <button className="form-thread-send" type="submit" aria-label="Yanıtı gönder" title="Yanıtı gönder" disabled={pending}><Send size={19} aria-hidden="true" /></button>}</div></form>}
     {error && <p role="alert" className="error">{error}</p>}
+    {preview && <FilePreviewModal file={preview} onClose={() => setPreview(null)} />}
   </>;
 }
+import { useComposerFocus } from '../../components/useComposerFocus';

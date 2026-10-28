@@ -5,6 +5,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import multer from 'multer';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
+import { displayFileName } from '../utils/file-name.js';
 export const uploadRoot=path.resolve(env.UPLOAD_DIR);
 export const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:env.MAX_FILE_SIZE,files:10,fields:15,parts:25,fieldSize:20000}}).array('files',10);
 export const announcementUpload=multer({storage:multer.memoryStorage(),limits:{fileSize:Math.min(env.MAX_FILE_SIZE,10*1024*1024),files:10,fields:1,parts:11,fieldSize:150000}}).array('files',10);
@@ -14,7 +15,7 @@ export async function discardStoredUploads(files:StoredUpload[]){
 }
 const mimeByExtension:Record<string,string>={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.pdf':'application/pdf','.docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.txt':'text/plain','.zip':'application/zip'};
 export async function validateFile(file:Express.Multer.File,maxFileSize=env.MAX_FILE_SIZE):Promise<Omit<StoredUpload,'storageKey'>>{
-  const originalName=path.basename(file.originalname.replaceAll('\\','/')).replace(/[\u0000-\u001f\u007f]/g,'').slice(-180);
+  const originalName=path.basename(displayFileName(file.originalname).replaceAll('\\','/')).replace(/[\u0000-\u001f\u007f]/g,'').slice(-180);
   const mime=mimeByExtension[path.extname(originalName).toLowerCase()];
   if(!mime||!file.size||file.size>maxFileSize)throw new AppError(400,'INVALID_FILE','Dosya türü veya boyutu desteklenmiyor.');
   if(file.mimetype!==mime&&file.mimetype!=='application/octet-stream')throw new AppError(400,'INVALID_FILE','Dosyanın MIME türü uzantısıyla uyuşmuyor.');

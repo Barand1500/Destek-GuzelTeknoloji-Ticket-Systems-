@@ -7,7 +7,7 @@ export function useComposerFocus(pending: boolean, conversationId?: string) {
   useEffect(() => {
     const cancelOnOtherTarget = (event: Event) => {
       if (!restore.current || !(event.target instanceof Element) || event.target === document.body) return;
-      if (!formRef.current?.contains(event.target) || !event.target.closest('textarea, .composer-send')) restore.current = false;
+      if (!formRef.current?.contains(event.target) || !event.target.closest('textarea, .composer-send, .form-thread-send')) restore.current = false;
     };
     document.addEventListener('pointerdown', cancelOnOtherTarget, true);
     document.addEventListener('focusin', cancelOnOtherTarget, true);
