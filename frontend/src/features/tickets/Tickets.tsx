@@ -1,4 +1,5 @@
 import { displayEmail } from "../../utils/email";
+import { useComposerFocus } from '../../components/useComposerFocus';
 import { elapsedDuration } from "../../utils/elapsed-duration";
 import { conversationChannels } from '../../utils/conversation-channels';
 import { ReplyChannelSelector } from "./ReplyChannelSelector";
@@ -766,6 +767,7 @@ export function TicketDetail() {
     },
     onSettled: () => { sending.current = false; },
   });
+  const composerFocus = useComposerFocus(reply.isPending, id);
   const update = useMutation({
     mutationFn: async (input: unknown) => api.patch(`/conversations/${id}`, input),
     onSuccess: result => {
@@ -900,12 +902,14 @@ export function TicketDetail() {
             })}
           </div>
           <form
+            ref={composerFocus.formRef}
             className={`composer ${internal ? "internal-note" : ""}`}
             onSubmit={(e) => {
               e.preventDefault();
               if (sending.current || reply.isPending || !canWrite || !canSubmitReply) return;
               liveTyping.stop();
               sending.current = true;
+              composerFocus.restoreAfterSend();
               reply.mutate();
             }}
           >
@@ -938,7 +942,7 @@ export function TicketDetail() {
               onSelectedChange={setSelectedMentions}
               disabled={reply.isPending || !canWrite}
               placeholder={t.status === "CLOSED" ? "Bu talep kapatıldı." : "@ yazarak departmandan bir kişiyi etiketleyin…"}
-              onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && canSubmitReply) { sending.current = true; reply.mutate(); } }}
+              onSubmit={() => { if (!sending.current && !reply.isPending && canWrite && canSubmitReply) { sending.current = true; composerFocus.restoreAfterSend(); reply.mutate(); } }}
             /> : <textarea
               aria-label={internal ? "Dahili Not" : "Yanıtınız"}
               value={body}
