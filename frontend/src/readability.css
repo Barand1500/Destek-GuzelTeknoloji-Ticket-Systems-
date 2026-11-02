@@ -83,6 +83,25 @@ html[data-theme="dark"] {
 :root .app-shell :is(.muted, .presence-current small, .presence-current span, .presence-metrics dt) {
   color: var(--ui-text-secondary);
 }
+:root .app-shell :is(.surveys-heading, .integrations-hub-heading, .guide-hub-heading) p {
+  font-size: 13px;
+  font-weight: 500;
+}
+:root .app-shell .presence-summary > button small,
+:root .app-shell .presence-card header p,
+:root .app-shell .presence-metrics dt {
+  font-size: 11px;
+  font-weight: 500;
+}
+:root .app-shell .presence-current :is(small, span) {
+  font-size: 11px;
+  font-weight: 500;
+}
+:root .app-shell :is(.stat-card small, .presence-summary > button small, .presence-card header p, .presence-metrics dt) {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
 :root .app-shell :is(.page-heading, .surveys-heading) .eyebrow,
 :root .app-shell .ticket-customer-summary .ticket-number,
 :root .app-shell .integration-toggle strong {

@@ -176,15 +176,22 @@ html[data-theme="dark"] .guide-hub-tabs a[aria-current="page"] {
   }
 }
 :root {
-  font-family: Inter, "Segoe UI", sans-serif;
+  font-family: "Figtree", "Segoe UI", Arial, sans-serif;
   color: #263a36;
   background: #f7f9f8;
   font-synthesis: none;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 14.5px;
+  line-height: 1.45;
 }
 * {
   box-sizing: border-box;
+}
+body {
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: 0.005em;
+  text-rendering: optimizeLegibility;
 }
 html[data-conversation-active="true"],
 html[data-conversation-active="true"] body {
@@ -194,6 +201,15 @@ html[data-conversation-active="true"] body {
 body {
   margin: 0;
   overflow-x: hidden;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  letter-spacing: -0.018em;
 }
 button,
 input,
@@ -1022,6 +1038,7 @@ html[data-theme="dark"] .internal-note-input::placeholder {
   border-radius: 7px;
   color: var(--ui-text-secondary);
   font-size: 13px;
+  font-weight: 500;
 }
 .sidebar nav a.active {
   background: #eaf3ed;
@@ -2372,9 +2389,10 @@ html[data-theme="dark"] .topbar-profile-link .avatar {
   margin: 0 0 30px;
 }
 .page-heading p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ui-text-secondary);
   margin-top: 9px;
+  font-weight: 500;
 }
 .page-heading h1 {
   display: flex;
@@ -3466,6 +3484,7 @@ html[data-theme="dark"] .inbox-ticket-row .management-pill {
   justify-content: space-between;
   font-size: 12px;
   color: var(--ui-text-secondary);
+  font-weight: 500;
 }
 .stat-card svg {
   color: var(--ui-text-secondary);
@@ -3477,8 +3496,9 @@ html[data-theme="dark"] .inbox-ticket-row .management-pill {
   margin: 21px 0 8px;
 }
 .stat-card small {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ui-text-secondary);
+  font-weight: 500;
 }
 .stat-card-link { color: var(--ui-text-primary); transition: border-color 150ms ease; }
 .stat-card-link:hover { border-color: var(--ui-tab-indicator); }
@@ -3495,9 +3515,10 @@ html[data-theme="dark"] .stat-card-link:hover { border-color: var(--ui-tab-indic
   padding: 32px;
 }
 .dashboard-card p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ui-text-secondary);
   margin-top: 10px;
+  font-weight: 500;
 }
 .status-bars {
   display: flex;
