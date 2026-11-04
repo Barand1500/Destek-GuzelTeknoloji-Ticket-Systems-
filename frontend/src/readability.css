@@ -157,6 +157,109 @@ html[data-theme="dark"] .app-shell .survey-vote:disabled {
   opacity: 1;
 }
 
+/* Keep supporting text readable without affecting inputs or placeholders. */
+html:not([data-theme="dark"]) {
+  --ui-text-secondary: #496257;
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .users-table td > small,
+  .customer-list-table td > small,
+  .inbox-table-scroll td > small,
+  .inbox-table-scroll .customer-name,
+  .roles-table small,
+  .roles-badge,
+  .roles-section-heading > span,
+  .roles-areas-heading > span,
+  .roles-permission-hint,
+  .roles-selection-summary small,
+  .survey-meta,
+  .survey-card > p,
+  .announcement-content-hint,
+  .announcement-muted,
+  .announcement-history-meta,
+  .calendar-day-announcement small,
+  .integration-toggle small,
+  .integration-help-text,
+  .integration-webhook-help small,
+  .file-card-upload-info,
+  .customer-request-description
+) {
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .users-role-text,
+  .users-department-text,
+  .inbox-secondary-text,
+  .inbox-priority-text,
+  .inbox-time-cell,
+  .inbox-response-cell
+) {
+  color: #496257;
+  font-weight: 500;
+}
+
+html:not([data-theme="dark"]) .app-shell .inbox-response-cell {
+  color: inherit;
+}
+
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(6) .inbox-secondary-text,
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(7) .inbox-secondary-text {
+  color: #587066;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+html:not([data-theme="dark"]) .app-shell .customer-list-table td > small {
+  color: #496257;
+  font-weight: 500;
+}
+
+html:not([data-theme="dark"]) .app-shell .customer-contact-cell {
+  color: #496257;
+  font-weight: 500;
+}
+
+html:not([data-theme="dark"]) .app-shell .inbox-time-cell .inbox-elapsed-time {
+  color: #496257;
+  font-weight: 500;
+}
+
+html:not([data-theme="dark"]) .app-shell .users-management-grid input::placeholder {
+  color: #496257;
+  font-weight: 400;
+  opacity: 1;
+}
+
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(4),
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(5),
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(6),
+html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(7) {
+  color: #263d34;
+  font-weight: 600;
+}
+
+html:not([data-theme="dark"]) .app-shell .users-table td > small,
+html:not([data-theme="dark"]) .app-shell .customer-list-table td > small,
+html:not([data-theme="dark"]) .app-shell .inbox-table-scroll td > small,
+html:not([data-theme="dark"]) .app-shell .inbox-table-scroll .customer-name,
+html:not([data-theme="dark"]) .app-shell .roles-table small,
+html:not([data-theme="dark"]) .app-shell .calendar-day-announcement small,
+html:not([data-theme="dark"]) .app-shell .file-card-upload-info {
+  font-size: 11px;
+}
+
+html:not([data-theme="dark"]) .app-shell .report-team-table tbody td::before,
+html:not([data-theme="dark"]) .app-shell .report-progress-label {
+  color: var(--ui-text-secondary);
+  font-weight: 500;
+}
+
 .app-shell .survey-answer-modal > header .icon-button {
   width: 34px;
   height: 34px;

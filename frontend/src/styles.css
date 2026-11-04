@@ -176,7 +176,7 @@ html[data-theme="dark"] .guide-hub-tabs a[aria-current="page"] {
   }
 }
 :root {
-  font-family: "Figtree", "Segoe UI", Arial, sans-serif;
+  font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
   color: #263a36;
   background: #f7f9f8;
   font-synthesis: none;
@@ -1489,6 +1489,15 @@ html[data-theme="dark"] .ticket-tabs button.active { color: #b7ead7; }
   border-bottom-color: #167766;
   color: #0d5848;
 }
+.ticket-panel .tabs button {
+  color: #3f5149;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ticket-panel .tabs button.active {
+  color: #24453b;
+}
 .ticket-customer-summary .ticket-number {
   color: #166b5c;
   font-weight: 700;
@@ -1498,6 +1507,12 @@ html[data-theme="dark"] .catalog-tabs button.active,
 html[data-theme="dark"] .ticket-tabs button.active {
   border-bottom-color: #8dd1ba;
   color: #b7ead7;
+}
+html[data-theme="dark"] .ticket-panel .tabs button {
+  color: #c6d8cf;
+}
+html[data-theme="dark"] .ticket-panel .tabs button.active {
+  color: #e5fff3;
 }
 html[data-theme="dark"] .ticket-customer-summary .ticket-number {
   color: #8dd1ba;

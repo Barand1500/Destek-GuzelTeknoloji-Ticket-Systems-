@@ -375,8 +375,8 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                         {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
                       <td>
-                        <span className="users-cell-text" title={person.accessRole?.name ?? roles[person.role]}>{person.accessRole?.name ?? roles[person.role]}</span>
-                        <small className="users-cell-text" title={person.departments.map(d => d.department.name).join(', ') || 'Departman yok'}>
+                        <span className="users-cell-text users-role-text" title={person.accessRole?.name ?? roles[person.role]}>{person.accessRole?.name ?? roles[person.role]}</span>
+                        <small className="users-cell-text users-department-text" title={person.departments.map(d => d.department.name).join(', ') || 'Departman yok'}>
                           {person.departments
                             .map((d) => d.department.name)
                             .join(", ") || "Departman yok"}
@@ -631,7 +631,7 @@ export function CustomersPage() {
                       {(bulkSelectionMode) && <input type="checkbox" disabled={bulkRemove.isPending} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>
                     </td>
-                    <td>{customer.phone ?? "Telefon yok"}<small>{displayEmail(customer.email) || "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
+                    <td className="customer-contact-cell">{customer.phone ?? "Telefon yok"}<small>{displayEmail(customer.email) || "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
