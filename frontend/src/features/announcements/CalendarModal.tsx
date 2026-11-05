@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,20 +12,6 @@ import { Heading } from "../management/shared";
 import { CalendarDayModal, type CalendarAnnouncement } from "./CalendarDayModal";
 
 export function CalendarPage() {
-  const page = useRef<HTMLElement>(null);
-  const [availableHeight, setAvailableHeight] = useState<number>();
-  useLayoutEffect(() => {
-    const fitViewport = () => {
-      if (!page.current) return;
-      const top = page.current.getBoundingClientRect().top + window.scrollY;
-      setAvailableHeight(Math.max(0, window.innerHeight - top));
-    };
-    fitViewport();
-    const observer = new ResizeObserver(fitViewport);
-    document.querySelectorAll(".topbar, .sidebar").forEach(node => observer.observe(node));
-    window.addEventListener("resize", fitViewport);
-    return () => { observer.disconnect(); window.removeEventListener("resize", fitViewport); };
-  }, []);
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const announcements = useQuery({
@@ -64,7 +50,7 @@ export function CalendarPage() {
     return days;
   }, [announcements.data]);
   return (
-    <main ref={page} className="page calendar-page" style={{ height: availableHeight }}>
+    <main className="page calendar-page">
       <Heading
         title="Takvim"
         description="Duyuruları ve özel günleri takvim üzerinden takip edin."
@@ -73,14 +59,13 @@ export function CalendarPage() {
         <header>
           <div>
             <CalendarDays size={20} />
-            <h1>
+            <h2>
               {cursor.toLocaleDateString("tr-TR", {
                 month: "long",
                 year: "numeric",
               })}
-            </h1>
+            </h2>
           </div>
-        </header>
         <div className="calendar-toolbar">
           <button type="button" onClick={() => setCursor(new Date())}>
             Bugün
@@ -102,6 +87,7 @@ export function CalendarPage() {
             </button>
           </div>
         </div>
+        </header>
         <div className="calendar-weekdays">
           {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map((day) => (
             <span key={day}>{day}</span>
@@ -112,25 +98,24 @@ export function CalendarPage() {
             const valid = date.getMonth() === month;
             const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
             const dailyEvents = events.get(key) ?? [];
-            const event = dailyEvents[0];
             return (
               <div
                 key={key}
-                aria-label={dateLabel(date)}
+                aria-label={`${dateLabel(date)}${dailyEvents.length ? `, ${dailyEvents.length} duyuru` : ""}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setSelectedDay(date)}
                 onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedDay(date); } }}
                 className={`calendar-cell${!valid ? " muted" : ""}${date.toDateString() === today.toDateString() ? " today" : ""}`}
               >
-                <span>{date.getDate()}</span>
-                {event && (
-                  <div className="calendar-event" title={event.title}>
+                <span className="calendar-day-number">{date.getDate()}</span>
+                {dailyEvents.slice(0, 2).map(event => (
+                  <div className="calendar-event" title={event.title} key={event.id}>
                     <Megaphone size={12} />
-                    {event.title}
-                    {dailyEvents.length > 1 && <strong className="calendar-event-more">+{dailyEvents.length - 1}</strong>}
+                    <span className="calendar-event-title">{event.title}</span>
                   </div>
-                )}
+                ))}
+                {dailyEvents.length > 2 && <span className="calendar-event-more" data-count={`+${dailyEvents.length - 2}`}>+{dailyEvents.length - 2} duyuru daha</span>}
               </div>
             );
           })}

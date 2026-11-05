@@ -207,6 +207,13 @@ model FormSettings {
   fieldOrder Json?
   updatedAt DateTime @updatedAt
 }
+model FormSource {
+  id String @id @default(uuid())
+  name String @db.VarChar(100)
+  url String @db.VarChar(500)
+  enabled Boolean @default(true)
+  createdAt DateTime @default(now())
+}
 model FormRequest {
   conversationId String @id
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -214,6 +221,10 @@ model FormRequest {
   name String @db.VarChar(100)
   phone String? @db.VarChar(30)
   company String? @db.VarChar(150)
+  sourceId String? @db.VarChar(36)
+  sourceName String? @db.VarChar(100)
+  sourceUrl String? @db.VarChar(500)
+  @@index([sourceId])
   createdAt DateTime @default(now())
   @@index([email, createdAt])
 }

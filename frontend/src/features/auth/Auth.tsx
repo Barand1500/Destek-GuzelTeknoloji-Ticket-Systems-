@@ -120,7 +120,7 @@ export function AuthPage() {
           <p>Sorularınız, konuşmalarınız ve çözümleriniz.<br />Hepsi tek bir yerde.</p>
         </div>
         <div className="auth-support-photo" aria-hidden="true">
-          <img src="/images/support-agent.png" alt="" />
+          <img src="/images/support-agent-blue.png" alt="" />
         </div>
         <div className="auth-caption"><ShieldCheck size={18} /> Ekibinizle güvenli ve düzenli iletişim.</div>
       </section>

@@ -3,7 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#12665b" />
+    <meta name="theme-color" content="#18A7DF" />
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem("helpdesk-theme") === "dark" ? "dark" : "light";
+      } catch {}
+    </script>
+    <link rel="preload" href="/fonts/inter/Inter-variable.ttf" as="font" type="font/ttf" crossorigin />
     <title>Destek — Helpdesk</title>
   </head>
   <body>

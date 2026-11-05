@@ -14,7 +14,7 @@ export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EM
 export type Conversation = {
   firstMessage?: string | null;
   whatsappServiceWindow?: { lastInboundAt: string | null; expiresAt: string | null; expired: boolean };
-  formRequest?: { name: string; email: string; phone: string | null; company: string | null } | null;
+  formRequest?: { sourceId?: string | null; sourceName?: string | null; sourceUrl?: string | null; name: string; email: string; phone: string | null; company: string | null } | null;
   replyChannels?: Array<"TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "FORM"> | null;
   channel: ConversationChannel;
   source?: string;

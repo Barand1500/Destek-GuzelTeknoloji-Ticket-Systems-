@@ -49,7 +49,54 @@ export function FormSettingsPanel() {
     <div className="form-settings-links"><label><span>Form Bağlantısı</span><input readOnly value={link} onFocus={e => e.currentTarget.select()} /></label><div className="management-actions"><button className="button secondary" type="button" onClick={() => void copy(link)}>Bağlantıyı Kopyala</button><a className="button secondary" href={link} target="_blank" rel="noopener noreferrer">Formu Aç</a></div>
       <label><span>Siteye Gömme Kodu (iframe)</span><textarea readOnly value={iframe} onFocus={e => e.currentTarget.select()} /></label><button className="button secondary" type="button" onClick={() => void copy(iframe)}>Gömme Kodunu Kopyala</button>
     </div></>}
-  </section>{settings.data && <div className="form-settings-actions"><button className="button primary" type="button" disabled={!editable || save.isPending} onClick={() => { if (!titleInput.current?.reportValidity()) return; setMessage(''); save.mutate(); }}>{save.isPending ? 'Kaydediliyor…' : 'Kaydet'}</button></div>}
+  </section>
+    <FormSourcesPanel editable={editable} />
+    {settings.data && <div className="form-settings-actions"><button className="button primary" type="button" disabled={!editable || save.isPending} onClick={() => { if (!titleInput.current?.reportValidity()) return; setMessage(''); save.mutate(); }}>{save.isPending ? 'Kaydediliyor…' : 'Kaydet'}</button></div>}
     {save.isError && <p role="alert" className="error">{errorText(save.error)}</p>}{message && <p role="status">{message}</p>}
   </div>;
+}
+
+type FormSource = { id: string; name: string; url: string; enabled: boolean };
+function FormSourcesPanel({ editable }: { editable: boolean }) {
+  const client = useQueryClient();
+  const sources = useQuery({ queryKey: ['form-sources'], queryFn: async () => (await api.get('/integrations/form/sources')).data.data as FormSource[] });
+  const [name, setName] = useState(''), [url, setUrl] = useState(''), [notice, setNotice] = useState('');
+  const nameInput = useRef<HTMLInputElement>(null), urlInput = useRef<HTMLInputElement>(null);
+  function addSource() {
+    if (create.isPending || !nameInput.current?.reportValidity() || !urlInput.current?.reportValidity()) return;
+    setNotice(''); create.mutate();
+  }
+  const create = useMutation({ mutationFn: () => api.post('/integrations/form/sources', { name, url }), onSuccess: async () => { setName(''); setUrl(''); setNotice('Kaynak site eklendi. Siteye özel iframe kodunu kopyalayabilirsiniz.'); await client.invalidateQueries({ queryKey: ['form-sources'] }); } });
+  const toggle = useMutation({ mutationFn: (source: FormSource) => api.patch(`/integrations/form/sources/${source.id}`, { enabled: !source.enabled }), onSuccess: async () => { await client.invalidateQueries({ queryKey: ['form-sources'] }); } });
+  const remove = useMutation({ mutationFn: (id: string) => api.delete(`/integrations/form/sources/${id}`), onSuccess: async () => { setNotice('Kaynak site silindi. Eski taleplerin kaynak bilgisi korundu.'); await client.invalidateQueries({ queryKey: ['form-sources'] }); } });
+  async function copy(value: string) { try { await navigator.clipboard.writeText(value); setNotice('Kopyalandı.'); } catch { setNotice('Kopyalanamadı. Metni seçip kopyalayabilirsiniz.'); } }
+  return <section className="integration-card form-source-settings" aria-label="Kaynak Siteler">
+    <h2>Kaynak Siteler</h2>
+    <p>Her siteye özel kodla gelen taleplerde kaynak site görünür. Kod başka bir sitede kullanılırsa aynı kaynakla kaydedilir.</p>
+    <p className="muted">Site Ekle ve etkinlik değişiklikleri hemen kaydedilir. Alttaki Kaydet düğmesi genel form ayarlarını kaydeder.</p>
+    {editable && <div className="form-source-create" onKeyDown={event => { if (event.key === 'Enter' && event.target instanceof HTMLInputElement) { event.preventDefault(); addSource(); } }}>
+      <label><span>Site Adı</span><input ref={nameInput} required pattern={'.*\\S.*'} maxLength={100} value={name} onChange={event => setName(event.target.value)} disabled={create.isPending} /></label>
+      <label><span>Site Adresi</span><input ref={urlInput} required type="url" placeholder="https://ornek.com" maxLength={500} value={url} onChange={event => setUrl(event.target.value)} disabled={create.isPending} /></label>
+      <button type="button" className="button primary" disabled={create.isPending} onClick={addSource}>{create.isPending ? 'Ekleniyor…' : 'Site Ekle'}</button>
+    </div>}
+    {sources.isPending && <p role="status">Kaynak siteler yükleniyor…</p>}
+    {sources.data?.length === 0 && <p className="muted">Henüz kaynak site tanımlanmadı.</p>}
+    {sources.data?.map(source => {
+      const link = `${window.location.origin}/form/destek?source=${encodeURIComponent(source.id)}`;
+      const iframe = `<iframe src="${link}&amp;embed=1" title="Destek Talebi" width="100%" height="1000" style="border:0;border-radius:12px" loading="lazy"></iframe>`;
+      return <details key={source.id} name="form-source" className="form-source-accordion">
+        <summary><span className="form-source-heading"><strong>{source.name}</strong><span className="muted">{source.url}</span></span><button type="button" role="switch" aria-checked={source.enabled} aria-label={`${source.name} kaynağını etkinleştir`} className="form-source-toggle" disabled={!editable || toggle.isPending || remove.isPending} onClick={event => { event.preventDefault(); event.stopPropagation(); setNotice(''); toggle.mutate(source); }}><span>{source.enabled ? 'Aktif' : 'Pasif'}</span><span className="form-source-toggle-track" aria-hidden="true"><span /></span></button><span className="form-source-chevron" aria-hidden="true">⌄</span></summary>
+        <div className="form-settings-links form-source-content">
+        {source.enabled ? <><label><span>Siteye Özel Form Bağlantısı</span><input readOnly value={link} onFocus={event => event.currentTarget.select()} /></label>
+          <label><span>Siteye Özel iframe Kodu</span><textarea readOnly value={iframe} onFocus={event => event.currentTarget.select()} /></label>
+          </> : <p className="muted">Bu kaynağın bağlantısı yeni talep kabul etmez. Eski taleplerin kaynak bilgisi korunur.</p>}
+        <div className="management-actions form-source-actions">
+          {source.enabled && <><button className="button secondary" type="button" onClick={() => void copy(iframe)}>iframe Kodunu Kopyala</button><button className="button secondary" type="button" onClick={() => void copy(link)}>Bağlantıyı Kopyala</button><a className="button secondary" href={link} target="_blank" rel="noopener noreferrer">Formu Aç</a></>}
+        {editable && <button className="button secondary" type="button" disabled={remove.isPending || toggle.isPending} onClick={() => { setNotice(''); remove.mutate(source.id); }}>{remove.isPending && remove.variables === source.id ? 'Siliniyor…' : 'Sil'}</button>}
+        </div></div>
+      </details>;
+    })}
+    {(sources.error || create.error || toggle.error || remove.error) && <p role="alert" className="error">{errorText(sources.error || create.error || toggle.error || remove.error)}</p>}
+    {notice && <p role="status">{notice}</p>}
+  </section>;
 }

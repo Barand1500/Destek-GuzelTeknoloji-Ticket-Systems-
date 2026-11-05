@@ -1,5 +1,5 @@
-.roles-page { --roles-surface: #fff; --roles-soft: #f5f8f6; --roles-border: #dce6e0; --roles-accent-soft: #eaf4ee; --roles-check-border: #7f968a; --roles-check-fill: #167766; --roles-check-text: #fff; }
-html[data-theme="dark"] .roles-page { --roles-surface: #1b2b24; --roles-soft: #17251f; --roles-border: #3a5145; --roles-accent-soft: #243b30; --roles-check-border: #8da99a; --roles-check-fill: #9ddfc7; --roles-check-text: #16382b; }
+.roles-page { --roles-surface: #fff; --roles-soft: #f5f7f8; --roles-border: #dae2e8; --roles-accent-soft: #e8f7fd; --roles-check-border: #7190a4; --roles-check-fill: #18a7df; --roles-check-text: #fff; }
+html[data-theme="dark"] .roles-page { --roles-surface: #1b252b; --roles-soft: #171f25; --roles-border: #364955; --roles-accent-soft: #24323b; --roles-check-border: #859fb1; --roles-check-fill: #9dc5df; --roles-check-text: #162a38; }
 .roles-page :is(h2,h3,p) { margin: 0; }
 .roles-page :is(h2,h3) { color: var(--ui-text-primary); font-size: 14px; font-weight: 600; line-height: 1.5; }
 .roles-page p { color: var(--ui-text-secondary); font-size: 12px; line-height: 1.7; }
@@ -29,8 +29,8 @@ html[data-theme="dark"] .roles-page { --roles-surface: #1b2b24; --roles-soft: #1
 .roles-table th { padding: 11px 22px; border-top: 1px solid var(--roles-border); border-bottom: 1px solid var(--roles-border); background: var(--roles-soft); color: var(--ui-text-secondary); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .roles-table td { padding: 18px 22px; border-bottom: 1px solid var(--roles-border); font-size: 12px; color: var(--ui-text-primary); vertical-align: middle; }
 .roles-table tbody td { transition: background-color 140ms ease; }
-.roles-table tbody tr:hover > td { background: #e2f1e7; }
-html[data-theme="dark"] .roles-table tbody tr:hover > td { background: #304b3f; }
+.roles-table tbody tr:hover > td { background: #d5f0fc; }
+html[data-theme="dark"] .roles-table tbody tr:hover > td { background: #30404b; }
 .roles-table tr:last-child td { border-bottom: 0; }
 .roles-name-cell { display: flex; align-items: center; gap: 12px; min-width: 160px; }
 .roles-name-cell strong { display: block; font-weight: 600; overflow-wrap: anywhere; }

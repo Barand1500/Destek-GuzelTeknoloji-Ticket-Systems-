@@ -72,12 +72,12 @@ const durationBetween = (from: string, to: string) => {
   return hours < 24 ? `${hours} sa${remainder ? ` ${remainder} dk` : ""}` : `${Math.floor(hours / 24)} gün`;
 };
 const responseTime = (startAt: string | null | undefined, responseAt: string | null | undefined, rules?: { responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string }) => {
-  if (!startAt || !responseAt) return { label: "Yanıt Bekliyor", state: "waiting", color: rules?.responseLateColor ?? "#c2413c" };
+  if (!startAt || !responseAt) return { label: "Yanıt Bekliyor", state: "waiting", color: rules?.responseLateColor ?? "var(--ticket-response-late, #c2413c)" };
   const minutes = Math.max(0, Math.floor((new Date(responseAt).getTime() - new Date(startAt).getTime()) / 60000));
   const label = minutes < 1 ? "1 dk'dan kısa" : minutes < 60 ? `${minutes} dk` : (() => { const hours = Math.floor(minutes / 60); return hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`; })();
   const fast = !rules || (minutes >= rules.responseFastFromMinutes && minutes <= rules.responseFastToMinutes);
   const normal = rules && minutes >= rules.responseNormalFromMinutes && minutes <= rules.responseNormalToMinutes;
-  return fast ? { label, state: "fast", color: rules?.responseFastColor ?? "#16715d" } : normal ? { label, state: "normal", color: rules.responseNormalColor } : { label, state: "late", color: rules?.responseLateColor ?? "#c2413c" };
+  return fast ? { label, state: "fast", color: rules?.responseFastColor ?? "var(--ticket-response-fast, #16715d)" } : normal ? { label, state: "normal", color: rules.responseNormalColor } : { label, state: "late", color: rules?.responseLateColor ?? "var(--ticket-response-late, #c2413c)" };
 };
 export function Badge({ status }: { status: Conversation["status"] }) {
   return (
@@ -197,6 +197,7 @@ export function TicketList() {
   const page = Number(params.get("page") ?? 1);
   const requestedLimit = Number(params.get("limit") ?? 15);
   const limit = [10, 15, 20, 50].includes(requestedLimit) ? requestedLimit : 15;
+  const formSources = useQuery({ queryKey: ['form-sources'], enabled: user?.role !== 'CUSTOMER', queryFn: async () => (await api.get('/integrations/form/sources')).data.data as { id: string; name: string; enabled: boolean }[] });
   const status = params.get("status") ?? "";
   const view = params.get("view") ?? "all";
   const defaultTabLabels: Record<string, string> = { all: "Tümü", ticket: "Telefon", mail: "Mail", sms: "SMS", whatsapp: "WhatsApp", form: "Form", mine: "Bana atanan", unassigned: "Atanmamış" };
@@ -408,6 +409,7 @@ export function TicketList() {
               )}
             </div>
           )}
+          {user?.role !== 'CUSTOMER' && Boolean(formSources.data?.length) && <DropdownSelect ariaLabel="Kaynak Siteye Göre Filtrele" value={params.get('formSourceId') ?? ''} onChange={value => filter('formSourceId', value)} options={[{ value: '', label: 'Tüm Kaynak Siteler' }, ...(formSources.data ?? []).map(source => ({ value: source.id, label: source.name + (source.enabled ? '' : ' (pasif)') }))]} />}
           <DropdownSelect ariaLabel="Duruma Göre Filtrele" value={status} onChange={(value) => filter("status", value)} options={[{ value: "", label: "Tüm Durumlar" }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
           <DropdownSelect ariaLabel="Önceliğe Göre Filtrele" value={params.get("priority") ?? ""} onChange={(value) => filter("priority", value)} options={[{ value: "", label: "Tüm Öncelikler" }, ...Object.entries(priorities).map(([value, label]) => ({ value, label }))]} />
         </div>
@@ -454,6 +456,7 @@ export function TicketList() {
                       >
                         <span className="inbox-subject-text">{ticket.subject}</span>
                       </Link>
+                      {ticket.formRequest?.sourceName && <small className="customer-name">Kaynak site: {ticket.formRequest.sourceName}</small>}
                       <span className="customer-name">
                         {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
@@ -837,6 +840,7 @@ export function TicketDetail() {
             #TK-{String(t.number).padStart(5, "0")} · {t.department.name}
           </span>
           <h1>{t.subject}</h1>
+          {t.formRequest?.sourceName && <p className="muted ticket-source-site">Kaynak site: <strong>{t.formRequest.sourceName}</strong> — {t.formRequest.sourceUrl}</p>}
         </div>
         <div className="ticket-status-cluster">
           <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>

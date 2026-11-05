@@ -183,14 +183,14 @@ export function TagsPage() {
   const save = useSave("/tags", reset, ["tags"]);
   const remove = useDelete("/tags", ["tags", "tickets", "conversations"]);
   const inboxViews = [
-    { id: "view-all", name: "Tümü", code: "ALL", color: "#7c9b91", href: "/admin/conversations?view=all&category=ALL" },
-    { id: "view-ticket", name: "Telefon", code: "TICKET", color: "#7c9b91", href: "/admin/conversations?view=all&category=TICKET" },
-    { id: "view-mail", name: "Mail", code: "EMAIL", color: "#7c9b91", href: "/admin/conversations?view=all&category=EMAIL" },
-    { id: "view-sms", name: "SMS", code: "SMS", color: "#7c9b91", href: "/admin/conversations?view=all&category=SMS" },
-    { id: "view-whatsapp", name: "WhatsApp", code: "WHATSAPP", color: "#7c9b91", href: "/admin/conversations?view=all&category=WHATSAPP" },
-    { id: "view-form", name: "Form", code: "FORM", color: "#7c9b91", href: "/admin/conversations?view=all&category=FORM" },
-    { id: "view-mine", name: "Bana atanan", code: "MINE", color: "#7c9b91", href: "/admin/conversations?view=mine&category=MINE" },
-    { id: "view-unassigned", name: "Atanmamış", code: "UNASSIGNED", color: "#7c9b91", href: "/admin/conversations?view=unassigned&category=UNASSIGNED" },
+    { id: "view-all", name: "Tümü", code: "ALL", color: "#7c9bb0", href: "/admin/conversations?view=all&category=ALL" },
+    { id: "view-ticket", name: "Telefon", code: "TICKET", color: "#7c9bb0", href: "/admin/conversations?view=all&category=TICKET" },
+    { id: "view-mail", name: "Mail", code: "EMAIL", color: "#7c9bb0", href: "/admin/conversations?view=all&category=EMAIL" },
+    { id: "view-sms", name: "SMS", code: "SMS", color: "#7c9bb0", href: "/admin/conversations?view=all&category=SMS" },
+    { id: "view-whatsapp", name: "WhatsApp", code: "WHATSAPP", color: "#7c9bb0", href: "/admin/conversations?view=all&category=WHATSAPP" },
+    { id: "view-form", name: "Form", code: "FORM", color: "#7c9bb0", href: "/admin/conversations?view=all&category=FORM" },
+    { id: "view-mine", name: "Bana atanan", code: "MINE", color: "#7c9bb0", href: "/admin/conversations?view=mine&category=MINE" },
+    { id: "view-unassigned", name: "Atanmamış", code: "UNASSIGNED", color: "#7c9bb0", href: "/admin/conversations?view=unassigned&category=UNASSIGNED" },
   ].map((view) => ({ ...view, name: viewLabels[view.code] ?? view.name }));
   const list = useList<Tag>("/tags", {}, inboxViews);
   function selectSection(value: "tags" | "statuses" | "priorities") {

@@ -1,6 +1,6 @@
 .reports-page {
   --report-surface: #fff;
-  --report-field-background: #f7f9f8;
+  --report-field-background: #f6f8fa;
   --report-soft: #f1f4f7;
   --report-track: #e2e8f0;
   --report-border: #dce4e9;
@@ -10,14 +10,14 @@
   color: var(--report-text);
 }
 html[data-theme="dark"] main.reports-page {
-  --report-surface: #1d2c26;
-  --report-field-background: #22342c;
-  --report-soft: #22342c;
-  --report-track: #2b493c;
-  --report-border: #31463d;
+  --report-surface: #1c262d;
+  --report-field-background: #222d34;
+  --report-soft: #222d34;
+  --report-track: #2b3d49;
+  --report-border: #2e3e49;
   --report-text: var(--ui-text-primary);
   --report-muted: var(--ui-text-secondary);
-  background: #15211d;
+  background: #151c21;
 }
 html[data-theme="dark"] .reports-page .report-filters select,
 html[data-theme="dark"] .reports-page .report-download {
@@ -32,16 +32,24 @@ html[data-theme="dark"] .reports-page .report-download {
   color: var(--report-muted);
 }
 .reports-page .page-heading .eyebrow {
-  color: #166b5c;
+  color: var(--ui-text-navigation);
 }
 html[data-theme="dark"] .reports-page .page-heading .eyebrow {
-  color: #8dd1ba;
+  color: #8db6d1;
 }
 .report-download {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   white-space: nowrap;
+  background: #e8f7fd;
+  border-color: #d5f0fc;
+  color: var(--ui-text-navigation);
+}
+.report-download:hover {
+  background: #d5f0fc;
+  border-color: #81d4f4;
+  color: var(--ui-text-navigation);
 }
 .report-tabs {
   display: flex;
@@ -140,15 +148,15 @@ html[data-theme="dark"] .reports-page .page-heading .eyebrow {
 }
 html[data-theme="dark"] .reports-page .styled-dropdown:has(.styled-dropdown-label) {
   background: var(--report-field-background);
-  border-color: #466056;
-  color: #e5eee9;
+  border-color: #415765;
+  color: #e5eaee;
 }
 html[data-theme="dark"] .reports-page .styled-dropdown-label {
-  background: #1d2c26;
+  background: #1c262d;
   color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .reports-page .styled-dropdown:has(.styled-dropdown-label):focus-within {
-  border-color: #218675;
+  border-color: #0d8fc5;
 }
 .reports-page .styled-dropdown-menu {
   background: var(--report-surface);
@@ -197,12 +205,12 @@ html[data-theme="dark"] .reports-page .styled-dropdown:has(.styled-dropdown-labe
   border-radius: 12px;
 }
 .report-stat-icon.purple {
-  color: #167766;
-  background: #1677661f;
+  color: var(--ui-text-navigation);
+  background: #18a7df1f;
 }
 .report-stat-icon.green {
-  color: #00ae83;
-  background: #00ae831a;
+  color: #1e6290;
+  background: #1e62901a;
 }
 .report-stat-icon.orange {
   color: #ed9500;
@@ -466,7 +474,7 @@ button.report-employee:hover {
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  background: #167766;
+  background: var(--brand-primary);
   border-radius: 10px;
   color: white;
   font-size: 12px;
@@ -506,11 +514,17 @@ button.report-employee:hover {
 .report-success {
   color: #00b98a;
 }
+html:not([data-theme="dark"]) .report-success {
+  color: #007756;
+}
+html:not([data-theme="dark"]) .report-ranking .report-employee:first-child .report-rank {
+  color: #946000;
+}
 .report-blue {
   color: #3b82f6;
 }
 .report-purple {
-  color: #167766;
+  color: var(--ui-text-navigation);
 }
 .report-muted {
   color: var(--report-muted);

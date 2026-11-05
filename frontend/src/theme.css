@@ -1,0 +1,223 @@
+/* Shared palette, loaded after component and responsive styles. */
+:root .app-shell .notification-table :is(.button.secondary, .notification-conversation-link) {
+  background: var(--brand-primary-light);
+  border-color: var(--ui-border);
+  color: var(--ui-text-navigation);
+}
+:root .app-shell .notification-table :is(.button.secondary, .notification-conversation-link):hover {
+  background: var(--brand-primary-soft);
+  border-color: var(--ui-border);
+  color: var(--ui-text-navigation);
+}
+
+.app-shell .notification-popover {
+  background: var(--surface);
+  border-color: var(--ui-border);
+}
+.app-shell .notification-popover-header {
+  background: var(--surface);
+  color: var(--ui-text-primary);
+  border-color: var(--ui-border);
+}
+.app-shell .notification-popover-header > span:not(.notification-popover-header-actions),
+.app-shell .notification-popover-icon {
+  background: var(--brand-primary-soft);
+  color: var(--ui-text-navigation);
+}
+.app-shell .notification-popover-item {
+  background: var(--surface);
+  border-color: var(--ui-border);
+  color: var(--ui-text-primary);
+}
+.app-shell .notification-popover-item.unread,
+.app-shell .notification-popover-item:hover,
+.app-shell .notification-popover-item.unread:hover,
+.app-shell .notification-popover-footer {
+  background: var(--brand-primary-light);
+  border-color: var(--ui-border);
+}
+.app-shell .notification-popover-item strong {
+  color: var(--ui-text-primary);
+}
+.app-shell .notification-popover-footer a {
+  color: var(--ui-text-navigation);
+}
+html:not([data-theme="dark"]) .app-shell .notification-popover-footer {
+  background: var(--brand-primary-soft);
+}
+
+.app-shell .inbox-channel-list .management-pill {
+  background: #e8f7fd;
+  color: var(--ui-text-navigation);
+}
+html[data-theme="dark"] .app-shell .inbox-channel-list .management-pill {
+  background: #1a3548;
+  color: #8ed5f5;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f5f8fb;
+  --surface: #fff;
+  --border: #d8e3eb;
+  --text: #203647;
+  --muted: #496174;
+  --ui-border: var(--border);
+  --ui-text-primary: var(--text);
+  --ui-text-secondary: var(--muted);
+  --ui-text-navigation: #086b98;
+  --ui-accent: #086b98;
+  --ui-tab-indicator: #18a7df;
+  --ui-tab-hover-text: #086b98;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: #101d28;
+  color: #e7eff6;
+  --bg: #101d28;
+  --surface: #192b38;
+  --border: #3b5365;
+  --text: #e7eff6;
+  --muted: #b8cbd9;
+  --ui-text-navigation: #8ed5f5;
+  --ui-accent: #8ed5f5;
+  --ui-tab-indicator: #39b9ed;
+  --ui-tab-hover-text: #c5edff;
+  --brand-primary-light: #1a3548;
+  --brand-primary-soft: #224b65;
+  --brand-primary-text: #a5dfff;
+  --brand-primary: #0879ad;
+  --brand-primary-hover: #086b98;
+  --ticket-response-late: #ff9c95;
+  --ticket-response-fast: #8dbbd9;
+}
+
+html[data-theme="dark"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="dark"] :is(input, select, textarea) {
+  accent-color: #18a7df;
+}
+html[data-theme="dark"] ::selection {
+  background: #21648a;
+  color: #fff;
+}
+html[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: #9db4c5;
+  opacity: 1;
+}
+html[data-theme="dark"] :is(input, select, textarea):focus-visible {
+  outline-color: var(--ui-tab-indicator);
+}
+html[data-theme="dark"] .public-form-page {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="dark"] .error {
+  background: #3a2427;
+  color: #ffb2ae;
+}
+
+/* The photo panel has its own dark palette in both themes. */
+.auth-story {
+  --ui-text-primary: #e7eff6;
+  --ui-text-secondary: #c2d9e8;
+  --ui-text-navigation: #8ed5f5;
+}
+.auth-support-photo {
+  background: #123a52;
+  border-color: #b2e3ff3d;
+  box-shadow: 0 28px 70px #021b2c52;
+}
+.auth-support-photo::after {
+  background: linear-gradient(180deg, #092b4305, #092b4329);
+}
+html[data-theme="dark"] .auth-form-wrap {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="dark"] .auth-form h2 {
+  color: var(--text);
+}
+html[data-theme="dark"] .auth-form label:has(> .field-label),
+html[data-theme="dark"] .auth-form .email-field > input,
+html[data-theme="dark"] .auth-form .password-field input {
+  background: #1c2e3d;
+  border-color: var(--border);
+  color: var(--text);
+}
+html[data-theme="dark"] .auth-form .field-label {
+  background: var(--bg);
+  color: var(--muted);
+}
+html[data-theme="dark"] .auth-form .auth-forgot {
+  color: var(--ui-text-navigation);
+}
+
+/* Later brand refinements must also use dark conversation surfaces. */
+html[data-theme="dark"] .app-shell .message:not(.internal-note) .message-content {
+  background: #1b2e3c;
+  border-color: var(--border);
+}
+html[data-theme="dark"] .app-shell .message.outgoing:not(.internal-note) .message-content {
+  background: #1a3b51;
+  border-color: #32617d;
+}
+html[data-theme="dark"] .app-shell .message:not(.internal-note) p {
+  color: var(--text);
+}
+html[data-theme="dark"] .app-shell :is(.composer-tabs, .composer-footer) {
+  background: #172b39;
+  border-color: var(--border);
+}
+html[data-theme="dark"] .app-shell :is(.conversation, .ticket-properties, .composer, .message, .section-heading) {
+  border-color: var(--border);
+}
+html[data-theme="dark"] .app-shell .ticket-properties > div > label,
+html[data-theme="dark"] .app-shell .ticket-properties hr {
+  border-color: var(--border);
+}
+html[data-theme="dark"] .app-shell :is(.tabs, .catalog-tabs, .report-tabs, .ticket-tabs, .integration-subtabs) {
+  border-color: var(--border);
+}
+html[data-theme="dark"] .app-shell :is(.created-pill, .composer-channel-pill, .message.incoming:not(.internal-note) .avatar) {
+  background: var(--brand-primary-light);
+  border-color: #32617d;
+  color: var(--ui-text-navigation);
+}
+html[data-theme="dark"] .app-shell .sidebar {
+  --sidebar-scroll-thumb: #415c70;
+  --sidebar-scroll-hover: #648ba5;
+}
+html[data-theme="dark"] .guide-shot-link {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ui-text-navigation);
+}
+
+/* Keep small white labels legible on blue controls in the dark theme. */
+html[data-theme="dark"] .app-shell .brand-dot {
+  color: var(--ui-text-navigation);
+}
+html[data-theme="dark"] .app-shell .survey-empty strong {
+  color: var(--ui-text-primary);
+}
+html[data-theme="dark"] .app-shell .survey-empty {
+  border-color: var(--border);
+}
+html[data-theme="dark"] .calendar-cell.today > .calendar-day-number,
+html[data-theme="dark"] .calendar-toolbar > button,
+html[data-theme="dark"] .guide-pin,
+html[data-theme="dark"] .guide-flow b,
+html[data-theme="dark"] .guide-flow-step b,
+html[data-theme="dark"] .guide-settings-flow span b,
+html[data-theme="dark"] .guide-shot-tabs button.active span {
+  background: #0879ad;
+  color: #fff;
+}
+html[data-theme="dark"] .guide-shot-tabs button:not(.active) span {
+  background: var(--brand-primary-light);
+  color: var(--ui-text-navigation);
+}

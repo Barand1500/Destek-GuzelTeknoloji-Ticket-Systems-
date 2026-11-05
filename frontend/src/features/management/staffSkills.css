@@ -1,7 +1,7 @@
 .staff-skills {
   display: grid;
   gap: 12px;
-  border-top: 1px solid var(--border, #dce5e2);
+  border-top: 1px solid var(--border, #dae2e7);
   padding-top: 18px;
   margin-top: 4px;
   min-width: 0;
@@ -60,8 +60,8 @@
   font-size: 12px;
 }
 .staff-skills-options button:hover {
-  background: #edf5f1;
-  border-color: #398571;
+  background: #edf2f5;
+  border-color: #396785;
 }
 .staff-skills-options button:disabled {
   opacity: 0.4;
@@ -136,9 +136,9 @@
   display: grid;
   gap: 3px;
   text-align: left;
-  border: 1px solid #d0e4dc;
-  background: #f3f8f5;
-  color: #245c50;
+  border: 1px solid #d0dce4;
+  background: #f3f6f8;
+  color: #24465c;
   padding: 7px 10px;
   border-radius: 8px;
   cursor: pointer;
@@ -146,8 +146,8 @@
 }
 .staff-suggestion-list button:hover,
 .staff-suggestion-list button.selected {
-  border-color: #398571;
-  background: #e4f2eb;
+  border-color: #396785;
+  background: #e4ecf2;
 }
 .staff-suggestion-list strong {
   font-size: 12px;
@@ -170,7 +170,7 @@
   gap: 4px;
   padding: 4px 7px;
   border-radius: 6px;
-  background: #e5efe9;
+  background: #e5ebef;
 }
 .staff-suggestion-skill-name {
   font-weight: 600;
@@ -181,7 +181,7 @@
   letter-spacing: 1px;
 }
 html[data-theme="dark"] .staff-suggestion-skill {
-  background: #304b3e;
+  background: #30404b;
 }
 html[data-theme="dark"] .staff-suggestion-stars {
   color: #f2ca72;
@@ -192,7 +192,7 @@ html[data-theme="dark"] .staff-suggestion-stars {
   }
 }
 html[data-theme="dark"] .staff-skills {
-  border-color: #466056;
+  border-color: #415765;
 }
 html[data-theme="dark"] .staff-skills-heading small {
   background: #334155;
@@ -202,7 +202,7 @@ html[data-theme="dark"] .staff-skills-options button {
   border-color: #465b70;
 }
 html[data-theme="dark"] .staff-skills-options button:hover {
-  background: #30423c;
+  background: #2c3c46;
 }
 html[data-theme="dark"] .staff-skill-tag {
   background: #203c5d;
@@ -216,12 +216,12 @@ html[data-theme="dark"] .staff-suggestions > small {
   color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .staff-suggestion-list button {
-  background: #223c32;
-  border-color: #466056;
-  color: #c2e4d6;
+  background: #22323c;
+  border-color: #415765;
+  color: #c2d6e4;
 }
 html[data-theme="dark"] .staff-suggestion-list button:hover,
 html[data-theme="dark"] .staff-suggestion-list button.selected {
-  background: #2d5143;
-  border-color: #8dd1ba;
+  background: #2d4351;
+  border-color: #8db6d1;
 }

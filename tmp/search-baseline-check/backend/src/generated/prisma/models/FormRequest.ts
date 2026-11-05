@@ -30,6 +30,9 @@ export type FormRequestMinAggregateOutputType = {
   name: string | null
   phone: string | null
   company: string | null
+  sourceId: string | null
+  sourceName: string | null
+  sourceUrl: string | null
   createdAt: Date | null
 }
 
@@ -39,6 +42,9 @@ export type FormRequestMaxAggregateOutputType = {
   name: string | null
   phone: string | null
   company: string | null
+  sourceId: string | null
+  sourceName: string | null
+  sourceUrl: string | null
   createdAt: Date | null
 }
 
@@ -48,6 +54,9 @@ export type FormRequestCountAggregateOutputType = {
   name: number
   phone: number
   company: number
+  sourceId: number
+  sourceName: number
+  sourceUrl: number
   createdAt: number
   _all: number
 }
@@ -59,6 +68,9 @@ export type FormRequestMinAggregateInputType = {
   name?: true
   phone?: true
   company?: true
+  sourceId?: true
+  sourceName?: true
+  sourceUrl?: true
   createdAt?: true
 }
 
@@ -68,6 +80,9 @@ export type FormRequestMaxAggregateInputType = {
   name?: true
   phone?: true
   company?: true
+  sourceId?: true
+  sourceName?: true
+  sourceUrl?: true
   createdAt?: true
 }
 
@@ -77,6 +92,9 @@ export type FormRequestCountAggregateInputType = {
   name?: true
   phone?: true
   company?: true
+  sourceId?: true
+  sourceName?: true
+  sourceUrl?: true
   createdAt?: true
   _all?: true
 }
@@ -159,6 +177,9 @@ export type FormRequestGroupByOutputType = {
   name: string
   phone: string | null
   company: string | null
+  sourceId: string | null
+  sourceName: string | null
+  sourceUrl: string | null
   createdAt: Date
   _count: FormRequestCountAggregateOutputType | null
   _min: FormRequestMinAggregateOutputType | null
@@ -189,6 +210,9 @@ export type FormRequestWhereInput = {
   name?: Prisma.StringFilter<"FormRequest"> | string
   phone?: Prisma.StringNullableFilter<"FormRequest"> | string | null
   company?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceId?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceName?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceUrl?: Prisma.StringNullableFilter<"FormRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FormRequest"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
 }
@@ -199,6 +223,9 @@ export type FormRequestOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   company?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceName?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   conversation?: Prisma.ConversationOrderByWithRelationInput
   _relevance?: Prisma.FormRequestOrderByRelevanceInput
@@ -213,6 +240,9 @@ export type FormRequestWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"FormRequest"> | string
   phone?: Prisma.StringNullableFilter<"FormRequest"> | string | null
   company?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceId?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceName?: Prisma.StringNullableFilter<"FormRequest"> | string | null
+  sourceUrl?: Prisma.StringNullableFilter<"FormRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FormRequest"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
 }, "conversationId">
@@ -223,6 +253,9 @@ export type FormRequestOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   company?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceName?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.FormRequestCountOrderByAggregateInput
   _max?: Prisma.FormRequestMaxOrderByAggregateInput
@@ -238,6 +271,9 @@ export type FormRequestScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"FormRequest"> | string
   phone?: Prisma.StringNullableWithAggregatesFilter<"FormRequest"> | string | null
   company?: Prisma.StringNullableWithAggregatesFilter<"FormRequest"> | string | null
+  sourceId?: Prisma.StringNullableWithAggregatesFilter<"FormRequest"> | string | null
+  sourceName?: Prisma.StringNullableWithAggregatesFilter<"FormRequest"> | string | null
+  sourceUrl?: Prisma.StringNullableWithAggregatesFilter<"FormRequest"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"FormRequest"> | Date | string
 }
 
@@ -246,6 +282,9 @@ export type FormRequestCreateInput = {
   name: string
   phone?: string | null
   company?: string | null
+  sourceId?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutFormRequestInput
 }
@@ -256,6 +295,9 @@ export type FormRequestUncheckedCreateInput = {
   name: string
   phone?: string | null
   company?: string | null
+  sourceId?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -264,6 +306,9 @@ export type FormRequestUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutFormRequestNestedInput
 }
@@ -274,6 +319,9 @@ export type FormRequestUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -283,6 +331,9 @@ export type FormRequestCreateManyInput = {
   name: string
   phone?: string | null
   company?: string | null
+  sourceId?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -291,6 +342,9 @@ export type FormRequestUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -300,6 +354,9 @@ export type FormRequestUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -320,6 +377,9 @@ export type FormRequestCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   company?: Prisma.SortOrder
+  sourceId?: Prisma.SortOrder
+  sourceName?: Prisma.SortOrder
+  sourceUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -329,6 +389,9 @@ export type FormRequestMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   company?: Prisma.SortOrder
+  sourceId?: Prisma.SortOrder
+  sourceName?: Prisma.SortOrder
+  sourceUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -338,6 +401,9 @@ export type FormRequestMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   company?: Prisma.SortOrder
+  sourceId?: Prisma.SortOrder
+  sourceName?: Prisma.SortOrder
+  sourceUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -378,6 +444,9 @@ export type FormRequestCreateWithoutConversationInput = {
   name: string
   phone?: string | null
   company?: string | null
+  sourceId?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -386,6 +455,9 @@ export type FormRequestUncheckedCreateWithoutConversationInput = {
   name: string
   phone?: string | null
   company?: string | null
+  sourceId?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -410,6 +482,9 @@ export type FormRequestUpdateWithoutConversationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -418,6 +493,9 @@ export type FormRequestUncheckedUpdateWithoutConversationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -429,6 +507,9 @@ export type FormRequestSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   name?: boolean
   phone?: boolean
   company?: boolean
+  sourceId?: boolean
+  sourceName?: boolean
+  sourceUrl?: boolean
   createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["formRequest"]>
@@ -441,10 +522,13 @@ export type FormRequestSelectScalar = {
   name?: boolean
   phone?: boolean
   company?: boolean
+  sourceId?: boolean
+  sourceName?: boolean
+  sourceUrl?: boolean
   createdAt?: boolean
 }
 
-export type FormRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"conversationId" | "email" | "name" | "phone" | "company" | "createdAt", ExtArgs["result"]["formRequest"]>
+export type FormRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"conversationId" | "email" | "name" | "phone" | "company" | "sourceId" | "sourceName" | "sourceUrl" | "createdAt", ExtArgs["result"]["formRequest"]>
 export type FormRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
 }
@@ -460,6 +544,9 @@ export type $FormRequestPayload<ExtArgs extends runtime.Types.Extensions.Interna
     name: string
     phone: string | null
     company: string | null
+    sourceId: string | null
+    sourceName: string | null
+    sourceUrl: string | null
     createdAt: Date
   }, ExtArgs["result"]["formRequest"]>
   composites: {}
@@ -836,6 +923,9 @@ export interface FormRequestFieldRefs {
   readonly name: Prisma.FieldRef<"FormRequest", 'String'>
   readonly phone: Prisma.FieldRef<"FormRequest", 'String'>
   readonly company: Prisma.FieldRef<"FormRequest", 'String'>
+  readonly sourceId: Prisma.FieldRef<"FormRequest", 'String'>
+  readonly sourceName: Prisma.FieldRef<"FormRequest", 'String'>
+  readonly sourceUrl: Prisma.FieldRef<"FormRequest", 'String'>
   readonly createdAt: Prisma.FieldRef<"FormRequest", 'DateTime'>
 }
     

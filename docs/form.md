@@ -81,6 +81,31 @@ zorunludur; firma, telefon, konu ve açıklama alanları isteğe bağlı yapıla
 
 ## iframe ve sunucu başlıkları
 
+### Kaynak site takibi
+
+Entegrasyonlar → Form → Kaynak Siteler bölümüne site adı ve `https://` ile başlayan
+adresini ekleyin. Her kaynak için üretilen iframe kodunu ilgili siteye yerleştirin.
+Kaynak ekleme ve etkinleştirme işlemleri hemen kaydedilir; genel form ayarlarındaki
+Kaydet düğmesinden bağımsızdır. Adresin yalnızca origin kısmı saklanır.
+
+Kaynağa özel bağlantı `/form/destek?source=<kaynak-kimliği>` biçimindedir.
+Kaynak adı ve adresi talep oluşturulurken kaydedilir; gelen kutusunda kaynak adı,
+talep detayında adı ve adresi gösterilir. Gelen kutusundaki Kaynak Site filtresiyle
+ilgili talepler listelenebilir. Genel bağlantıyla gelen ve eski taleplerde kaynak
+bilgisi bulunmaz; geriye dönük tahmin yapılmaz.
+
+Pasifleştirilen kaynağın bağlantıları yeni talep kabul etmez. Kaynak tekrar
+etkinleştirilebilir; eski taleplerin bilgisi korunur. Kaynak kimliği bir erişim
+anahtarı veya alan adı doğrulaması değildir: kod başka bir sitede kullanılırsa
+aynı kaynakla kaydedilir.
+
+Akordiyon başlığındaki Aktif/Pasif anahtarıyla kaynak durumunu değiştirebilirsiniz.
+Akordiyon içindeki Sil düğmesi kaynağı listeden kaldırır ve bağlantısını geçersiz
+kılar. Eski taleplerde saklanan kaynak adı ve adresi silinmez.
+
+Yayınlamadan önce `20261105120000_form_sources` migration'ını
+`npm run db:migrate` ile uygulayın ve backend/frontend derlemelerini yayınlayın.
+
 Frontend sunucusu `/form/destek` ve `/form/talep` yollarını SPA'nın `index.html`
 dosyasına yönlendirmelidir. Bu zaten diğer uygulama sayfalarının kullandığı davranıştır.
 

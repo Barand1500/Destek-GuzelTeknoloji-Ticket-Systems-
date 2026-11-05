@@ -1,0 +1,76 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { db } from '../src/config/db.js';
+import { formSourceSchema, createFormSource, setFormSourceEnabled, deleteFormSource } from '../src/services/form-sources.service.js';
+import { formSubmissionSchema, submitForm } from '../src/services/forms.service.js';
+import { listConversations } from '../src/services/conversations.service.js';
+import { listSchema } from '../src/validators/index.js';
+import type { Actor } from '../src/types/express.js';
+
+test('Site sources are validated, persisted, filtered and disabled without losing ticket history', async () => {
+  assert.equal(formSourceSchema.safeParse({ name: 'Site', url: 'javascript:alert(1)' }).success, false);
+  assert.equal(formSourceSchema.safeParse({ name: 'Site', url: 'invalid' }).success, false);
+  assert.equal(formSourceSchema.safeParse({ name: 'Site', url: 'https://user:password@example.com' }).success, false);
+  const suffix = randomUUID();
+  const staff = await db.user.create({ data: { name: 'Source test', role: 'ADMIN', passwordHash: 'test' } });
+  const actor: Actor = { id: staff.id, name: staff.name, email: '', role: 'ADMIN', departmentIds: [], sessionId: '' };
+  const department = await db.department.create({ data: { name: `Sources ${suffix}` } });
+  const original = await db.formSettings.findUnique({ where: { id: 'default' } });
+  const originalSmtp = db.integrationSettings.findUnique.bind(db.integrationSettings);
+  const originalTx = db.$transaction.bind(db);
+  const smtp = (value: any) => ({ ...value, smtpEnabled: true, smtpHost: 'smtp.example.invalid', smtpFromAddress: 'support@example.invalid' });
+  db.integrationSettings.findUnique = ((args: any) => originalSmtp(args).then(smtp)) as typeof originalSmtp;
+  db.$transaction = ((work: any, options?: any) => originalTx(async tx => {
+    const find = tx.integrationSettings.findUnique.bind(tx.integrationSettings);
+    tx.integrationSettings.findUnique = ((args: any) => find(args).then(smtp)) as typeof find;
+    const upsert = tx.outboundMessage.upsert.bind(tx.outboundMessage);
+    tx.outboundMessage.upsert = ((args: any) => upsert({ ...args, create: { ...args.create, availableAt: new Date('2099-01-01') } })) as typeof upsert;
+    return work(tx);
+  }, options)) as typeof db.$transaction;
+  let sourceId: string | undefined;
+  const ids: string[] = [];
+  try {
+    await assert.rejects(createFormSource({ ...actor, role: 'CUSTOMER' }, { name: 'No access', url: 'https://example.com' }), (error: any) => error.code === 'FORBIDDEN');
+    const source = await createFormSource(actor, formSourceSchema.parse({ name: 'New site', url: 'https://example.com/contact?x=1' }));
+    sourceId = source.id;
+    assert.equal(source.url, 'https://example.com');
+    await db.formSettings.upsert({ where: { id: 'default' }, create: { enabled: true, departmentId: department.id }, update: { enabled: true, departmentId: department.id, requireCompany: false, requirePhone: false } });
+    const input = formSubmissionSchema.parse({ name: 'Source customer', email: `source-${suffix}@example.invalid`, subject: 'Source ticket', message: 'Test', sourceId });
+    const result = await submitForm(input);
+    const ticket = await db.conversation.findUniqueOrThrow({ where: { number: result.number }, include: { formRequest: true } });
+    ids.push(ticket.id);
+    assert.equal(ticket.formRequest?.sourceId, source.id);
+    assert.equal(ticket.formRequest?.sourceName, 'New site');
+    assert.equal(ticket.formRequest?.sourceUrl, 'https://example.com');
+    const generic = await submitForm({ ...input, sourceId: undefined });
+    const genericTicket = await db.conversation.findUniqueOrThrow({ where: { number: generic.number }, include: { formRequest: true } });
+    ids.push(genericTicket.id);
+    assert.equal(genericTicket.formRequest?.sourceId, null);
+    const filtered = await listConversations(actor, listSchema.parse({ formSourceId: source.id }));
+    assert.deepEqual(filtered.data.map(item => item.id), [ticket.id]);
+    await setFormSourceEnabled(actor, source.id, false);
+    await assert.rejects(submitForm(input), (error: any) => error.code === 'INVALID_FORM_SOURCE');
+    await assert.rejects(submitForm({ ...input, sourceId: randomUUID() }), (error: any) => error.code === 'INVALID_FORM_SOURCE');
+    assert.equal((await db.formRequest.findUniqueOrThrow({ where: { conversationId: ticket.id } })).sourceName, 'New site');
+    await setFormSourceEnabled(actor, source.id, true);
+    await assert.rejects(deleteFormSource({ ...actor, role: 'CUSTOMER' }, source.id), (error: any) => error.code === 'FORBIDDEN');
+    await deleteFormSource(actor, source.id);
+    assert.equal(await db.formSource.findUnique({ where: { id: source.id } }), null);
+    assert.equal((await db.formRequest.findUniqueOrThrow({ where: { conversationId: ticket.id } })).sourceName, 'New site');
+    await assert.rejects(submitForm(input), (error: any) => error.code === 'INVALID_FORM_SOURCE');
+  } finally {
+    db.$transaction = originalTx;
+    db.integrationSettings.findUnique = originalSmtp;
+    await db.conversationMessage.deleteMany({ where: { conversationId: { in: ids } } });
+    await db.conversation.deleteMany({ where: { id: { in: ids } } });
+    await db.activityLog.deleteMany({ where: { OR: [{ userId: staff.id }, { user: { email: `source-${suffix}@example.invalid` } }] } });
+    await db.user.deleteMany({ where: { email: `source-${suffix}@example.invalid` } });
+    if (sourceId) await db.formSource.deleteMany({ where: { id: sourceId } });
+    if (original) await db.formSettings.update({ where: { id: 'default' }, data: original });
+    else await db.formSettings.deleteMany({ where: { id: 'default' } });
+    await db.department.delete({ where: { id: department.id } });
+    await db.user.delete({ where: { id: staff.id } });
+    await db.$disconnect();
+  }
+});

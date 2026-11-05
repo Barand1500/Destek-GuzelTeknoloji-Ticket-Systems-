@@ -40,6 +40,7 @@ export const listSchema = paginationSchema.extend({
   assignedAgentId: idSchema.optional(),
   customerId: idSchema.optional(),
   channel: z.enum(['TICKET','EMAIL','SMS','WHATSAPP','FORM','LIVE_CHAT']).optional(),
+  formSourceId: z.uuid().optional(),
   category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),
   view: z.enum(["all", "mine", "unassigned", "open", "pending", "resolved", "closed", "urgent", "today"]).default("all"),
 });

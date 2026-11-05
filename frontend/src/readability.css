@@ -1,56 +1,56 @@
 /* Shared foreground tokens for both workspace themes. */
 /* Guide accents use dark surfaces only when the dark theme is active. */
 html[data-theme="dark"] .guide-page .guide-callout-list li{
-  background:#22342c;border-color:#3b5147;
+  background:#222d34;border-color:#374955;
 }
 html[data-theme="dark"] .guide-page .guide-callout-list li>span,
 html[data-theme="dark"] .guide-page .guide-hero-icon,
 html[data-theme="dark"] .project-guide-section-icon,
 html[data-theme="dark"] .project-guide-response-list li>span{
-  background:#29463a;color:#9ddfc7;
+  background:#293a46;color:#9dc5df;
 }
 html[data-theme="dark"] .project-guide-tech-list span{
-  background:#29463a;border-color:#466056;color:#b5e6d3;
+  background:#293a46;border-color:#415765;color:#b5d2e6;
 }
 html[data-theme="dark"] .guide-page .guide-eyebrow,
 html[data-theme="dark"] .guide-page .guide-setting-number,
 html[data-theme="dark"] .project-guide-section-heading>div>span,
 html[data-theme="dark"] .project-guide-playbooks summary>span,
 html[data-theme="dark"] .project-guide-playbook-body h5{
-  color:#9ddfc7;
+  color:#9dc5df;
 }
 html[data-theme="dark"] .project-guide-security-note{
-  background:#243e32;border-color:#466056;color:#b5e6d3;
+  background:#24343e;border-color:#415765;color:#b5d2e6;
 }
 html[data-theme="dark"] .project-guide-escalate h5{color:#f1d397}
 .app-shell .pagination .icon-button,.app-shell .roles-template-actions>.icon-button{
-  background:var(--surface,#fff);border-color:var(--border,#dce7e0);color:var(--ui-text-navigation);cursor:pointer;
+  background:var(--surface,#fff);border-color:var(--border,#dbe3e8);color:var(--ui-text-navigation);cursor:pointer;
 }
-.app-shell .pagination .icon-button:hover:not(:disabled),.app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#eaf4ee;border-color:#9bbcad;color:#166b5c}
+.app-shell .pagination .icon-button:hover:not(:disabled),.app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#e8f7fd;border-color:#99afbe;color:var(--ui-text-navigation)}
 .app-shell .pagination .icon-button:disabled,.app-shell .roles-template-actions>.icon-button:disabled{opacity:.45;cursor:default}
-html[data-theme="dark"] .app-shell .pagination .icon-button,html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button{background:#20332b;border-color:#466056;color:var(--ui-text-navigation)}
-html[data-theme="dark"] .app-shell .pagination .icon-button:hover:not(:disabled),html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#2a4236;border-color:#729886;color:var(--ui-tab-hover-text)}
-html[data-theme="dark"] .app-shell table th{border-color:#31463d}
+html[data-theme="dark"] .app-shell .pagination .icon-button,html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button{background:#202b33;border-color:#415765;color:var(--ui-text-navigation)}
+html[data-theme="dark"] .app-shell .pagination .icon-button:hover:not(:disabled),html[data-theme="dark"] .app-shell .roles-template-actions>.icon-button:hover:not(:disabled){background:#2a3842;border-color:#6a8aa0;color:var(--ui-tab-hover-text)}
+html[data-theme="dark"] .app-shell table th{border-color:#2e3e49}
 :root {
-  --ui-text-primary: #203832;
-  --ui-text-secondary: #496257;
-  --ui-text-navigation: #166b5c;
-  --ui-tab-indicator: #167766;
-  --ui-tab-hover-text: #0d493e;
+  --ui-text-primary: #202e38;
+  --ui-text-secondary: #435968;
+  --ui-text-navigation: #0879ad;
+  --ui-tab-indicator: #18a7df;
+  --ui-tab-hover-text: #0879ad;
 }
 html[data-theme="dark"] {
-  --ui-text-primary: #e5eee9;
-  --ui-text-secondary: #c6d8cf;
-  --ui-text-navigation: #9ddfc7;
-  --ui-tab-indicator: #8dd0b8;
-  --ui-tab-hover-text: #e5fff3;
+  --ui-text-primary: #e5eaee;
+  --ui-text-secondary: #c4d1da;
+  --ui-text-navigation: #9dc5df;
+  --ui-tab-indicator: #8db5d0;
+  --ui-tab-hover-text: #eaf4fa;
 }
 
 /* The sign-in illustration always has a dark surface, even in light mode. */
 .auth-story {
-  --ui-text-primary: #e5eee9;
-  --ui-text-secondary: #c6d8cf;
-  --ui-text-navigation: #9ddfc7;
+  --ui-text-primary: #e5eaee;
+  --ui-text-secondary: #c4d1da;
+  --ui-text-navigation: #9dc5df;
 }
 .calendar-page {
   --calendar-text: var(--ui-text-primary);
@@ -115,29 +115,29 @@ html[data-theme="dark"] {
   line-height: 1.5;
 }
 .app-shell .integration-toggle i {
-  background: #718078;
+  background: #5e7e93;
 }
 .app-shell .integration-toggle input:checked + i {
-  background: #167766;
+  background: #18a7df;
 }
 html[data-theme="dark"] .app-shell .integration-toggle i {
-  background: #64786f;
+  background: #567386;
 }
 html[data-theme="dark"] .app-shell .integration-toggle input:checked + i {
-  background: #218675;
+  background: #0d8fc5;
 }
 
 html[data-theme="dark"] .app-shell .presence-summary-overflow {
   color: var(--ui-text-navigation);
 }
 html[data-theme="dark"] .app-shell .roles-row-actions .icon-button {
-  background: #20332b;
-  border-color: #466056;
+  background: #202b33;
+  border-color: #415765;
   color: var(--ui-text-navigation);
 }
 html[data-theme="dark"] .app-shell .roles-row-actions .icon-button:hover {
-  background: #2a4236;
-  border-color: #729886;
+  background: #2a3842;
+  border-color: #6a8aa0;
   color: var(--ui-tab-hover-text);
 }
 html[data-theme="dark"] .app-shell .roles-row-actions .icon-button.danger-icon {
@@ -151,15 +151,632 @@ html[data-theme="dark"] .app-shell .roles-row-actions .icon-button.danger-icon:h
   color: #ffd5d2;
 }
 html[data-theme="dark"] .app-shell .survey-vote:disabled {
-  background: #243b30;
-  border: 1px solid #466056;
+  background: #24323b;
+  border: 1px solid #415765;
   color: var(--ui-text-navigation);
   opacity: 1;
 }
 
+/* Keep presence online and conversation surfaces aligned with the blue brand. */
+.app-shell :is(.online-dot, .presence-ONLINE, .presence-dot.online) {
+  color: var(--brand-primary-text);
+}
+.app-shell :is(.online-dot, .presence-dot.online) {
+  background: var(--brand-primary);
+}
+.app-shell .presence-dot.online {
+  box-shadow: 0 0 0 4px #18a7df1c;
+}
+.app-shell .assignee-open-count {
+  color: var(--brand-primary-text);
+}
+.app-shell .presence-summary > button.status-filter.online.active {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .presence-summary > button.status-filter.online.active strong {
+  color: var(--brand-primary-text);
+}
+
+.app-shell .conversation,
+.app-shell .ticket-properties {
+  border-color: #cfe3ed;
+}
+.app-shell .section-heading {
+  border-bottom-color: #dceef6;
+}
+.app-shell .message {
+  border-bottom-color: #e4f1f7;
+}
+.app-shell .message:not(.internal-note) .message-content {
+  border-color: #d8eaf3;
+  background: #f5fbfe;
+  box-shadow: 0 2px 8px rgba(13, 143, 197, 0.06);
+}
+.app-shell .message.outgoing:not(.internal-note) .message-content {
+  border-color: #a9d9ed;
+  background: var(--brand-primary-light);
+}
+.app-shell .message.incoming:not(.internal-note) .avatar {
+  background: #e8f7fd;
+  color: var(--brand-primary-text);
+}
+.app-shell .message:not(.internal-note) p {
+  color: #355468;
+}
+.app-shell .composer {
+  border-color: #cfe3ed;
+  box-shadow: 0 8px 24px rgba(13, 143, 197, 0.08);
+}
+.app-shell .composer-tabs {
+  background: #f1faff;
+  border-bottom-color: #dceef6;
+}
+.app-shell .composer-tabs button.active {
+  color: var(--brand-primary-text);
+}
+.app-shell .composer-footer {
+  border-top-color: #dceef6;
+  background: #f5fbfe;
+}
+.app-shell .composer-attachment-trigger {
+  border-color: #cfe3ed;
+}
+.app-shell .composer-attachment-trigger:hover {
+  border-color: var(--brand-focus);
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .ticket-properties > div > label {
+  border-color: #b8d5e5;
+}
+.app-shell .ticket-properties hr {
+  border-top-color: #e1f0f7;
+}
+
+/* Finish the blue conversion on announcements, notifications, and calendar events. */
+.app-shell .announcement-submit {
+  border-color: var(--brand-primary-text);
+  background: linear-gradient(110deg, var(--brand-primary), var(--brand-primary-hover));
+  box-shadow: 0 4px 12px #18a7df25;
+}
+.app-shell .announcement-submit:hover {
+  background: var(--brand-primary-hover);
+  filter: none;
+}
+.app-shell .notification-conversation-link {
+  border-color: #b9ddec;
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .notification-conversation-link:hover {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary-text);
+}
+.app-shell .notification-read-state {
+  color: var(--brand-primary-text);
+}
+.app-shell .notification-table .button.secondary {
+  border-color: #b9ddec;
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .notification-table .button.secondary:hover {
+  border-color: var(--brand-focus);
+  background: var(--brand-primary-soft);
+}
+.app-shell .calendar-page .calendar-event {
+  border-left-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+  margin-top: 4px;
+  padding: 4px;
+  font-size: 10px;
+}
+.app-shell .calendar-page .calendar-cell {
+  padding: 6px;
+}
+
+.app-shell .conversation-page .created-pill,
+.app-shell .conversation-page .composer-channel-pill {
+  border: 1px solid #d5f0fc;
+  background: #e8f7fd;
+  color: var(--brand-primary-text);
+}
+
+.app-shell .surveys-page :is(input, textarea, select):focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+.app-shell .surveys-page .survey-section-title::before {
+  background: var(--brand-primary);
+}
+.app-shell .surveys-page .survey-status.active {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .surveys-page .survey-channel-section .survey-channels label.selected,
+.app-shell .surveys-page .survey-channels label.selected {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+.app-shell .surveys-page .survey-channel-section .survey-channels label.selected strong,
+.app-shell .surveys-page .survey-channel-section .survey-channels label.selected small {
+  color: var(--brand-primary-text);
+}
+
+.app-shell .topbar-profile-link .avatar,
+.app-shell .profile > .avatar {
+  background: var(--brand-primary-light);
+  border-color: #b5e3f3;
+  color: var(--brand-primary-text);
+}
+.app-shell .topbar-profile-link:hover .avatar,
+.app-shell .topbar-profile-link.active .avatar {
+  background: var(--brand-primary-soft);
+  border-color: #9bdcf4;
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .management-table th,
+  .management-table thead,
+  .table-scroll thead,
+  table > thead
+) {
+  background: #f3fbfe;
+  border-color: #d5f0fc;
+}
+
+html:not([data-theme="dark"]) .app-shell .integration-tabs button.active,
+html:not([data-theme="dark"]) .app-shell .integration-subtabs button.active {
+  border-bottom-color: var(--brand-primary);
+}
+
+/* Conversation pages use the blue brand for the page scrollbar as well. */
+html:has(.conversation-page),
+body:has(.conversation-page),
+.app-shell:has(.conversation-page) {
+  scrollbar-color: var(--brand-primary) transparent;
+}
+.app-shell:has(.conversation-page) {
+  scrollbar-width: thin;
+}
+html:has(.conversation-page)::-webkit-scrollbar,
+body:has(.conversation-page)::-webkit-scrollbar {
+  width: 8px;
+}
+html:has(.conversation-page)::-webkit-scrollbar-track,
+body:has(.conversation-page)::-webkit-scrollbar-track {
+  background: transparent;
+}
+html:has(.conversation-page)::-webkit-scrollbar-thumb,
+body:has(.conversation-page)::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--brand-primary);
+}
+html:has(.conversation-page)::-webkit-scrollbar-thumb:hover,
+body:has(.conversation-page)::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary-hover);
+}
+.app-shell:has(.conversation-page)::-webkit-scrollbar {
+  width: 8px;
+}
+.app-shell:has(.conversation-page)::-webkit-scrollbar-track {
+  background: transparent;
+}
+.app-shell:has(.conversation-page)::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--brand-primary);
+}
+.app-shell:has(.conversation-page)::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary-hover);
+}
+
+/* The surrounding outlined field owns focus; inner controls stay visually flat. */
+.app-shell label:has(> .field-label) > :is(input, textarea, select):focus,
+.app-shell .announcement-field :is(input, textarea, select):focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+/* Brand theme tokens. Semantic status colors remain page-specific. */
+:root {
+  --brand-primary: #0879ad;
+  --brand-primary-hover: #086b98;
+  --brand-primary-active: #075b82;
+  --brand-primary-light: #e8f7fd;
+  --brand-primary-soft: #d5f0fc;
+  --brand-focus: #81d4f4;
+  --brand-primary-text: #086b98;
+  --ui-text-navigation: #0879ad;
+  --ui-tab-indicator: #18a7df;
+  --ui-tab-hover-text: #0879ad;
+}
+
+html[data-theme="dark"] {
+  --brand-primary-light: #173c50;
+  --brand-primary-soft: #1d5068;
+  --brand-focus: #58c4ed;
+  --brand-primary-text: #81d4f4;
+  --ui-text-navigation: #81d4f4;
+  --ui-tab-indicator: #58c4ed;
+  --ui-tab-hover-text: #d5f0fc;
+}
+
+html .app-shell,
+html .app-shell :is(button, input, textarea, select, option, a, table, th, td, label, small, strong, p, span) {
+  font-family: var(--font-ui);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .button.primary,
+  .button.primary:hover,
+  .button.primary:focus-visible,
+  .button.primary:active,
+  .tabs button,
+  .catalog-tabs button,
+  .report-tabs button,
+  .integration-subtabs button,
+  .response-settings-tabs button,
+  .filters button,
+  .filter-tab,
+  .ticket-tabs button,
+  .management-actions .button,
+  .page-heading .eyebrow,
+  .integration-toggle strong,
+  .roles-icon-tile,
+  .roles-count
+) {
+  color: var(--brand-primary-text);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .button.primary,
+  .button.primary:hover,
+  .button.primary:focus-visible,
+  .button.primary:active
+) {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fff;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+html:not([data-theme="dark"]) .app-shell .button.primary:hover {
+  background: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+}
+
+html:not([data-theme="dark"]) .app-shell .button.primary:active {
+  background: var(--brand-primary-active);
+  border-color: var(--brand-primary-text);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .tabs button:hover,
+  .catalog-tabs button:hover,
+  .report-tabs button:hover,
+  .integration-subtabs button:hover,
+  .response-settings-tabs button:hover,
+  .filters button:hover,
+  .filter-tab:hover,
+  .ticket-tabs button:hover,
+  .sidebar a:hover,
+  .sidebar button:hover
+) {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .tabs button.active,
+  .catalog-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .response-settings-tabs button.active,
+  .filter-tab.active,
+  .ticket-tabs button.active,
+  .sidebar a[aria-current="page"],
+  .sidebar a.active,
+  .sidebar button.active
+) {
+  background: var(--brand-primary-soft);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary-text);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  input:focus,
+  textarea:focus,
+  select:focus,
+  .search-box:focus-within
+) {
+  border-color: var(--brand-focus);
+  box-shadow: 0 0 0 3px rgb(24 167 223 / 18%);
+}
+
+.app-shell .global-search:focus,
+.app-shell .search-box input:focus,
+.app-shell .composer textarea:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0;
+}
+
+.app-shell .global-search-wrap:focus-within,
+.app-shell .search-box:focus-within {
+  border-color: var(--brand-focus);
+  box-shadow: 0 0 0 3px rgb(24 167 223 / 18%);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .management-table tbody tr:hover > td,
+  .roles-table tbody tr:hover > td,
+  .inbox-ticket-row:hover > td
+) {
+  background-color: var(--brand-primary-light);
+}
+
+html:not([data-theme="dark"]) .app-shell a:hover {
+  color: var(--brand-primary-text);
+}
+
+html[data-theme="dark"] .app-shell :is(
+  .button.primary,
+  .button.primary:hover,
+  .button.primary:focus-visible,
+  .button.primary:active
+) {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fff;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+html[data-theme="dark"] .app-shell .button.primary:hover {
+  background: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+}
+
+html[data-theme="dark"] .app-shell .button.primary:active {
+  background: var(--brand-primary-active);
+  border-color: var(--brand-primary-text);
+}
+
+html[data-theme="dark"] .app-shell :is(
+  .tabs button:hover,
+  .catalog-tabs button:hover,
+  .report-tabs button:hover,
+  .integration-subtabs button:hover,
+  .response-settings-tabs button:hover,
+  .filters button:hover,
+  .filter-tab:hover,
+  .ticket-tabs button:hover,
+  .sidebar a:hover,
+  .sidebar button:hover
+) {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+
+html[data-theme="dark"] .app-shell :is(
+  .tabs button.active,
+  .catalog-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .response-settings-tabs button.active,
+  .filter-tab.active,
+  .ticket-tabs button.active,
+  .sidebar a[aria-current="page"],
+  .sidebar a.active,
+  .sidebar button.active
+) {
+  background: var(--brand-primary-soft);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary-text);
+}
+
+html[data-theme="dark"] .app-shell :is(
+  input:focus,
+  textarea:focus,
+  select:focus,
+  .search-box:focus-within
+) {
+  border-color: var(--brand-focus);
+  box-shadow: 0 0 0 3px rgb(24 167 223 / 24%);
+}
+
+html[data-theme="dark"] .app-shell :is(
+  .management-table tbody tr:hover > td,
+  .roles-table tbody tr:hover > td,
+  .inbox-ticket-row:hover > td
+) {
+  background-color: var(--brand-primary-light);
+}
+
+html[data-theme="dark"] .app-shell a:hover {
+  color: var(--brand-primary-text);
+}
+
+/* Sidebar keeps its original neutral default state; only interaction states use blue. */
+.app-shell .sidebar nav a,
+.app-shell .sidebar .settings-nav-toggle {
+  background: transparent;
+  color: var(--ui-text-secondary);
+  font-weight: 500;
+}
+
+.app-shell .sidebar {
+  --sidebar-scroll-thumb: #d5f0fc;
+  --sidebar-scroll-hover: #d5f0fc;
+  scrollbar-color: var(--sidebar-scroll-thumb) transparent;
+}
+.app-shell .sidebar::-webkit-scrollbar-thumb {
+  background: var(--sidebar-scroll-thumb);
+}
+.app-shell .sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-scroll-hover);
+}
+
+.app-shell .sidebar nav a:hover,
+.app-shell .sidebar .settings-nav-toggle:hover,
+.app-shell .sidebar .settings-nav-toggle.open {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-text);
+}
+
+.app-shell .sidebar nav a.active {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary-text);
+  font-weight: 600;
+}
+
+.app-shell .sidebar nav a svg,
+.app-shell .sidebar .settings-nav-toggle svg {
+  color: inherit;
+}
+
+.app-shell .styled-dropdown.open .styled-dropdown-trigger {
+  border-color: #dae2e7;
+  box-shadow: none;
+}
+
+.app-shell .styled-dropdown:has(.styled-dropdown-label):focus-within {
+  border-color: #b8c6d5;
+  box-shadow: none;
+}
+
+.app-shell .styled-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--brand-focus);
+  outline-offset: 2px;
+}
+
+.app-shell .styled-dropdown:has(.styled-dropdown-label).open .styled-dropdown-trigger {
+  border: 0;
+  box-shadow: none;
+}
+
+.app-shell .stat-card-link:hover {
+  border-color: inherit;
+}
+
+html:not([data-theme="dark"]) .app-shell .tabs button,
+html:not([data-theme="dark"]) .app-shell .tabs button:hover,
+html:not([data-theme="dark"]) .app-shell .tabs button.active,
+html:not([data-theme="dark"]) .app-shell .tabs button:focus-visible,
+html[data-theme="dark"] .app-shell .tabs button,
+html[data-theme="dark"] .app-shell .tabs button:hover,
+html[data-theme="dark"] .app-shell .tabs button.active,
+html[data-theme="dark"] .app-shell .tabs button:focus-visible {
+  background: transparent;
+}
+
+html:not([data-theme="dark"]) .app-shell .tabs button.active,
+html[data-theme="dark"] .app-shell .tabs button.active {
+  border-color: transparent transparent var(--brand-primary);
+}
+
+.app-shell :is(
+  .catalog-tabs button,
+  .report-tabs button,
+  .integration-subtabs button,
+  .response-settings-tabs button
+),
+.app-shell :is(
+  .catalog-tabs button:hover,
+  .report-tabs button:hover,
+  .integration-subtabs button:hover,
+  .response-settings-tabs button:hover
+),
+.app-shell :is(
+  .catalog-tabs button.active,
+  .report-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .integration-subtabs button[aria-selected="true"],
+  .response-settings-tabs button.active,
+  .response-settings-tabs button[aria-selected="true"]
+) {
+  background: transparent;
+}
+
+.app-shell :is(
+  .catalog-tabs button.active,
+  .report-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .integration-subtabs button[aria-selected="true"],
+  .response-settings-tabs button.active,
+  .response-settings-tabs button[aria-selected="true"]
+) {
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+  border-bottom-color: var(--brand-primary);
+}
+
+html:not([data-theme="dark"]) .app-shell :is(
+  .catalog-tabs button,
+  .report-tabs button,
+  .integration-subtabs button,
+  .response-settings-tabs button
+),
+html:not([data-theme="dark"]) .app-shell :is(
+  .catalog-tabs button:hover,
+  .report-tabs button:hover,
+  .integration-subtabs button:hover,
+  .response-settings-tabs button:hover
+),
+html:not([data-theme="dark"]) .app-shell :is(
+  .catalog-tabs button.active,
+  .catalog-tabs button[aria-selected="true"],
+  .report-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .integration-subtabs button[aria-selected="true"],
+  .response-settings-tabs button.active,
+  .response-settings-tabs button[aria-selected="true"]
+),
+html[data-theme="dark"] .app-shell :is(
+  .catalog-tabs button,
+  .report-tabs button,
+  .integration-subtabs button,
+  .response-settings-tabs button
+),
+html[data-theme="dark"] .app-shell :is(
+  .catalog-tabs button:hover,
+  .report-tabs button:hover,
+  .integration-subtabs button:hover,
+  .response-settings-tabs button:hover
+),
+html[data-theme="dark"] .app-shell :is(
+  .catalog-tabs button.active,
+  .catalog-tabs button[aria-selected="true"],
+  .report-tabs button.active,
+  .report-tabs button[aria-selected="true"],
+  .integration-subtabs button.active,
+  .integration-subtabs button[aria-selected="true"],
+  .response-settings-tabs button.active,
+  .response-settings-tabs button[aria-selected="true"]
+) {
+  background-color: transparent !important;
+}
+
+.app-shell .stat-card > strong {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-stretch: normal;
+  letter-spacing: normal;
+  font-variant-numeric: normal;
+}
+
 /* Keep supporting text readable without affecting inputs or placeholders. */
 html:not([data-theme="dark"]) {
-  --ui-text-secondary: #496257;
+  --ui-text-secondary: #435968;
 }
 
 html:not([data-theme="dark"]) .app-shell :is(
@@ -199,7 +816,7 @@ html:not([data-theme="dark"]) .app-shell :is(
   .inbox-time-cell,
   .inbox-response-cell
 ) {
-  color: #496257;
+  color: #435968;
   font-weight: 500;
 }
 
@@ -209,29 +826,29 @@ html:not([data-theme="dark"]) .app-shell .inbox-response-cell {
 
 html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(6) .inbox-secondary-text,
 html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(7) .inbox-secondary-text {
-  color: #587066;
+  color: #4e687a;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.3;
 }
 
 html:not([data-theme="dark"]) .app-shell .customer-list-table td > small {
-  color: #496257;
+  color: #435968;
   font-weight: 500;
 }
 
 html:not([data-theme="dark"]) .app-shell .customer-contact-cell {
-  color: #496257;
+  color: #435968;
   font-weight: 500;
 }
 
 html:not([data-theme="dark"]) .app-shell .inbox-time-cell .inbox-elapsed-time {
-  color: #496257;
+  color: #435968;
   font-weight: 500;
 }
 
 html:not([data-theme="dark"]) .app-shell .users-management-grid input::placeholder {
-  color: #496257;
+  color: #435968;
   font-weight: 400;
   opacity: 1;
 }
@@ -240,7 +857,7 @@ html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(4),
 html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(5),
 html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(6),
 html:not([data-theme="dark"]) .app-shell .inbox-ticket-row > td:nth-child(7) {
-  color: #263d34;
+  color: #26343d;
   font-weight: 600;
 }
 
@@ -271,11 +888,11 @@ html:not([data-theme="dark"]) .app-shell .report-progress-label {
   color: var(--ui-text-secondary);
 }
 .app-shell .survey-answer-modal > header .icon-button:hover {
-  background: #f7faf8;
+  background: #f7f9fa;
   color: var(--ui-text-primary);
 }
 html[data-theme="dark"] .app-shell .survey-answer-modal > header .icon-button:hover {
-  background: #2a3e34;
+  background: #29363f;
 }
 .app-shell .survey-answer-modal > header .icon-button:focus-visible {
   outline: 2px solid var(--ui-tab-indicator);

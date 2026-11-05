@@ -26,8 +26,8 @@ const writes = rateLimit({ windowMs: 10 * 60_000, limit: 15, standardHeaders: 'd
 const reads = rateLimit({ windowMs: 60_000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const replies = rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false, message: limitMessage });
 const formFileSize = FORM_UPLOAD_BYTES;
-// Eight application fields, plus the hidden field sent by older Turnstile clients.
-const parseAttachments = multer({ storage: formUploadStorage(), limits: { fileSize: formFileSize, fields: 9, fieldSize: 40000 } }).array('files');
+// Application fields include the optional source, plus the older hidden Turnstile field.
+const parseAttachments = multer({ storage: formUploadStorage(), limits: { fileSize: formFileSize, fields: 10, fieldSize: 40000 } }).array('files');
 const attachments: RequestHandler = (req, res, next) => parseAttachments(req, res, error => {
   if (!(error instanceof multer.MulterError)) { next(error); return; }
   const message = error.code === 'LIMIT_FILE_SIZE' ? `Dosya başına sınır ${Number((formFileSize / 1024 / 1024).toFixed(2))} MB.`

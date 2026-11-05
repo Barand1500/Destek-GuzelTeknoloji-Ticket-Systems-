@@ -9,10 +9,10 @@ import { inboxPath, workspacePath } from "../router/paths";
 import { hasPermission } from "../features/auth/permissions";
 
 const chartColors: Record<Status, string> = {
-  OPEN: "#398571",
+  OPEN: "#18A7DF",
   PENDING: "#d8a142",
   IN_PROGRESS: "#4f86c6",
-  RESOLVED: "#7c9f64",
+  RESOLVED: "#0879AD",
   CLOSED: "#89968e",
 };
 

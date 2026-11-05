@@ -62,6 +62,7 @@ export const ModelName = {
   DepartmentAgent: 'DepartmentAgent',
   Conversation: 'Conversation',
   FormSettings: 'FormSettings',
+  FormSource: 'FormSource',
   FormRequest: 'FormRequest',
   FormAccess: 'FormAccess',
   FormLoginChallenge: 'FormLoginChallenge',
@@ -276,12 +277,26 @@ export const FormSettingsScalarFieldEnum = {
 export type FormSettingsScalarFieldEnum = (typeof FormSettingsScalarFieldEnum)[keyof typeof FormSettingsScalarFieldEnum]
 
 
+export const FormSourceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  url: 'url',
+  enabled: 'enabled',
+  createdAt: 'createdAt'
+} as const
+
+export type FormSourceScalarFieldEnum = (typeof FormSourceScalarFieldEnum)[keyof typeof FormSourceScalarFieldEnum]
+
+
 export const FormRequestScalarFieldEnum = {
   conversationId: 'conversationId',
   email: 'email',
   name: 'name',
   phone: 'phone',
   company: 'company',
+  sourceId: 'sourceId',
+  sourceName: 'sourceName',
+  sourceUrl: 'sourceUrl',
   createdAt: 'createdAt'
 } as const
 
@@ -950,12 +965,24 @@ export const FormSettingsOrderByRelevanceFieldEnum = {
 export type FormSettingsOrderByRelevanceFieldEnum = (typeof FormSettingsOrderByRelevanceFieldEnum)[keyof typeof FormSettingsOrderByRelevanceFieldEnum]
 
 
+export const FormSourceOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  url: 'url'
+} as const
+
+export type FormSourceOrderByRelevanceFieldEnum = (typeof FormSourceOrderByRelevanceFieldEnum)[keyof typeof FormSourceOrderByRelevanceFieldEnum]
+
+
 export const FormRequestOrderByRelevanceFieldEnum = {
   conversationId: 'conversationId',
   email: 'email',
   name: 'name',
   phone: 'phone',
-  company: 'company'
+  company: 'company',
+  sourceId: 'sourceId',
+  sourceName: 'sourceName',
+  sourceUrl: 'sourceUrl'
 } as const
 
 export type FormRequestOrderByRelevanceFieldEnum = (typeof FormRequestOrderByRelevanceFieldEnum)[keyof typeof FormRequestOrderByRelevanceFieldEnum]

@@ -79,7 +79,7 @@ const initials = (name: string) =>
 const palette: Record<string, string> = {
   URGENT: "#ef4444",
   HIGH: "#f59e0b",
-  NORMAL: "#398571",
+  NORMAL: "#18A7DF",
   LOW: "#94a3b8",
 };
 
@@ -216,7 +216,7 @@ function Trend({ daily }: { daily: Report["daily"] }) {
       extra={
         <div className="report-legend">
           <span>
-            <i style={{ background: "#167766" }} />
+            <i style={{ background: "var(--report-accent)" }} />
             Tamamlanan
           </span>
           <span>
@@ -275,7 +275,7 @@ function PriorityChart({ data }: { data: Report }) {
   const slices = keys.map((key, index) => {
     const start = offset;
     offset += data.total ? ((data.priorities[key] ?? 0) * 100) / data.total : 0;
-    return `${palette[key] ?? ["#167766", "#14b8a6", "#0f766e"][index % 3]} ${start}% ${offset}%`;
+    return `${palette[key] ?? ["#0879AD", "#58C4ED", "#0D8FC5"][index % 3]} ${start}% ${offset}%`;
   });
   return (
     <Panel title="Öncelik Dağılımı">
@@ -302,7 +302,7 @@ function PriorityChart({ data }: { data: Report }) {
                 style={{
                   background:
                     palette[key] ??
-                    ["#167766", "#14b8a6", "#0f766e"][index % 3],
+                    ["#0879AD", "#58C4ED", "#0D8FC5"][index % 3],
                 }}
               />
               {priorities[key] ?? key}

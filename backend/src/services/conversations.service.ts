@@ -123,6 +123,7 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
   ]) : [[], []];
   const filters: Prisma.ConversationWhereInput = {
     ...(q.channel ? conversationChannelFilter(q.channel) : {}),
+    ...(q.formSourceId ? { formRequest: { is: { sourceId: q.formSourceId } } } : {}),
     status: q.status,
     priority: q.priority,
     departmentId: q.departmentId,

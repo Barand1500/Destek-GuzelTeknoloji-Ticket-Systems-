@@ -1,4 +1,5 @@
 import { getTurnstileSettings, revealTurnstileSecret, saveTurnstileSettings, turnstileSettingsSchema } from '../services/turnstile-settings.service.js';
+import { listFormSources, createFormSource, setFormSourceEnabled, deleteFormSource, formSourceSchema } from '../services/form-sources.service.js';
 import { getFormSettings, saveFormSettings, formSettingsSchema } from '../services/forms.service.js';
 import { Router } from "express";
 import { mergeCustomers, mergeCustomersInput, duplicateCustomers, duplicateCustomersQuery } from '../services/customer-merge.service.js';
@@ -116,6 +117,10 @@ managementRouter.delete("/activity-logs", staff, async (req, res) => res.json({ 
 managementRouter.get('/integrations/turnstile', staff, async (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await getTurnstileSettings(req.actor) }));
 managementRouter.get('/integrations/turnstile/secret', staff, async (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await revealTurnstileSecret(req.actor) }));
 managementRouter.put('/integrations/turnstile', staff, async (req, res) => res.json({ success: true, data: await saveTurnstileSettings(req.actor, turnstileSettingsSchema.parse(req.body)) }));
+managementRouter.get('/integrations/form/sources', staff, async (_req, res) => res.json({ success: true, data: await listFormSources() }));
+managementRouter.delete('/integrations/form/sources/:id', staff, async (req, res) => { await deleteFormSource(req.actor, idSchema.parse(req.params.id)); res.json({ success: true }); });
+managementRouter.post('/integrations/form/sources', staff, async (req, res) => res.status(201).json({ success: true, data: await createFormSource(req.actor, formSourceSchema.parse(req.body)) }));
+managementRouter.patch('/integrations/form/sources/:id', staff, async (req, res) => res.json({ success: true, data: await setFormSourceEnabled(req.actor, idSchema.parse(req.params.id), z.object({ enabled: z.boolean() }).strict().parse(req.body).enabled) }));
 managementRouter.get('/integrations/form', staff, async (_req, res) => res.json({ success: true, data: await getFormSettings() }));
 managementRouter.put('/integrations/form', staff, async (req, res) => res.json({ success: true, data: await saveFormSettings(req.actor, formSettingsSchema.parse(req.body)) }));
 managementRouter.get("/integrations", staff, async (req, res) => res.json({ success: true, data: await service.integrationSettings(req.actor) }));

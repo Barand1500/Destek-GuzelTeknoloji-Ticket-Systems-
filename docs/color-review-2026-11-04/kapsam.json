@@ -1,0 +1,1106 @@
+﻿[
+    {
+        "key":  "light-admin-admin-dashboard",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/dashboard",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-conversations",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/conversations",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-conversations-ticket0",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/conversations/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-conversations-ticket0-log",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/conversations/ticket0/log",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-users",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-notification-popover",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-dropdown",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-customers",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/customers",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-departments",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/departments",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-websites",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/websites",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-tags",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/tags",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-tags-skills",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/tags/skills",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-roles",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/roles",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-files",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/files",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-saved-replies",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/saved-replies",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-surveys",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-survey-create",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-calendar",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/calendar",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-notifications",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/notifications",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-integrations-channels",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-response-time-rules",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/response-time-rules",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-staff-presence",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/staff-presence",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-profile",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-guide-system",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/guide/system",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-guide-projects",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/guide/projects?project=site",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-reports",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/reports",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-activity-logs",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/activity-logs",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-admin-phone-support",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/phone-support",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-agent-agent-inbox",
+        "role":  "AGENT",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/agent/inbox",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-agent-agent-conversations-ticket0",
+        "role":  "AGENT",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/agent/conversations/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-agent-agent-profile",
+        "role":  "AGENT",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/agent/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-dashboard",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/dashboard",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-tickets",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/tickets",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-tickets-new",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/tickets/new",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-tickets-ticket0",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/tickets/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-profile",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-customer-customer-notifications",
+        "role":  "CUSTOMER",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/customer/notifications",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-guest-auth",
+        "role":  "GUEST",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/auth",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-guest-form-destek",
+        "role":  "GUEST",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/form/destek",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-guest-form-talep",
+        "role":  "GUEST",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/form/talep",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-dashboard",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/dashboard",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-conversations",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/conversations",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-conversations-ticket0",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/conversations/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-conversations-ticket0-log",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/conversations/ticket0/log",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-users",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-notification-popover",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-dropdown",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/users",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-customers",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/customers",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-departments",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/departments",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-websites",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/websites",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-tags",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/tags",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-tags-skills",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/tags/skills",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-roles",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/roles",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-files",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/files",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-saved-replies",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/saved-replies",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-surveys",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-survey-create",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-calendar",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/calendar",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-notifications",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/notifications",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-integrations-channels",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-response-time-rules",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/response-time-rules",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-staff-presence",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/staff-presence",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-profile",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-guide-system",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/guide/system",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-guide-projects",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/guide/projects?project=site",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-reports",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/reports",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-activity-logs",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/activity-logs",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-admin-phone-support",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/phone-support",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-agent-agent-inbox",
+        "role":  "AGENT",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/agent/inbox",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-agent-agent-conversations-ticket0",
+        "role":  "AGENT",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/agent/conversations/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-agent-agent-profile",
+        "role":  "AGENT",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/agent/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-dashboard",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/dashboard",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-tickets",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/tickets",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-tickets-new",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/tickets/new",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-tickets-ticket0",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/tickets/ticket0",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-profile",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/profile",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-customer-customer-notifications",
+        "role":  "CUSTOMER",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/customer/notifications",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-guest-auth",
+        "role":  "GUEST",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/auth",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-guest-form-destek",
+        "role":  "GUEST",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/form/destek",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-guest-form-talep",
+        "role":  "GUEST",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/form/talep",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-survey-answer",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-role-editor",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/roles",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-survey-answer",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/surveys",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-role-editor",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/roles",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-integration-sms",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-integration-whatsapp",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-integration-form",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "light-admin-integration-cloudflare",
+        "role":  "ADMIN",
+        "theme":  "light",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-integration-sms",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-integration-whatsapp",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-integration-form",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    },
+    {
+        "key":  "dark-admin-integration-cloudflare",
+        "role":  "ADMIN",
+        "theme":  "dark",
+        "url":  "http://127.0.0.1:5174/admin/integrations/channels",
+        "desktop":  "1440x1000",
+        "mobile":  "390x844",
+        "mobileOverflow":  false,
+        "errors":  [
+
+                   ]
+    }
+]

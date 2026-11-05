@@ -1,0 +1,10 @@
+CREATE TABLE `FormSource` (
+ `id` VARCHAR(191) NOT NULL,
+ `name` VARCHAR(100) NOT NULL,
+ `url` VARCHAR(500) NOT NULL,
+ `enabled` BOOLEAN NOT NULL DEFAULT true,
+ `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+ PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `FormRequest` ADD COLUMN `sourceId` VARCHAR(36) NULL, ADD COLUMN `sourceName` VARCHAR(100) NULL, ADD COLUMN `sourceUrl` VARCHAR(500) NULL;
+CREATE INDEX `FormRequest_sourceId_idx` ON `FormRequest`(`sourceId`);

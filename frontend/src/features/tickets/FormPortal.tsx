@@ -65,6 +65,8 @@ export function FormPortal() {
         setNotice(deliveryChannel === 'EMAIL' ? 'Doğrulama kodu e-posta adresinize gönderildi.' : 'Doğrulama kodu telefon numaranıza SMS olarak gönderildi.');
       } else {
         if (captcha.payload.turnstileToken) data.set('turnstileToken', captcha.payload.turnstileToken);
+        const sourceId = new URLSearchParams(location.search).get('source');
+        if (sourceId) data.set('sourceId', sourceId);
         const result = await guest.post('/requests', data);
         setCreated(result.data.data.number);
       }

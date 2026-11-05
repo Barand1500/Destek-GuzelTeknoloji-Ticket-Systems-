@@ -408,6 +408,7 @@ export const ModelName = {
   DepartmentAgent: 'DepartmentAgent',
   Conversation: 'Conversation',
   FormSettings: 'FormSettings',
+  FormSource: 'FormSource',
   FormRequest: 'FormRequest',
   FormAccess: 'FormAccess',
   FormLoginChallenge: 'FormLoginChallenge',
@@ -458,7 +459,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1185,6 +1186,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.FormSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.FormSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    FormSource: {
+      payload: Prisma.$FormSourcePayload<ExtArgs>
+      fields: Prisma.FormSourceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FormSourceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FormSourceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        findFirst: {
+          args: Prisma.FormSourceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FormSourceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        findMany: {
+          args: Prisma.FormSourceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>[]
+        }
+        create: {
+          args: Prisma.FormSourceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        createMany: {
+          args: Prisma.FormSourceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.FormSourceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        update: {
+          args: Prisma.FormSourceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        deleteMany: {
+          args: Prisma.FormSourceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FormSourceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.FormSourceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FormSourcePayload>
+        }
+        aggregate: {
+          args: Prisma.FormSourceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFormSource>
+        }
+        groupBy: {
+          args: Prisma.FormSourceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormSourceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FormSourceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FormSourceCountAggregateOutputType> | number
         }
       }
     }
@@ -3698,12 +3765,26 @@ export const FormSettingsScalarFieldEnum = {
 export type FormSettingsScalarFieldEnum = (typeof FormSettingsScalarFieldEnum)[keyof typeof FormSettingsScalarFieldEnum]
 
 
+export const FormSourceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  url: 'url',
+  enabled: 'enabled',
+  createdAt: 'createdAt'
+} as const
+
+export type FormSourceScalarFieldEnum = (typeof FormSourceScalarFieldEnum)[keyof typeof FormSourceScalarFieldEnum]
+
+
 export const FormRequestScalarFieldEnum = {
   conversationId: 'conversationId',
   email: 'email',
   name: 'name',
   phone: 'phone',
   company: 'company',
+  sourceId: 'sourceId',
+  sourceName: 'sourceName',
+  sourceUrl: 'sourceUrl',
   createdAt: 'createdAt'
 } as const
 
@@ -4372,12 +4453,24 @@ export const FormSettingsOrderByRelevanceFieldEnum = {
 export type FormSettingsOrderByRelevanceFieldEnum = (typeof FormSettingsOrderByRelevanceFieldEnum)[keyof typeof FormSettingsOrderByRelevanceFieldEnum]
 
 
+export const FormSourceOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  url: 'url'
+} as const
+
+export type FormSourceOrderByRelevanceFieldEnum = (typeof FormSourceOrderByRelevanceFieldEnum)[keyof typeof FormSourceOrderByRelevanceFieldEnum]
+
+
 export const FormRequestOrderByRelevanceFieldEnum = {
   conversationId: 'conversationId',
   email: 'email',
   name: 'name',
   phone: 'phone',
-  company: 'company'
+  company: 'company',
+  sourceId: 'sourceId',
+  sourceName: 'sourceName',
+  sourceUrl: 'sourceUrl'
 } as const
 
 export type FormRequestOrderByRelevanceFieldEnum = (typeof FormRequestOrderByRelevanceFieldEnum)[keyof typeof FormRequestOrderByRelevanceFieldEnum]
@@ -5001,6 +5094,7 @@ export type GlobalOmitConfig = {
   departmentAgent?: Prisma.DepartmentAgentOmit
   conversation?: Prisma.ConversationOmit
   formSettings?: Prisma.FormSettingsOmit
+  formSource?: Prisma.FormSourceOmit
   formRequest?: Prisma.FormRequestOmit
   formAccess?: Prisma.FormAccessOmit
   formLoginChallenge?: Prisma.FormLoginChallengeOmit

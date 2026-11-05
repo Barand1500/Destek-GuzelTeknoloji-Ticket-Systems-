@@ -97,6 +97,11 @@ export type Conversation = Prisma.ConversationModel
  */
 export type FormSettings = Prisma.FormSettingsModel
 /**
+ * Model FormSource
+ * 
+ */
+export type FormSource = Prisma.FormSourceModel
+/**
  * Model FormRequest
  * 
  */

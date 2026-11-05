@@ -28,6 +28,7 @@ export const formSubmissionSchema = z.object({
   subject: z.string().trim().max(200).default(''), message: z.string().trim().max(10000).default(''),
   // Older clients can still submit this field, but routing uses saved settings only.
   departmentId: z.uuid().optional(),
+  sourceId: z.uuid().optional(),
   turnstileToken: z.string().max(2048).optional(),
 }).strict();
 export async function smtpReady() {
@@ -73,6 +74,8 @@ export async function submitForm(input: z.infer<typeof formSubmissionSchema>, fi
     const settings = await tx.formSettings.findUnique({ where: { id: 'default' } });
     const department = await tx.department.findFirst({ where: { ...(settings?.departmentId ? { id: settings.departmentId } : {}), isActive: true, deletedAt: null }, orderBy: [{ name: 'asc' }, { id: 'asc' }], select: { id: true } });
     if (!department) throw new AppError(503, 'FORM_UNAVAILABLE', 'Form şu anda kullanılamıyor. Lütfen daha sonra deneyin.');
+    const source = input.sourceId ? await tx.formSource.findUnique({ where: { id: input.sourceId } }) : null;
+    if (input.sourceId && !source?.enabled) throw new AppError(400, 'INVALID_FORM_SOURCE', 'Bu siteye ait form bağlantısı artık geçerli değil.');
     const person = customer ?? await tx.user.create({ data: { name: input.name, email: input.email, phone: input.phone || null, company: input.company || null, passwordHash, role: 'CUSTOMER' } });
     // Complete missing company details without overwriting an existing customer profile.
     if (customer && input.company) {
@@ -84,7 +87,7 @@ export async function submitForm(input: z.infer<typeof formSubmissionSchema>, fi
     const conversation = await tx.conversation.create({ data: {
       subject, searchSubject: subject.normalize('NFKC').toLocaleLowerCase('tr-TR'), customerId: person.id,
       channel: 'FORM', replyChannels: ['FORM'], source: 'FORM', departmentId: department.id,
-      formRequest: { create: { name: input.name, email: input.email, phone: input.phone || null, company: input.company || null } },
+      formRequest: { create: { name: input.name, email: input.email, phone: input.phone || null, company: input.company || null, sourceId: source?.id, sourceName: source?.name, sourceUrl: source?.url } },
       messages: { create: { authorId: person.id, body: message, type: 'CUSTOMER_MESSAGE', attachments: { create: files.map(file => ({ ...file, uploaderId: person.id })) } } },
     } });
     const actor: Actor = { id: person.id, name: person.name, email: input.email, role: 'CUSTOMER', departmentIds: [], sessionId: '', ipAddress };
