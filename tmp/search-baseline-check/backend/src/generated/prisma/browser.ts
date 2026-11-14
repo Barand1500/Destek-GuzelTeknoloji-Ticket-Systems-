@@ -267,3 +267,8 @@ export type CreditCharge = Prisma.CreditChargeModel
  * 
  */
 export type CustomerLoginChallenge = Prisma.CustomerLoginChallengeModel
+/**
+ * Model AgreementType
+ * 
+ */
+export type AgreementType = Prisma.AgreementTypeModel

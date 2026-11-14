@@ -1002,7 +1002,7 @@ export function TicketDetail() {
             {user?.role === "CUSTOMER" ? (
               <Badge status={t.status} />
             ) : (
-              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status)) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
+              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status) && !t.creditCharge) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
             )}
           </div>
           <div className="property-editor">
@@ -1035,7 +1035,7 @@ export function TicketDetail() {
                 aria-label="Çözüldü Olarak İşaretle"
                 title="Çözüldü Olarak İşaretle"
                 disabled={update.isPending || !hasPermission(user, 'conversations.update')}
-                onClick={() => setResolutionStatus('RESOLVED')}
+                onClick={() => t.creditCharge ? update.mutate({ status: 'RESOLVED' }) : setResolutionStatus('RESOLVED')}
               >
                 <CheckCheck size={16} /> Çözüldü Olarak İşaretle
               </button>

@@ -100,7 +100,8 @@ export const ModelName = {
   SurveyResponse: 'SurveyResponse',
   Agreement: 'Agreement',
   CreditCharge: 'CreditCharge',
-  CustomerLoginChallenge: 'CustomerLoginChallenge'
+  CustomerLoginChallenge: 'CustomerLoginChallenge',
+  AgreementType: 'AgreementType'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -841,6 +842,16 @@ export const CustomerLoginChallengeScalarFieldEnum = {
 export type CustomerLoginChallengeScalarFieldEnum = (typeof CustomerLoginChallengeScalarFieldEnum)[keyof typeof CustomerLoginChallengeScalarFieldEnum]
 
 
+export const AgreementTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AgreementTypeScalarFieldEnum = (typeof AgreementTypeScalarFieldEnum)[keyof typeof AgreementTypeScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1448,4 +1459,12 @@ export const CustomerLoginChallengeOrderByRelevanceFieldEnum = {
 } as const
 
 export type CustomerLoginChallengeOrderByRelevanceFieldEnum = (typeof CustomerLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof CustomerLoginChallengeOrderByRelevanceFieldEnum]
+
+
+export const AgreementTypeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name'
+} as const
+
+export type AgreementTypeOrderByRelevanceFieldEnum = (typeof AgreementTypeOrderByRelevanceFieldEnum)[keyof typeof AgreementTypeOrderByRelevanceFieldEnum]
 

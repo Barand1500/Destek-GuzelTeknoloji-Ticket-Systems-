@@ -682,7 +682,7 @@ model Agreement {
  customerId String
  customer User @relation(fields: [customerId], references: [id], onDelete: Restrict)
  name String @db.VarChar(150)
- type String @db.VarChar(20)
+ type String @db.VarChar(64)
  startsOn DateTime @db.Date
  endsOn DateTime @db.Date
  fee Decimal @db.Decimal(12, 2)
@@ -716,4 +716,11 @@ model CustomerLoginChallenge {
  requestWindowAt DateTime @default(now())
  expiresAt DateTime
  consumedAt DateTime?
+}
+
+model AgreementType {
+ id String @id @default(uuid())
+ name String @unique @db.VarChar(80)
+ archivedAt DateTime?
+ createdAt DateTime @default(now())
 }

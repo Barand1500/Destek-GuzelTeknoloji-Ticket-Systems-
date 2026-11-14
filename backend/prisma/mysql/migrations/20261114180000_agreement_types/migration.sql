@@ -1,0 +1,2 @@
+ALTER TABLE `Agreement` MODIFY `type` VARCHAR(64) NOT NULL;
+CREATE TABLE `AgreementType` (`id` VARCHAR(191) NOT NULL, `name` VARCHAR(80) NOT NULL, `archivedAt` DATETIME(3) NULL, `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), PRIMARY KEY (`id`), UNIQUE INDEX `AgreementType_name_key` (`name`)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

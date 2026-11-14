@@ -10,7 +10,7 @@ import { createCustomer } from './management.service.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v, 'Geçerli bir tarih girin.');
 export const agreementInput = z.object({
-  name: z.string().trim().min(1).max(150), type: z.enum(['MONTHLY', 'YEARLY', 'ONE_OFF', 'MAINTENANCE']),
+  name: z.string().trim().min(1).max(150), type: z.union([z.enum(['MONTHLY', 'YEARLY', 'ONE_OFF', 'MAINTENANCE']), z.uuid()]),
   startsOn: day, endsOn: day,
   fee: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ücret en fazla iki ondalık basamak içermelidir.')).default('0'),
   credits: z.number().int().min(0).max(1_000_000),
@@ -27,6 +27,45 @@ async function customer(tx: Prisma.TransactionClient, id: string) {
   if (!result) throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Müşteri bulunamadı.');
   return result;
 }
+export const builtInAgreementTypes: Record<string, string> = { MONTHLY: 'Aylık', YEARLY: 'Yıllık', ONE_OFF: 'Ek Destek Kredisi', MAINTENANCE: 'Bakım Anlaşması' };
+export async function listAgreementTypes(actor: Actor) {
+  staff(actor);
+  return [...Object.entries(builtInAgreementTypes).map(([id, name]) => ({ id, name, builtIn: true })), ...(await db.agreementType.findMany({ where: { archivedAt: null }, orderBy: { name: 'asc' } })).map(t => ({ id: t.id, name: t.name, builtIn: false }))];
+}
+export async function createAgreementType(actor: Actor, rawName: string) {
+  staff(actor, true);
+  const name = z.string().trim().min(1).max(80).parse(rawName).replace(/\s+/g, ' ');
+  if (Object.values(builtInAgreementTypes).some(label => label.localeCompare(name, 'tr-TR', { sensitivity: 'base' }) === 0)) throw invalid('Bu hazır anlaşma türü zaten var.');
+  const result = await db.$transaction(async tx => {
+    const existing = await tx.agreementType.findUnique({ where: { name } });
+    if (existing && !existing.archivedAt) throw new AppError(409, 'TYPE_EXISTS', 'Bu anlaşma türü zaten var.');
+    const type = existing ? await tx.agreementType.update({ where: { id: existing.id }, data: { archivedAt: null } }) : await tx.agreementType.create({ data: { name } });
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement_type.created', entityType: 'AgreementType', entityId: type.id, metadata: { name }, ipAddress: actor.ipAddress } });
+    return { id: type.id, name: type.name, builtIn: false };
+  });
+  publishChange(); return result;
+}
+export async function archiveAgreementType(actor: Actor, id: string) {
+  staff(actor, true);
+  if (builtInAgreementTypes[id]) throw invalid('Hazır anlaşma türleri silinemez.');
+  await db.$transaction(async tx => {
+    const changed = await tx.agreementType.updateMany({ where: { id, archivedAt: null }, data: { archivedAt: new Date() } });
+    if (!changed.count) throw invalid('Anlaşma türü bulunamadı.');
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement_type.archived', entityType: 'AgreementType', entityId: id, ipAddress: actor.ipAddress } });
+  }); publishChange();
+}
+export const relationCandidateInput = z.object({ direction: z.enum(['CHILD', 'PARENT']), search: z.string().trim().max(150).default(''), page: z.coerce.number().int().min(1).max(100000).default(1), limit: z.coerce.number().int().min(1).max(25).default(10) });
+export async function listRelationCandidates(actor: Actor, customerId: string, raw: z.input<typeof relationCandidateInput>) {
+  staff(actor);
+  const input = relationCandidateInput.parse(raw), current = await customer(db, customerId);
+  const blocked = input.direction === 'CHILD' ? Boolean(current.parentCustomerId) : Boolean(await db.user.count({ where: { parentCustomerId: current.id, deletedAt: null } }));
+  if (blocked) return { data: [], pagination: { page: input.page, limit: input.limit, total: 0, totalPages: 1 } };
+  const where: Prisma.UserWhereInput = { id: { not: current.id }, role: 'CUSTOMER', isActive: true, deletedAt: null, parentCustomerId: null,
+    ...(input.direction === 'CHILD' ? { subCustomers: { none: { deletedAt: null } } } : {}),
+    ...(input.search ? { OR: ['name', 'company', 'email', 'phone'].map(field => ({ [field]: { contains: input.search } })) } : {}) };
+  const [total, data] = await db.$transaction([db.user.count({ where }), db.user.findMany({ where, select: { id: true, name: true, company: true, email: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }], skip: (input.page - 1) * input.limit, take: input.limit })]);
+  return { data, pagination: { page: input.page, limit: input.limit, total, totalPages: Math.max(1, Math.ceil(total / input.limit)) } };
+}
 export async function listCustomerRelations(actor: Actor, customerId: string) {
   const person = await customer(db, customerId);
   if (actor.role === 'CUSTOMER') {
@@ -40,9 +79,11 @@ export async function listAgreements(actor: Actor, customerId: string) {
   const { customer: person, parent, children } = await listCustomerRelations(actor, customerId);
   const ownerIds = [person.id, ...(parent ? [parent.id] : []), ...children.filter(c => c.isActive).map(c => c.id)];
   const agreements = await db.agreement.findMany({ where: { customerId: { in: ownerIds } }, include: { customer: { select: { id: true, name: true } } }, orderBy: [{ endsOn: 'asc' }, { createdAt: 'desc' }] });
+  const customTypes = await db.agreementType.findMany({ where: { id: { in: agreements.map(a => a.type).filter(t => !builtInAgreementTypes[t]) } } });
+  const typeNames = new Map(customTypes.map(t => [t.id, t.name]));
   const now = today();
   const active = (a: typeof agreements[number]) => !a.cancelledAt && a.startsOn <= now && a.endsOn >= now;
-  const rows = agreements.map(a => ({ ...a, fee: a.fee.toString(), remainingCredits: a.credits - a.usedCredits,
+  const rows = agreements.map(a => ({ ...a, typeLabel: builtInAgreementTypes[a.type] ?? typeNames.get(a.type) ?? 'Özel Anlaşma', fee: a.fee.toString(), remainingCredits: a.credits - a.usedCredits,
     usable: Boolean(person.isActive && active(a) && (a.customerId === person.id || (a.customerId === parent?.id && parent.shareCreditsWithChildren))),
     creditSource: a.customerId === person.id ? 'PERSONAL' : a.customerId === parent?.id ? 'COMPANY' : 'CHILD',
     state: a.cancelledAt ? 'CANCELLED' : a.startsOn > now ? 'UPCOMING' : a.endsOn < now ? 'EXPIRED' : 'ACTIVE' }));
@@ -74,6 +115,10 @@ export async function createAgreement(actor: Actor, customerId: string, input: z
   await customer(db, customerId);
   const checked = agreementInput.parse(input);
   return db.$transaction(async tx => {
+    if (!builtInAgreementTypes[checked.type]) {
+      const active = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${checked.type} AND archivedAt IS NULL FOR UPDATE`;
+      if (!active.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
+    }
     const result = await tx.agreement.create({ data: { ...checked, customerId, startsOn: new Date(checked.startsOn), endsOn: new Date(checked.endsOn) } });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.created', entityType: 'Agreement', entityId: result.id, metadata: { customerId, ...checked }, ipAddress: actor.ipAddress } });
     return { ...result, fee: result.fee.toString() };

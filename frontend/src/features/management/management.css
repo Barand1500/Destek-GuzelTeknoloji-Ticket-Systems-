@@ -5144,3 +5144,6 @@ html[data-theme="dark"] .customer-request-status[data-status=OPEN]{background:#2
 html[data-theme="dark"] .customer-request-status[data-status=RESOLVED]{background:#254d39;color:#afe3c6}
 html[data-theme="dark"] .customer-request-status[data-status=PENDING]{background:#4c3e23;color:#f2d48e}
 @media(max-width:600px){.customer-request-cards{grid-template-columns:minmax(0,1fr)}.customer-request-card{padding:14px}.customer-request-card-heading{flex-wrap:wrap}}
+
+.customer-merge-filters>label{justify-content:flex-start;padding:8px 12px;box-sizing:border-box}
+.customer-merge-filters>label>input{height:28px;line-height:20px;padding:4px 2px;box-sizing:border-box;margin:0}

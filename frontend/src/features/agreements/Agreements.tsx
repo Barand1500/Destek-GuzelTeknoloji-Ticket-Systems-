@@ -1,18 +1,19 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X, ArrowLeft, History } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, errorText } from '../../services/api';
 import { useAuth } from '../auth/Auth';
 import { hasPermission } from '../auth/permissions';
-import { DropdownSelect } from '../../components/DropdownSelect';
+import { SearchableDropdown } from '../../components/SearchableDropdown';
+import { AgreementTypeSelect } from './AgreementTypeSelect';
 import { conversationPath, inboxPath } from '../../router/paths';
 import { agreementEndDate } from '../../utils/agreement-dates';
 import './agreements.css';
 
 type Person = { id: string; name: string; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
-export type Agreement = { id: string; name: string; type: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
+export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
 type Charge = { id: string; credits: number; createdAt: string; agreement: { name: string } | null; conversation: { id: string; number: number; subject: string; customer: { name: string } } };
 type Summary = { customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
 const types: Record<string, string> = { MONTHLY: 'Aylık', YEARLY: 'Yıllık', ONE_OFF: 'Ek Destek Kredisi', MAINTENANCE: 'Bakım Anlaşması' };
@@ -54,11 +55,16 @@ export function CompanyCreditSharing({ customer }: { customer: Person }) {
 }
 
 export function CustomerAgreementsModal({ customer, onClose }: { customer: Person; onClose: () => void }) {
+  const { user } = useAuth();
+  const canEdit = user?.role !== 'CUSTOMER' && hasPermission(user, 'customers.update');
   const [selected, setSelected] = useState(customer);
   const [history, setHistory] = useState(false);
-  return <AgreementDialog title={`${selected.name} — ${history ? 'Kredi Hareketleri' : 'Anlaşmalar'}`} onClose={onClose} headerActions={<button className="standard-modal-close" type="button" aria-label="Kredi Hareketleri" title="Kredi Hareketleri" aria-pressed={history} onClick={() => setHistory(v => !v)}><History size={18} /></button>}>
-    {!history && selected.id !== customer.id && <button className="button secondary agreement-back" onClick={() => setSelected(customer)}><ArrowLeft size={16} /> {customer.name} Anlaşmalarına Dön</button>}
-    <div hidden={history}><AgreementWorkspace key={selected.id} customerId={selected.id} onSelectCustomer={setSelected} /></div>{history && <CreditHistory key={selected.id} customerId={selected.id} onBack={() => setHistory(false)} />}
+  const [adding, setAdding] = useState(false), [pending, setPending] = useState(false), [ready, setReady] = useState(false);
+  const formId = useId();
+  const selectCustomer = (person: Person) => { setAdding(false); setReady(false); setSelected(person); };
+  return <AgreementDialog title={`${selected.name} — ${history ? 'Kredi Hareketleri' : 'Anlaşmalar'}`} onClose={onClose} pending={pending} footer={<><button className="button secondary" type="button" disabled={pending} aria-label={adding && !history ? 'Vazgeç' : 'Anlaşmaları Kapat'} onClick={() => adding && !history ? setAdding(false) : onClose()}>{adding && !history ? 'Vazgeç' : 'Kapat'}</button>{!history && canEdit && ready && (adding ? <button type="submit" form={formId} className="button primary" disabled={pending}>{pending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button> : <button type="button" className="button primary" disabled={pending} onClick={() => setAdding(true)}>+ Anlaşma Ekle</button>)}</>} headerActions={<button className="standard-modal-close" type="button" aria-label="Kredi Hareketleri" title="Kredi Hareketleri" disabled={pending} aria-pressed={history} onClick={() => setHistory(v => !v)}><History size={18} /></button>}>
+    {!history && selected.id !== customer.id && <button className="button secondary agreement-back" disabled={pending} onClick={() => selectCustomer(customer)}><ArrowLeft size={16} /> {customer.name} Anlaşmalarına Dön</button>}
+    <div hidden={history}><AgreementWorkspace key={selected.id} customerId={selected.id} onSelectCustomer={selectCustomer} modalControl={{ adding, setAdding, formId, onPendingChange: setPending, onReadyChange: setReady }} /></div>{history && <CreditHistory key={selected.id} customerId={selected.id} onBack={() => setHistory(false)} />}
   </AgreementDialog>;
 }
 export function CustomerAgreementsPage() {
@@ -82,17 +88,25 @@ function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: ()
     {pages > 1 && <nav className="pagination" aria-label="Kredi Hareketleri Sayfaları"><button className="button secondary" disabled={page === 1} onClick={() => setPage(v => v - 1)}>Önceki</button><span>{page} / {pages}</span><button className="button secondary" disabled={page >= pages} onClick={() => setPage(v => v + 1)}>Sonraki</button></nav>}
   </section>;
 }
-function AgreementWorkspace({ customerId, onSelectCustomer }: { customerId: string; onSelectCustomer?: (customer: Person) => void }) {
+type WorkspaceModalControl = { adding: boolean; setAdding: (value: boolean) => void; formId: string; onPendingChange: (pending: boolean) => void; onReadyChange: (ready: boolean) => void };
+function AgreementWorkspace({ customerId, onSelectCustomer, modalControl }: { customerId: string; onSelectCustomer?: (customer: Person) => void; modalControl?: WorkspaceModalControl }) {
   const { user } = useAuth(); const client = useQueryClient();
   const editable = user?.role !== 'CUSTOMER' && hasPermission(user, 'customers.update');
   const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as Summary });
-  const [adding, setAdding] = useState(false), [notice, setNotice] = useState('');
+  const [localAdding, setLocalAdding] = useState(false), [notice, setNotice] = useState('');
+  const localFormId = useId();
+  const adding = modalControl?.adding ?? localAdding, setAdding = modalControl?.setAdding ?? setLocalAdding;
+  const formId = modalControl?.formId ?? localFormId;
+  const typeMutations = useIsMutating({ mutationKey: ['agreement-types'] });
   const [agreementType, setAgreementType] = useState('MONTHLY'), [startsOn, setStartsOn] = useState(''), [manualEnd, setManualEnd] = useState('');
   const automaticPeriod = ['MONTHLY', 'YEARLY'].includes(agreementType);
   const endsOn = automaticPeriod ? agreementEndDate(startsOn, agreementType) : manualEnd;
   const refresh = async () => { await Promise.all([client.invalidateQueries({ queryKey: ['agreements'] }), client.invalidateQueries({ queryKey: ['/customers'] }), client.invalidateQueries({ queryKey: ['conversations'] })]); };
   const save = useMutation({ mutationFn: (data: object) => api.post(`/customers/${customerId}/agreements`, data), onSuccess: async () => { setAdding(false); setNotice('Anlaşma eklendi.'); await refresh(); } });
   const cancel = useMutation({ mutationFn: (id: string) => api.post(`/customers/${customerId}/agreements/${id}/cancel`), onSuccess: async () => { setNotice('Anlaşma iptal edildi. Geçmiş hareketleri korundu.'); await refresh(); } });
+  const pending = save.isPending || cancel.isPending || typeMutations > 0;
+  useEffect(() => { modalControl?.onReadyChange(Boolean(summary.data)); }, [Boolean(summary.data), modalControl?.onReadyChange]);
+  useEffect(() => { modalControl?.onPendingChange(pending); }, [pending, modalControl?.onPendingChange]);
   const error = summary.error || save.error || cancel.error;
   if (summary.isPending) return <p role="status">Anlaşmalar yükleniyor…</p>;
   const data = summary.data;
@@ -105,26 +119,25 @@ function AgreementWorkspace({ customerId, onSelectCustomer }: { customerId: stri
         {data.parent && <><div><span>Şirket ortak bakiyesi</span><strong>{data.parentCredits}</strong><small>{data.parent.name} · {data.parent.shareCreditsWithChildren ? 'Ortak kullanım açık' : 'Ortak kullanım kapalı'}</small></div><div><span>Kullanılabilir toplam</span><strong>{data.availableCredits}</strong><small>Kendi kredisi + kullanılabilen ortak kredi</small></div></>}
       </div>
       {data.parent && <p className="agreement-credit-note muted">{data.parent.shareCreditsWithChildren ? 'Ortak bakiye tüm alt müşterilerce kullanılır.' : 'Ortak kullanım kapalı; yalnızca kendi krediniz kullanılabilir.'}</p>}
-      {!data.customer.parentCustomerId && !data.parent && <CompanyCreditSharing customer={data.customer} />}
-      {data.children.length > 0 && <section className="agreement-children" aria-label="Alt Müşteriler">
-        <h3>Alt Müşteriler</h3>
+      {!data.customer.parentCustomerId && !data.parent && data.children.length > 0 && <CompanyCreditSharing customer={data.customer} />}
+      {data.children.length > 0 && <details className="agreement-children" aria-label="Alt Müşteriler"><summary>Alt Müşteriler <span>{data.children.length}</span></summary>
         {data.children.map(child => <div className="agreement-history" key={child.id}><div><strong>{child.name}</strong><small>{child.isActive ? 'Kişisel kalan kredi' : 'Pasif müşteri'}: {child.personalCredits ?? 0}</small></div><div className="management-actions">
-          {onSelectCustomer ? <button type="button" className="button secondary" onClick={() => onSelectCustomer(child)}>{child.name} Anlaşmaları</button> : <Link className="button secondary" to={`/customer/agreements?customerId=${child.id}`}>Anlaşmaları Gör</Link>}
+          {onSelectCustomer ? <button type="button" className="button secondary" disabled={pending} onClick={() => onSelectCustomer(child)}>{child.name} Anlaşmaları</button> : <Link className="button secondary" to={`/customer/agreements?customerId=${child.id}`}>Anlaşmaları Gör</Link>}
           <Link className="button secondary" to={`${inboxPath(user!.role)}?customerId=${child.id}`}>Talepleri Gör</Link>
         </div></div>)}
-      </section>}
-        <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(v => !v); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
-        {adding && <form className="agreement-form" onSubmit={event => {
-          event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, credits: Number(values.credits) });
+      </details>}
+        <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
+        {adding && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {
+          event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, credits: Number(values.credits) });
         }}>
-          <label><span>Anlaşma Adı</span><input name="name" required maxLength={150} /></label>
-          <label><span>Anlaşma Türü</span><select name="type" value={agreementType} onChange={event => { if (automaticPeriod) setManualEnd(endsOn); setAgreementType(event.target.value); }}>{Object.entries(types).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label><span>Başlangıç Tarihi</span><input name="startsOn" type="date" min="1000-01-01" max="9998-12-31" required value={startsOn} onChange={event => setStartsOn(event.target.value)} /></label><label><span>Bitiş Tarihi</span><input name="endsOn" type="date" min={startsOn || '1000-01-01'} max="9999-12-31" required value={endsOn} readOnly={automaticPeriod} onChange={event => setManualEnd(event.target.value)} />{automaticPeriod && <small className="muted">{agreementType === 'MONTHLY' ? 'Başlangıca göre bir aylık süre hesaplanır.' : 'Başlangıca göre bir yıllık süre hesaplanır.'}</small>}</label>
-          <label><span>Kredi Miktarı</span><input name="credits" type="number" min="0" max="1000000" step="1" required /></label>
-          <p className="muted">Paketler otomatik yenilenmez.</p><button className="button primary" disabled={save.isPending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button>
+          <label className="agreement-field"><span className="field-label">Anlaşma Adı</span><input name="name" required maxLength={150} /></label>
+          <AgreementTypeSelect value={agreementType} onChange={value => { if (automaticPeriod) setManualEnd(endsOn); setAgreementType(value); }} />
+          <label className="agreement-field agreement-date-field"><span className="field-label">Başlangıç Tarihi</span><span className="agreement-date-display" aria-hidden="true">{startsOn ? date(startsOn) : "gg.aa.yyyy"}</span><input name="startsOn" type="date" min="1000-01-01" max="9998-12-31" required value={startsOn} onChange={event => setStartsOn(event.target.value)} /></label><div className="agreement-field-hint"><label className="agreement-field agreement-date-field"><span className="field-label">Bitiş Tarihi</span><span className="agreement-date-display" aria-hidden="true">{endsOn ? date(endsOn) : "gg.aa.yyyy"}</span><input name="endsOn" type="date" min={startsOn || '1000-01-01'} max="9999-12-31" required value={endsOn} readOnly={automaticPeriod} onChange={event => setManualEnd(event.target.value)} /></label>{automaticPeriod && <small className="muted">{agreementType === 'MONTHLY' ? 'Başlangıca göre bir aylık süre hesaplanır.' : 'Başlangıca göre bir yıllık süre hesaplanır.'}</small>}</div>
+          <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min="0" max="1000000" step="1" required /></label>
+          <p className="muted">Paketler otomatik yenilenmez.</p>{!modalControl && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button><button className="button primary" disabled={pending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button></div>}
         </form>}
-        {!data.agreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
-        {data.agreements.map(a => <details className="agreement-card" key={a.id}><summary><strong>{a.name}</strong><span>{a.customer.name} · {states[a.state]} · {a.remainingCredits} / {a.credits} kredi</span></summary><div className="agreement-card-body"><p className="muted">{a.customerId === customerId ? 'Bu müşterinin kendi paketi' : a.customerId === data.parent?.id ? 'Şirketin ortak paketi' : 'Alt müşterinin kişisel paketi'}{a.customerId === data.parent?.id && !data.parent.shareCreditsWithChildren ? ' · Ortak kullanım kapalı' : ''}</p><p>{types[a.type]} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{a.credits}</strong> · Kullanılan: <strong>{a.usedCredits}</strong> · Kalan: <strong>{a.remainingCredits}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={cancel.isPending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
+        {!adding && !data.agreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
+        {data.agreements.map(a => <details className="agreement-card" key={a.id}><summary><strong>{a.name}</strong><span>{a.customer.name} · {states[a.state]} · {a.remainingCredits} / {a.credits} kredi</span></summary><div className="agreement-card-body"><p className="muted">{a.customerId === customerId ? 'Bu müşterinin kendi paketi' : a.customerId === data.parent?.id ? 'Şirketin ortak paketi' : 'Alt müşterinin kişisel paketi'}{a.customerId === data.parent?.id && !data.parent.shareCreditsWithChildren ? ' · Ortak kullanım kapalı' : ''}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{a.credits}</strong> · Kullanılan: <strong>{a.usedCredits}</strong> · Kalan: <strong>{a.remainingCredits}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={cancel.isPending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
     </>}
     {notice && <p role="status">{notice}</p>}
   </section>;
@@ -143,10 +156,10 @@ export function ResolveWithCreditModal({ conversationId, status, onClose, onReso
     {options.isPending && <p role="status">Krediler yükleniyor…</p>}{(options.error || save.error) && <p className="error" role="alert">{errorText(options.error || save.error)}</p>}
     {options.data && <form id={formId} className="agreement-resolution" onSubmit={event => { event.preventDefault(); save.mutate(); }}>
       {options.data.charge ? <p>Daha önce {options.data.charge.credits} kredi kullanıldı. Yeniden düşülmez.</p> : <>
-        <DropdownSelect label="Kullanılacak Anlaşma" ariaLabel="Kullanılacak Anlaşma" value={selected} onChange={setSelected} options={[{ value: '', label: 'Anlaşma seçin' }, ...options.data.agreements.filter(a => a.remainingCredits > 0).map(a => ({ value: a.id, label: `${a.name} — ${a.customer.name} (${a.remainingCredits} kredi)` }))]} />
+        <SearchableDropdown label="Kullanılacak Anlaşma" name="agreementId" value={selected} onChange={setSelected} options={[{ value: '', label: 'Anlaşma seçin' }, ...options.data.agreements.filter(a => a.remainingCredits > 0).map(a => ({ value: a.id, label: `${a.name} — ${a.customer.name} (${a.remainingCredits} kredi)` }))]} />
         {agreement && <p>{date(agreement.startsOn)} — {date(agreement.endsOn)} · Kullanılabilir: <strong>{agreement.remainingCredits} kredi</strong></p>}
         <label className="agreement-credit-input"><span>Kullanılacak Kredi</span><input aria-label="Kullanılacak Kredi" type="number" min="0" max={agreement?.remainingCredits ?? 1000000} step="1" required value={credits} onChange={e => setCredits(e.target.value)} /></label>
-        <p className="muted">Ücretsiz destek için 0 girin.</p>
+
       </>}
 
     </form>}

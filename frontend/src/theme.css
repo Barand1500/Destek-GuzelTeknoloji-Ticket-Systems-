@@ -221,3 +221,11 @@ html[data-theme="dark"] .guide-shot-tabs button:not(.active) span {
   background: var(--brand-primary-light);
   color: var(--ui-text-navigation);
 }
+
+/* Text fields use a plain border focus state, without nested glow/halo effects. */
+:root :is(input, select, textarea):is(:hover, :focus, :focus-visible){box-shadow:none!important}
+:root :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea):is(:hover, :focus, :focus-visible){outline:none!important}
+:root label:focus-within,:root .styled-dropdown:focus-within{box-shadow:none!important}
+
+/* Read-only selectors display a choice, not a text editing caret. */
+.searchable-dropdown-input[readonly]{caret-color:transparent;cursor:pointer}

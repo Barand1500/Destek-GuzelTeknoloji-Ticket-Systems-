@@ -68,3 +68,17 @@ Backend ve frontend kaynaklarını aktarın, backend ortamını koruyarak
 `20261114160000_company_credit_sharing`. Backend sürecini yeniden başlatın ve frontend
 derlemesini yayınlayın. Migration mevcut müşterilere otomatik anlaşma veya kredi
 tanımlamaz. Yerel ortamda migration uygulanmıştır; canlıya otomatik yayın yapılmaz.
+
+## Türler ve müşteri seçimi
+
+Anlaşma türü ve anlaşma seçimi talep bilgilerindeki SearchableDropdown bileşenini kullanır. Hazır Aylık/Yıllık/Ek Destek Kredisi/Bakım Anlaşması türleri sabittir. Personel, tür listesinin altındaki + ve küçük giriş alanıyla özel tür ekler. Yalnızca özel türlerde çöp kutusu vardır; silme arşivler, eski anlaşmaların adını ve kredilerini korur. Özel türlerde başlangıç/bitiş elle girilir; hazır aylık/yıllık otomatik tarih hesabı sürer. Yönetim customers.update yetkisine tabidir. Yeni migration: `20261114180000_agreement_types`. Yerelde uygulanmıştır.
+
+Bağlı Müşteriler bölümünde seçim alanı aramanın solundadır; sağ üstteki küçük arama sonuçları modalın gövdesine getirir. Arama sonuçları sunucuda, mevcut bağlantılar kendi listesinde beşer satırla sayfalanır. Adaylar aktif, başka ana müşteriye bağlı olmayan ve tek seviyeli ilişkiye uygun müşteri kayıtlarıdır. Seçimden sonra alt sağdaki düğmeyle bağlanır; yeni kişi oluşturma da alt işlem alanından kaydedilir.
+
+Anlaşmaların alt müşteri listesi kapalı gelen akordiyondur; ana müşteri kendi portalında şirket bakiyesini ve açtığında kişilerin kişisel kredilerini görebilir. Önceden kredi kaydı bulunan (0 kredi dahil) bir talep tekrar çözülürken ikinci kredi onayı açılmaz; yalnızca durum güncellenir. İlk çözümde kredi miktarı seçimi korunur.
+
+## Alan ve açılır liste düzeltmeleri
+
+Anlaşma formunun etiketleri standart çerçeve etiketidir; alanlar 46px ve aynı satırda hizalıdır. Kaydet/Vazgeç modalın çizgiyle ayrılan alt sağ bölümündedir. Tür ekleme + düğmesi girişin sağındadır. Tür kataloğunda işlem sürerken anlaşma kaydı bekler. Bağlı müşteri seçimi aramayla aynı 38px yüksekliği kullanır. Açılır liste modalın kaydırma alanına göre yön ve yükseklik seçer; kesilmez ve Escape önce listeyi kapatır. Input odak/hover gölgeleri uygulama genelinde kaldırılmıştır; tercih [UI kuralları](ui-conventions.md) dosyasında kayıtlıdır.
+
+Kontrol edilen akışlar: kişisel/ortak bakiye ayrımı, ortak kredi kapatma yetkisi, eşzamanlı tüketim ve tekrar çözümde tek düşüm; özel tür arşivleme ve eski etiketlerin korunması; aday arama/sayfalama/bağlama; e-posta koduyla giriş. Bunlar hedefli testlerdir, kapsamlı bağımsız denetim değildir. Bilinen kapsam sınırları: kredi iade/düzeltme arayüzü yok; kullanım geçmişinde son 100 kayıt gösteriliyor; tek çözüm bir paketten düşüyor.

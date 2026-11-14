@@ -446,7 +446,8 @@ export const ModelName = {
   SurveyResponse: 'SurveyResponse',
   Agreement: 'Agreement',
   CreditCharge: 'CreditCharge',
-  CustomerLoginChallenge: 'CustomerLoginChallenge'
+  CustomerLoginChallenge: 'CustomerLoginChallenge',
+  AgreementType: 'AgreementType'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -462,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3766,6 +3767,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AgreementType: {
+      payload: Prisma.$AgreementTypePayload<ExtArgs>
+      fields: Prisma.AgreementTypeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AgreementTypeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AgreementTypeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        findFirst: {
+          args: Prisma.AgreementTypeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AgreementTypeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        findMany: {
+          args: Prisma.AgreementTypeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>[]
+        }
+        create: {
+          args: Prisma.AgreementTypeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        createMany: {
+          args: Prisma.AgreementTypeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.AgreementTypeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        update: {
+          args: Prisma.AgreementTypeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        deleteMany: {
+          args: Prisma.AgreementTypeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AgreementTypeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.AgreementTypeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementTypePayload>
+        }
+        aggregate: {
+          args: Prisma.AgreementTypeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAgreementType>
+        }
+        groupBy: {
+          args: Prisma.AgreementTypeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AgreementTypeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AgreementTypeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AgreementTypeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4527,6 +4594,16 @@ export const CustomerLoginChallengeScalarFieldEnum = {
 export type CustomerLoginChallengeScalarFieldEnum = (typeof CustomerLoginChallengeScalarFieldEnum)[keyof typeof CustomerLoginChallengeScalarFieldEnum]
 
 
+export const AgreementTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AgreementTypeScalarFieldEnum = (typeof AgreementTypeScalarFieldEnum)[keyof typeof AgreementTypeScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5136,6 +5213,14 @@ export const CustomerLoginChallengeOrderByRelevanceFieldEnum = {
 export type CustomerLoginChallengeOrderByRelevanceFieldEnum = (typeof CustomerLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof CustomerLoginChallengeOrderByRelevanceFieldEnum]
 
 
+export const AgreementTypeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name'
+} as const
+
+export type AgreementTypeOrderByRelevanceFieldEnum = (typeof AgreementTypeOrderByRelevanceFieldEnum)[keyof typeof AgreementTypeOrderByRelevanceFieldEnum]
+
+
 
 /**
  * Field references
@@ -5419,6 +5504,7 @@ export type GlobalOmitConfig = {
   agreement?: Prisma.AgreementOmit
   creditCharge?: Prisma.CreditChargeOmit
   customerLoginChallenge?: Prisma.CustomerLoginChallengeOmit
+  agreementType?: Prisma.AgreementTypeOmit
 }
 
 /* Types for Logging */
