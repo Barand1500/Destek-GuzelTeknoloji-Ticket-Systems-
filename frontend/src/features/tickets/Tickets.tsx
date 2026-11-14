@@ -1,4 +1,5 @@
 import { displayEmail } from "../../utils/email";
+import { ResolveWithCreditModal } from '../agreements/Agreements';
 import { useComposerFocus } from '../../components/useComposerFocus';
 import { elapsedDuration } from "../../utils/elapsed-duration";
 import { conversationChannels } from '../../utils/conversation-channels';
@@ -670,6 +671,7 @@ export function NewTicket() {
   );
 }
 export function TicketDetail() {
+  const [resolutionStatus, setResolutionStatus] = useState<string | null>(null);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
   const { startNewRequest, forgetConversation } = useWorkSession();
   const navigate=useNavigate();
@@ -753,7 +755,7 @@ export function TicketDetail() {
     enabled: canEditProject,
   });
   function invalidate() {
-    for (const key of ["conversation", "conversations", "messages", "dashboard"])
+    for (const key of ["conversation", "conversations", "messages", "dashboard", "agreements", "credit-options"])
       void queryClient.invalidateQueries({ queryKey: [key] });
   }
   const reply = useMutation({
@@ -778,7 +780,7 @@ export function TicketDetail() {
       invalidate();
     },
   });
-  const liveTyping = useConversationTyping(id, Boolean(ticket.data && !internal && !reply.isPending && ticket.data.status !== 'CLOSED' && hasPermission(user, 'conversations.reply')));
+  const liveTyping = useConversationTyping(id, Boolean(ticket.data && !internal && !reply.isPending && ticket.data.status !== 'CLOSED' && (user?.role !== 'CUSTOMER' || ticket.data.customerId === user.id) && hasPermission(user, 'conversations.reply')));
   const claim = useMutation({ mutationFn: () => api.post(`/conversations/${id}/assign-to-me`), onSuccess: invalidate });
   const remove=useMutation({mutationFn:()=>api.delete(`/conversations/${id}`),onSuccess:()=>{invalidate();forgetConversation(conversationPath(user!.role, id!));navigate(inboxPath(user!.role));}});
   useLayoutEffect(() => {
@@ -821,7 +823,7 @@ export function TicketDetail() {
     ...(websites.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name })),
   ];
   const agentNeedsClaim = user?.role === 'AGENT' && assignedPeople.length === 0;
-  const canPublicReply = hasPermission(user, 'conversations.reply') && t.status !== 'CLOSED';
+  const canPublicReply = hasPermission(user, 'conversations.reply') && t.status !== 'CLOSED' && (user?.role !== 'CUSTOMER' || t.customerId === user.id);
   const canInternalNote = hasPermission(user, 'conversations.note') && t.status !== 'CLOSED' && user?.role !== 'CUSTOMER' && (user?.role !== 'AGENT' || Boolean(t.canAddInternalNote));
   const canWrite = internal ? canInternalNote : canPublicReply;
   const canSubmitReply = Boolean(body.trim() || files.length);
@@ -840,6 +842,7 @@ export function TicketDetail() {
             #TK-{String(t.number).padStart(5, "0")} · {t.department.name}
           </span>
           <h1>{t.subject}</h1>
+          {t.creditCharge && <p className="muted ticket-source-site">Bu destek için kullanılan kredi: <strong>{t.creditCharge.credits}</strong></p>}
           {t.formRequest?.sourceName && <p className="muted ticket-source-site">Kaynak site: <strong>{t.formRequest.sourceName}</strong> — {t.formRequest.sourceUrl}</p>}
         </div>
         <div className="ticket-status-cluster">
@@ -999,7 +1002,7 @@ export function TicketDetail() {
             {user?.role === "CUSTOMER" ? (
               <Badge status={t.status} />
             ) : (
-              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (statusOptions.some((option) => option.value === value)) update.mutate({ status: value }); }} options={statusOptions} />
+              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status)) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
             )}
           </div>
           <div className="property-editor">
@@ -1032,7 +1035,7 @@ export function TicketDetail() {
                 aria-label="Çözüldü Olarak İşaretle"
                 title="Çözüldü Olarak İşaretle"
                 disabled={update.isPending || !hasPermission(user, 'conversations.update')}
-                onClick={() => update.mutate({ status: "RESOLVED" })}
+                onClick={() => setResolutionStatus('RESOLVED')}
               >
                 <CheckCheck size={16} /> Çözüldü Olarak İşaretle
               </button>
@@ -1041,6 +1044,7 @@ export function TicketDetail() {
           </div>
         </aside>
       </div>
+      {resolutionStatus && <ResolveWithCreditModal conversationId={t.id} status={resolutionStatus} onClose={() => setResolutionStatus(null)} onResolved={invalidate} />}
       {hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi Sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
     </main>
   );

@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type FormEvent,
 } from "react";
+import { CustomerEmailLogin } from './CustomerEmailLogin';
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
@@ -86,6 +87,7 @@ export function AuthPage() {
   const [resetEmail, setResetEmail] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
+  const [emailLogin, setEmailLogin] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   function forgotPassword() {
     const input = formRef.current?.elements.namedItem("email") as HTMLInputElement | null;
@@ -126,7 +128,7 @@ export function AuthPage() {
       </section>
       <section className="auth-form-wrap">
         <div className="auth-slider">
-        {resetEmail !== null ? <PasswordResetForm email={resetEmail} onBack={() => setResetEmail(null)} onSaved={() => { setResetEmail(null); setSaved(true); }} /> :
+        {resetEmail !== null ? <PasswordResetForm email={resetEmail} onBack={() => setResetEmail(null)} onSaved={() => { setResetEmail(null); setSaved(true); }} /> : emailLogin ? <CustomerEmailLogin initialEmail={loginEmail} onBack={() => setEmailLogin(false)} onAccept={accept} /> :
         <form ref={formRef} className="auth-form auth-slide-back" onSubmit={submit}>
           <h2>Tekrar Hoş Geldiniz</h2>
           <label><span className="field-label">E-Posta Adresi</span><EmailInput name="email" defaultValue={loginEmail} required /></label>
@@ -136,6 +138,7 @@ export function AuthPage() {
           {error && <p className="error" role="alert">{error}</p>}
           <TurnstileField captcha={captcha} />
           <button className="button primary" disabled={pending || !captcha.ready}>{pending ? "Lütfen Bekleyin…" : "Giriş Yap"}<ArrowRight size={17} /></button>
+          <button className="button secondary" type="button" disabled={pending} onClick={() => { const email = formRef.current?.elements.namedItem('email') as HTMLInputElement | null; setLoginEmail(email?.value ?? ''); setError(''); setEmailLogin(true); }}>E-Posta ile Devam Et</button>
         </form>}
         </div>
       </section>

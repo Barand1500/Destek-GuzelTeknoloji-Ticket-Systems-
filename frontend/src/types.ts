@@ -1,7 +1,7 @@
 export type Role = "ADMIN" | "SUPERVISOR" | "AGENT" | "CUSTOMER";
 export type AccessRole = { id: string; name: string; permissions: string[]; scope: string };
 export type StaffSkill = { name: string; category: string; level: string; levelScore?: number };
-export type User = { id: string; name: string; displayName?: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; accessRoleId?: string | null; accessRole?: AccessRole | null; rolePermissions?: string[]; roleScope?: string; departmentIds?: string[] };
+export type User = { canSetPasswordWithoutCurrent?: boolean; id: string; name: string; displayName?: string; email: string | null; phone?: string | null; company?: string | null; staffNote?: string | null; extraPhones?: string | null; extraEmails?: string | null; role: Role; accessRoleId?: string | null; accessRole?: AccessRole | null; rolePermissions?: string[]; roleScope?: string; departmentIds?: string[] };
 export type Department = { id: string; name: string };
 export type Tag={id:string;name:string;code:string;color:string};
 export type Website={id:string;name:string;url:string;isActive:boolean;guideFileCount?:number};
@@ -12,6 +12,7 @@ export type ConversationChannel = "TICKET" | "EMAIL" | "SMS" | "WHATSAPP" | "LIV
 export type MessageType = "CUSTOMER_MESSAGE" | "AGENT_REPLY" | "INTERNAL_NOTE" | "SYSTEM";
 export const channels: Record<ConversationChannel,string> = {TICKET:"Telefon",EMAIL:"E-Posta",SMS:"SMS",WHATSAPP:"WhatsApp",FORM:"Form",LIVE_CHAT:"Canlı sohbet"};
 export type Conversation = {
+  creditCharge?: { credits: number; agreementId: string | null } | null;
   firstMessage?: string | null;
   whatsappServiceWindow?: { lastInboundAt: string | null; expiresAt: string | null; expired: boolean };
   formRequest?: { sourceId?: string | null; sourceName?: string | null; sourceUrl?: string | null; name: string; email: string; phone: string | null; company: string | null } | null;

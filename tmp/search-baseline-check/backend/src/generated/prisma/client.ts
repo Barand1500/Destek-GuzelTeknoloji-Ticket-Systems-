@@ -276,3 +276,18 @@ export type SurveyRecipient = Prisma.SurveyRecipientModel
  * 
  */
 export type SurveyResponse = Prisma.SurveyResponseModel
+/**
+ * Model Agreement
+ * 
+ */
+export type Agreement = Prisma.AgreementModel
+/**
+ * Model CreditCharge
+ * 
+ */
+export type CreditCharge = Prisma.CreditChargeModel
+/**
+ * Model CustomerLoginChallenge
+ * 
+ */
+export type CustomerLoginChallenge = Prisma.CustomerLoginChallengeModel

@@ -5,6 +5,8 @@ import { publicAuthSecurity, verifyTurnstile } from '../services/turnstile.servi
 import { managementOrder } from '../services/management-sorting.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { permissionScope } from "../services/permissions.js";
+import { agreementsRouter } from './agreements.js';
+import { requestCustomerEmailLogin, verifyCustomerEmailLogin } from '../services/customer-email-login.service.js';
 import { Router, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -85,6 +87,16 @@ router.use("/auth", authLimiter, (req, _res, next) => {
   next();
 });
 const turnstileTokenSchema = z.string().trim().max(2048).optional();
+router.post('/auth/customer-email', async (req, res) => {
+  const input = z.object({ email: emailSchema, turnstileToken: turnstileTokenSchema }).strict().parse(req.body);
+  await verifyTurnstile(input.turnstileToken, 'login', req.ip);
+  res.set('Cache-Control', 'no-store').json({ success: true, data: await requestCustomerEmailLogin(input.email) });
+});
+router.post('/auth/customer-email/verify', async (req, res) => {
+  const input = z.object({ challengeId: z.uuid(), code: z.string().regex(/^\d{6}$/) }).strict().parse(req.body);
+  res.set('Cache-Control', 'no-store');
+  sendSession(res, await verifyCustomerEmailLogin(input.challengeId, input.code));
+});
 router.get('/auth/security', async (_req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await publicAuthSecurity() }));
 router.post("/auth/register", async (req, res) => {
   const { turnstileToken, ...input } = registerSchema.extend({ turnstileToken: turnstileTokenSchema }).parse(req.body);
@@ -176,6 +188,7 @@ router.use((req, _res, next) => {
 });
 router.use((req,res,next)=>{if(req.method!=='GET')res.on('finish',()=>{if(res.statusCode<400&&!req.path.startsWith('/conversations'))publishChange();});next();});
 router.use(enforceRolePermissions);
+router.use(agreementsRouter);
 router.use(rolesRouter);
 router.use(managementRouter);
 router.use('/announcements', announcementsRouter);

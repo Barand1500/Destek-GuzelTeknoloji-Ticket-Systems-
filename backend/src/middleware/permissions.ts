@@ -6,6 +6,8 @@ import { AppError } from '../utils/errors.js';
 export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
   if (!req.actor.accessRole && !['SUPERVISOR', 'AGENT'].includes(req.actor.role)) { next(); return; }
   const path = req.path, read = req.method === 'GET';
+  if (path.startsWith('/my/agreements')) { next(); return; }
+  if (/^\/customers\/[^/]+\/(agreements|parent|relations|credit-sharing)(\/|$)/.test(path)) { next(); return; } // Service enforces the specific customer permissions.
   const allow = (key: string) => { if (!can(req.actor, key)) throw new AppError(403, 'FORBIDDEN', 'Rolünüz bu işlem için yetkili değil.'); };
   if (/^\/(auth\/me|profile|notifications|presence)(\/|$)/.test(path)) { next(); return; }
   if (path === '/role-options') { allow('users.view'); next(); return; }

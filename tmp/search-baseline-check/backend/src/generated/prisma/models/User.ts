@@ -26,6 +26,8 @@ export type AggregateUser = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
+  shareCreditsWithChildren: boolean | null
+  parentCustomerId: string | null
   name: string | null
   email: string | null
   phone: string | null
@@ -45,6 +47,8 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
+  shareCreditsWithChildren: boolean | null
+  parentCustomerId: string | null
   name: string | null
   email: string | null
   phone: string | null
@@ -64,6 +68,8 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
+  shareCreditsWithChildren: number
+  parentCustomerId: number
   name: number
   email: number
   phone: number
@@ -85,6 +91,8 @@ export type UserCountAggregateOutputType = {
 
 export type UserMinAggregateInputType = {
   id?: true
+  shareCreditsWithChildren?: true
+  parentCustomerId?: true
   name?: true
   email?: true
   phone?: true
@@ -104,6 +112,8 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
+  shareCreditsWithChildren?: true
+  parentCustomerId?: true
   name?: true
   email?: true
   phone?: true
@@ -123,6 +133,8 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
+  shareCreditsWithChildren?: true
+  parentCustomerId?: true
   name?: true
   email?: true
   phone?: true
@@ -215,6 +227,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
+  shareCreditsWithChildren: boolean
+  parentCustomerId: string | null
   name: string
   email: string | null
   phone: string | null
@@ -255,6 +269,8 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
+  shareCreditsWithChildren?: Prisma.BoolFilter<"User"> | boolean
+  parentCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   name?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
@@ -270,6 +286,10 @@ export type UserWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  parentCustomer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  subCustomers?: Prisma.UserListRelationFilter
+  agreements?: Prisma.AgreementListRelationFilter
+  customerLoginChallenge?: Prisma.XOR<Prisma.CustomerLoginChallengeNullableScalarRelationFilter, Prisma.CustomerLoginChallengeWhereInput> | null
   accessRole?: Prisma.XOR<Prisma.AccessRoleNullableScalarRelationFilter, Prisma.AccessRoleWhereInput> | null
   departments?: Prisma.DepartmentAgentListRelationFilter
   skills?: Prisma.UserSkillListRelationFilter
@@ -292,6 +312,8 @@ export type UserWhereInput = {
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  shareCreditsWithChildren?: Prisma.SortOrder
+  parentCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -307,6 +329,10 @@ export type UserOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  parentCustomer?: Prisma.UserOrderByWithRelationInput
+  subCustomers?: Prisma.UserOrderByRelationAggregateInput
+  agreements?: Prisma.AgreementOrderByRelationAggregateInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeOrderByWithRelationInput
   accessRole?: Prisma.AccessRoleOrderByWithRelationInput
   departments?: Prisma.DepartmentAgentOrderByRelationAggregateInput
   skills?: Prisma.UserSkillOrderByRelationAggregateInput
@@ -334,6 +360,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
+  shareCreditsWithChildren?: Prisma.BoolFilter<"User"> | boolean
+  parentCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   name?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
@@ -348,6 +376,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"User"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  parentCustomer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  subCustomers?: Prisma.UserListRelationFilter
+  agreements?: Prisma.AgreementListRelationFilter
+  customerLoginChallenge?: Prisma.XOR<Prisma.CustomerLoginChallengeNullableScalarRelationFilter, Prisma.CustomerLoginChallengeWhereInput> | null
   accessRole?: Prisma.XOR<Prisma.AccessRoleNullableScalarRelationFilter, Prisma.AccessRoleWhereInput> | null
   departments?: Prisma.DepartmentAgentListRelationFilter
   skills?: Prisma.UserSkillListRelationFilter
@@ -370,6 +402,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  shareCreditsWithChildren?: Prisma.SortOrder
+  parentCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -395,6 +429,8 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
+  shareCreditsWithChildren?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  parentCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -414,6 +450,7 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -428,6 +465,10 @@ export type UserCreateInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -450,6 +491,8 @@ export type UserCreateInput = {
 
 export type UserUncheckedCreateInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -465,6 +508,9 @@ export type UserUncheckedCreateInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -486,6 +532,7 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -500,6 +547,10 @@ export type UserUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -522,6 +573,8 @@ export type UserUpdateInput = {
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -537,6 +590,9 @@ export type UserUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -558,6 +614,8 @@ export type UserUncheckedUpdateInput = {
 
 export type UserCreateManyInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -577,6 +635,7 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -595,6 +654,8 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -612,6 +673,21 @@ export type UserUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type UserOrderByRelevanceInput = {
   fields: Prisma.UserOrderByRelevanceFieldEnum | Prisma.UserOrderByRelevanceFieldEnum[]
   sort: Prisma.SortOrder
@@ -620,6 +696,8 @@ export type UserOrderByRelevanceInput = {
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  shareCreditsWithChildren?: Prisma.SortOrder
+  parentCustomerId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -639,6 +717,8 @@ export type UserCountOrderByAggregateInput = {
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  shareCreditsWithChildren?: Prisma.SortOrder
+  parentCustomerId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -658,6 +738,8 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  shareCreditsWithChildren?: Prisma.SortOrder
+  parentCustomerId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -675,24 +757,33 @@ export type UserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
 }
 
-export type UserListRelationFilter = {
-  every?: Prisma.UserWhereInput
-  some?: Prisma.UserWhereInput
-  none?: Prisma.UserWhereInput
-}
-
-export type UserOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
-}
-
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
+export type UserCreateNestedOneWithoutSubCustomersInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubCustomersInput, Prisma.UserUncheckedCreateWithoutSubCustomersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubCustomersInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedManyWithoutParentCustomerInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput> | Prisma.UserCreateWithoutParentCustomerInput[] | Prisma.UserUncheckedCreateWithoutParentCustomerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutParentCustomerInput | Prisma.UserCreateOrConnectWithoutParentCustomerInput[]
+  createMany?: Prisma.UserCreateManyParentCustomerInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutParentCustomerInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput> | Prisma.UserCreateWithoutParentCustomerInput[] | Prisma.UserUncheckedCreateWithoutParentCustomerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutParentCustomerInput | Prisma.UserCreateOrConnectWithoutParentCustomerInput[]
+  createMany?: Prisma.UserCreateManyParentCustomerInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -703,8 +794,42 @@ export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type UserUpdateOneWithoutSubCustomersNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubCustomersInput, Prisma.UserUncheckedCreateWithoutSubCustomersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubCustomersInput
+  upsert?: Prisma.UserUpsertWithoutSubCustomersInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSubCustomersInput, Prisma.UserUpdateWithoutSubCustomersInput>, Prisma.UserUncheckedUpdateWithoutSubCustomersInput>
+}
+
+export type UserUpdateManyWithoutParentCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput> | Prisma.UserCreateWithoutParentCustomerInput[] | Prisma.UserUncheckedCreateWithoutParentCustomerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutParentCustomerInput | Prisma.UserCreateOrConnectWithoutParentCustomerInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutParentCustomerInput | Prisma.UserUpsertWithWhereUniqueWithoutParentCustomerInput[]
+  createMany?: Prisma.UserCreateManyParentCustomerInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutParentCustomerInput | Prisma.UserUpdateWithWhereUniqueWithoutParentCustomerInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutParentCustomerInput | Prisma.UserUpdateManyWithWhereWithoutParentCustomerInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutParentCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput> | Prisma.UserCreateWithoutParentCustomerInput[] | Prisma.UserUncheckedCreateWithoutParentCustomerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutParentCustomerInput | Prisma.UserCreateOrConnectWithoutParentCustomerInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutParentCustomerInput | Prisma.UserUpsertWithWhereUniqueWithoutParentCustomerInput[]
+  createMany?: Prisma.UserCreateManyParentCustomerInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutParentCustomerInput | Prisma.UserUpdateWithWhereUniqueWithoutParentCustomerInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutParentCustomerInput | Prisma.UserUpdateManyWithWhereWithoutParentCustomerInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedManyWithoutAccessRoleInput = {
@@ -993,8 +1118,37 @@ export type UserUpdateOneRequiredWithoutSavedRepliesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSavedRepliesInput, Prisma.UserUpdateWithoutSavedRepliesInput>, Prisma.UserUncheckedUpdateWithoutSavedRepliesInput>
 }
 
-export type UserCreateWithoutAccessRoleInput = {
+export type UserCreateNestedOneWithoutAgreementsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAgreementsInput, Prisma.UserUncheckedCreateWithoutAgreementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAgreementsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAgreementsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAgreementsInput, Prisma.UserUncheckedCreateWithoutAgreementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAgreementsInput
+  upsert?: Prisma.UserUpsertWithoutAgreementsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAgreementsInput, Prisma.UserUpdateWithoutAgreementsInput>, Prisma.UserUncheckedUpdateWithoutAgreementsInput>
+}
+
+export type UserCreateNestedOneWithoutCustomerLoginChallengeInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedCreateWithoutCustomerLoginChallengeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCustomerLoginChallengeInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCustomerLoginChallengeNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedCreateWithoutCustomerLoginChallengeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCustomerLoginChallengeInput
+  upsert?: Prisma.UserUpsertWithoutCustomerLoginChallengeInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCustomerLoginChallengeInput, Prisma.UserUpdateWithoutCustomerLoginChallengeInput>, Prisma.UserUncheckedUpdateWithoutCustomerLoginChallengeInput>
+}
+
+export type UserCreateWithoutSubCustomersInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1009,6 +1163,316 @@ export type UserCreateWithoutAccessRoleInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSubCustomersInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSubCustomersInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubCustomersInput, Prisma.UserUncheckedCreateWithoutSubCustomersInput>
+}
+
+export type UserCreateWithoutParentCustomerInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutParentCustomerInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutParentCustomerInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput>
+}
+
+export type UserCreateManyParentCustomerInputEnvelope = {
+  data: Prisma.UserCreateManyParentCustomerInput | Prisma.UserCreateManyParentCustomerInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserUpsertWithoutSubCustomersInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSubCustomersInput, Prisma.UserUncheckedUpdateWithoutSubCustomersInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubCustomersInput, Prisma.UserUncheckedCreateWithoutSubCustomersInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSubCustomersInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSubCustomersInput, Prisma.UserUncheckedUpdateWithoutSubCustomersInput>
+}
+
+export type UserUpdateWithoutSubCustomersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSubCustomersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutParentCustomerInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutParentCustomerInput, Prisma.UserUncheckedUpdateWithoutParentCustomerInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutParentCustomerInput, Prisma.UserUncheckedCreateWithoutParentCustomerInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutParentCustomerInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutParentCustomerInput, Prisma.UserUncheckedUpdateWithoutParentCustomerInput>
+}
+
+export type UserUpdateManyWithWhereWithoutParentCustomerInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutParentCustomerInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  shareCreditsWithChildren?: Prisma.BoolFilter<"User"> | boolean
+  parentCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
+  name?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringNullableFilter<"User"> | string | null
+  phone?: Prisma.StringNullableFilter<"User"> | string | null
+  loginEmail?: Prisma.StringNullableFilter<"User"> | string | null
+  company?: Prisma.StringNullableFilter<"User"> | string | null
+  staffNote?: Prisma.StringNullableFilter<"User"> | string | null
+  extraPhones?: Prisma.StringNullableFilter<"User"> | string | null
+  extraEmails?: Prisma.StringNullableFilter<"User"> | string | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  passwordHash?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  accessRoleId?: Prisma.StringNullableFilter<"User"> | string | null
+  isActive?: Prisma.BoolFilter<"User"> | boolean
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+}
+
+export type UserCreateWithoutAccessRoleInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
@@ -1030,6 +1494,8 @@ export type UserCreateWithoutAccessRoleInput = {
 
 export type UserUncheckedCreateWithoutAccessRoleInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1044,6 +1510,9 @@ export type UserUncheckedCreateWithoutAccessRoleInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -1089,30 +1558,9 @@ export type UserUpdateManyWithWhereWithoutAccessRoleInput = {
   data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutAccessRoleInput>
 }
 
-export type UserScalarWhereInput = {
-  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
-  OR?: Prisma.UserScalarWhereInput[]
-  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
-  id?: Prisma.StringFilter<"User"> | string
-  name?: Prisma.StringFilter<"User"> | string
-  email?: Prisma.StringNullableFilter<"User"> | string | null
-  phone?: Prisma.StringNullableFilter<"User"> | string | null
-  loginEmail?: Prisma.StringNullableFilter<"User"> | string | null
-  company?: Prisma.StringNullableFilter<"User"> | string | null
-  staffNote?: Prisma.StringNullableFilter<"User"> | string | null
-  extraPhones?: Prisma.StringNullableFilter<"User"> | string | null
-  extraEmails?: Prisma.StringNullableFilter<"User"> | string | null
-  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  passwordHash?: Prisma.StringFilter<"User"> | string
-  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
-  accessRoleId?: Prisma.StringNullableFilter<"User"> | string | null
-  isActive?: Prisma.BoolFilter<"User"> | boolean
-  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
-}
-
 export type UserCreateWithoutSkillsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1127,6 +1575,10 @@ export type UserCreateWithoutSkillsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
@@ -1148,6 +1600,8 @@ export type UserCreateWithoutSkillsInput = {
 
 export type UserUncheckedCreateWithoutSkillsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1163,6 +1617,9 @@ export type UserUncheckedCreateWithoutSkillsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
@@ -1199,6 +1656,7 @@ export type UserUpdateToOneWithWhereWithoutSkillsInput = {
 
 export type UserUpdateWithoutSkillsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1213,6 +1671,10 @@ export type UserUpdateWithoutSkillsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
@@ -1234,6 +1696,8 @@ export type UserUpdateWithoutSkillsInput = {
 
 export type UserUncheckedUpdateWithoutSkillsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1249,6 +1713,9 @@ export type UserUncheckedUpdateWithoutSkillsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
@@ -1269,6 +1736,7 @@ export type UserUncheckedUpdateWithoutSkillsInput = {
 
 export type UserCreateWithoutPasswordResetsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1283,6 +1751,10 @@ export type UserCreateWithoutPasswordResetsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -1304,6 +1776,8 @@ export type UserCreateWithoutPasswordResetsInput = {
 
 export type UserUncheckedCreateWithoutPasswordResetsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1319,6 +1793,9 @@ export type UserUncheckedCreateWithoutPasswordResetsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -1355,6 +1832,7 @@ export type UserUpdateToOneWithWhereWithoutPasswordResetsInput = {
 
 export type UserUpdateWithoutPasswordResetsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1369,6 +1847,10 @@ export type UserUpdateWithoutPasswordResetsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -1390,6 +1872,8 @@ export type UserUpdateWithoutPasswordResetsInput = {
 
 export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1405,6 +1889,9 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1425,6 +1912,7 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
 
 export type UserCreateWithoutSessionsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1439,6 +1927,10 @@ export type UserCreateWithoutSessionsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -1460,6 +1952,8 @@ export type UserCreateWithoutSessionsInput = {
 
 export type UserUncheckedCreateWithoutSessionsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1475,6 +1969,9 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -1511,6 +2008,7 @@ export type UserUpdateToOneWithWhereWithoutSessionsInput = {
 
 export type UserUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1525,6 +2023,10 @@ export type UserUpdateWithoutSessionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -1546,6 +2048,8 @@ export type UserUpdateWithoutSessionsInput = {
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1561,6 +2065,9 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1581,6 +2088,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 
 export type UserCreateWithoutDepartmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1595,6 +2103,10 @@ export type UserCreateWithoutDepartmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
@@ -1616,6 +2128,8 @@ export type UserCreateWithoutDepartmentsInput = {
 
 export type UserUncheckedCreateWithoutDepartmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1631,6 +2145,9 @@ export type UserUncheckedCreateWithoutDepartmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
@@ -1667,6 +2184,7 @@ export type UserUpdateToOneWithWhereWithoutDepartmentsInput = {
 
 export type UserUpdateWithoutDepartmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1681,6 +2199,10 @@ export type UserUpdateWithoutDepartmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
@@ -1702,6 +2224,8 @@ export type UserUpdateWithoutDepartmentsInput = {
 
 export type UserUncheckedUpdateWithoutDepartmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1717,6 +2241,9 @@ export type UserUncheckedUpdateWithoutDepartmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
@@ -1737,6 +2264,7 @@ export type UserUncheckedUpdateWithoutDepartmentsInput = {
 
 export type UserCreateWithoutCustomerConversationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1751,6 +2279,10 @@ export type UserCreateWithoutCustomerConversationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -1772,6 +2304,8 @@ export type UserCreateWithoutCustomerConversationsInput = {
 
 export type UserUncheckedCreateWithoutCustomerConversationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1787,6 +2321,9 @@ export type UserUncheckedCreateWithoutCustomerConversationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
@@ -1812,6 +2349,7 @@ export type UserCreateOrConnectWithoutCustomerConversationsInput = {
 
 export type UserCreateWithoutAssignedConversationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -1826,6 +2364,10 @@ export type UserCreateWithoutAssignedConversationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -1847,6 +2389,8 @@ export type UserCreateWithoutAssignedConversationsInput = {
 
 export type UserUncheckedCreateWithoutAssignedConversationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -1862,6 +2406,9 @@ export type UserUncheckedCreateWithoutAssignedConversationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -1898,6 +2445,7 @@ export type UserUpdateToOneWithWhereWithoutCustomerConversationsInput = {
 
 export type UserUpdateWithoutCustomerConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1912,6 +2460,10 @@ export type UserUpdateWithoutCustomerConversationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -1933,6 +2485,8 @@ export type UserUpdateWithoutCustomerConversationsInput = {
 
 export type UserUncheckedUpdateWithoutCustomerConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1948,6 +2502,9 @@ export type UserUncheckedUpdateWithoutCustomerConversationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
@@ -1979,6 +2536,7 @@ export type UserUpdateToOneWithWhereWithoutAssignedConversationsInput = {
 
 export type UserUpdateWithoutAssignedConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1993,6 +2551,10 @@ export type UserUpdateWithoutAssignedConversationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2014,6 +2576,8 @@ export type UserUpdateWithoutAssignedConversationsInput = {
 
 export type UserUncheckedUpdateWithoutAssignedConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2029,6 +2593,9 @@ export type UserUncheckedUpdateWithoutAssignedConversationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2049,6 +2616,7 @@ export type UserUncheckedUpdateWithoutAssignedConversationsInput = {
 
 export type UserCreateWithoutConversationAssignmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2063,6 +2631,10 @@ export type UserCreateWithoutConversationAssignmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2084,6 +2656,8 @@ export type UserCreateWithoutConversationAssignmentsInput = {
 
 export type UserUncheckedCreateWithoutConversationAssignmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2099,6 +2673,9 @@ export type UserUncheckedCreateWithoutConversationAssignmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2135,6 +2712,7 @@ export type UserUpdateToOneWithWhereWithoutConversationAssignmentsInput = {
 
 export type UserUpdateWithoutConversationAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2149,6 +2727,10 @@ export type UserUpdateWithoutConversationAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2170,6 +2752,8 @@ export type UserUpdateWithoutConversationAssignmentsInput = {
 
 export type UserUncheckedUpdateWithoutConversationAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2185,6 +2769,9 @@ export type UserUncheckedUpdateWithoutConversationAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2205,6 +2792,7 @@ export type UserUncheckedUpdateWithoutConversationAssignmentsInput = {
 
 export type UserCreateWithoutMessagesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2219,6 +2807,10 @@ export type UserCreateWithoutMessagesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2240,6 +2832,8 @@ export type UserCreateWithoutMessagesInput = {
 
 export type UserUncheckedCreateWithoutMessagesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2255,6 +2849,9 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2291,6 +2888,7 @@ export type UserUpdateToOneWithWhereWithoutMessagesInput = {
 
 export type UserUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2305,6 +2903,10 @@ export type UserUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2326,6 +2928,8 @@ export type UserUpdateWithoutMessagesInput = {
 
 export type UserUncheckedUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2341,6 +2945,9 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2361,6 +2968,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
 
 export type UserCreateWithoutConversationParticipantsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2375,6 +2983,10 @@ export type UserCreateWithoutConversationParticipantsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2396,6 +3008,8 @@ export type UserCreateWithoutConversationParticipantsInput = {
 
 export type UserUncheckedCreateWithoutConversationParticipantsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2411,6 +3025,9 @@ export type UserUncheckedCreateWithoutConversationParticipantsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2447,6 +3064,7 @@ export type UserUpdateToOneWithWhereWithoutConversationParticipantsInput = {
 
 export type UserUpdateWithoutConversationParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2461,6 +3079,10 @@ export type UserUpdateWithoutConversationParticipantsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2482,6 +3104,8 @@ export type UserUpdateWithoutConversationParticipantsInput = {
 
 export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2497,6 +3121,9 @@ export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2517,6 +3144,7 @@ export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
 
 export type UserCreateWithoutMessageMentionsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2531,6 +3159,10 @@ export type UserCreateWithoutMessageMentionsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2552,6 +3184,8 @@ export type UserCreateWithoutMessageMentionsInput = {
 
 export type UserUncheckedCreateWithoutMessageMentionsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2567,6 +3201,9 @@ export type UserUncheckedCreateWithoutMessageMentionsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2603,6 +3240,7 @@ export type UserUpdateToOneWithWhereWithoutMessageMentionsInput = {
 
 export type UserUpdateWithoutMessageMentionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2617,6 +3255,10 @@ export type UserUpdateWithoutMessageMentionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2638,6 +3280,8 @@ export type UserUpdateWithoutMessageMentionsInput = {
 
 export type UserUncheckedUpdateWithoutMessageMentionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2653,6 +3297,9 @@ export type UserUncheckedUpdateWithoutMessageMentionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2673,6 +3320,7 @@ export type UserUncheckedUpdateWithoutMessageMentionsInput = {
 
 export type UserCreateWithoutOutboundMessagesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2687,6 +3335,10 @@ export type UserCreateWithoutOutboundMessagesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2708,6 +3360,8 @@ export type UserCreateWithoutOutboundMessagesInput = {
 
 export type UserUncheckedCreateWithoutOutboundMessagesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2723,6 +3377,9 @@ export type UserUncheckedCreateWithoutOutboundMessagesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2759,6 +3416,7 @@ export type UserUpdateToOneWithWhereWithoutOutboundMessagesInput = {
 
 export type UserUpdateWithoutOutboundMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2773,6 +3431,10 @@ export type UserUpdateWithoutOutboundMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2794,6 +3456,8 @@ export type UserUpdateWithoutOutboundMessagesInput = {
 
 export type UserUncheckedUpdateWithoutOutboundMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2809,6 +3473,9 @@ export type UserUncheckedUpdateWithoutOutboundMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2829,6 +3496,7 @@ export type UserUncheckedUpdateWithoutOutboundMessagesInput = {
 
 export type UserCreateWithoutLogsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2843,6 +3511,10 @@ export type UserCreateWithoutLogsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -2864,6 +3536,8 @@ export type UserCreateWithoutLogsInput = {
 
 export type UserUncheckedCreateWithoutLogsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -2879,6 +3553,9 @@ export type UserUncheckedCreateWithoutLogsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -2915,6 +3592,7 @@ export type UserUpdateToOneWithWhereWithoutLogsInput = {
 
 export type UserUpdateWithoutLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2929,6 +3607,10 @@ export type UserUpdateWithoutLogsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -2950,6 +3632,8 @@ export type UserUpdateWithoutLogsInput = {
 
 export type UserUncheckedUpdateWithoutLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2965,6 +3649,9 @@ export type UserUncheckedUpdateWithoutLogsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2985,6 +3672,7 @@ export type UserUncheckedUpdateWithoutLogsInput = {
 
 export type UserCreateWithoutAttachmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -2999,6 +3687,10 @@ export type UserCreateWithoutAttachmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -3020,6 +3712,8 @@ export type UserCreateWithoutAttachmentsInput = {
 
 export type UserUncheckedCreateWithoutAttachmentsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3035,6 +3729,9 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -3071,6 +3768,7 @@ export type UserUpdateToOneWithWhereWithoutAttachmentsInput = {
 
 export type UserUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3085,6 +3783,10 @@ export type UserUpdateWithoutAttachmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -3106,6 +3808,8 @@ export type UserUpdateWithoutAttachmentsInput = {
 
 export type UserUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3121,6 +3825,9 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3141,6 +3848,7 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
 
 export type UserCreateWithoutCustomerFilesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -3155,6 +3863,10 @@ export type UserCreateWithoutCustomerFilesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -3176,6 +3888,8 @@ export type UserCreateWithoutCustomerFilesInput = {
 
 export type UserUncheckedCreateWithoutCustomerFilesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3191,6 +3905,9 @@ export type UserUncheckedCreateWithoutCustomerFilesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -3227,6 +3944,7 @@ export type UserUpdateToOneWithWhereWithoutCustomerFilesInput = {
 
 export type UserUpdateWithoutCustomerFilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3241,6 +3959,10 @@ export type UserUpdateWithoutCustomerFilesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -3262,6 +3984,8 @@ export type UserUpdateWithoutCustomerFilesInput = {
 
 export type UserUncheckedUpdateWithoutCustomerFilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3277,6 +4001,9 @@ export type UserUncheckedUpdateWithoutCustomerFilesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3297,6 +4024,7 @@ export type UserUncheckedUpdateWithoutCustomerFilesInput = {
 
 export type UserCreateWithoutProjectGuideFilesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -3311,6 +4039,10 @@ export type UserCreateWithoutProjectGuideFilesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -3332,6 +4064,8 @@ export type UserCreateWithoutProjectGuideFilesInput = {
 
 export type UserUncheckedCreateWithoutProjectGuideFilesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3347,6 +4081,9 @@ export type UserUncheckedCreateWithoutProjectGuideFilesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -3383,6 +4120,7 @@ export type UserUpdateToOneWithWhereWithoutProjectGuideFilesInput = {
 
 export type UserUpdateWithoutProjectGuideFilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3397,6 +4135,10 @@ export type UserUpdateWithoutProjectGuideFilesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -3418,6 +4160,8 @@ export type UserUpdateWithoutProjectGuideFilesInput = {
 
 export type UserUncheckedUpdateWithoutProjectGuideFilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3433,6 +4177,9 @@ export type UserUncheckedUpdateWithoutProjectGuideFilesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3453,6 +4200,7 @@ export type UserUncheckedUpdateWithoutProjectGuideFilesInput = {
 
 export type UserCreateWithoutNotificationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -3467,6 +4215,10 @@ export type UserCreateWithoutNotificationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -3488,6 +4240,8 @@ export type UserCreateWithoutNotificationsInput = {
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3503,6 +4257,9 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -3539,6 +4296,7 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3553,6 +4311,10 @@ export type UserUpdateWithoutNotificationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -3574,6 +4336,8 @@ export type UserUpdateWithoutNotificationsInput = {
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3589,6 +4353,9 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3609,6 +4376,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
 
 export type UserCreateWithoutSavedRepliesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
   name: string
   email?: string | null
   phone?: string | null
@@ -3623,6 +4391,10 @@ export type UserCreateWithoutSavedRepliesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
   accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
   departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
@@ -3644,6 +4416,8 @@ export type UserCreateWithoutSavedRepliesInput = {
 
 export type UserUncheckedCreateWithoutSavedRepliesInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3659,6 +4433,9 @@ export type UserUncheckedCreateWithoutSavedRepliesInput = {
   isActive?: boolean
   updatedAt?: Date | string
   createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
   departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
   skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
   customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
@@ -3695,6 +4472,7 @@ export type UserUpdateToOneWithWhereWithoutSavedRepliesInput = {
 
 export type UserUpdateWithoutSavedRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3709,6 +4487,10 @@ export type UserUpdateWithoutSavedRepliesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
@@ -3730,6 +4512,8 @@ export type UserUpdateWithoutSavedRepliesInput = {
 
 export type UserUncheckedUpdateWithoutSavedRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3745,6 +4529,9 @@ export type UserUncheckedUpdateWithoutSavedRepliesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3763,8 +4550,482 @@ export type UserUncheckedUpdateWithoutSavedRepliesInput = {
   messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
 }
 
+export type UserCreateWithoutAgreementsInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAgreementsInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAgreementsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAgreementsInput, Prisma.UserUncheckedCreateWithoutAgreementsInput>
+}
+
+export type UserUpsertWithoutAgreementsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAgreementsInput, Prisma.UserUncheckedUpdateWithoutAgreementsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAgreementsInput, Prisma.UserUncheckedCreateWithoutAgreementsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAgreementsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAgreementsInput, Prisma.UserUncheckedUpdateWithoutAgreementsInput>
+}
+
+export type UserUpdateWithoutAgreementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAgreementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutCustomerLoginChallengeInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCustomerLoginChallengeInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCustomerLoginChallengeInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedCreateWithoutCustomerLoginChallengeInput>
+}
+
+export type UserUpsertWithoutCustomerLoginChallengeInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedUpdateWithoutCustomerLoginChallengeInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedCreateWithoutCustomerLoginChallengeInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCustomerLoginChallengeInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCustomerLoginChallengeInput, Prisma.UserUncheckedUpdateWithoutCustomerLoginChallengeInput>
+}
+
+export type UserUpdateWithoutCustomerLoginChallengeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCustomerLoginChallengeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateManyParentCustomerInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+}
+
+export type UserUpdateWithoutParentCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutParentCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutParentCustomerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type UserCreateManyAccessRoleInput = {
   id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
   name: string
   email?: string | null
   phone?: string | null
@@ -3783,6 +5044,7 @@ export type UserCreateManyAccessRoleInput = {
 
 export type UserUpdateWithoutAccessRoleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3797,6 +5059,10 @@ export type UserUpdateWithoutAccessRoleInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
@@ -3818,6 +5084,8 @@ export type UserUpdateWithoutAccessRoleInput = {
 
 export type UserUncheckedUpdateWithoutAccessRoleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3832,6 +5100,9 @@ export type UserUncheckedUpdateWithoutAccessRoleInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
   departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
   skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
   customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3853,6 +5124,8 @@ export type UserUncheckedUpdateWithoutAccessRoleInput = {
 
 export type UserUncheckedUpdateManyWithoutAccessRoleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3875,6 +5148,8 @@ export type UserUncheckedUpdateManyWithoutAccessRoleInput = {
  */
 
 export type UserCountOutputType = {
+  subCustomers: number
+  agreements: number
   departments: number
   skills: number
   customerConversations: number
@@ -3895,6 +5170,8 @@ export type UserCountOutputType = {
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  subCustomers?: boolean | UserCountOutputTypeCountSubCustomersArgs
+  agreements?: boolean | UserCountOutputTypeCountAgreementsArgs
   departments?: boolean | UserCountOutputTypeCountDepartmentsArgs
   skills?: boolean | UserCountOutputTypeCountSkillsArgs
   customerConversations?: boolean | UserCountOutputTypeCountCustomerConversationsArgs
@@ -3922,6 +5199,20 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSubCustomersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAgreementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AgreementWhereInput
 }
 
 /**
@@ -4046,6 +5337,8 @@ export type UserCountOutputTypeCountMessageMentionsArgs<ExtArgs extends runtime.
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: boolean
   name?: boolean
   email?: boolean
   phone?: boolean
@@ -4061,6 +5354,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isActive?: boolean
   updatedAt?: boolean
   createdAt?: boolean
+  parentCustomer?: boolean | Prisma.User$parentCustomerArgs<ExtArgs>
+  subCustomers?: boolean | Prisma.User$subCustomersArgs<ExtArgs>
+  agreements?: boolean | Prisma.User$agreementsArgs<ExtArgs>
+  customerLoginChallenge?: boolean | Prisma.User$customerLoginChallengeArgs<ExtArgs>
   accessRole?: boolean | Prisma.User$accessRoleArgs<ExtArgs>
   departments?: boolean | Prisma.User$departmentsArgs<ExtArgs>
   skills?: boolean | Prisma.User$skillsArgs<ExtArgs>
@@ -4086,6 +5383,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectScalar = {
   id?: boolean
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: boolean
   name?: boolean
   email?: boolean
   phone?: boolean
@@ -4103,8 +5402,12 @@ export type UserSelectScalar = {
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "loginEmail" | "company" | "staffNote" | "extraPhones" | "extraEmails" | "deletedAt" | "passwordHash" | "role" | "accessRoleId" | "isActive" | "updatedAt" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shareCreditsWithChildren" | "parentCustomerId" | "name" | "email" | "phone" | "loginEmail" | "company" | "staffNote" | "extraPhones" | "extraEmails" | "deletedAt" | "passwordHash" | "role" | "accessRoleId" | "isActive" | "updatedAt" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parentCustomer?: boolean | Prisma.User$parentCustomerArgs<ExtArgs>
+  subCustomers?: boolean | Prisma.User$subCustomersArgs<ExtArgs>
+  agreements?: boolean | Prisma.User$agreementsArgs<ExtArgs>
+  customerLoginChallenge?: boolean | Prisma.User$customerLoginChallengeArgs<ExtArgs>
   accessRole?: boolean | Prisma.User$accessRoleArgs<ExtArgs>
   departments?: boolean | Prisma.User$departmentsArgs<ExtArgs>
   skills?: boolean | Prisma.User$skillsArgs<ExtArgs>
@@ -4129,6 +5432,10 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    parentCustomer: Prisma.$UserPayload<ExtArgs> | null
+    subCustomers: Prisma.$UserPayload<ExtArgs>[]
+    agreements: Prisma.$AgreementPayload<ExtArgs>[]
+    customerLoginChallenge: Prisma.$CustomerLoginChallengePayload<ExtArgs> | null
     accessRole: Prisma.$AccessRolePayload<ExtArgs> | null
     departments: Prisma.$DepartmentAgentPayload<ExtArgs>[]
     skills: Prisma.$UserSkillPayload<ExtArgs>[]
@@ -4150,6 +5457,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    shareCreditsWithChildren: boolean
+    parentCustomerId: string | null
     name: string
     email: string | null
     phone: string | null
@@ -4505,6 +5814,10 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  parentCustomer<T extends Prisma.User$parentCustomerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$parentCustomerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  subCustomers<T extends Prisma.User$subCustomersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subCustomersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  agreements<T extends Prisma.User$agreementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$agreementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AgreementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  customerLoginChallenge<T extends Prisma.User$customerLoginChallengeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$customerLoginChallengeArgs<ExtArgs>>): Prisma.Prisma__CustomerLoginChallengeClient<runtime.Types.Result.GetResult<Prisma.$CustomerLoginChallengePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   accessRole<T extends Prisma.User$accessRoleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accessRoleArgs<ExtArgs>>): Prisma.Prisma__AccessRoleClient<runtime.Types.Result.GetResult<Prisma.$AccessRolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   departments<T extends Prisma.User$departmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DepartmentAgentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   skills<T extends Prisma.User$skillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4553,6 +5866,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
+  readonly shareCreditsWithChildren: Prisma.FieldRef<"User", 'Boolean'>
+  readonly parentCustomerId: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly phone: Prisma.FieldRef<"User", 'String'>
@@ -4913,6 +6228,92 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.parentCustomer
+ */
+export type User$parentCustomerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * User.subCustomers
+ */
+export type User$subCustomersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
+}
+
+/**
+ * User.agreements
+ */
+export type User$agreementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Agreement
+   */
+  select?: Prisma.AgreementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Agreement
+   */
+  omit?: Prisma.AgreementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AgreementInclude<ExtArgs> | null
+  where?: Prisma.AgreementWhereInput
+  orderBy?: Prisma.AgreementOrderByWithRelationInput | Prisma.AgreementOrderByWithRelationInput[]
+  cursor?: Prisma.AgreementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AgreementScalarFieldEnum | Prisma.AgreementScalarFieldEnum[]
+}
+
+/**
+ * User.customerLoginChallenge
+ */
+export type User$customerLoginChallengeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerLoginChallenge
+   */
+  select?: Prisma.CustomerLoginChallengeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomerLoginChallenge
+   */
+  omit?: Prisma.CustomerLoginChallengeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerLoginChallengeInclude<ExtArgs> | null
+  where?: Prisma.CustomerLoginChallengeWhereInput
 }
 
 /**

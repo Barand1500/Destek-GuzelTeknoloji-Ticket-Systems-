@@ -443,7 +443,10 @@ export const ModelName = {
   AnnouncementTemplate: 'AnnouncementTemplate',
   Survey: 'Survey',
   SurveyRecipient: 'SurveyRecipient',
-  SurveyResponse: 'SurveyResponse'
+  SurveyResponse: 'SurveyResponse',
+  Agreement: 'Agreement',
+  CreditCharge: 'CreditCharge',
+  CustomerLoginChallenge: 'CustomerLoginChallenge'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -459,7 +462,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3565,6 +3568,204 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Agreement: {
+      payload: Prisma.$AgreementPayload<ExtArgs>
+      fields: Prisma.AgreementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AgreementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AgreementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        findFirst: {
+          args: Prisma.AgreementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AgreementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        findMany: {
+          args: Prisma.AgreementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>[]
+        }
+        create: {
+          args: Prisma.AgreementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        createMany: {
+          args: Prisma.AgreementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.AgreementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        update: {
+          args: Prisma.AgreementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        deleteMany: {
+          args: Prisma.AgreementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AgreementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.AgreementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AgreementPayload>
+        }
+        aggregate: {
+          args: Prisma.AgreementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAgreement>
+        }
+        groupBy: {
+          args: Prisma.AgreementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AgreementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AgreementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AgreementCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditCharge: {
+      payload: Prisma.$CreditChargePayload<ExtArgs>
+      fields: Prisma.CreditChargeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditChargeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditChargeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        findFirst: {
+          args: Prisma.CreditChargeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditChargeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        findMany: {
+          args: Prisma.CreditChargeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>[]
+        }
+        create: {
+          args: Prisma.CreditChargeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        createMany: {
+          args: Prisma.CreditChargeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditChargeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        update: {
+          args: Prisma.CreditChargeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditChargeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditChargeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditChargeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditChargePayload>
+        }
+        aggregate: {
+          args: Prisma.CreditChargeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditCharge>
+        }
+        groupBy: {
+          args: Prisma.CreditChargeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditChargeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditChargeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditChargeCountAggregateOutputType> | number
+        }
+      }
+    }
+    CustomerLoginChallenge: {
+      payload: Prisma.$CustomerLoginChallengePayload<ExtArgs>
+      fields: Prisma.CustomerLoginChallengeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CustomerLoginChallengeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CustomerLoginChallengeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        findFirst: {
+          args: Prisma.CustomerLoginChallengeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CustomerLoginChallengeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        findMany: {
+          args: Prisma.CustomerLoginChallengeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>[]
+        }
+        create: {
+          args: Prisma.CustomerLoginChallengeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        createMany: {
+          args: Prisma.CustomerLoginChallengeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CustomerLoginChallengeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        update: {
+          args: Prisma.CustomerLoginChallengeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        deleteMany: {
+          args: Prisma.CustomerLoginChallengeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CustomerLoginChallengeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CustomerLoginChallengeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerLoginChallengePayload>
+        }
+        aggregate: {
+          args: Prisma.CustomerLoginChallengeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCustomerLoginChallenge>
+        }
+        groupBy: {
+          args: Prisma.CustomerLoginChallengeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerLoginChallengeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CustomerLoginChallengeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerLoginChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3624,6 +3825,8 @@ export type SharedFileScalarFieldEnum = (typeof SharedFileScalarFieldEnum)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
+  shareCreditsWithChildren: 'shareCreditsWithChildren',
+  parentCustomerId: 'parentCustomerId',
   name: 'name',
   email: 'email',
   phone: 'phone',
@@ -3695,6 +3898,7 @@ export type PasswordResetScalarFieldEnum = (typeof PasswordResetScalarFieldEnum)
 
 export const SessionScalarFieldEnum = {
   id: 'id',
+  customerEmailVerifiedAt: 'customerEmailVerifiedAt',
   userId: 'userId',
   tokenHash: 'tokenHash',
   expiresAt: 'expiresAt',
@@ -4279,6 +4483,50 @@ export const SurveyResponseScalarFieldEnum = {
 export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnum)[keyof typeof SurveyResponseScalarFieldEnum]
 
 
+export const AgreementScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  type: 'type',
+  startsOn: 'startsOn',
+  endsOn: 'endsOn',
+  fee: 'fee',
+  credits: 'credits',
+  usedCredits: 'usedCredits',
+  cancelledAt: 'cancelledAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AgreementScalarFieldEnum = (typeof AgreementScalarFieldEnum)[keyof typeof AgreementScalarFieldEnum]
+
+
+export const CreditChargeScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  agreementId: 'agreementId',
+  credits: 'credits',
+  actorId: 'actorId',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditChargeScalarFieldEnum = (typeof CreditChargeScalarFieldEnum)[keyof typeof CreditChargeScalarFieldEnum]
+
+
+export const CustomerLoginChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  codeHash: 'codeHash',
+  attempts: 'attempts',
+  requests: 'requests',
+  requestWindowAt: 'requestWindowAt',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt'
+} as const
+
+export type CustomerLoginChallengeScalarFieldEnum = (typeof CustomerLoginChallengeScalarFieldEnum)[keyof typeof CustomerLoginChallengeScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -4328,6 +4576,7 @@ export type SharedFileOrderByRelevanceFieldEnum = (typeof SharedFileOrderByRelev
 
 export const UserOrderByRelevanceFieldEnum = {
   id: 'id',
+  parentCustomerId: 'parentCustomerId',
   name: 'name',
   email: 'email',
   phone: 'phone',
@@ -4857,6 +5106,36 @@ export const SurveyResponseOrderByRelevanceFieldEnum = {
 export type SurveyResponseOrderByRelevanceFieldEnum = (typeof SurveyResponseOrderByRelevanceFieldEnum)[keyof typeof SurveyResponseOrderByRelevanceFieldEnum]
 
 
+export const AgreementOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  type: 'type'
+} as const
+
+export type AgreementOrderByRelevanceFieldEnum = (typeof AgreementOrderByRelevanceFieldEnum)[keyof typeof AgreementOrderByRelevanceFieldEnum]
+
+
+export const CreditChargeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  agreementId: 'agreementId',
+  actorId: 'actorId'
+} as const
+
+export type CreditChargeOrderByRelevanceFieldEnum = (typeof CreditChargeOrderByRelevanceFieldEnum)[keyof typeof CreditChargeOrderByRelevanceFieldEnum]
+
+
+export const CustomerLoginChallengeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  codeHash: 'codeHash'
+} as const
+
+export type CustomerLoginChallengeOrderByRelevanceFieldEnum = (typeof CustomerLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof CustomerLoginChallengeOrderByRelevanceFieldEnum]
+
+
 
 /**
  * Field references
@@ -4885,16 +5164,16 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
- * Reference to a field of type 'Role'
+ * Reference to a field of type 'Boolean'
  */
-export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'Role'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
     
 
 
@@ -4923,6 +5202,13 @@ export type EnumConversationChannelFieldRefInput<$PrismaModel> = FieldRefInputTy
  * Reference to a field of type 'MessageType'
  */
 export type EnumMessageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MessageType'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal'
+ */
+export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
     
 
 
@@ -5130,6 +5416,9 @@ export type GlobalOmitConfig = {
   survey?: Prisma.SurveyOmit
   surveyRecipient?: Prisma.SurveyRecipientOmit
   surveyResponse?: Prisma.SurveyResponseOmit
+  agreement?: Prisma.AgreementOmit
+  creditCharge?: Prisma.CreditChargeOmit
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeOmit
 }
 
 /* Types for Logging */

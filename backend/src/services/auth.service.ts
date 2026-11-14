@@ -5,6 +5,7 @@ import { db } from "../config/db.js";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/errors.js";
 import { builtInStaffTemplate } from './role-templates.js';
+import type { Prisma } from '../generated/prisma/client.js';
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 const newRefresh = () => randomBytes(48).toString("base64url");
@@ -25,16 +26,17 @@ function access(userId: string, sessionId: string) {
     audience: "helpdesk-web",
   });
 }
-async function issue(userId: string) {
+export async function issue(userId: string, client: Prisma.TransactionClient = db, customerEmailVerifiedAt?: Date) {
   const refreshToken = newRefresh();
-  const session = await db.session.create({
+  const session = await client.session.create({
     data: {
       userId,
+      customerEmailVerifiedAt,
       tokenHash: digest(refreshToken),
       expiresAt: new Date(Date.now() + 7 * 86400000),
     },
   });
-  const user = await db.user.findUniqueOrThrow({
+  const user = await client.user.findUniqueOrThrow({
     where: { id: userId },
     select: publicUser,
   });

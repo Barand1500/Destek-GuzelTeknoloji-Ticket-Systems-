@@ -1,4 +1,5 @@
 import { issueFormLink } from './form-access.service.js';
+import { debitResolution } from './agreements.service.js';
 import { whatsappWindow } from './whatsapp-window.js';
 import { conversationSearch } from "./conversation-search.js";
 import { internationalEmailSearchIds } from './email-search.js';
@@ -28,6 +29,7 @@ import { assignedTo, unassigned as unassignedFilter, assignmentIds, setAssignees
 const conversationInclude = {
   customer: { select: person },
   formRequest: true,
+  creditCharge: { select: { credits: true, agreementId: true } },
   assignedAgent: { select: person },
   assignees: { include: { user: { select: person } }, orderBy: { createdAt: "asc" } },
   department: true,
@@ -67,7 +69,7 @@ async function enqueueConversationMessages(tx: Prisma.TransactionClient, actor: 
   if (actor.role !== 'CUSTOMER') for (const channel of channels) if (channel === 'SMS' || channel === 'WHATSAPP') await enqueueChannelReply(channel, customer, body, context, files, tx);
 }
 export function visibility(actor: Actor): Prisma.ConversationWhereInput {
-  if (actor.role === 'CUSTOMER') return { deletedAt: null, customerId: actor.id };
+  if (actor.role === 'CUSTOMER') return { deletedAt: null, customer: { deletedAt: null, isActive: true }, OR: [{ customerId: actor.id }, { customer: { parentCustomerId: actor.id } }] };
   if (actor.accessRole || actor.roleScope) {
     const scope = permissionScope(actor);
     if (scope === 'OWN') return { deletedAt: null, ...assignedTo(actor.id) };
@@ -411,7 +413,7 @@ export async function addMessage(
       ? { deletedAt: null, OR: [assignedTo(actor.id), { participants: { some: { userId: actor.id } } }] }
       : visibility(actor);
     const lock = await tx.conversation.updateMany({
-      where: { AND: [actor.role === "AGENT" ? agentWriteScope : visibility(actor), { id, status: { not: "CLOSED" } }] },
+      where: { AND: [actor.role === "AGENT" ? agentWriteScope : visibility(actor), { id, status: { not: "CLOSED" }, ...(actor.role === 'CUSTOMER' ? { customerId: actor.id } : {}) }] },
       data: { updatedAt: new Date() },
     });
     if (lock.count !== 1)
@@ -535,7 +537,10 @@ export async function updateConversation(
       const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
       validateReplyChannels(input.replyChannels, recipient, settings);
     }
-    const {tagIds, assignedAgentIds: _assignedAgentIds, ...changes}=input;
+    if (input.creditResolution && !['RESOLVED', 'CLOSED'].includes(input.status ?? '')) throw new AppError(400, 'INVALID_CREDIT_STATUS', 'Kredi yalnızca talep çözülürken kullanılabilir.');
+    if (['RESOLVED', 'CLOSED'].includes(input.status ?? '') && !['RESOLVED', 'CLOSED'].includes(conversation.status)) await debitResolution(tx, actor, conversation, input.creditResolution);
+    else if (input.creditResolution) await debitResolution(tx, actor, conversation, input.creditResolution);
+    const {tagIds, creditResolution: _creditResolution, assignedAgentIds: _assignedAgentIds, ...changes}=input;
     await setAssignees(tx, id, nextIds);
     const updated = await tx.conversation.update({
       where: { id },

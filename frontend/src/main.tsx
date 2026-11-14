@@ -1,4 +1,5 @@
 import { FormPortal } from './features/tickets/FormPortal';
+import { CustomerAgreementsPage } from './features/agreements/Agreements';
 import ReactDOM from "react-dom/client";
 import {
   BrowserRouter,
@@ -88,6 +89,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route element={<RequireRole roles={["CUSTOMER"]} />}>
               <Route path="/customer" element={<LegacyRedirect />} />
               <Route path="/customer/dashboard" element={<Dashboard />} />
+              <Route path="/customer/agreements" element={<CustomerAgreementsPage />} />
               <Route path="/customer/tickets" element={<TicketList />} />
               <Route path="/customer/tickets/new" element={<NewTicket />} />
               <Route path="/customer/tickets/:id" element={<TicketDetail />} />

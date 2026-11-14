@@ -381,6 +381,9 @@ function WorkspaceLayout() {
             {user.role === "CUSTOMER" ? "Taleplerim" : "Gelen Kutusu"}
           </NavLink>
           {user.role === "CUSTOMER" && (
+            <NavLink to={path('agreements')}><FileText size={19} />Anlaşmalarım ve Kredilerim</NavLink>
+          )}
+          {user.role === "CUSTOMER" && (
             <NavLink to={path("tickets/new")}>
               <Plus size={19} />
               Yeni Talep
@@ -594,7 +597,7 @@ function WorkspaceLayout() {
             )}
           </div>
           <div className="topbar-actions">
-            {hasPermission(user, "announcements.create") && (
+            {user.role !== 'CUSTOMER' && hasPermission(user, "announcements.create") && (
               <button
                 className="topbar-icon-link"
                 type="button"
@@ -755,7 +758,7 @@ function WorkspaceLayout() {
           </div>
         </header>
         <PermissionScreen><WorkScreenOutlet /></PermissionScreen>
-        {announcementsOpen && (
+        {user.role !== 'CUSTOMER' && announcementsOpen && (
           <AnnouncementsModal
             user={user}
             initialTab={announcementsTab}

@@ -332,6 +332,7 @@ export type ConversationWhereInput = {
   resolvedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   firstResponseAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
+  creditCharge?: Prisma.XOR<Prisma.CreditChargeNullableScalarRelationFilter, Prisma.CreditChargeWhereInput> | null
   website?: Prisma.XOR<Prisma.WebsiteNullableScalarRelationFilter, Prisma.WebsiteWhereInput> | null
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   department?: Prisma.XOR<Prisma.DepartmentScalarRelationFilter, Prisma.DepartmentWhereInput>
@@ -370,6 +371,7 @@ export type ConversationOrderByWithRelationInput = {
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   firstResponseAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  creditCharge?: Prisma.CreditChargeOrderByWithRelationInput
   website?: Prisma.WebsiteOrderByWithRelationInput
   customer?: Prisma.UserOrderByWithRelationInput
   department?: Prisma.DepartmentOrderByWithRelationInput
@@ -412,6 +414,7 @@ export type ConversationWhereUniqueInput = Prisma.AtLeast<{
   resolvedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   firstResponseAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
+  creditCharge?: Prisma.XOR<Prisma.CreditChargeNullableScalarRelationFilter, Prisma.CreditChargeWhereInput> | null
   website?: Prisma.XOR<Prisma.WebsiteNullableScalarRelationFilter, Prisma.WebsiteWhereInput> | null
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   department?: Prisma.XOR<Prisma.DepartmentScalarRelationFilter, Prisma.DepartmentWhereInput>
@@ -500,6 +503,7 @@ export type ConversationCreateInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -538,6 +542,7 @@ export type ConversationUncheckedCreateInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -567,6 +572,7 @@ export type ConversationUpdateInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -605,6 +611,7 @@ export type ConversationUncheckedUpdateInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -1113,6 +1120,20 @@ export type ConversationUpdateOneRequiredWithoutExternalMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutExternalMessagesInput, Prisma.ConversationUpdateWithoutExternalMessagesInput>, Prisma.ConversationUncheckedUpdateWithoutExternalMessagesInput>
 }
 
+export type ConversationCreateNestedOneWithoutCreditChargeInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutCreditChargeInput, Prisma.ConversationUncheckedCreateWithoutCreditChargeInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutCreditChargeInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutCreditChargeNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutCreditChargeInput, Prisma.ConversationUncheckedCreateWithoutCreditChargeInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutCreditChargeInput
+  upsert?: Prisma.ConversationUpsertWithoutCreditChargeInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutCreditChargeInput, Prisma.ConversationUpdateWithoutCreditChargeInput>, Prisma.ConversationUncheckedUpdateWithoutCreditChargeInput>
+}
+
 export type ConversationCreateWithoutCustomerInput = {
   id?: string
   number?: number
@@ -1130,6 +1151,7 @@ export type ConversationCreateWithoutCustomerInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
@@ -1166,6 +1188,7 @@ export type ConversationUncheckedCreateWithoutCustomerInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1206,6 +1229,7 @@ export type ConversationCreateWithoutAssignedAgentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -1242,6 +1266,7 @@ export type ConversationUncheckedCreateWithoutAssignedAgentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1340,6 +1365,7 @@ export type ConversationCreateWithoutDepartmentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
@@ -1376,6 +1402,7 @@ export type ConversationUncheckedCreateWithoutDepartmentInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1432,6 +1459,7 @@ export type ConversationCreateWithoutFormRequestInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -1469,6 +1497,7 @@ export type ConversationUncheckedCreateWithoutFormRequestInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1513,6 +1542,7 @@ export type ConversationUpdateWithoutFormRequestInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -1550,6 +1580,7 @@ export type ConversationUncheckedUpdateWithoutFormRequestInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -1579,6 +1610,7 @@ export type ConversationCreateWithoutFormAccessInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -1616,6 +1648,7 @@ export type ConversationUncheckedCreateWithoutFormAccessInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1660,6 +1693,7 @@ export type ConversationUpdateWithoutFormAccessInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -1697,6 +1731,7 @@ export type ConversationUncheckedUpdateWithoutFormAccessInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -1726,6 +1761,7 @@ export type ConversationCreateWithoutFormLoginInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -1763,6 +1799,7 @@ export type ConversationUncheckedCreateWithoutFormLoginInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -1807,6 +1844,7 @@ export type ConversationUpdateWithoutFormLoginInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -1844,6 +1882,7 @@ export type ConversationUncheckedUpdateWithoutFormLoginInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -1873,6 +1912,7 @@ export type ConversationCreateWithoutAssigneesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -1910,6 +1950,7 @@ export type ConversationUncheckedCreateWithoutAssigneesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
@@ -1954,6 +1995,7 @@ export type ConversationUpdateWithoutAssigneesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -1991,6 +2033,7 @@ export type ConversationUncheckedUpdateWithoutAssigneesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
@@ -2020,6 +2063,7 @@ export type ConversationCreateWithoutMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2057,6 +2101,7 @@ export type ConversationUncheckedCreateWithoutMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
@@ -2101,6 +2146,7 @@ export type ConversationUpdateWithoutMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2138,6 +2184,7 @@ export type ConversationUncheckedUpdateWithoutMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
@@ -2167,6 +2214,7 @@ export type ConversationCreateWithoutParticipantsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2204,6 +2252,7 @@ export type ConversationUncheckedCreateWithoutParticipantsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -2248,6 +2297,7 @@ export type ConversationUpdateWithoutParticipantsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2285,6 +2335,7 @@ export type ConversationUncheckedUpdateWithoutParticipantsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -2314,6 +2365,7 @@ export type ConversationCreateWithoutIncomingEmailsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2351,6 +2403,7 @@ export type ConversationUncheckedCreateWithoutIncomingEmailsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
@@ -2395,6 +2448,7 @@ export type ConversationUpdateWithoutIncomingEmailsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2432,6 +2486,7 @@ export type ConversationUncheckedUpdateWithoutIncomingEmailsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
@@ -2461,6 +2516,7 @@ export type ConversationCreateWithoutOutboundMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2498,6 +2554,7 @@ export type ConversationUncheckedCreateWithoutOutboundMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -2542,6 +2599,7 @@ export type ConversationUpdateWithoutOutboundMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2579,6 +2637,7 @@ export type ConversationUncheckedUpdateWithoutOutboundMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -2608,6 +2667,7 @@ export type ConversationCreateWithoutWebsiteInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
   assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
@@ -2644,6 +2704,7 @@ export type ConversationUncheckedCreateWithoutWebsiteInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -2700,6 +2761,7 @@ export type ConversationCreateWithoutTagsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2737,6 +2799,7 @@ export type ConversationUncheckedCreateWithoutTagsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -2781,6 +2844,7 @@ export type ConversationUpdateWithoutTagsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2818,6 +2882,7 @@ export type ConversationUncheckedUpdateWithoutTagsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -2847,6 +2912,7 @@ export type ConversationCreateWithoutNotificationsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -2884,6 +2950,7 @@ export type ConversationUncheckedCreateWithoutNotificationsInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -2928,6 +2995,7 @@ export type ConversationUpdateWithoutNotificationsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -2965,6 +3033,7 @@ export type ConversationUncheckedUpdateWithoutNotificationsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -2994,6 +3063,7 @@ export type ConversationCreateWithoutExternalMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeCreateNestedOneWithoutConversationInput
   website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
   customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
   department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
@@ -3031,6 +3101,7 @@ export type ConversationUncheckedCreateWithoutExternalMessagesInput = {
   resolvedAt?: Date | string | null
   firstResponseAt?: Date | string | null
   deletedAt?: Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedCreateNestedOneWithoutConversationInput
   assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
   incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
@@ -3075,6 +3146,7 @@ export type ConversationUpdateWithoutExternalMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -3112,12 +3184,164 @@ export type ConversationUncheckedUpdateWithoutExternalMessagesInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
   tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutCreditChargeInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  website?: Prisma.WebsiteCreateNestedOneWithoutConversationsInput
+  customer: Prisma.UserCreateNestedOneWithoutCustomerConversationsInput
+  department: Prisma.DepartmentCreateNestedOneWithoutConversationsInput
+  assignedAgent?: Prisma.UserCreateNestedOneWithoutAssignedConversationsInput
+  assignees?: Prisma.ConversationAssigneeCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutCreditChargeInput = {
+  id?: string
+  number?: number
+  subject: string
+  websiteUrl?: string | null
+  websiteId?: string | null
+  channel?: $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: string
+  searchSubject: string
+  customerId: string
+  departmentId: string
+  assignedAgentId?: string | null
+  status?: string
+  priority?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  closedAt?: Date | string | null
+  resolvedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  deletedAt?: Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutConversationInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedCreateNestedManyWithoutConversationInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutConversationInput
+  tags?: Prisma.ConversationTagUncheckedCreateNestedManyWithoutConversationInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutConversationInput
+  externalMessages?: Prisma.ExternalMessageUncheckedCreateNestedManyWithoutConversationInput
+  participants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutConversationInput
+  formRequest?: Prisma.FormRequestUncheckedCreateNestedOneWithoutConversationInput
+  formAccess?: Prisma.FormAccessUncheckedCreateNestedManyWithoutConversationInput
+  formLogin?: Prisma.FormLoginChallengeUncheckedCreateNestedOneWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutCreditChargeInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutCreditChargeInput, Prisma.ConversationUncheckedCreateWithoutCreditChargeInput>
+}
+
+export type ConversationUpsertWithoutCreditChargeInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutCreditChargeInput, Prisma.ConversationUncheckedUpdateWithoutCreditChargeInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutCreditChargeInput, Prisma.ConversationUncheckedCreateWithoutCreditChargeInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutCreditChargeInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutCreditChargeInput, Prisma.ConversationUncheckedUpdateWithoutCreditChargeInput>
+}
+
+export type ConversationUpdateWithoutCreditChargeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
+  department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
+  assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
+  assignees?: Prisma.ConversationAssigneeUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUpdateManyWithoutConversationNestedInput
+  participants?: Prisma.ConversationParticipantUpdateManyWithoutConversationNestedInput
+  formRequest?: Prisma.FormRequestUpdateOneWithoutConversationNestedInput
+  formAccess?: Prisma.FormAccessUpdateManyWithoutConversationNestedInput
+  formLogin?: Prisma.FormLoginChallengeUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutCreditChargeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  subject?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  channel?: Prisma.EnumConversationChannelFieldUpdateOperationsInput | $Enums.ConversationChannel
+  replyChannels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  searchSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  departmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedAgentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  priority?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
+  incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutConversationNestedInput
+  tags?: Prisma.ConversationTagUncheckedUpdateManyWithoutConversationNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutConversationNestedInput
+  externalMessages?: Prisma.ExternalMessageUncheckedUpdateManyWithoutConversationNestedInput
   participants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutConversationNestedInput
   formRequest?: Prisma.FormRequestUncheckedUpdateOneWithoutConversationNestedInput
   formAccess?: Prisma.FormAccessUncheckedUpdateManyWithoutConversationNestedInput
@@ -3184,6 +3408,7 @@ export type ConversationUpdateWithoutCustomerInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
@@ -3220,6 +3445,7 @@ export type ConversationUncheckedUpdateWithoutCustomerInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -3271,6 +3497,7 @@ export type ConversationUpdateWithoutAssignedAgentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
@@ -3307,6 +3534,7 @@ export type ConversationUncheckedUpdateWithoutAssignedAgentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -3380,6 +3608,7 @@ export type ConversationUpdateWithoutDepartmentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   website?: Prisma.WebsiteUpdateOneWithoutConversationsNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
@@ -3416,6 +3645,7 @@ export type ConversationUncheckedUpdateWithoutDepartmentInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -3489,6 +3719,7 @@ export type ConversationUpdateWithoutWebsiteInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUpdateOneWithoutConversationNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCustomerConversationsNestedInput
   department?: Prisma.DepartmentUpdateOneRequiredWithoutConversationsNestedInput
   assignedAgent?: Prisma.UserUpdateOneWithoutAssignedConversationsNestedInput
@@ -3525,6 +3756,7 @@ export type ConversationUncheckedUpdateWithoutWebsiteInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creditCharge?: Prisma.CreditChargeUncheckedUpdateOneWithoutConversationNestedInput
   assignees?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
   incomingEmails?: Prisma.IncomingEmailUncheckedUpdateManyWithoutConversationNestedInput
@@ -3684,6 +3916,7 @@ export type ConversationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   resolvedAt?: boolean
   firstResponseAt?: boolean
   deletedAt?: boolean
+  creditCharge?: boolean | Prisma.Conversation$creditChargeArgs<ExtArgs>
   website?: boolean | Prisma.Conversation$websiteArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   department?: boolean | Prisma.DepartmentDefaultArgs<ExtArgs>
@@ -3729,6 +3962,7 @@ export type ConversationSelectScalar = {
 
 export type ConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "number" | "subject" | "websiteUrl" | "websiteId" | "channel" | "replyChannels" | "source" | "searchSubject" | "customerId" | "departmentId" | "assignedAgentId" | "status" | "priority" | "createdAt" | "updatedAt" | "closedAt" | "resolvedAt" | "firstResponseAt" | "deletedAt", ExtArgs["result"]["conversation"]>
 export type ConversationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  creditCharge?: boolean | Prisma.Conversation$creditChargeArgs<ExtArgs>
   website?: boolean | Prisma.Conversation$websiteArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   department?: boolean | Prisma.DepartmentDefaultArgs<ExtArgs>
@@ -3750,6 +3984,7 @@ export type ConversationInclude<ExtArgs extends runtime.Types.Extensions.Interna
 export type $ConversationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Conversation"
   objects: {
+    creditCharge: Prisma.$CreditChargePayload<ExtArgs> | null
     website: Prisma.$WebsitePayload<ExtArgs> | null
     customer: Prisma.$UserPayload<ExtArgs>
     department: Prisma.$DepartmentPayload<ExtArgs>
@@ -4127,6 +4362,7 @@ readonly fields: ConversationFieldRefs;
  */
 export interface Prisma__ConversationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  creditCharge<T extends Prisma.Conversation$creditChargeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$creditChargeArgs<ExtArgs>>): Prisma.Prisma__CreditChargeClient<runtime.Types.Result.GetResult<Prisma.$CreditChargePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   website<T extends Prisma.Conversation$websiteArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$websiteArgs<ExtArgs>>): Prisma.Prisma__WebsiteClient<runtime.Types.Result.GetResult<Prisma.$WebsitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   customer<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   department<T extends Prisma.DepartmentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DepartmentDefaultArgs<ExtArgs>>): Prisma.Prisma__DepartmentClient<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -4536,6 +4772,25 @@ export type ConversationDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many Conversations to delete.
    */
   limit?: number
+}
+
+/**
+ * Conversation.creditCharge
+ */
+export type Conversation$creditChargeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CreditCharge
+   */
+  select?: Prisma.CreditChargeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CreditCharge
+   */
+  omit?: Prisma.CreditChargeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CreditChargeInclude<ExtArgs> | null
+  where?: Prisma.CreditChargeWhereInput
 }
 
 /**

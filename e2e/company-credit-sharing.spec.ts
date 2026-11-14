@@ -1,0 +1,74 @@
+import { test, expect, type Page } from '@playwright/test';
+const companyId = '11111111-1111-4111-8111-111111111111', childId = '22222222-2222-4222-8222-222222222222', ticketId = '33333333-3333-4333-8333-333333333333';
+async function setup(page: Page, role = 'ADMIN', actorId = companyId) {
+  let enabled = true;
+  const company = () => ({ id: companyId, name: 'Merkez Şirket', role: 'CUSTOMER', parentCustomerId: null, shareCreditsWithChildren: enabled, isActive: true });
+  const child = { id: childId, name: 'Ahmet', role: 'CUSTOMER', parentCustomerId: companyId, isActive: true, personalCredits: 20 };
+  const pack = (id: string, name: string, owner: any, credits: number, endsOn: string) => ({ id, name, customerId: owner.id, customer: owner, credits, usedCredits: 0, remainingCredits: credits, startsOn: '2020-01-01', endsOn, state: 'ACTIVE', usable: true, type: 'ONE_OFF' });
+  const ownSoon = pack('own-soon', 'Kişisel Yakın', child, 10, '2090-01-01');
+  const ownLate = pack('own-late', 'Kişisel Sonra', child, 10, '2099-01-01');
+  const shared = () => pack('shared', 'Şirket Paketi', company(), 100, '2080-01-01');
+  await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
+  await page.route('**/socket.io/**', route => route.abort());
+  await page.route('**/api/v1/**', route => {
+    const path = new URL(route.request().url()).pathname.replace('/api/v1', '');
+    const send = (data: unknown) => route.fulfill({ json: { success: true, data, pagination: { page: 1, total: 1, totalPages: 1, limit: 15 } } });
+    if (path === '/auth/refresh') return send({ accessToken: 'test', user: role === 'ADMIN' ? { id: 'staff', name: 'Yönetici', role } : actorId === companyId ? company() : child });
+    if (path === '/auth/security') return send({ enabled: false });
+    if (path === '/staff-presence') return send({ staff: [], idleMinutes: 5 });
+    if (path === '/customers') return send([company(), child]);
+    if (path === '/customers/' + companyId + '/credit-sharing') { enabled = route.request().postDataJSON().enabled; return send({}); }
+    if (path === '/customers/' + companyId + '/agreements') return send({ customer: company(), parent: null, children: [child], agreements: [shared(), { ...ownSoon, usable: false }, { ...ownLate, usable: false }], charges: [], personalCredits: 100, parentCredits: 0, sharedCredits: 0, availableCredits: 100 });
+    if (path === '/customers/' + childId + '/agreements') return send({ customer: child, parent: company(), children: [], agreements: [ownSoon, ownLate, { ...shared(), usable: enabled }], charges: [], personalCredits: 20, parentCredits: 100, sharedCredits: enabled ? 100 : 0, availableCredits: enabled ? 120 : 20 });
+    if (path === '/conversations/' + ticketId + '/credit-options') return send({ agreements: [ownSoon, ownLate, shared()], charge: null });
+    if (path === '/conversations/' + ticketId) return send({ id: ticketId, number: 15, subject: 'Kredi Sıralaması', customerId: childId, customer: child, department: { id: 'dep', name: 'Destek' }, channel: 'TICKET', replyChannels: ['TICKET'], status: 'OPEN', priority: 'NORMAL', assignees: [], tags: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    return send([]);
+  });
+}
+test('Company policy and child summaries use standard modals without mixing balances', async ({ page }) => {
+  await setup(page);
+  await page.goto('/admin/customers');
+  await page.getByRole('button', { name: 'Merkez Şirket anlaşmaları', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Kapat', exact: true }).locator('svg')).toBeVisible();
+  await expect(dialog).toHaveClass(/confirm-modal/);
+  const toggle = dialog.getByRole('switch');
+  await expect(toggle).toBeChecked();
+  await toggle.uncheck(); await expect(toggle).not.toBeChecked();
+  await expect(dialog.getByRole('region', { name: 'Alt Müşteriler' })).toContainText('Kişisel kalan kredi: 20');
+  await page.screenshot({ path: '.local/company-credit-policy.png', fullPage: true });
+  await dialog.getByRole('button', { name: 'Ahmet Anlaşmaları', exact: true }).click();
+  await expect(dialog.getByText('Kendi kredisi', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Şirket ortak bakiyesi', { exact: true })).toBeVisible();
+  await expect(dialog.locator('.agreement-overview>div').nth(2)).toContainText('20');
+  await expect(dialog.getByRole('switch')).toHaveCount(0);
+  await expect(dialog.getByText(/Ortak kullanım kapalı; yalnızca kendi krediniz/)).toBeVisible();
+  await page.screenshot({ path: '.local/child-credit-balances.png', fullPage: true });
+  await dialog.getByRole('button', { name: /Merkez Şirket Anlaşmalarına Dön/ }).click();
+  await expect(dialog.getByRole('switch')).not.toBeChecked();
+});
+test('Company customer can control sharing and inspect child balances', async ({ page }) => {
+  await setup(page, 'CUSTOMER');
+  await page.goto('/customer/agreements');
+  await page.getByRole('switch').uncheck();
+  await expect(page.getByRole('switch')).not.toBeChecked();
+  await page.getByRole('link', { name: 'Anlaşmaları Gör', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(childId));
+  await expect(page.getByText('Kendi kredisi', { exact: true })).toBeVisible();
+  await expect(page.getByRole('switch')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: '.local/child-credit-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+test('Resolution suggests the personal package expiring first and leaves staff the choice', async ({ page }) => {
+  await setup(page);
+  await page.goto('/admin/conversations/' + ticketId);
+  await page.getByRole('button', { name: 'Çözüldü Olarak İşaretle', exact: true }).click();
+  const select = page.getByRole('button', { name: 'Kullanılacak Anlaşma', exact: true });
+  await expect(select).toContainText('Kişisel Yakın');
+  await select.click();
+  const texts = await page.getByRole('option').allTextContents();
+  expect(texts.join('|')).toMatch(/Kişisel Yakın.*Kişisel Sonra.*Şirket Paketi/);
+  await page.getByRole('option', { name: /Şirket Paketi/ }).click();
+  await expect(select).toContainText('Şirket Paketi');
+});

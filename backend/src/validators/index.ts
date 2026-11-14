@@ -77,6 +77,7 @@ export const messageSchema = z
   .strict();
 export const updateConversationSchema = z
   .object({
+    creditResolution: z.object({ agreementId: z.uuid().nullable().optional(), credits: z.number().int().min(0).max(1_000_000) }).strict().optional(),
     status: statusSchema.optional(),
     priority: prioritySchema.optional(),
     assignedAgentId: idSchema.nullable().optional(),

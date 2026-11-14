@@ -97,7 +97,10 @@ export const ModelName = {
   AnnouncementTemplate: 'AnnouncementTemplate',
   Survey: 'Survey',
   SurveyRecipient: 'SurveyRecipient',
-  SurveyResponse: 'SurveyResponse'
+  SurveyResponse: 'SurveyResponse',
+  Agreement: 'Agreement',
+  CreditCharge: 'CreditCharge',
+  CustomerLoginChallenge: 'CustomerLoginChallenge'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -136,6 +139,8 @@ export type SharedFileScalarFieldEnum = (typeof SharedFileScalarFieldEnum)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
+  shareCreditsWithChildren: 'shareCreditsWithChildren',
+  parentCustomerId: 'parentCustomerId',
   name: 'name',
   email: 'email',
   phone: 'phone',
@@ -207,6 +212,7 @@ export type PasswordResetScalarFieldEnum = (typeof PasswordResetScalarFieldEnum)
 
 export const SessionScalarFieldEnum = {
   id: 'id',
+  customerEmailVerifiedAt: 'customerEmailVerifiedAt',
   userId: 'userId',
   tokenHash: 'tokenHash',
   expiresAt: 'expiresAt',
@@ -791,6 +797,50 @@ export const SurveyResponseScalarFieldEnum = {
 export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnum)[keyof typeof SurveyResponseScalarFieldEnum]
 
 
+export const AgreementScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  type: 'type',
+  startsOn: 'startsOn',
+  endsOn: 'endsOn',
+  fee: 'fee',
+  credits: 'credits',
+  usedCredits: 'usedCredits',
+  cancelledAt: 'cancelledAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AgreementScalarFieldEnum = (typeof AgreementScalarFieldEnum)[keyof typeof AgreementScalarFieldEnum]
+
+
+export const CreditChargeScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  agreementId: 'agreementId',
+  credits: 'credits',
+  actorId: 'actorId',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditChargeScalarFieldEnum = (typeof CreditChargeScalarFieldEnum)[keyof typeof CreditChargeScalarFieldEnum]
+
+
+export const CustomerLoginChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  codeHash: 'codeHash',
+  attempts: 'attempts',
+  requests: 'requests',
+  requestWindowAt: 'requestWindowAt',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt'
+} as const
+
+export type CustomerLoginChallengeScalarFieldEnum = (typeof CustomerLoginChallengeScalarFieldEnum)[keyof typeof CustomerLoginChallengeScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -840,6 +890,7 @@ export type SharedFileOrderByRelevanceFieldEnum = (typeof SharedFileOrderByRelev
 
 export const UserOrderByRelevanceFieldEnum = {
   id: 'id',
+  parentCustomerId: 'parentCustomerId',
   name: 'name',
   email: 'email',
   phone: 'phone',
@@ -1367,4 +1418,34 @@ export const SurveyResponseOrderByRelevanceFieldEnum = {
 } as const
 
 export type SurveyResponseOrderByRelevanceFieldEnum = (typeof SurveyResponseOrderByRelevanceFieldEnum)[keyof typeof SurveyResponseOrderByRelevanceFieldEnum]
+
+
+export const AgreementOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  type: 'type'
+} as const
+
+export type AgreementOrderByRelevanceFieldEnum = (typeof AgreementOrderByRelevanceFieldEnum)[keyof typeof AgreementOrderByRelevanceFieldEnum]
+
+
+export const CreditChargeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  agreementId: 'agreementId',
+  actorId: 'actorId'
+} as const
+
+export type CreditChargeOrderByRelevanceFieldEnum = (typeof CreditChargeOrderByRelevanceFieldEnum)[keyof typeof CreditChargeOrderByRelevanceFieldEnum]
+
+
+export const CustomerLoginChallengeOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  codeHash: 'codeHash'
+} as const
+
+export type CustomerLoginChallengeOrderByRelevanceFieldEnum = (typeof CustomerLoginChallengeOrderByRelevanceFieldEnum)[keyof typeof CustomerLoginChallengeOrderByRelevanceFieldEnum]
 

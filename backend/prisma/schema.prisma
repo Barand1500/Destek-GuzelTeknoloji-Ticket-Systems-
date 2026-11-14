@@ -46,6 +46,13 @@ model SharedFile {
 
 model User {
   id String @id @default(uuid())
+  shareCreditsWithChildren Boolean @default(true)
+  parentCustomerId String?
+  parentCustomer User? @relation("CustomerFamily", fields: [parentCustomerId], references: [id], onDelete: Restrict)
+  subCustomers User[] @relation("CustomerFamily")
+  agreements Agreement[]
+  customerLoginChallenge CustomerLoginChallenge?
+  @@index([parentCustomerId])
   name String
   // Contact information can belong to more than one person in a household or company.
   email String?
@@ -128,6 +135,7 @@ model PasswordReset {
 }
 model Session {
   id String @id @default(uuid())
+  customerEmailVerifiedAt DateTime?
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String @unique
@@ -154,6 +162,7 @@ model DepartmentAgent {
 }
 model Conversation {
   id String @id @default(uuid())
+  creditCharge CreditCharge?
   number Int @unique @default(autoincrement())
   subject String
   websiteUrl String?
@@ -666,4 +675,45 @@ model SurveyResponse {
   createdAt DateTime @default(now())
   @@unique([surveyId, userId])
   @@index([surveyId, createdAt])
+}
+
+model Agreement {
+ id String @id @default(uuid())
+ customerId String
+ customer User @relation(fields: [customerId], references: [id], onDelete: Restrict)
+ name String @db.VarChar(150)
+ type String @db.VarChar(20)
+ startsOn DateTime @db.Date
+ endsOn DateTime @db.Date
+ fee Decimal @db.Decimal(12, 2)
+ credits Int
+ usedCredits Int @default(0)
+ cancelledAt DateTime?
+ createdAt DateTime @default(now())
+ charges CreditCharge[]
+ @@index([customerId, endsOn])
+}
+model CreditCharge {
+ id String @id @default(uuid())
+ conversationId String @unique
+ conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+ agreementId String?
+ agreement Agreement? @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+ credits Int
+ actorId String
+ createdAt DateTime @default(now())
+ @@index([agreementId, createdAt])
+}
+
+model CustomerLoginChallenge {
+ id String @id @default(uuid())
+ userId String @unique
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ email String @db.VarChar(254)
+ codeHash String @db.VarChar(64)
+ attempts Int @default(0)
+ requests Int @default(1)
+ requestWindowAt DateTime @default(now())
+ expiresAt DateTime
+ consumedAt DateTime?
 }

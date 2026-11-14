@@ -39,6 +39,8 @@ const person = {
   email: true,
   phone: true,
   company: true,
+  parentCustomerId: true,
+  parentCustomer: { select: { id: true, name: true } },
   staffNote: true,
   extraPhones: true,
   extraEmails: true,
@@ -317,9 +319,10 @@ export async function createCustomer(
   actor: Actor,
   input: z.infer<typeof schema.createCustomerSchema>,
   files: StoredUpload[] = [],
+  transaction?: Prisma.TransactionClient,
 ) {
   requireStaff(actor);
-  const data = await serial(async (tx) => {
+  const work = async (tx: Prisma.TransactionClient) => {
     if (input.email) {
       const sameEmail = await tx.user.findMany({
         where: { role: "CUSTOMER", deletedAt: null, email: input.email },
@@ -384,8 +387,9 @@ export async function createCustomer(
       { userId: data.id }, [], tx, `welcome:${data.id}`,
     );
     return data;
-  });
-  publishChange();
+  };
+  const data = transaction ? await work(transaction) : await serial(work);
+  if (!transaction) publishChange();
   return data;
 }
 export async function customer(actor: Actor, id: string) {
@@ -425,9 +429,8 @@ export async function updateCustomer(
     if (!current) throw notFound();
     const data = await tx.user.update({
       where: { id },
-      // Customer email is contact data only. It must never occupy the
-      // unique login identity column used by staff accounts.
-      data: { ...input, loginEmail: null },
+      // Contact edits preserve an explicitly configured customer login identity.
+      data: { ...input },
       select: person,
     });
     if (files.length)
@@ -1995,7 +1998,14 @@ export async function testIntegration(
   return result;
 }
 export async function profile(actor: Actor) {
-  return db.user.findUniqueOrThrow({ where: { id: actor.id }, select: person });
+  const data = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: person });
+  const identity = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { email: true, loginEmail: true } });
+  return { ...data, canSetPasswordWithoutCurrent: await customerPasswordProof(db, actor, identity) };
+}
+async function customerPasswordProof(tx: Prisma.TransactionClient, actor: Actor, user: { email: string | null; loginEmail: string | null }) {
+  if (actor.role !== 'CUSTOMER' || !(user.loginEmail || user.email)) return false;
+  const session = await tx.session.findFirst({ where: { id: actor.sessionId, userId: actor.id, revokedAt: null, expiresAt: { gt: new Date() }, customerEmailVerifiedAt: { gt: new Date(Date.now() - 15 * 60_000) } }, select: { customerEmailVerifiedAt: true } });
+  return Boolean(session?.customerEmailVerifiedAt && await tx.customerLoginChallenge.count({ where: { userId: actor.id, email: user.loginEmail || user.email!, consumedAt: session.customerEmailVerifiedAt } }));
 }
 export async function user(actor: Actor, id: string) {
   requireUserPermission(actor, 'view');
@@ -2015,8 +2025,9 @@ export async function updateProfile(
   const credentialChange = Boolean(
     input.password || (input.email && input.email !== current.email),
   );
+  const otpPasswordSetup = Boolean(input.password && !input.currentPassword && (!input.email || input.email === current.email) && await customerPasswordProof(db, actor, current));
   if (
-    credentialChange &&
+    credentialChange && !otpPasswordSetup &&
     (!input.currentPassword ||
       !(await bcrypt.compare(input.currentPassword, current.passwordHash)))
   )
@@ -2030,6 +2041,7 @@ export async function updateProfile(
     : undefined;
   return serial(async (tx) => {
     const latest = await tx.user.findUniqueOrThrow({ where: { id: actor.id } });
+    if (otpPasswordSetup && !await customerPasswordProof(tx, actor, latest)) throw new AppError(400, 'CURRENT_PASSWORD_REQUIRED', 'Doğrulama süresi doldu. E-posta koduyla yeniden giriş yapın veya mevcut şifrenizi girin.');
     if (
       latest.passwordHash !== current.passwordHash ||
       latest.email !== current.email
@@ -2046,11 +2058,13 @@ export async function updateProfile(
         email: input.email,
         phone: input.phone,
         ...(input.email !== undefined ? { loginEmail: input.email } : {}),
+        ...(actor.role === 'CUSTOMER' && passwordHash ? { loginEmail: input.email ?? latest.loginEmail ?? latest.email } : {}),
         passwordHash,
       },
       select: person,
     });
-    if (credentialChange)
+    if (credentialChange) {
+      await tx.session.updateMany({ where: { id: actor.sessionId, userId: actor.id }, data: { customerEmailVerifiedAt: null } });
       await tx.session.updateMany({
         where: {
           userId: actor.id,
@@ -2059,6 +2073,7 @@ export async function updateProfile(
         },
         data: { revokedAt: new Date() },
       });
+    }
     await audit(tx, actor, "profile.updated", "User", actor.id, {
       fields: Object.keys(input).filter(
         (k) => !k.toLowerCase().includes("password"),

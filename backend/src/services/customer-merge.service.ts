@@ -96,6 +96,9 @@ export async function mergeCustomers(
               "Seçilen müşterilerden biri silinmiş veya artık kullanılamıyor.",
             );
           const target = customers.find((item) => item.id === targetId)!;
+          if (customers.some(item => item.parentCustomerId) || await tx.user.count({ where: { parentCustomerId: { in: ids } } }) || await tx.agreement.count({ where: { customerId: { in: ids } } })) {
+            throw new AppError(400, 'CUSTOMER_HAS_AGREEMENTS', 'Anlaşması veya ana/alt müşteri bağlantısı bulunan kayıtlar birleştirilemez. Önce bu bağlantıları kontrol edin.');
+          }
           const sources = input.sourceIds.map((id) =>
             customers.find((item) => item.id === id)!,
           );

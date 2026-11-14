@@ -1,5 +1,8 @@
 import { displayEmail } from "../../utils/email";
 import { CustomerRequests } from './CustomerRequests';
+import { CustomerAgreementsModal } from '../agreements/Agreements';
+import { CustomerRelationsModal } from './CustomerRelations';
+import { Handshake, Network } from 'lucide-react';
 import { SortableTableHead } from "../../components/TableSorting";
 import { contactChannels } from "../../utils/contact-channels";
 import { formatPhone } from "../../utils/phone";
@@ -49,6 +52,7 @@ import { StaffSkills } from './StaffSkills';
 import { SuggestedDescription } from './StaffSuggestions';
 import type { StaffSkill } from '../../types';
 type ManagedUser = User & {
+  parentCustomer?: { id: string; name: string } | null;
   skills?: StaffSkill[];
   isActive: boolean;
   createdAt: string;
@@ -558,6 +562,8 @@ export function CustomersPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
+  const [agreementsCustomer, setAgreementsCustomer] = useState<ManagedUser | null>(null);
+  const [relationsCustomer, setRelationsCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
   usePageScrollLock(customerModalOpen || Boolean(filesCustomer) || mergeModalOpen);
   useEffect(() => {
@@ -630,11 +636,14 @@ export function CustomersPage() {
                     <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
                       {(bulkSelectionMode) && <input type="checkbox" disabled={bulkRemove.isPending} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.name}</strong>
+                      {customer.parentCustomer && <small>Ana müşteri: {customer.parentCustomer.name}</small>}
                     </td>
                     <td className="customer-contact-cell">{customer.phone ?? "Telefon yok"}<small>{displayEmail(customer.email) || "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
+                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} anlaşmaları`} title="Anlaşmalar ve Krediler" onClick={() => setAgreementsCustomer(customer)}><Handshake size={18} /></button>}
+                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} bağlı müşterileri`} title="Bağlı Müşteriler" onClick={() => setRelationsCustomer(customer)}><Network size={18} /></button>}
                       {canViewConversations && <Link
                         className="button secondary"
                         to={`${inboxPath(user!.role)}?customerId=${encodeURIComponent(customer.id)}`}
@@ -660,6 +669,8 @@ export function CustomersPage() {
         />
       </section>
       {mergeModalOpen && <CustomerMergeModal onClose={() => setMergeModalOpen(false)} />}
+      {agreementsCustomer && <CustomerAgreementsModal customer={agreementsCustomer} onClose={() => setAgreementsCustomer(null)} />}
+      {relationsCustomer && <CustomerRelationsModal customer={relationsCustomer} onClose={() => setRelationsCustomer(null)} />}
       {deleteTarget && (
         <div className="confirm-backdrop" role="presentation">
           <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}>
