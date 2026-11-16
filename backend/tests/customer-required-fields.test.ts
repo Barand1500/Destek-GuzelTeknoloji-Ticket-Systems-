@@ -16,3 +16,11 @@ test('manual customer creation requires company, name, phone and email but permi
   // Editing existing records still supports partial updates.
   assert.equal(updateCustomerSchema.safeParse({ staffNote: 'Updated note' }).success, true);
 });
+
+test('customer edits reject clearing required fields while preserving partial account updates',()=>{
+ const input={company:'Example Company',name:'Example Customer',phone:'0532 123 45 67',email:'customer@example.com'};
+ assert.equal(updateCustomerSchema.safeParse(input).success,true);
+ for(const field of ['company','name','phone','email']) for(const value of ['', ' ', null]) assert.equal(updateCustomerSchema.safeParse({[field]:value}).success,false,field+' cannot be cleared');
+ assert.equal(updateCustomerSchema.safeParse({phone:'abcdefghi'}).success,false);
+ assert.equal(updateCustomerSchema.safeParse({isActive:false}).success,true);
+});

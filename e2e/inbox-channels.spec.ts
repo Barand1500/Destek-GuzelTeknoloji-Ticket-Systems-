@@ -4,7 +4,7 @@ test('inbox shows current channels vertically instead of the original channel', 
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const user = { id: 'admin', name: 'Test Yönetici', email: 'test@example.test', role: 'ADMIN', departmentIds: [] };
-  const base = { customer: { id: 'customer', name: 'Test Müşteri', email: 'customer@example.test', role: 'CUSTOMER' }, department: { id: 'department', name: 'Test Departman' }, assignedAgent: null, channel: 'WHATSAPP', status: 'OPEN', priority: 'NORMAL', tags: [], createdAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
+  const base = { customer: { id: 'customer', name: 'Test Müşteri', company:'Eski şirket',parentCustomer:{id:'company',name:'Şirket Yetkilisi',company:'Merkez Şirket'}, email: 'customer@example.test', role: 'CUSTOMER' }, department: { id: 'department', name: 'Test Departman' }, assignedAgent: null, channel: 'WHATSAPP', status: 'OPEN', priority: 'NORMAL', tags: [], createdAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
   const rows = [
     { ...base, id: 'changed', number: 12, subject: 'Sadece E-Posta', replyChannels: ['EMAIL'] },
     { ...base, id: 'multi', number: 13, subject: 'Birden fazla kanal', replyChannels: ['WHATSAPP', 'EMAIL'] },
@@ -18,6 +18,7 @@ test('inbox shows current channels vertically instead of the original channel', 
   await page.goto('/admin/conversations');
   const lists = page.locator('.inbox-channel-list');
   await expect(lists).toHaveCount(3);
+  await expect(page.locator('.customer-name').first()).toContainText('Merkez Şirket · Test Müşteri');
   await expect(lists.nth(0)).toHaveText('E-Posta');
   await expect(lists.nth(0).getByText('WhatsApp')).toHaveCount(0);
   await expect(lists.nth(1).locator('.management-pill')).toHaveText(['WhatsApp', 'E-Posta']);

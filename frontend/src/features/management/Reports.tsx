@@ -1,3 +1,4 @@
+import { StaffCreditReport } from './StaffCreditReport';
 import { displayEmail } from "../../utils/email";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -872,6 +873,7 @@ export function ReportsPage() {
             </>
           )}
       </div>
+      {(tab !== 'person' || Boolean(personId)) && <StaffCreditReport key={[days, tab, personId, departmentId].join(':')} days={days} onPersonSelect={id => { showPerson(id); requestAnimationFrame(() => document.querySelector('.reports-page')?.scrollIntoView({block:'start',behavior:'smooth'})); }} agentId={tab === 'person' ? personId || undefined : undefined} departmentId={tab === 'department' ? departmentId || undefined : undefined} />}
     </main>
   );
 }

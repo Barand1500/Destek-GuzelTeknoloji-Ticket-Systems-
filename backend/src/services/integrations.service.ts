@@ -1,3 +1,4 @@
+import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import bcrypt from "bcrypt";
 import { canonicalPhone, matchesPhone } from "./inbound-phone-matching.js";
 import { randomBytes, timingSafeEqual } from "node:crypto";
@@ -151,6 +152,7 @@ export async function persistInboundMessage(input: InboundMessage) {
           number: Number(number), deletedAt: null, status: { not: "CLOSED" }, customerId: { in: matching.map(item => item.id) },
         } }) : null;
         if (target) customer = matching.find(item => item.id === target!.customerId)!;
+        if (!customer) await assertUniqueCustomerContact(tx, { email, phone });
         if (!customer) customer = await tx.user.create({ data: {
           name: input.sender.name?.trim().slice(0, 100) || email || phone || "Bilinmeyen müşteri",
           email: email ?? null, phone: phone || null,

@@ -1,0 +1,53 @@
+import {test, after} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {db} from '../src/config/db.js';
+import {listAgreements, createAgreement, debitResolution, updateAgreement, reactivateAgreement} from '../src/services/agreements.service.js';
+import {users, deleteCustomer} from '../src/services/management.service.js';
+import {directoryQuery} from '../src/validators/management.js';
+import type {Actor} from '../src/types/express.js';
+after(async()=>{await db.$disconnect();});
+test('company contacts are hidden only from root list and spend company credits exclusively',async()=>{
+ const prefix='Company model '+randomUUID();
+ const members=await Promise.all(['staff','company','person','individual'].map((label,i)=>db.user.create({data:{name:prefix+' '+label,role:i===0?'ADMIN':'CUSTOMER',passwordHash:'fixture'}})));
+ const [staff,company,person,individual]=members;
+ const actor:Actor={id:staff.id,name:staff.name,role:'ADMIN',email:'',departmentIds:[],sessionId:''};
+ const department=await db.department.create({data:{name:prefix}});
+ const ticket=await db.conversation.create({data:{subject:prefix,searchSubject:prefix,channel:'TICKET',customerId:person.id,departmentId:department.id}});
+ const input={name:'Credit',type:'MONTHLY' as const,startsOn:'2020-01-01',endsOn:'2099-01-01',credits:500,fee:'0'};
+ try{
+  const legacy=await createAgreement(actor,person.id,input);
+  const shared=await createAgreement(actor,company.id,{...input,credits:100});
+  await createAgreement(actor,individual.id,input);
+  await db.user.update({where:{id:person.id},data:{parentCustomerId:company.id}});
+  await db.user.update({where:{id:company.id},data:{shareCreditsWithChildren:false}});
+  const roots=await users(actor,directoryQuery.parse({search:prefix,rootsOnly:'true'}),true);
+  assert.deepEqual(new Set(roots.data.map(x=>x.id)),new Set([company.id,individual.id]));
+  const directory=await users(actor,directoryQuery.parse({search:prefix}),true);
+  assert.ok(directory.data.some(x=>x.id===person.id),'ticket selector retains contacts');
+  await assert.rejects(deleteCustomer(actor,company.id),(error:any)=>error.code==='COMPANY_HAS_PEOPLE');
+  const summary=await listAgreements(actor,person.id);
+  assert.equal(summary.personalCredits,0);
+  assert.equal(summary.availableCredits,100);
+  assert.deepEqual(summary.agreements.map(a=>a.id),[shared.id]);
+  assert.equal((await listAgreements(actor,individual.id)).availableCredits,500);
+  assert.equal(await db.agreement.count({where:{id:legacy.id,deletedAt:null}}),1,'legacy preserved');
+  await assert.rejects(createAgreement(actor,person.id,input));
+  await assert.rejects(updateAgreement(actor,person.id,legacy.id,input));
+  await db.agreement.update({where:{id:legacy.id},data:{cancelledAt:new Date()}});
+  await assert.rejects(reactivateAgreement(actor,person.id,legacy.id));
+  await assert.rejects(db.$transaction(tx=>debitResolution(tx,actor,ticket,{agreementId:legacy.id,credits:1})));
+  await db.$transaction(tx=>debitResolution(tx,actor,ticket,{agreementId:shared.id,credits:10}));
+  assert.equal((await db.agreement.findUniqueOrThrow({where:{id:shared.id}})).usedCredits,10);
+  assert.equal((await listAgreements(actor,company.id)).charges[0].conversation.customer.name,person.name);
+  assert.equal((await listAgreements({...actor,id:person.id,role:'CUSTOMER'},person.id)).availableCredits,90);
+ }finally{
+  await db.creditCharge.deleteMany({where:{conversationId:ticket.id}});
+  await db.agreement.deleteMany({where:{customerId:{in:members.map(x=>x.id)}}});
+  await db.conversation.delete({where:{id:ticket.id}});
+  await db.activityLog.deleteMany({where:{userId:staff.id}});
+  await db.user.updateMany({where:{id:{in:members.map(x=>x.id)}},data:{parentCustomerId:null}});
+  await db.user.deleteMany({where:{id:{in:members.map(x=>x.id)}}});
+  await db.department.delete({where:{id:department.id}});
+ }
+});

@@ -13,3 +13,5 @@ Anlaşmalar, Bağlı Müşteriler ve Duyurular modallarında yalnızca X ile ayn
 Silme onay modallarında da X ile aynı kapatma davranışını tekrarlayan Vazgeç/İptal gösterilmez. Ortak DeleteModal, müşteri/toplu müşteri, etiket-katalog, bildirim, talep ve işlem geçmişi silme pencereleri bu kuralı kullanır. Formun kendi düzenleme durumunu sıfırlayan Vazgeç korunur.
 
 Anlaşma tarihleri tema uyumlu özel takvimle seçilir: Pazartesi başlangıçlı Türkçe hafta/ay, ay geçişi, seçili gün/bugün, Temizle ve Bugün işlemleri. Takvim ikonun altında üst katmanda açılır, tarih sınırları ve otomatik dönem hesabı korunur. Bağlı Müşteriler işlem seçimi Duyurular gibi altı çizgili sekmeler kullanır. Tekli bakiye modal başlığında hareket geçmişinin yanında gösterilir; ortak kullanımı açık bağlı müşterilerin üçlü kredi özeti korunur. Anlaşma detayları sığdığı ölçüde yatay akışta gösterilir.
+
+- Şirket kişisi formlarında Ad Soyad, E-Posta ve Telefon aynı 46px outlined alan düzenini kullanır. E-posta bileşeninin iç inputunda ikinci kenarlık olmaz. Telefon formatPhone ile 0530 123 45 67 biçiminde düzenlenir.

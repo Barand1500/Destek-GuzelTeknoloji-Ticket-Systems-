@@ -1,8 +1,7 @@
 import { displayEmail } from "../../utils/email";
 import { CustomerRequests } from './CustomerRequests';
 import { CustomerAgreementsModal } from '../agreements/Agreements';
-import { CustomerRelationsModal } from './CustomerRelations';
-import { Handshake, Network } from 'lucide-react';
+import { Handshake } from 'lucide-react';
 import { SortableTableHead } from "../../components/TableSorting";
 import { contactChannels } from "../../utils/contact-channels";
 import { formatPhone } from "../../utils/phone";
@@ -551,7 +550,7 @@ export function CustomersPage() {
   const canCreateConversations = hasPermission(user, 'conversations.create');
   const queryClient = useQueryClient();
   const [customerSort, setCustomerSort] = useState<"asc" | "desc" | null>(null);
-  const list = useList<ManagedUser>("/customers", customerSort ? { nameSort: customerSort } : {});
+  const list = useList<ManagedUser>("/customers", { rootsOnly: true, ...(customerSort ? { nameSort: customerSort } : {}) });
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerFiles, setCustomerFiles] = useState<File[]>([]);
@@ -563,7 +562,6 @@ export function CustomersPage() {
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
   const [agreementsCustomer, setAgreementsCustomer] = useState<ManagedUser | null>(null);
-  const [relationsCustomer, setRelationsCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
   usePageScrollLock(customerModalOpen || Boolean(filesCustomer) || mergeModalOpen);
   useEffect(() => {
@@ -642,8 +640,7 @@ export function CustomersPage() {
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
-                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} anlaşmaları`} title="Anlaşmalar ve Krediler" onClick={() => setAgreementsCustomer(customer)}><Handshake size={18} /></button>}
-                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} bağlı müşterileri`} title="Bağlı Müşteriler" onClick={() => setRelationsCustomer(customer)}><Network size={18} /></button>}
+                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} yönetimi`} title="Müşteri / Şirket Yönetimi" onClick={() => setAgreementsCustomer(customer)}><Handshake size={18} /></button>}
                       {canViewConversations && <Link
                         className="button secondary"
                         to={`${inboxPath(user!.role)}?customerId=${encodeURIComponent(customer.id)}`}
@@ -670,7 +667,6 @@ export function CustomersPage() {
       </section>
       {mergeModalOpen && <CustomerMergeModal onClose={() => setMergeModalOpen(false)} />}
       {agreementsCustomer && <CustomerAgreementsModal customer={agreementsCustomer} onClose={() => setAgreementsCustomer(null)} />}
-      {relationsCustomer && <CustomerRelationsModal customer={relationsCustomer} onClose={() => setRelationsCustomer(null)} />}
       {deleteTarget && (
         <div className="confirm-backdrop" role="presentation">
           <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}>
@@ -707,11 +703,11 @@ export function CustomersPage() {
           save.mutate({ id: editing?.id, data });
         }}>
           <div className="customer-form-body">
-          <label><span className="field-label">Şirket Adı{!editing && ' *'}</span><input name="company" required={!editing} minLength={2} maxLength={120} defaultValue={editing?.company ?? ""}/></label>
+          <label><span className="field-label">Şirket Adı *</span><input name="company" required minLength={2} maxLength={120} defaultValue={editing?.company ?? ""}/></label>
           <label><span className="field-label">Ad Soyad *</span><input name="name" required minLength={2} maxLength={100} defaultValue={editing?.name} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase("tr-TR"); }}/></label>
           <div className="customer-contact-row">
-          <label><span className="field-label">Telefon{!editing && ' *'}</span><input name="phone" required={!editing} minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
-          <label><span className="field-label">E-Posta{!editing && ' *'}</span><EmailInput name="email" required={!editing} defaultValue={displayEmail(editing?.email)} /></label>
+          <label><span className="field-label">Telefon *</span><input name="phone" required minLength={7} maxLength={30} inputMode="tel" defaultValue={formatPhone(editing?.phone ?? "")} onInput={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }}/></label>
+          <label><span className="field-label">E-Posta *</span><EmailInput name="email" required defaultValue={displayEmail(editing?.email)} /></label>
           </div>
           <label><span className="field-label">Ek Telefon</span><input name="extraPhones" maxLength={500} placeholder="Virgülle ayırabilirsiniz" defaultValue={editing?.extraPhones ?? ""} onInput={(event) => { event.currentTarget.value = event.currentTarget.value.split(",").map((phone) => formatPhone(phone.trim())).filter(Boolean).join(", "); }} /></label>
           <label><span className="field-label">Ek E-Posta</span><EmailInput name="extraEmails" multiple autoComplete="email" defaultValue={editing?.extraEmails ?? ""} /></label>

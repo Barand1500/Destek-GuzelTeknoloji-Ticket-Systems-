@@ -40,6 +40,7 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
   ];
   const requests: URL[] = [];
   let extraEmployees = 0;
+  const creditRequests: URL[] = [];
   await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace("/api/v1", "");
@@ -53,6 +54,11 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
           },
         },
       });
+    if (path === '/reports/credit-usage') {
+      creditRequests.push(url);
+      const actorId=url.searchParams.get('agentId')||'ece';
+      return route.fulfill({json:{success:true,totalCredits:42,staff:[{id:actorId,name:'Ece Kaya',credits:42,count:2}],pagination:{page:Number(url.searchParams.get('page')||1),total:22,totalPages:Math.ceil(22/Number(url.searchParams.get('limit')||20)),limit:Number(url.searchParams.get('limit')||20)},data:[42,0].map((credits,index)=>({id:'charge-'+index,credits,createdAt:'2026-11-16T09:00:00Z',actor:{id:actorId,name:'Ece Kaya'},agreement:credits?{name:'Şirket Destek Paketi'}:null,conversation:{id:'ticket-'+index,number:719+index,subject:'Kredilendirilen destek '+index,customer:{name:'Örnek Müşteri'},department:{name:'Operasyon'}}}))}});
+    }
     if (path === "/reports") {
       requests.push(url);
       const personal = url.searchParams.get("agentId");
@@ -110,6 +116,32 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
   await expect(
     page.getByRole("heading", { name: "Çalışan Sıralaması" }),
   ).toBeVisible();
+  const creditTable=page.getByRole('table',{name:'Personel Kredi Kullanımları',exact:true});
+  await expect(creditTable).toBeVisible();
+  await expect(creditTable).toContainText('Ece Kaya');
+  await expect(creditTable).toContainText('42');
+  await expect(creditTable.locator('.report-credit-amount').last()).toHaveText('0');
+  await expect(creditTable.getByRole('link').first()).toHaveAttribute('href','/admin/conversations/ticket-0');
+  const creditPanel=page.locator('.report-credit-usage');
+  await expect(creditPanel.locator('.report-credit-staff')).toHaveCount(0);
+  await expect(creditPanel.locator('.report-credit-totals')).toContainText('42 kredi');
+  await expect(creditPanel.locator('.report-credit-totals')).toContainText('22 talep');
+  await creditPanel.getByRole('button',{name:'Sonraki',exact:true}).click();
+  await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('page')).toBe('2');
+  await creditPanel.getByRole('textbox',{name:'Personel, Talep veya Müşteri Ara'}).fill('Ece');
+  await creditPanel.getByRole('button',{name:'Ara',exact:true}).click();
+  await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('search')).toBe('Ece');
+  expect(creditRequests.at(-1)?.searchParams.get('page')).toBe('1');
+  await creditPanel.getByRole('button',{name:'Kredi Kullanımı Filtresi',exact:true}).click();
+  await page.getByRole('option',{name:'Kredi Harcananlar',exact:true}).click();
+  await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('creditType')).toBe('paid');
+  await creditPanel.getByRole('button',{name:'Kredi Kayıt Sayısı',exact:true}).click();
+  await page.getByRole('option',{name:'50 kayıt',exact:true}).click();
+  await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('limit')).toBe('50');
+  await creditPanel.getByRole('button',{name:'Temizle',exact:true}).click();
+  await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('creditType')).toBe('all');
+  expect(creditRequests.at(-1)?.searchParams.get('search')).toBeNull();
+
   await page.getByRole("button", { name: "Ayarlar", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "Raporlar", exact: true }),
@@ -131,8 +163,8 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
   const rankingBefore = (await rankingPanel.boundingBox())!;
   expect(Math.abs(rankingBefore.height - stack.height)).toBeLessThan(1);
   extraEmployees = 18;
-  await page.getByRole("button", { name: "Trend ve süre dönemi", exact: true }).click();
-  await page.getByRole("option", { name: "Son 7 gün", exact: true }).click();
+  await page.getByRole("button", { name: "Trend ve Süre Dönemi", exact: true }).click();
+  await page.getByRole("option", { name: "Son 7 Gün", exact: true }).click();
   await expect(page.locator(".report-ranking .report-employee")).toHaveCount(21);
   expect(Math.abs((await rankingPanel.boundingBox())!.height - rankingBefore.height)).toBeLessThan(1);
   expect(await page.locator(".report-ranking").evaluate(node => {
@@ -147,13 +179,21 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
   await expect(
     page.getByRole("button", { name: "Rapor İndir" }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Çalışan seçin", exact: true }).click();
+  await page.getByRole("button", { name: "Çalışan Seçin", exact: true }).click();
   await page.getByRole("option", { name: "Ece Kaya", exact: true }).click();
   await expect(page.locator(".report-stat").first()).toContainText("1");
   await expect(page.locator(".report-stat").last()).toContainText("%100");
   expect(
     requests.some((url) => url.searchParams.get("agentId") === "ece"),
   ).toBe(true);
+  await expect.poll(()=>creditRequests.some(url=>url.searchParams.get('agentId')==='ece'&&url.searchParams.get('days')==='7')).toBe(true);
+  await expect(creditPanel.locator('.report-credit-totals')).toContainText('42 kredi');
+  await expect(creditPanel.locator('.report-credit-staff')).toHaveCount(0);
+  await page.getByRole('tab',{name:'Genel Rapor',exact:true}).click();
+  await creditPanel.getByRole('button',{name:'Ece Kaya kişi raporunu aç',exact:true}).first().click();
+  await expect(page.getByRole('tab',{name:'Kişi Raporu',exact:true})).toHaveAttribute('aria-selected','true');
+  await expect(page.getByRole('button',{name:'Çalışan Seçin',exact:true})).toContainText('Ece Kaya');
+  await expect(creditPanel.locator('.report-credit-totals')).toContainText('42 kredi');
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Rapor İndir" }).click();
   const download = await downloadPromise;
@@ -170,7 +210,7 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
     "2 çalışan · 2 talep",
   );
   await expect(page.locator(".report-department-rate")).toContainText("%50");
-  await page.getByRole("button", { name: "Departman seçin", exact: true }).click();
+  await page.getByRole("button", { name: "Departman Seçin", exact: true }).click();
   await page.getByRole("option", { name: "Operasyon", exact: true }).click();
   await expect(page.getByRole("button", { name: "Rapor İndir" })).toBeEnabled();
   expect(
@@ -178,8 +218,8 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
       (url) => url.searchParams.get("departmentId") === "operations",
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Trend ve süre dönemi", exact: true }).click();
-  await page.getByRole("option", { name: "Son 7 gün", exact: true }).click();
+  await page.getByRole("button", { name: "Trend ve Süre Dönemi", exact: true }).click();
+  await page.getByRole("option", { name: "Son 7 Gün", exact: true }).click();
   await expect
     .poll(() =>
       requests.some(
@@ -189,12 +229,14 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
       ),
     )
     .toBe(true);
-  await page.getByRole("button", { name: "Gece moduna geç" }).click();
+  await expect.poll(()=>creditRequests.some(url=>url.searchParams.get('departmentId')==='operations'&&url.searchParams.get('days')==='7')).toBe(true);
+  await page.getByRole("button", { name: "Gece Moduna Geç" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.screenshot({
     path: ".local/reports-department-dark.png",
     fullPage: true,
   });
+  await page.locator('.report-credit-usage').screenshot({path:'.local/staff-credit-report-dark.png'});
   await page.setViewportSize({ width: 390, height: 844 });
   for (const name of ["Genel Rapor", "Kişi Raporu", "Departman Raporu"]) {
     await page.getByRole("tab", { name, exact: true }).click();

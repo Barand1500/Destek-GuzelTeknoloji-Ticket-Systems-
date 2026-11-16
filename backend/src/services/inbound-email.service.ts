@@ -1,3 +1,4 @@
+import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import { canonicalEmail } from '../utils/email.js';
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
@@ -167,8 +168,11 @@ export async function persistInboundEmail(input: {
   if (!conversation && input.createTickets === false) { await discardStoredUploads(input.attachments ?? []); return null; }
   if (!customer) {
     const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
-    customer = await db.user.create({
-      data: { name: input.from.name?.trim().slice(0, 100) || email, email, passwordHash, role: "CUSTOMER" },
+    customer = await db.$transaction(async tx => {
+      await assertUniqueCustomerContact(tx, { email });
+      return tx.user.create({
+        data: { name: input.from.name?.trim().slice(0, 100) || email, email, passwordHash, role: "CUSTOMER" },
+      });
     });
   }
   const department = conversation ? null : await db.department.findFirst({ where: { ...(input.departmentId ? { id: input.departmentId } : {}), isActive: true, deletedAt: null }, orderBy: { name: "asc" } }) ?? await db.department.findFirst({ where: { isActive: true, deletedAt: null }, orderBy: { name: "asc" } });

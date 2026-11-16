@@ -27,7 +27,7 @@ import type {
 const person = { id: true, name: true, email: true, phone: true, company: true, staffNote: true, extraPhones: true, extraEmails: true, role: true } as const;
 import { assignedTo, unassigned as unassignedFilter, assignmentIds, setAssignees, validateAssignees } from './conversation-assignees.js';
 const conversationInclude = {
-  customer: { select: person },
+  customer: { select: {...person, parentCustomer: {select:{id:true,name:true,company:true}}} },
   formRequest: true,
   creditCharge: { select: { credits: true, agreementId: true } },
   assignedAgent: { select: person },

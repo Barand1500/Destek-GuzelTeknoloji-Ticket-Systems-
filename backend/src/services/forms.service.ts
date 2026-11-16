@@ -1,3 +1,4 @@
+import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
@@ -76,6 +77,7 @@ export async function submitForm(input: z.infer<typeof formSubmissionSchema>, fi
     if (!department) throw new AppError(503, 'FORM_UNAVAILABLE', 'Form şu anda kullanılamıyor. Lütfen daha sonra deneyin.');
     const source = input.sourceId ? await tx.formSource.findUnique({ where: { id: input.sourceId } }) : null;
     if (input.sourceId && !source?.enabled) throw new AppError(400, 'INVALID_FORM_SOURCE', 'Bu siteye ait form bağlantısı artık geçerli değil.');
+    if (!customer) await assertUniqueCustomerContact(tx, input);
     const person = customer ?? await tx.user.create({ data: { name: input.name, email: input.email, phone: input.phone || null, company: input.company || null, passwordHash, role: 'CUSTOMER' } });
     // Complete missing company details without overwriting an existing customer profile.
     if (customer && input.company) {

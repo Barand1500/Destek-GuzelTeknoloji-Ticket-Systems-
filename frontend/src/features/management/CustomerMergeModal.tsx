@@ -26,12 +26,13 @@ export function CustomerMergeModal({ onClose }: { onClose: () => void }) {
     <button className="standard-modal-close" type="button" aria-label="Kapat" disabled={merge.isPending} onClick={onClose}><X size={18}/></button>
     <h2><UserRoundPlus size={22}/> Müşterileri Birleştir</h2>
     {!group ? <>
-      <p>Aynı bilgiye sahip kayıtları bulun, ardından birleştireceğiniz müşterileri seçin.</p>
+      <p>Ana müşteri listesindeki aynı bilgiye sahip kayıtları bulun. Şirkete bağlı kişiler bu listede gösterilmez.</p>
       <form className="customer-merge-filters" onSubmit={event => {event.preventDefault(); setSubmittedSearch(search.trim());}}>
         <DropdownSelect label="Eşleştirilecek Bilgi" ariaLabel="Eşleştirilecek Bilgi" value={field} onChange={value => {setField(value as Field); setSearch(''); setSubmittedSearch(''); resetSelection();}} options={[{value:'name',label:'Ad Soyad'},{value:'email',label:'E-Posta'},{value:'company',label:'Şirket'},{value:'phone',label:'Telefon'}]}/>
         <label><span className="field-label">Eşleşmelerde Ara</span><input autoFocus value={search} maxLength={100} onChange={event=>setSearch(event.target.value)} placeholder="Arama değeri yazınız"/></label>
         <button className="button secondary" type="submit">Ara</button>
       </form>
+      {(field === 'email' || field === 'phone') && <p className="muted">Bu arama, eski kayıtlar ve ek iletişim bilgileri arasındaki eşleşmeleri bulur.</p>}
       <div className="customer-merge-groups">
         {groups.isPending && <p role="status">Eşleşmeler aranıyor…</p>}
         {groups.isError && <p className="error" role="alert">{errorText(groups.error)}</p>}

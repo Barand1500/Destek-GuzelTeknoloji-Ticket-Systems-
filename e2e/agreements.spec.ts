@@ -37,9 +37,9 @@ async function setup(page: Page, role = 'ADMIN') {
 test('Customer agreements contain purchases and history; family management opens separately', async ({ page }) => {
   const writes = await setup(page);
   await page.goto('/admin/customers');
-  await page.getByRole('button', { name: 'Örnek Firma anlaşmaları', exact: true }).click();
+  await page.getByRole('button', { name: 'Örnek Firma yönetimi', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog).toHaveAttribute('aria-label', 'Örnek Firma — Anlaşmalar');
+  await expect(dialog).toHaveAttribute('aria-label', 'Örnek Firma — Yönetim');
   await expect(dialog.getByText('Kullanılabilir kredi', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: '+ Anlaşma Ekle', exact: true }).click();
   await dialog.getByLabel('Anlaşma Adı', { exact: true }).fill('Ek Destek');
@@ -87,15 +87,11 @@ test('Customer agreements contain purchases and history; family management opens
   await expect(dialog.getByRole('tab', { name: 'Müşteri Girişi', exact: true })).toHaveCount(0);
   await expect(dialog.getByRole('tab', { name: 'Bağlı Müşteriler', exact: true })).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Kapat', exact: true }).click();
-  await page.getByRole('button', { name: 'Örnek Firma bağlı müşterileri', exact: true }).click();
-  const relations = page.getByRole('dialog', { name: 'Örnek Firma — Bağlı Müşteriler' });
-  await expect(relations.getByRole('button', { name: 'Alt Müşteri Ekle', exact: true })).toBeVisible();
-  await expect(relations.getByRole('textbox', { name: 'Ana Müşteri Seçin', exact: true })).toHaveCount(0);
-  await relations.getByRole('button', { name: 'Bu müşteriyi bir ana müşteriye bağla', exact: true }).click();
-  await expect(relations.getByRole('textbox', { name: 'Ana Müşteri Seçin', exact: true })).toBeVisible();
-  await expect(relations.getByRole('button', { name: 'Alt Müşteri Ekle', exact: true })).toHaveCount(0);
-  await page.screenshot({ path: '.local/customer-relations-simplified.png', fullPage: true });
-  await expect(relations.getByRole('tab')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Örnek Firma yönetimi', exact: true }).click();
+  const management = page.getByRole('dialog');
+  await management.getByRole('button', {name:'Şirkete Bağlı Kişiler',exact:true}).click();
+  await expect(management.getByRole('button',{name:'Kişi Ekle',exact:true})).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
 });
 test('Resolution asks for credits and cancel leaves the ticket untouched', async ({ page }) => {
   const writes = await setup(page);
@@ -127,43 +123,4 @@ test('Customer portal shows balance and history without staff-only controls', as
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: '.local/agreements-customer-mobile.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-});
-
-test('Missing related customers can be created and linked directly', async ({ page }) => {
-  await setup(page);
-  let parent: any = null;
-  const children: any[] = [];
-  const writes: any[] = [];
-  await page.route('**/api/v1/customers/' + customerId + '/relations', route => {
-    if (route.request().method() === 'POST') {
-      const input = route.request().postDataJSON(); writes.push(input);
-      const person = { ...input.customer, id: 'new-person', isActive: true };
-      if (input.direction === 'CHILD') children.push(person); else parent = person;
-      return route.fulfill({ json: { success: true, data: person } });
-    }
-    return route.fulfill({ json: { success: true, data: { parent, children } } });
-  });
-  await page.goto('/admin/customers');
-  await page.getByRole('button', { name: 'Örnek Firma bağlı müşterileri', exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByRole('button', { name: '+ Yeni Kişi Ekle', exact: true }).click();
-  await dialog.locator('input[name=name]').fill('Yeni Kişi');
-  await dialog.locator('input[name=email]').fill('new@example.test');
-  await dialog.locator('input[name=phone]').fill('5301234567');
-  await page.screenshot({ path: '.local/customer-quick-create.png', fullPage: true });
-  await dialog.getByRole('button', { name: 'Oluştur ve Bağla', exact: true }).click();
-  await expect(dialog.getByText('Yeni Kişi', { exact: true })).toBeVisible();
-  expect(writes[0]).toMatchObject({ direction: 'CHILD', customer: { name: 'Yeni Kişi', email: 'new@example.test', company: 'Örnek', phone: '5301234567' } });
-  children.length = 0;
-  await page.reload();
-  await page.getByRole('button', { name: 'Örnek Firma bağlı müşterileri', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Bu müşteriyi bir ana müşteriye bağla', exact: true }).click();
-  await dialog.getByRole('button', { name: '+ Yeni Ana Müşteri Ekle', exact: true }).click();
-  await dialog.locator('input[name=name]').fill('Yeni Merkez');
-  await dialog.locator('input[name=company]').fill('Merkez Şirket');
-  await dialog.locator('input[name=email]').fill('parent@example.test');
-  await dialog.locator('input[name=phone]').fill('5301234567');
-  await dialog.getByRole('button', { name: 'Oluştur ve Bağla', exact: true }).click();
-  await expect(dialog.getByText('Yeni Merkez', { exact: true }).first()).toBeVisible();
-  expect(writes[1].direction).toBe('PARENT');
 });

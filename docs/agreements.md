@@ -104,3 +104,22 @@ Ortak kredi paylaşımı kapalıyken alt müşterinin Anlaşmalar görünümünd
 Anlaşma silme için ek onay modalı açılmaz: çöp kutusu doğrudan silme isteği gönderir. İstek sürerken işlem düğmeleri kilitlenir; hata mevcut ekranda gösterilir. Geçmişi koruyan silme davranışı aynıdır.
 
 Anlaşma yetkileri: ekleme/düzenleme/iptal/yeniden etkinleştirme customers.update, silme customers.delete. Müşteri rolü bu yazma işlemlerinden bağımsız olarak engellenir. Personelde silme ve düzenleme düğmeleri ayrı kontrol edilir; yalnızca düzenleme yetkisi silme API erişimi sağlamaz.
+
+## 16 Kasım 2026 — Şirket ve kişiler yönetimi
+
+Önceki kişisel/ortak kredi ve aç/kapat kurallarının yerini aşağıdaki model alır:
+
+- Müşteriler ana listesi rootsOnly=true ile yalnızca bağımsız hesapları gösterir. Şirkete bağlı kişiler, aynı yönetim modalındaki Şirkete Bağlı Kişiler sekmesindedir; talep açma dizinlerinde görünmeye devam ederler.
+- Tek yönetim butonu Anlaşmalar ve Kredi / Şirkete Bağlı Kişiler sekmelerini açar. Kişi oluşturma, düzenleme, aktiflik, dosyalar ve talepler bu tabloda korunur.
+- Bağımsız müşteriler kendi anlaşmalarını kullanır. Bağlı kişiler sadece aktif şirketin anlaşmalarını kullanır. Eski shareCreditsWithChildren değeri artık tüketimi değiştirmez; aç/kapat API'si kaldırılan politika için 410 döner.
+- Bağlı kişiler için kişisel anlaşma oluşturma, düzenleme, iptal, yeniden etkinleştirme ve silme engellenir. Önceki kişisel anlaşmalar veri tabanında kalır ve personele salt okunur geçmiş olarak gösterilir; bakiye otomatik taşınmaz.
+- Şirket hareketleri şirket anlaşmasından yapılan geçmiş harcamaları da kapsar; kişi hareketleri yalnızca kendi taleplerini gösterir.
+- Aktif veya pasif, silinmemiş kişileri bulunan şirket silinemez. Kişiler yönetilmeden gizli/yönetilemez kayıt oluşmasına izin verilmez.
+- Yetkiler: müşterileri düzenle = kişi ve anlaşma düzenleme; müşterileri oluştur + düzenle = şirkete kişi ekleme; müşterileri sil = kişi/anlaşma/dosya silme. Müşteri rolüne bu personel işlemleri açılmaz.
+- Mevcut parentCustomerId ilişkisi kullanılır; şirket adı benzerliğine göre otomatik eşleştirme veya veri göçü yapılmaz. Şema değişmedi.
+
+## Müşteri iletişim bilgilerinin benzersizliği
+
+Ana e-posta ve telefon birbirinden bağımsız kontrol edilir; farklı ad veya şirket çakışmayı geçersiz kılmaz. Silinmemiş pasif kayıtlar da kontrol kapsamındadır. Telefon boşluk/noktalama, 0, +90 ve 0090 farklarından arındırılarak; e-posta canonicalEmail ile karşılaştırılır. Müşteri oluşturma/düzenleme, şirket kişisi oluşturma, müşteri profili, kayıt ve otomatik kanal oluşturma yolları aynı işlem içi kilitli kontrolü kullanır. Mevcut kayıtlar otomatik birleştirilmez veya değiştirilmez. Veritabanına eski mükerrerleri silmeyi gerektirecek bir unique index göçü uygulanmadı. Hatalar CUSTOMER_EMAIL_EXISTS / CUSTOMER_PHONE_EXISTS kodlarıyla alanı açıkça belirtir.
+
+- Şirket yönetiminde yalnızca şirketin anlaşmaları listelenir. Önceki kişisel anlaşmalar bölümü ve API yanıtındaki legacyAgreements kaldırıldı; eski veriler silinmedi ve kullanılabilir şirket kredisine eklenmedi.

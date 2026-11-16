@@ -17,9 +17,6 @@ const queryBoolean = z
   .transform((v) => v === "true")
   .optional();
 const nonempty = (v: object) => Object.keys(v).length > 0;
-const customerPhone = z.string().trim()
-  .pipe(z.union([z.literal(''), z.string().min(7).max(30)]))
-  .transform(value => value || null).optional();
 const sorting = {
   sortBy: z.enum(['name', 'code', 'roleDepartments', 'url', 'title', 'label', 'body', 'author', 'createdAt', 'user', 'action', 'description', 'message', 'isRead', 'isActive']).optional(),
   sortDirection: z.enum(['asc', 'desc']).optional(),
@@ -30,6 +27,7 @@ const departments = z
   .refine((v) => new Set(v).size === v.length, "Departmanlar tekrarlanamaz.");
 export const directoryQuery = paginationSchema.extend({
   ...sorting,
+  rootsOnly: queryBoolean,
   nameSort: z.enum(['asc', 'desc']).optional(),
   search,
   id: idSchema.optional(),
@@ -42,6 +40,7 @@ export const reportQuery = paginationSchema.extend({
   departmentId: idSchema.optional(),
   days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
 });
+export const creditReportQuery = reportQuery.extend({ search, creditType: z.enum(['all', 'paid', 'free']).default('all') });
 export const announcementTemplateSchema = z
   .object({
     label: z.string().trim().min(2).max(80),
@@ -66,15 +65,9 @@ export const createCustomerSchema = z
 export const updateCustomerSchema = z
   .object({
     name: z.string().trim().min(2).max(100).optional(),
-    email: z
-      .union([z.literal(""), emailSchema])
-      .transform((value) => value || null)
-      .optional(),
-    phone: customerPhone,
-    company: z
-      .union([z.literal(""), z.string().trim().min(2).max(120)])
-      .transform((value) => value || null)
-      .optional(),
+    email: createCustomerSchema.shape.email.optional(),
+    phone: createCustomerSchema.shape.phone.optional(),
+    company: createCustomerSchema.shape.company.optional(),
     staffNote: z
       .union([z.literal(""), z.string().trim().min(1).max(2000)])
       .transform((value) => value || null)

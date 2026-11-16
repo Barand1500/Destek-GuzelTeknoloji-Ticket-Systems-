@@ -1,3 +1,4 @@
+import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { randomBytes, createHash } from "node:crypto";
@@ -47,13 +48,16 @@ export async function register(input: {
   email: string;
   password: string;
 }) {
-  const user = await db.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      loginEmail: input.email,
-      passwordHash: await bcrypt.hash(input.password, 12),
-    },
+  const user = await db.$transaction(async tx => {
+    await assertUniqueCustomerContact(tx, { email: input.email });
+    return tx.user.create({
+      data: {
+        name: input.name,
+        email: input.email,
+        loginEmail: input.email,
+        passwordHash: await bcrypt.hash(input.password, 12),
+      },
+    });
   });
   return issue(user.id);
 }

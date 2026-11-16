@@ -443,6 +443,7 @@ export function TicketList() {
                   <th>AÇILIŞ</th>
                   {sortHeader('responseTime', 'YANIT SÜRESİ')}
                   <th>SON GÜNCELLEME</th>
+                  <th>KULLANILAN KREDİ</th>
                   <th className="inbox-sort-reset-cell"><button className="inbox-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setParams(current => { const next = new URLSearchParams(current); next.delete('sortBy'); next.delete('sortDirection'); next.delete('page'); return next; }); void query.refetch(); }}><RotateCcw size={15}/></button></th>
                 </tr>
               </thead>
@@ -459,7 +460,7 @@ export function TicketList() {
                       </Link>
                       {ticket.formRequest?.sourceName && <small className="customer-name">Kaynak site: {ticket.formRequest.sourceName}</small>}
                       <span className="customer-name">
-                        {ticket.customer.name} <small>({ticket.customerMessageCount ?? 0})</small>
+                        {[ticket.customer.parentCustomer?.company?.trim() || ticket.customer.parentCustomer?.name || ticket.customer.company?.trim(),ticket.customer.name].filter((value,index,array)=>value&&array.indexOf(value)===index).join(' · ')} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
                     <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${conversationChannels(ticket).map(channel => channels[channel]).join(', ')}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
@@ -480,6 +481,7 @@ export function TicketList() {
                     <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-response-cell inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
                     <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
+                    <td className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong> kredi</Link> : <span className="muted">—</span>}</td>
                     <td className="inbox-sort-reset-cell" aria-hidden="true" />
                   </tr>
                 ))}
@@ -844,10 +846,10 @@ export function TicketDetail() {
             #TK-{String(t.number).padStart(5, "0")} · {t.department.name}
           </span>
           <h1>{t.subject}</h1>
-          {t.creditCharge && <p className="muted ticket-source-site">Bu destek için kullanılan kredi: <strong>{t.creditCharge.credits}</strong></p>}
           {t.formRequest?.sourceName && <p className="muted ticket-source-site">Kaynak site: <strong>{t.formRequest.sourceName}</strong> — {t.formRequest.sourceUrl}</p>}
         </div>
         <div className="ticket-status-cluster">
+          {t.creditCharge && <span className="ticket-credit-pill">Bu destek için kullanılan kredi: <strong>{new Intl.NumberFormat('tr-TR').format(t.creditCharge.credits)}</strong></span>}
           <span className="management-pill created-pill">{(t.createdBy ?? t.customer).name} tarafından {date(t.createdAt)} tarihinde oluşturuldu.</span>
           <Badge status={t.status} />
         </div>

@@ -1,86 +1,128 @@
-import { test, expect, type Page } from '@playwright/test';
-const companyId = '11111111-1111-4111-8111-111111111111', childId = '22222222-2222-4222-8222-222222222222', ticketId = '33333333-3333-4333-8333-333333333333';
-async function setup(page: Page, role = 'ADMIN', actorId = companyId) {
-  let enabled = true;
-  const company = () => ({ id: companyId, name: 'Merkez Şirket', role: 'CUSTOMER', parentCustomerId: null, shareCreditsWithChildren: enabled, isActive: true });
-  const child = { id: childId, name: 'Ahmet', role: 'CUSTOMER', parentCustomerId: companyId, isActive: true, personalCredits: 20 };
-  const pack = (id: string, name: string, owner: any, credits: number, endsOn: string) => ({ id, name, customerId: owner.id, customer: owner, credits, usedCredits: 0, remainingCredits: credits, startsOn: '2020-01-01', endsOn, state: 'ACTIVE', usable: true, type: 'ONE_OFF' });
-  const ownSoon = pack('own-soon', 'Kişisel Yakın', child, 10, '2090-01-01');
-  const ownLate = pack('own-late', 'Kişisel Sonra', child, 10, '2099-01-01');
-  const shared = () => pack('shared', 'Şirket Paketi', company(), 100, '2080-01-01');
-  await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
-  await page.route('**/socket.io/**', route => route.abort());
-  await page.route('**/api/v1/**', route => {
-    const path = new URL(route.request().url()).pathname.replace('/api/v1', '');
-    const send = (data: unknown) => route.fulfill({ json: { success: true, data, pagination: { page: 1, total: 1, totalPages: 1, limit: 15 } } });
-    if (path === '/auth/refresh') return send({ accessToken: 'test', user: role === 'ADMIN' ? { id: 'staff', name: 'Yönetici', role } : actorId === companyId ? company() : child });
-    if (path === '/auth/security') return send({ enabled: false });
-    if (path === '/staff-presence') return send({ staff: [], idleMinutes: 5 });
-    if (path === '/customers') return send([company(), child]);
-    if (path === '/customers/' + companyId + '/credit-sharing') { enabled = route.request().postDataJSON().enabled; return send({}); }
-    if (path === '/customers/' + companyId + '/agreements') return send({ customer: company(), parent: null, children: [child], agreements: [shared(), { ...ownSoon, usable: false }, { ...ownLate, usable: false }], charges: [], personalCredits: 100, parentCredits: 0, sharedCredits: 0, availableCredits: 100 });
-    if (path === '/customers/' + childId + '/agreements') return send({ customer: child, parent: company(), children: [], agreements: [ownSoon, ownLate, { ...shared(), usable: enabled }], charges: [], personalCredits: 20, parentCredits: 100, sharedCredits: enabled ? 100 : 0, availableCredits: enabled ? 120 : 20 });
-    if (path === '/conversations/' + ticketId + '/credit-options') return send({ agreements: [ownSoon, ownLate, shared()], charge: null });
-    if (path === '/conversations/' + ticketId) return send({ id: ticketId, number: 15, subject: 'Kredi Sıralaması', customerId: childId, customer: child, department: { id: 'dep', name: 'Destek' }, channel: 'TICKET', replyChannels: ['TICKET'], status: 'OPEN', priority: 'NORMAL', assignees: [], tags: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-    return send([]);
-  });
+import {test,expect,type Page} from '@playwright/test';
+const companyId='11111111-1111-4111-8111-111111111111',childId='22222222-2222-4222-8222-222222222222';
+async function setup(page:Page,role='ADMIN',permissions?:string[]){
+ const company={id:companyId,name:'Merkez Şirket',company:'Merkez Şirket',role:'CUSTOMER',isActive:true,parentCustomerId:null};
+ const children:any[]=Array.from({length:12},(_,i)=>({id:i===0?childId:'contact-'+i,name:'Kişi '+String(i+1).padStart(2,'0'),role:'CUSTOMER',email:i===0?'baran@xn--gzelteknoloji-wob.com':'person'+i+'@example.test',phone:'5301234567',isActive:true,parentCustomerId:companyId}));
+ const pack={id:'package',name:'Şirket Paketi',customerId:companyId,customer:company,type:'ONE_OFF',startsOn:'2020-01-01',endsOn:'2099-01-01',credits:100,usedCredits:20,remainingCredits:80,usable:true,state:'ACTIVE'};
+ const legacy={...pack,id:'legacy',name:'Eski Kişisel Paket',customerId:childId,customer:children[0],usable:false};
+ const requests:string[]=[],writes:any[]=[];
+ await page.addInitScript(()=>localStorage.setItem('helpdesk-theme','dark'));
+ await page.route('**/socket.io/**',route=>route.abort());
+ await page.route('**/api/v1/**',async route=>{
+  const url=new URL(route.request().url()),path=url.pathname.replace('/api/v1',''),method=route.request().method(); requests.push(path);
+  const send=(data:unknown)=>route.fulfill({json:{success:true,data,pagination:{page:1,total:1,totalPages:1,limit:15}}});
+  if(path==='/auth/refresh')return send({accessToken:'test',user:role==='CUSTOMER'?children[0]:{id:'staff',name:'Yönetici',role, ...(permissions?{rolePermissions:permissions}:{})}});
+  if(path==='/auth/security')return send({enabled:false});
+  if(path==='/customers'){expect(url.searchParams.get('rootsOnly')).toBe('true');return send([company]);}
+  if(path==='/customers/'+companyId+'/relations'){
+   if(method==='POST'){const input=route.request().postDataJSON();writes.push(input);children.push({...input.customer,id:'created',isActive:true,parentCustomerId:companyId});return send(children.at(-1));}
+   return send({customer:company,parent:null,children});
+  }
+  if(path==='/customers/'+companyId+'/agreements'||path==='/customers/'+childId+'/agreements')return send({customer:path.includes(childId)?children[0]:company,parent:path.includes(childId)?company:null,children:path.includes(childId)?[]:children,agreements:[pack],legacyAgreements:role==='CUSTOMER'?[]:[legacy],charges:[],personalCredits:path.includes(childId)?0:80,parentCredits:80,sharedCredits:80,availableCredits:80});
+  if(path==='/customers/'+childId && method==='PATCH'){const req=route.request();const input=req.headers()['content-type']?.includes('multipart/form-data')?Object.fromEntries((await new Request(req.url(),{method:'POST',headers:{'content-type':req.headers()['content-type']},body:req.postDataBuffer()!}).formData()).entries()):req.postDataJSON();writes.push({path,...input});Object.assign(children[0],input);return send(children[0]);}
+  if(path==='/customers/'+childId+'/files')return send([{id:'file',originalName:'Eski Dosya.pdf',size:1024}]);
+  if(path==='/staff-presence')return send({staff:[]});
+  return send([]);
+ });
+ return {requests,writes};
 }
-test('Company policy and child summaries use standard modals without mixing balances', async ({ page }) => {
-  await setup(page);
-  await page.goto('/admin/customers');
-  await page.getByRole('button', { name: 'Merkez Şirket anlaşmaları', exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('button', { name: 'Kapat', exact: true }).locator('svg')).toBeVisible();
-  await expect(dialog).toHaveClass(/confirm-modal/);
-  const toggle = dialog.getByRole('switch');
-  const accordion = dialog.locator('details.agreement-children');
-  await expect(accordion).not.toHaveAttribute('open');
-  await expect(toggle).toBeChecked();
-  await toggle.uncheck(); await expect(toggle).not.toBeChecked();
-  await expect(accordion).not.toHaveAttribute('open');
-  const family = dialog.locator('details.agreement-children');
-  await expect(family).not.toHaveAttribute('open');
-  await family.locator('summary').click();
-  await expect(family).toContainText('Kişisel kalan kredi: 20');
-  await page.screenshot({ path: '.local/company-credit-policy.png', fullPage: true });
-  await dialog.getByRole('button', { name: 'Ahmet Anlaşmaları', exact: true }).click();
-  await expect(dialog.locator('.agreement-header-credit')).toContainText('Kullanılabilir kredi');
-  await expect(dialog.getByText('Şirket ortak bakiyesi', { exact: true })).toHaveCount(0);
-  await expect(dialog.locator('.agreement-workspace')).not.toContainText('Şirket Paketi');
-  await expect(dialog.locator('.agreement-overview>div')).toHaveCount(0);
-  await expect(dialog.locator('.agreement-header-credit')).toContainText('20');
-  await expect(dialog.getByRole('switch')).toHaveCount(0);
-  await expect(dialog.getByText(/Ortak kullanım kapalı; yalnızca kendi krediniz/)).toHaveCount(0);
-  await page.screenshot({ path: '.local/child-credit-balances.png', fullPage: true });
-  await dialog.getByRole('button', { name: /Merkez Şirket Anlaşmalarına Dön/ }).click();
-  await expect(dialog.getByRole('switch')).not.toBeChecked();
+test('one management dialog contains company people, create/edit and preserved legacy agreements',async({page})=>{
+ const {requests,writes}=await setup(page);await page.goto('/admin/customers');
+ await expect(page.getByRole('button',{name:'Merkez Şirket bağlı müşterileri',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
+ const dialog=page.getByRole('dialog');await expect(dialog.locator('.agreement-header-credit')).toContainText('80');
+ await expect(dialog.getByRole('switch')).toHaveCount(0);
+ await expect(dialog.locator('.company-legacy-agreements')).toHaveCount(0);
+ await expect(dialog.getByText('Eski Kişisel Paket',{exact:true})).toHaveCount(0);
+ await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+ const rows=dialog.getByRole('table',{name:'Şirkete Bağlı Kişiler',exact:true}).locator('tbody tr');
+ await expect(rows).toHaveCount(10);await expect(rows.first().locator('td').first()).toHaveText('1');
+ await expect(rows.first()).toContainText('baran@güzelteknoloji.com');await expect(rows.first()).not.toContainText('xn--');
+ await dialog.getByRole('textbox',{name:'Şirket kişilerinde ara',exact:true}).fill('güzelteknoloji');await expect(rows).toHaveCount(1);
+ await dialog.getByRole('textbox',{name:'Şirket kişilerinde ara',exact:true}).fill('');
+ await dialog.getByRole('button',{name:'Sonraki',exact:true}).click();await expect(rows).toHaveCount(2);await expect(rows.first().locator('td').first()).toHaveText('11');
+ await dialog.getByRole('textbox',{name:'Şirket kişilerinde ara',exact:true}).fill('Kişi 01');await expect(rows).toHaveCount(1);
+ await rows.getByRole('button',{name:'Kişi 01 kişisini düzenle',exact:true}).click();
+ await expect(dialog.locator('.company-person-file-button svg')).toBeVisible();
+ const phoneBox=await dialog.getByLabel('Telefon',{exact:true}).locator('..').boundingBox();
+ const uploadBox=await dialog.locator('.company-person-file-button').boundingBox();
+ expect(Math.abs(phoneBox!.y-uploadBox!.y)).toBeLessThanOrEqual(1);
+ expect(Math.abs(phoneBox!.height-uploadBox!.height)).toBeLessThanOrEqual(1);
+ await expect(dialog.locator('.company-person-file-button>.field-label')).toHaveText('Dosya Ekle');
+ await dialog.screenshot({path:'.local/company-person-file-field.png'});
+ await dialog.getByLabel('Kişiye dosya ekle',{exact:true}).setInputFiles({name:'not.txt',mimeType:'text/plain',buffer:Buffer.from('Test notu')});
+ await expect(dialog.locator('.company-person-upload')).toContainText('1 dosya seçildi');
+ await dialog.getByLabel('Ad Soyad',{exact:true}).fill('Düzenlenen Kişi');await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();
+ await expect.poll(()=>writes.some(w=>w.name==='Düzenlenen Kişi')).toBe(true);
+ await dialog.getByRole('textbox',{name:'Şirket kişilerinde ara',exact:true}).fill('');
+ await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
+ await dialog.getByLabel('Ad Soyad',{exact:true}).fill('Yeni Kişi');await dialog.locator('input[name=email]').fill('new@example.test');await dialog.getByLabel('Telefon',{exact:true}).fill('5301234567');
+ await expect(dialog.getByLabel('Telefon',{exact:true})).toHaveValue('0530 123 45 67');
+ const fields=dialog.locator('.company-person-form>.agreement-field');
+ const boxes=await fields.evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().height));
+ expect(Math.max(...boxes)-Math.min(...boxes)).toBeLessThanOrEqual(1);
+ await expect(dialog.locator('.email-field>input')).toHaveCSS('border-top-width','0px');
+ await page.screenshot({path:'.local/company-person-form.png',fullPage:true});
+ await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();
+ await expect.poll(()=>writes.some(w=>w.direction==='CHILD'&&w.customer.name==='Yeni Kişi')).toBe(true);
+ await expect(page.getByRole('dialog')).toHaveCount(1);
+ await page.screenshot({path:'.local/company-management-people.png',fullPage:true});
+ await dialog.getByRole('button',{name:'Düzenlenen Kişi dosyaları',exact:true}).click();await expect(dialog.getByText('Eski Dosya.pdf',{exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(1);await dialog.getByRole('button',{name:'Kişilere Dön',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.local/company-management-mobile.png',fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ expect(requests.some(p=>p.includes('relation-candidates'))).toBe(false);
 });
-test('Company customer can control sharing and inspect child balances', async ({ page }) => {
-  await setup(page, 'CUSTOMER');
-  await page.goto('/customer/agreements');
-  await page.getByRole('switch').uncheck();
-  await expect(page.getByRole('switch')).not.toBeChecked();
-  await page.locator('details.agreement-children>summary').click();
-  await page.getByRole('link', { name: 'Anlaşmaları Gör', exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(childId));
-  await expect(page.getByText('Kendi kredisi', { exact: true })).toBeVisible();
-  await expect(page.getByRole('switch')).toHaveCount(0);
-  const valueBoxes = await page.locator('.agreement-overview>div>strong').all();
-  const valueYs = await Promise.all(valueBoxes.map(async value => (await value.boundingBox())!.y));
-  expect(Math.max(...valueYs) - Math.min(...valueYs)).toBeLessThanOrEqual(1);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: '.local/child-credit-mobile.png', fullPage: true });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+test('company contact portal has only company balance without personal packages or controls',async({page})=>{
+ await setup(page,'CUSTOMER');await page.goto('/customer/agreements');
+ await expect(page.getByText('Şirket kredisi',{exact:true})).toBeVisible();await expect(page.locator('.agreement-overview>div')).toHaveCount(1);
+ await expect(page.getByText('Şirket Paketi',{exact:true})).toBeVisible();await expect(page.getByText('Eski Kişisel Paket',{exact:true})).toHaveCount(0);
+ await expect(page.getByRole('switch')).toHaveCount(0);await expect(page.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);
+ await page.screenshot({path:'.local/company-contact-credit.png',fullPage:true});
 });
-test('Resolution suggests the personal package expiring first and leaves staff the choice', async ({ page }) => {
-  await setup(page);
-  await page.goto('/admin/conversations/' + ticketId);
-  await page.getByRole('button', { name: 'Çözüldü Olarak İşaretle', exact: true }).click();
-  const select = page.getByRole('textbox', { name: 'Kullanılacak Anlaşma', exact: true });
-  await expect(select).toHaveValue(/Kişisel Yakın/);
-  await select.click();
-  const texts = await page.getByRole('option').allTextContents();
-  expect(texts.join('|')).toMatch(/Kişisel Yakın.*Kişisel Sonra.*Şirket Paketi/);
-  await page.getByRole('option', { name: /Şirket Paketi/ }).click();
-  await expect(select).toHaveValue(/Şirket Paketi/);
+test('read-only staff sees company people without mutation controls',async({page})=>{
+ await setup(page,'AGENT',['customers.view']);await page.goto('/agent/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
+ const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+ await expect(dialog.getByRole('button',{name:'Kişi Ekle',exact:true})).toHaveCount(0);await expect(dialog.getByRole('button',{name:/kişisini (sil|düzenle)/})).toHaveCount(0);
 });
+
+test('company person form keeps input and identifies email and phone conflicts',async({page})=>{
+ await setup(page);
+ let field='e-posta';
+ await page.route('**/api/v1/customers/'+companyId+'/relations',route=>route.request().method()==='POST'?route.fulfill({status:409,json:{success:false,error:{code:field==='e-posta'?'CUSTOMER_EMAIL_EXISTS':'CUSTOMER_PHONE_EXISTS',message:'Bu '+field+' başka bir müşteri kaydında kullanılıyor.'}}}):route.fallback());
+ await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
+ const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
+ await dialog.getByLabel('Ad Soyad',{exact:true}).fill('Yeni Kişi');await dialog.locator('input[name=email]').fill('used@example.test');await dialog.getByLabel('Telefon',{exact:true}).fill('5301234567');
+ await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('Bu e-posta');
+ await expect(dialog.getByLabel('Ad Soyad',{exact:true})).toHaveValue('Yeni Kişi');
+ field='telefon';await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('Bu telefon');
+ await expect(page.getByRole('dialog')).toHaveCount(1);
+});
+
+ test('existing people can be searched and linked inside company management',async({page})=>{
+  await setup(page);let linked=false;
+  const existingId='33333333-3333-4333-8333-333333333333';
+  await page.route('**/api/v1/customers/'+companyId+'/relation-candidates**',route=>{const url=new URL(route.request().url());return route.fulfill({json:{success:true,data:[{id:existingId,name:'Mevcut Kişi',email:'baran@xn--gzelteknoloji-wob.com',company:null}],pagination:{total:1,totalPages:1}}});});
+  await page.route('**/api/v1/customers/'+existingId+'/parent',route=>{expect(route.request().method()).toBe('PUT');expect(route.request().postDataJSON()).toEqual({parentCustomerId:companyId});linked=true;return route.fulfill({json:{success:true}});});
+  await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
+  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+  await expect(dialog.getByRole('button',{name:'Mevcut Kişi Ekle',exact:true})).toHaveCount(0);
+  await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
+  await expect(dialog.getByRole('button',{name:'Yeni Kişi',exact:true})).toHaveAttribute('aria-pressed','true');
+  await dialog.getByRole('button',{name:'Mevcut Kişi',exact:true}).click();
+  await expect(dialog.getByLabel('Ad Soyad',{exact:true})).toHaveCount(0);
+  await dialog.getByRole('textbox',{name:'Eklenecek kişiyi ara',exact:true}).fill('Mevcut');await dialog.getByRole('button',{name:'Ara',exact:true}).click();
+  const candidate=dialog.locator('.company-existing-options>label').first();
+  await expect(candidate).toContainText('baran@güzelteknoloji.com');await expect(candidate).not.toContainText('xn--');
+  const positions=await candidate.evaluate(node=>{const radio=node.querySelector('input')!.getBoundingClientRect(),name=node.querySelector('strong')!.getBoundingClientRect();return {radioX:radio.x,radioY:radio.y,nameX:name.x,nameBottom:name.bottom};});
+  expect(positions.nameX).toBeGreaterThan(positions.radioX);expect(positions.radioY).toBeLessThan(positions.nameBottom+12);
+  await dialog.screenshot({path:'.local/company-existing-rows.png'});
+  await dialog.getByRole('radio').check();await dialog.getByRole('button',{name:'Seçilen Kişiyi Ekle',exact:true}).click();
+  await expect.poll(()=>linked).toBe(true);await expect(dialog.getByRole('heading',{name:'Mevcut Kişiyi Şirkete Ekle',exact:true})).toHaveCount(0);
+ });
+ test('people tab remains available without a company name',async({page})=>{
+  await setup(page);let companyName='';
+  await page.route('**/api/v1/customers/'+companyId+'/agreements',route=>route.fulfill({json:{success:true,data:{customer:{id:companyId,name:'Merkez Şirket',company:companyName,parentCustomerId:null},parent:null,children:[],agreements:[],charges:[],availableCredits:0,personalCredits:0}}}));
+  await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
+  const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true})).toBeVisible();
+  await dialog.getByRole('button',{name:'Kapat',exact:true}).click();companyName='Yeni Şirket';
+  await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();await expect(dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true})).toBeVisible();
+ });

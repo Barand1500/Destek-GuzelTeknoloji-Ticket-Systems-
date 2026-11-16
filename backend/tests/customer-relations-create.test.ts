@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomInt } from 'node:crypto';
 import { db } from '../src/config/db.js';
 import { createRelatedCustomer } from '../src/services/agreements.service.js';
 import type { Actor } from '../src/types/express.js';
@@ -18,13 +18,13 @@ test('Quick creation links a new child or parent atomically with both customer p
     const parent = await db.user.create({ data: { name: 'Quick-create parent', role: 'CUSTOMER', passwordHash: 'test' } }); ids.push(parent.id);
     const orphan = await db.user.create({ data: { name: 'Quick-create orphan', role: 'CUSTOMER', passwordHash: 'test' } }); ids.push(orphan.id);
     const actor: Actor = { id: staff.id, name: staff.name, email: '', role: 'ADMIN', departmentIds: [], sessionId: '' };
-    const input = { name: `Quick child ${suffix}`, email: `quick-${suffix}@example.invalid`, phone: '5301234567', company: 'Quick company' };
+    const input = { name: `Quick child ${suffix}`, email: `quick-${suffix}@example.invalid`, phone: '05' + String(randomInt(100000000,999999999)), company: 'Quick company' };
     await assert.rejects(createRelatedCustomer({ ...actor, role: 'AGENT', rolePermissions: ['customers.update'] }, parent.id, { direction: 'CHILD', customer: input }));
     const child = await createRelatedCustomer(actor, parent.id, { direction: 'CHILD', customer: input }); ids.push(child.id);
     assert.equal((await db.user.findUniqueOrThrow({ where: { id: child.id } })).parentCustomerId, parent.id);
     await assert.rejects(createRelatedCustomer(actor, child.id, { direction: 'CHILD', customer: { ...input, email: `blocked-${input.email}` } }));
     assert.equal(await db.user.count({ where: { email: `blocked-${input.email}` } }), 0);
-    const newParent = await createRelatedCustomer(actor, orphan.id, { direction: 'PARENT', customer: { ...input, name: `New parent ${suffix}`, email: `parent-${input.email}` } }); ids.push(newParent.id);
+    const newParent = await createRelatedCustomer(actor, orphan.id, { direction: 'PARENT', customer: { ...input, name: `New parent ${suffix}`, phone: '05' + String(randomInt(100000000,999999999)), email: `parent-${input.email}` } }); ids.push(newParent.id);
     assert.equal((await db.user.findUniqueOrThrow({ where: { id: orphan.id } })).parentCustomerId, newParent.id);
   } finally {
     db.$transaction = originalTx;

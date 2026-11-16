@@ -9,11 +9,12 @@ import { hasPermission } from '../auth/permissions';
 import { SearchableDropdown } from '../../components/SearchableDropdown';
 import { AgreementDateField } from '../../components/AgreementDateField';
 import { AgreementTypeSelect } from './AgreementTypeSelect';
-import { conversationPath, inboxPath } from '../../router/paths';
+import { CompanyPeoplePanel } from '../management/CompanyPeople';
+import { conversationPath } from '../../router/paths';
 import { agreementEndDate } from '../../utils/agreement-dates';
 import './agreements.css';
 
-type Person = { id: string; name: string; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
+type Person = { id: string; name: string; company?: string | null; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
 export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
 type Charge = { id: string; credits: number; createdAt: string; agreement: { name: string } | null; conversation: { id: string; number: number; subject: string; customer: { name: string } } };
 type Summary = { customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
@@ -40,34 +41,27 @@ export function AgreementDialog({ title, children, onClose, pending = false, hea
     }
   }}><header><h2>{title}</h2><div className="agreement-header-actions">{headerActions}<button className="standard-modal-close" type="button" aria-label="Kapat" disabled={pending} onClick={onClose}><X size={18} /></button></div></header><div className="agreement-dialog-body">{children}</div>{footer && <footer className="agreement-dialog-footer">{footer}</footer>}</div></div>, document.body);
 }
-export function CompanyCreditSharing({ customer, compact = false }: { customer: Person; compact?: boolean }) {
-  const { user } = useAuth(); const client = useQueryClient();
-  const editable = user?.role === 'CUSTOMER' ? user.id === customer.id : hasPermission(user, 'customers.update');
-  const [enabled, setEnabled] = useState(customer.shareCreditsWithChildren ?? true);
-  useEffect(() => setEnabled(customer.shareCreditsWithChildren ?? true), [customer.id, customer.shareCreditsWithChildren]);
-  const mutation = useMutation({ mutationFn: (enabled: boolean) => api.put(`/customers/${customer.id}/credit-sharing`, { enabled }), onError: () => setEnabled(customer.shareCreditsWithChildren ?? true), onSuccess: async () => {
-    await Promise.all(['agreements', 'customer-relations', 'credit-options'].map(key => client.invalidateQueries({ queryKey: [key] })));
-  } });
-  return <section className={"company-credit-policy" + (compact ? " company-credit-policy--compact" : "")} aria-label="Şirket Ortak Kredi Ayarı">
-    <div><h3>{compact ? "Ortak kredi" : "Şirket ortak kredisi"}</h3>{!compact && <p className="muted">Alt müşteriler ortak krediyi kullanabilsin.</p>}</div>
-    <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label="Alt müşteriler şirketin ortak kredisini kullanabilir" checked={enabled} disabled={!editable || mutation.isPending || customer.isActive === false} onChange={e => { setEnabled(e.target.checked); mutation.mutate(e.target.checked); }} /><span aria-hidden="true" /></label>{!compact && <strong>{enabled ? 'Açık' : 'Kapalı'}</strong>}</div>
-    {mutation.error && <p className="error" role="alert">{errorText(mutation.error)}</p>}
-  </section>;
-}
-
 export function CustomerAgreementsModal({ customer, onClose }: { customer: Person; onClose: () => void }) {
   const { user } = useAuth();
   const canEdit = user?.role !== 'CUSTOMER' && hasPermission(user, 'customers.update');
-  const [selected, setSelected] = useState(customer);
-  const headerSummary = useQuery({ queryKey: ['agreements', selected.id], queryFn: async () => (await api.get(`/customers/${selected.id}/agreements`)).data.data as Summary });
+  const summary = useQuery({ refetchOnMount: 'always', queryKey: ['agreements', customer.id], queryFn: async () => (await api.get(`/customers/${customer.id}/agreements`)).data.data as Summary });
+  const [tab, setTab] = useState<'agreements' | 'people'>('agreements');
   const [editing, setEditing] = useState<Agreement | null>(null);
   const [history, setHistory] = useState(false);
   const [adding, setAdding] = useState(false), [pending, setPending] = useState(false), [ready, setReady] = useState(false);
   const formId = useId();
-  const selectCustomer = (person: Person) => { setEditing(null); setAdding(false); setReady(false); setSelected(person); };
-  return <AgreementDialog title={`${selected.name} — ${history ? 'Kredi Hareketleri' : 'Anlaşmalar'}`} onClose={onClose} pending={pending} footer={history || (!canEdit && !editing) ? undefined : editing ? <><button className="button secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Vazgeç</button><button className="button primary" type="submit" form={formId} disabled={pending}>{pending ? "Kaydediliyor…" : "Değişiklikleri Kaydet"}</button></> : <>{adding && !history && <button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button>}{!history && canEdit && ready && (adding ? <button type="submit" form={formId} className="button primary" disabled={pending}>{pending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button> : <button type="button" className="button primary" disabled={pending} onClick={() => setAdding(true)}>+ Anlaşma Ekle</button>)}</>} headerActions={<>{!history && headerSummary.data && !headerSummary.data.parent?.shareCreditsWithChildren && <div className="agreement-header-credit"><span>Kullanılabilir kredi</span><strong>{new Intl.NumberFormat('tr-TR').format(headerSummary.data.personalCredits ?? headerSummary.data.availableCredits)}</strong></div>}<button className="standard-modal-close" type="button" aria-label="Kredi Hareketleri" title="Kredi Hareketleri" disabled={pending || Boolean(editing)} aria-pressed={history} onClick={() => setHistory(v => !v)}><History size={18} /></button></>}>
-    {!history && selected.id !== customer.id && <button className="button secondary agreement-back" disabled={pending} onClick={() => selectCustomer(customer)}><ArrowLeft size={16} /> {customer.name} Anlaşmalarına Dön</button>}
-    <div hidden={history}><AgreementWorkspace key={selected.id} customerId={selected.id} onSelectCustomer={selectCustomer} modalControl={{ adding, setAdding, editing, setEditing, formId, onPendingChange: setPending, onReadyChange: setReady }} /></div>{history && <CreditHistory key={selected.id} customerId={selected.id} onBack={() => setHistory(false)} />}
+  const companyCustomer = summary.data?.customer ?? customer;
+  const showPeople = !companyCustomer.parentCustomerId;
+  useEffect(() => { if (!showPeople) setTab('agreements'); }, [showPeople]);
+  const switchTab = (next: 'agreements' | 'people') => { setTab(next); setHistory(false); setAdding(false); setEditing(null); };
+  return <AgreementDialog title={customer.name + ' — Yönetim'} onClose={onClose} pending={pending}
+    footer={tab === 'people' || history || !canEdit || summary.data?.customer.parentCustomerId ? undefined : editing ? <><button className="button secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Vazgeç</button><button className="button primary" type="submit" form={formId} disabled={pending}>{pending ? 'Kaydediliyor…' : 'Değişiklikleri Kaydet'}</button></> : <>{adding && <button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button>}{ready && (adding ? <button type="submit" form={formId} className="button primary" disabled={pending}>{pending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button> : <button type="button" className="button primary" disabled={pending} onClick={() => setAdding(true)}>+ Anlaşma Ekle</button>)}</>}
+    headerActions={<>{summary.data && <div className="agreement-header-credit"><span>{summary.data.parent || summary.data.children.length ? 'Şirket kredisi' : 'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(summary.data.availableCredits)}</strong></div>}{tab === 'agreements' && <button className="standard-modal-close" type="button" aria-label="Kredi Hareketleri" title="Kredi Hareketleri" disabled={pending || Boolean(editing)} aria-pressed={history} onClick={() => setHistory(v => !v)}><History size={18} /></button>}</>}>
+    <div className="customer-relation-choices company-management-tabs" aria-label="Yönetim Bölümleri">
+      <button type="button" className={'relation-tab' + (tab === 'agreements' ? ' active' : '')} aria-pressed={tab === 'agreements'} disabled={pending} onClick={() => switchTab('agreements')}>Anlaşmalar ve Kredi</button>
+      {showPeople && <button type="button" className={'relation-tab' + (tab === 'people' ? ' active' : '')} aria-pressed={tab === 'people'} disabled={pending} onClick={() => switchTab('people')}>Şirkete Bağlı Kişiler</button>}
+    </div>
+    {tab === 'people' && showPeople ? <CompanyPeoplePanel customer={companyCustomer} onPendingChange={setPending} /> : <><div hidden={history}><AgreementWorkspace customerId={customer.id} modalControl={{ adding, setAdding, editing, setEditing, formId, onPendingChange: setPending, onReadyChange: setReady }} /></div>{history && <CreditHistory customerId={customer.id} onBack={() => setHistory(false)} />}</>}
   </AgreementDialog>;
 }
 export function CustomerAgreementsPage() {
@@ -92,11 +86,12 @@ function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: ()
   </section>;
 }
 type WorkspaceModalControl = { editing: Agreement | null; setEditing: (agreement: Agreement | null) => void; adding: boolean; setAdding: (value: boolean) => void; formId: string; onPendingChange: (pending: boolean) => void; onReadyChange: (ready: boolean) => void };
-function AgreementWorkspace({ customerId, onSelectCustomer, modalControl }: { customerId: string; onSelectCustomer?: (customer: Person) => void; modalControl?: WorkspaceModalControl }) {
+function AgreementWorkspace({ customerId, modalControl }: { customerId: string; modalControl?: WorkspaceModalControl }) {
   const { user } = useAuth(); const client = useQueryClient();
-  const editable = user?.role !== 'CUSTOMER' && hasPermission(user, 'customers.update');
-  const canDelete = user?.role !== 'CUSTOMER' && hasPermission(user, 'customers.delete');
   const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as Summary });
+  const editable = user?.role !== 'CUSTOMER' && !summary.data?.customer.parentCustomerId && hasPermission(user, 'customers.update');
+  const canDelete = user?.role !== 'CUSTOMER' && !summary.data?.customer.parentCustomerId && hasPermission(user, 'customers.delete');
+
   const [editPending, setEditPending] = useState(false);
   const [localEditing, setLocalEditing] = useState<Agreement | null>(null);
   const editing = modalControl?.editing ?? localEditing, setEditing = modalControl?.setEditing ?? setLocalEditing;
@@ -119,23 +114,11 @@ function AgreementWorkspace({ customerId, onSelectCustomer, modalControl }: { cu
   const error = summary.error || save.error || cancel.error || reactivate.error || remove.error;
   if (summary.isPending) return <p role="status">Anlaşmalar yükleniyor…</p>;
   const data = summary.data;
-  const showSharedCredit = Boolean(data?.parent?.shareCreditsWithChildren);
-  const visibleAgreements = data?.agreements.filter(a => a.customerId !== data.parent?.id || showSharedCredit) ?? [];
+  const visibleAgreements = data?.agreements ?? [];
   return <section className="agreement-workspace">
     {error && <p className="error" role="alert">{errorText(error)}</p>}
     {data && <>
-      {user?.role === 'CUSTOMER' && data.parent?.id === user.id && <Link className="button secondary agreement-back" to="/customer/agreements"><ArrowLeft size={16} /> Şirket Anlaşmalarına Dön</Link>}
-      {(!modalControl || showSharedCredit) && <div className={`agreement-overview ${showSharedCredit ? 'has-parent' : ''}`}>
-        <div><span>{data.parent ? 'Kendi kredisi' : 'Kullanılabilir kredi'}</span><strong>{data.personalCredits ?? data.availableCredits}</strong></div>
-        {data.parent && showSharedCredit && <><div><span>Şirket ortak bakiyesi</span><strong>{data.parentCredits}</strong><small>{data.parent.name} · {data.parent.shareCreditsWithChildren ? 'Ortak kullanım açık' : 'Ortak kullanım kapalı'}</small></div><div><span>Kullanılabilir toplam</span><strong>{data.availableCredits}</strong><small>Kendi kredisi + kullanılabilen ortak kredi</small></div></>}
-      </div>}
-      {data.parent && showSharedCredit && <p className="agreement-credit-note muted">{data.parent.shareCreditsWithChildren ? 'Ortak bakiye tüm alt müşterilerce kullanılır.' : 'Ortak kullanım kapalı; yalnızca kendi krediniz kullanılabilir.'}</p>}
-      {data.children.length > 0 && <div className="agreement-family-block"><details className="agreement-children" aria-label="Alt Müşteriler"><summary>Alt Müşteriler <span>{data.children.length}</span></summary>
-        {data.children.map(child => <div className="agreement-history" key={child.id}><div><strong>{child.name}</strong><small>{child.isActive ? 'Kişisel kalan kredi' : 'Pasif müşteri'}: {child.personalCredits ?? 0}</small></div><div className="management-actions">
-          {onSelectCustomer ? <button type="button" className="button secondary" disabled={pending} onClick={() => onSelectCustomer(child)}>{child.name} Anlaşmaları</button> : <Link className="button secondary" to={`/customer/agreements?customerId=${child.id}`}>Anlaşmaları Gör</Link>}
-          <Link className="button secondary" to={`${inboxPath(user!.role)}?customerId=${child.id}`}>Talepleri Gör</Link>
-        </div></div>)}
-      </details>{!data.customer.parentCustomerId && !data.parent && <CompanyCreditSharing compact customer={data.customer} />}</div>}
+      {!modalControl && <div className="agreement-overview company-single-balance"><div><span>{data.parent || data.children.length ? 'Şirket kredisi' : 'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(data.availableCredits)}</strong>{data.parent && <small>{data.parent.name}</small>}</div></div>}
         <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
         {editing && <EditAgreementForm key={editing.id} agreement={editing} formId={formId} onPendingChange={setEditPending} inlineActions={!modalControl} onClose={() => setEditing(null)} onSaved={async () => { setEditing(null); setNotice("Anlaşma güncellendi."); await refresh(); }} />}
         {adding && !editing && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {
@@ -149,7 +132,7 @@ function AgreementWorkspace({ customerId, onSelectCustomer, modalControl }: { cu
           {!modalControl && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button><button className="button primary" disabled={pending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button></div>}
         </form>}
         {!adding && !editing && !visibleAgreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
-        {visibleAgreements.map(a => <details className="agreement-card" key={a.id}><summary><strong>{a.name}</strong><span className="agreement-summary-actions"><span>{a.customer.name} · {states[a.state]} · {a.remainingCredits} / {a.credits} kredi</span>{editable && <button className="agreement-edit-button" type="button" aria-label={a.name + " anlaşmasını düzenle"} title="Anlaşmayı Düzenle" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); setAdding(false); setEditing(a); }}><Pencil size={16} /></button>}{canDelete && <button className="agreement-delete-button" type="button" aria-label={a.name + " anlaşmasını sil"} title="Anlaşmayı Sil" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); if (!pending) { remove.reset(); setNotice(''); remove.mutate(a); } }}><Trash2 size={16} /></button>}</span></summary><div className="agreement-card-body"><p className="muted">{a.customerId === customerId ? 'Bu müşterinin kendi paketi' : a.customerId === data.parent?.id ? 'Şirketin ortak paketi' : 'Alt müşterinin kişisel paketi'}{a.customerId === data.parent?.id && !data.parent.shareCreditsWithChildren ? ' · Ortak kullanım kapalı' : ''}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{a.credits}</strong> · Kullanılan: <strong>{a.usedCredits}</strong> · Kalan: <strong>{a.remainingCredits}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state === 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => reactivate.mutate(a.id)}>Yeniden Etkinleştir</button>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
+        {visibleAgreements.map(a => <details className="agreement-card" key={a.id}><summary><strong>{a.name}</strong><span className="agreement-summary-actions"><span>{a.customer.name} · {states[a.state]} · {a.remainingCredits} / {a.credits} kredi</span>{editable && <button className="agreement-edit-button" type="button" aria-label={a.name + " anlaşmasını düzenle"} title="Anlaşmayı Düzenle" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); setAdding(false); setEditing(a); }}><Pencil size={16} /></button>}{canDelete && <button className="agreement-delete-button" type="button" aria-label={a.name + " anlaşmasını sil"} title="Anlaşmayı Sil" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); if (!pending) { remove.reset(); setNotice(''); remove.mutate(a); } }}><Trash2 size={16} /></button>}</span></summary><div className="agreement-card-body"><p className="muted">{data.parent || data.children.length ? 'Şirket paketi' : 'Bireysel müşteri paketi'}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{a.credits}</strong> · Kullanılan: <strong>{a.usedCredits}</strong> · Kalan: <strong>{a.remainingCredits}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state === 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => reactivate.mutate(a.id)}>Yeniden Etkinleştir</button>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
     </>}
     {notice && <p role="status">{notice}</p>}
   </section>;

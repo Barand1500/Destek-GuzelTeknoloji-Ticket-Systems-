@@ -54,7 +54,8 @@ model User {
   customerLoginChallenge CustomerLoginChallenge?
   @@index([parentCustomerId])
   name String
-  // Contact information can belong to more than one person in a household or company.
+  // Customer primary email and phone are independently checked by the transactional contact guard.
+  // Legacy duplicates remain stored until explicitly resolved; login identity is a separate constraint.
   email String?
   phone String?
   // Only accounts that can sign in receive a unique login identity.

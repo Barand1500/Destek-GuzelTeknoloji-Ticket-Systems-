@@ -72,49 +72,44 @@ export async function listCustomerRelations(actor: Actor, customerId: string) {
     if (actor.id !== person.id && person.parentCustomerId !== actor.id) throw new AppError(403, 'FORBIDDEN', 'Bu müşteriye erişim izniniz yok.');
   } else staff(actor);
   const parent = person.parentCustomerId ? await db.user.findFirst({ where: { id: person.parentCustomerId, isActive: true, deletedAt: null }, select: { id: true, name: true, shareCreditsWithChildren: true } }) : null;
-  const children = await db.user.findMany({ where: { parentCustomerId: person.id, deletedAt: null, role: 'CUSTOMER' }, select: { id: true, name: true, isActive: true }, orderBy: { name: 'asc' } });
+  const children = await db.user.findMany({ where: { parentCustomerId: person.id, deletedAt: null, role: 'CUSTOMER' }, select: { id: true, name: true, company: true, email: true, phone: true, isActive: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] });
   return { customer: person, parent, children };
 }
 export async function listAgreements(actor: Actor, customerId: string) {
   const { customer: person, parent, children } = await listCustomerRelations(actor, customerId);
-  const ownerIds = [person.id, ...(parent?.shareCreditsWithChildren ? [parent.id] : []), ...children.filter(c => c.isActive).map(c => c.id)];
-  const agreements = await db.agreement.findMany({ where: { customerId: { in: ownerIds }, deletedAt: null }, include: { customer: { select: { id: true, name: true } } }, orderBy: [{ endsOn: 'asc' }, { createdAt: 'desc' }] });
+  // Linked people use only their active company's agreements. Legacy personal agreements stay intact.
+  const ownerId = person.parentCustomerId ? parent?.id : person.id;
+  const agreements = await db.agreement.findMany({ where: { customerId: { in: (ownerId ? [ownerId] : []) }, deletedAt: null }, include: { customer: { select: { id: true, name: true } } }, orderBy: [{ endsOn: 'asc' }, { createdAt: 'desc' }, { id: 'asc' }] });
   const customTypes = await db.agreementType.findMany({ where: { id: { in: agreements.map(a => a.type).filter(t => !builtInAgreementTypes[t]) } } });
   const typeNames = new Map(customTypes.map(t => [t.id, t.name]));
   const now = today();
   const active = (a: typeof agreements[number]) => !a.cancelledAt && a.startsOn <= now && a.endsOn >= now;
   const rows = agreements.map(a => ({ ...a, typeLabel: builtInAgreementTypes[a.type] ?? typeNames.get(a.type) ?? 'Özel Anlaşma', fee: a.fee.toString(), remainingCredits: a.credits - a.usedCredits,
-    usable: Boolean(person.isActive && active(a) && (a.customerId === person.id || (a.customerId === parent?.id && parent.shareCreditsWithChildren))),
-    creditSource: a.customerId === person.id ? 'PERSONAL' : a.customerId === parent?.id ? 'COMPANY' : 'CHILD',
+    usable: Boolean(person.isActive && a.customerId === ownerId && active(a)),
+    creditSource: person.parentCustomerId ? 'COMPANY' : 'PERSONAL',
     state: a.cancelledAt ? 'CANCELLED' : a.startsOn > now ? 'UPCOMING' : a.endsOn < now ? 'EXPIRED' : 'ACTIVE' }));
-  const rank = (id: string) => id === person.id ? 0 : id === parent?.id ? 1 : 2;
-  rows.sort((a, b) => rank(a.customerId) - rank(b.customerId) || a.endsOn.getTime() - b.endsOn.getTime() || a.id.localeCompare(b.id));
-  const balanceFor = (id: string) => agreements.filter(a => a.customerId === id && active(a)).reduce((sum, a) => sum + a.credits - a.usedCredits, 0);
-  const personalCredits = person.isActive ? balanceFor(person.id) : 0;
-  const parentCredits = parent?.shareCreditsWithChildren ? balanceFor(parent.id) : 0;
-  const sharedCredits = person.isActive && parent?.shareCreditsWithChildren ? parentCredits : 0;
-  const childSummaries = children.map(c => ({ ...c, personalCredits: c.isActive ? balanceFor(c.id) : 0 }));
-  const charges = await db.creditCharge.findMany({ where: { conversation: { customerId: { in: [person.id, ...children.map(c => c.id)] } } }, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } }, orderBy: { createdAt: 'desc' }, take: 100 });
-  return { customer: person, parent, children: childSummaries, agreements: rows, charges, personalCredits, parentCredits, sharedCredits, availableCredits: personalCredits + sharedCredits };
+  const currentRows = rows.filter(a => a.customerId === ownerId);
+  const availableCredits = currentRows.filter(a => a.usable).reduce((sum,a) => sum + a.remainingCredits, 0);
+  const charges = await db.creditCharge.findMany({ where: person.parentCustomerId ? { conversation: { customerId: person.id } } : { OR: [{ conversation: { customerId: { in: [person.id, ...children.map(c => c.id)] } } }, { agreement: { customerId: person.id } }] }, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } }, orderBy: { createdAt: 'desc' }, take: 100 });
+  return { customer: person, parent: parent ? { ...parent, shareCreditsWithChildren: true } : null, children, agreements: currentRows, charges,
+    personalCredits: person.parentCustomerId ? 0 : availableCredits, parentCredits: person.parentCustomerId ? availableCredits : 0, sharedCredits: person.parentCustomerId ? availableCredits : 0, availableCredits };
 }
-export async function setCompanyCreditSharing(actor: Actor, customerId: string, enabled: boolean) {
-  if (actor.role === 'CUSTOMER') {
-    if (actor.id !== customerId) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi şirketinizin ortak kredi ayarını değiştirebilirsiniz.');
-  } else staff(actor, true);
-  await db.$transaction(async tx => {
-    await tx.$queryRaw`SELECT id FROM User WHERE id = ${customerId} FOR UPDATE`;
-    const company = await customer(tx, customerId);
-    if (company.parentCustomerId || !company.isActive) throw invalid('Ortak kredi ayarı yalnızca aktif ana müşteride değiştirilebilir.');
-    await tx.user.update({ where: { id: customerId }, data: { shareCreditsWithChildren: enabled } });
-    await tx.activityLog.create({ data: { userId: actor.id, action: 'customer.credit_sharing_updated', entityType: 'User', entityId: customerId, metadata: { enabled }, ipAddress: actor.ipAddress } });
-  });
-  publishChange();
+export async function setCompanyCreditSharing(actor: Actor, customerId: string, _enabled: boolean) {
+  staff(actor, true);
+  await customer(db, customerId);
+  throw new AppError(410, 'COMPANY_CREDIT_POLICY', 'Şirkete bağlı kişiler şirket kredisini kullanır. Ortak kredi açma/kapatma ayarı kaldırıldı.');
+}
+async function agreementOwner(tx: Prisma.TransactionClient, customerId: string) {
+  await tx.$queryRaw`SELECT id FROM User WHERE id = ${customerId} FOR UPDATE`;
+  const person = await customer(tx, customerId);
+  if (person.parentCustomerId) throw invalid('Şirkete bağlı kişiler için kişisel anlaşma oluşturulamaz veya değiştirilemez. Şirketin anlaşmalarını yönetin.');
+  return person;
 }
 export async function createAgreement(actor: Actor, customerId: string, input: z.infer<typeof agreementInput>) {
   staff(actor, true);
-  await customer(db, customerId);
   const checked = agreementInput.parse(input);
   return db.$transaction(async tx => {
+    await agreementOwner(tx, customerId);
     if (!builtInAgreementTypes[checked.type]) {
       const active = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${checked.type} AND archivedAt IS NULL FOR UPDATE`;
       if (!active.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
@@ -128,6 +123,7 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
   staff(actor, true);
   const input = agreementInput.parse(raw);
   return db.$transaction(async tx => {
+    await agreementOwner(tx, customerId);
     const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM Agreement WHERE id = ${id} AND customerId = ${customerId} AND deletedAt IS NULL FOR UPDATE`;
     if (!locked.length) throw invalid('Anlaşma bulunamadı veya silinmiş.');
     const before = await tx.agreement.findUniqueOrThrow({ where: { id } });
@@ -144,6 +140,7 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
 export async function cancelAgreement(actor: Actor, customerId: string, id: string) {
   staff(actor, true);
   return db.$transaction(async tx => {
+    await agreementOwner(tx, customerId);
     const changed = await tx.agreement.updateMany({ where: { id, customerId, cancelledAt: null, deletedAt: null }, data: { cancelledAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten iptal edilmiş.');
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.cancelled', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
@@ -152,6 +149,7 @@ export async function cancelAgreement(actor: Actor, customerId: string, id: stri
 export async function reactivateAgreement(actor: Actor, customerId: string, id: string) {
   staff(actor, true);
   return db.$transaction(async tx => {
+    await agreementOwner(tx, customerId);
     const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null, cancelledAt: { not: null } }, data: { cancelledAt: null } });
     if (!changed.count) throw invalid('İptal edilmiş anlaşma bulunamadı.');
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.reactivated', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
@@ -160,6 +158,7 @@ export async function reactivateAgreement(actor: Actor, customerId: string, id: 
 export async function deleteAgreement(actor: Actor, customerId: string, id: string) {
   if (actor.role === 'CUSTOMER' || !can(actor, 'customers.delete')) throw new AppError(403, 'FORBIDDEN', 'Anlaşma silmek için müşteri silme yetkisi gerekir.');
   return db.$transaction(async tx => {
+    await agreementOwner(tx, customerId);
     const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null }, data: { deletedAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten silinmiş.');
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.deleted', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
@@ -208,13 +207,14 @@ export async function debitResolution(tx: Prisma.TransactionClient, actor: Actor
     if (input && (existing.credits !== input.credits || (existing.agreementId ?? null) !== (input.agreementId ?? null))) throw invalid('Bu talebin kredi işlemi daha önce kaydedildi. Tekrar kredi düşülemez.');
     return existing;
   }
-  const person = await customer(tx, conversation.customerId);
-  const ownerIds = [person.id];
-  if (person.parentCustomerId) {
-    // Serialize company policy changes with shared-credit consumption.
-    const companies = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM User WHERE id = ${person.parentCustomerId} AND role = 'CUSTOMER' AND isActive = true AND deletedAt IS NULL AND shareCreditsWithChildren = true FOR UPDATE`;
+  const people = await tx.$queryRaw<{ id: string; parentCustomerId: string | null; isActive: boolean }[]>`SELECT id, parentCustomerId, isActive FROM User WHERE id = ${conversation.customerId} AND role = 'CUSTOMER' AND deletedAt IS NULL FOR UPDATE`;
+  const person = people[0];
+  if (!person) throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Müşteri bulunamadı.');
+  const ownerIds: string[] = [];
+  if (person.isActive && person.parentCustomerId) {
+    const companies = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM User WHERE id = ${person.parentCustomerId} AND role = 'CUSTOMER' AND isActive = true AND deletedAt IS NULL FOR UPDATE`;
     if (companies.length) ownerIds.push(companies[0].id);
-  }
+  } else if (person.isActive) ownerIds.push(person.id);
   if (!input) {
     if (await tx.agreement.count({ where: { customerId: { in: ownerIds }, deletedAt: null } })) throw new AppError(400, 'CREDIT_REQUIRED', 'Talebi çözerken kullanılacak kredi miktarını belirtin. Ücretsiz destek için 0 girin.');
     return null; // Preserve resolution behavior for existing customers without agreements.

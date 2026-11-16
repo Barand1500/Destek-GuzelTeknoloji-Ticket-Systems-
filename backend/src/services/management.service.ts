@@ -1,3 +1,4 @@
+import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import { assignedTo, transferAssignee, assignmentCounts } from './conversation-assignees.js';
 import { managementOrder, sortManagementRows } from './management-sorting.js';
 import { activityActionLabel, richDescriptionFor, type ActivityLog } from '../utils/activity-log-format.js';
@@ -103,9 +104,6 @@ function assertDepartmentsInScope(actor: Actor, departmentIds: string[]) {
   throw new AppError(403, 'FORBIDDEN', 'Kapsamınız dışındaki departmanlara personel bağlayamazsınız.');
 }
 const notFound = () => new AppError(404, "NOT_FOUND", "Kayıt bulunamadı.");
-const normalizeCustomerName = (value: string) =>
-  value.trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
-const normalizeCustomerPhone = (value: string) => value.replace(/\D/g, "");
 async function audit(
   tx: Prisma.TransactionClient,
   actor: Actor,
@@ -191,6 +189,7 @@ export async function users(
     : [];
   const where: Prisma.UserWhereInput = {
     id: q.id,
+    ...(customersOnly && q.rootsOnly ? { parentCustomerId: null } : {}),
     role: customersOnly
       ? "CUSTOMER"
       : (q.role ?? { in: ["ADMIN", "SUPERVISOR", "AGENT"] }),
@@ -291,6 +290,7 @@ export async function createUser(
     if (rest.accessRoleId && !await tx.accessRole.findUnique({ where: { id: rest.accessRoleId } })) throw notFound();
     if (rest.accessRoleId && rest.role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (!rest.accessRoleId || rest.accessRoleId !== actor.accessRole.id)) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzde personel oluşturabilirsiniz.');
+    if (rest.role === 'CUSTOMER') await assertUniqueCustomerContact(tx, rest);
     const data = await tx.user.create({
       data: {
         ...rest,
@@ -323,27 +323,7 @@ export async function createCustomer(
 ) {
   requireStaff(actor);
   const work = async (tx: Prisma.TransactionClient) => {
-    if (input.email) {
-      const sameEmail = await tx.user.findMany({
-        where: { role: "CUSTOMER", deletedAt: null, email: input.email },
-        select: { name: true, email: true, phone: true },
-      });
-      const duplicate = sameEmail.some(
-        (customer) =>
-          normalizeCustomerName(customer.name) ===
-            normalizeCustomerName(input.name) &&
-          normalizeCustomerPhone(customer.phone ?? "") ===
-            normalizeCustomerPhone(input.phone ?? '') &&
-          customer.email?.trim().toLocaleLowerCase("tr-TR") ===
-            input.email?.trim().toLocaleLowerCase("tr-TR"),
-      );
-      if (duplicate)
-        throw new AppError(
-          409,
-          "DUPLICATE_CUSTOMER",
-          "Ad soyad, telefon ve e-posta bilgileriyle kayıtlı bir müşteri zaten var.",
-        );
-    }
+    await assertUniqueCustomerContact(tx, input);
     const data = await tx.user.create({
       data: {
         ...input,
@@ -427,6 +407,7 @@ export async function updateCustomer(
       },
     });
     if (!current) throw notFound();
+    await assertUniqueCustomerContact(tx, input, id);
     const data = await tx.user.update({
       where: { id },
       // Contact edits preserve an explicitly configured customer login identity.
@@ -529,6 +510,7 @@ export async function deleteCustomer(actor: Actor, id: string) {
       select: { id: true, name: true, phone: true, email: true },
     });
     if (!current) throw notFound();
+    if (await tx.user.count({ where: { parentCustomerId: id, deletedAt: null } })) throw new AppError(409, 'COMPANY_HAS_PEOPLE', 'Şirkete bağlı kişiler varken şirket silinemez. Önce şirketin kişiler listesini düzenleyin.');
     const deletedAt = new Date();
     // Customer deletion follows the application's soft-delete model. Hide every
     // associated conversation at the same time so its messages cannot remain in
@@ -623,6 +605,7 @@ export async function updateUser(
     if (!current) throw notFound();
     assertStaffInScope(actor, current);
     const role = input.role ?? current.role;
+    if (role === 'CUSTOMER') await assertUniqueCustomerContact(tx, current.role === 'CUSTOMER' ? input : { email: input.email ?? current.email, phone: input.phone ?? current.phone }, id);
     const accessRoleId = input.accessRoleId !== undefined ? input.accessRoleId : current.accessRoleId;
     const isSystemAdmin = actor.role === 'ADMIN' && !actor.accessRole;
     if (!isSystemAdmin && input.role === 'SUPERVISOR' && current.role !== 'SUPERVISOR') throw new AppError(403, 'FORBIDDEN', 'Departman sorumlusu rolünü yalnızca sistem yöneticisi atayabilir.');
@@ -2041,6 +2024,7 @@ export async function updateProfile(
     : undefined;
   return serial(async (tx) => {
     const latest = await tx.user.findUniqueOrThrow({ where: { id: actor.id } });
+    if (latest.role === 'CUSTOMER') await assertUniqueCustomerContact(tx, input, actor.id);
     if (otpPasswordSetup && !await customerPasswordProof(tx, actor, latest)) throw new AppError(400, 'CURRENT_PASSWORD_REQUIRED', 'Doğrulama süresi doldu. E-posta koduyla yeniden giriş yapın veya mevcut şifrenizi girin.');
     if (
       latest.passwordHash !== current.passwordHash ||

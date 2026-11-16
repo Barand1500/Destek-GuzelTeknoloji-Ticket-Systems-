@@ -45,7 +45,7 @@ export async function duplicateCustomers(actor: Actor, input: z.infer<typeof dup
     throw new AppError(403, 'FORBIDDEN', 'Müşteri birleştirme için düzenleme ve silme yetkisi gerekir.');
   const scope = permissionScope(actor);
   const customers = await db.user.findMany({
-    where: { role: 'CUSTOMER', deletedAt: null, ...(scope === 'ALL' ? {} : { customerConversations: { none: scope === 'OWN' ? { OR: [{ assignedAgentId: null }, { assignedAgentId: { not: actor.id } }] } : { departmentId: { notIn: actor.departmentIds } } } }) },
+    where: { role: 'CUSTOMER', deletedAt: null, parentCustomerId: null, ...(scope === 'ALL' ? {} : { customerConversations: { none: scope === 'OWN' ? { OR: [{ assignedAgentId: null }, { assignedAgentId: { not: actor.id } }] } : { departmentId: { notIn: actor.departmentIds } } } }) },
     select: { id: true, name: true, email: true, phone: true, company: true, extraEmails: true, extraPhones: true },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
   });
@@ -97,7 +97,7 @@ export async function mergeCustomers(
             );
           const target = customers.find((item) => item.id === targetId)!;
           if (customers.some(item => item.parentCustomerId) || await tx.user.count({ where: { parentCustomerId: { in: ids } } }) || await tx.agreement.count({ where: { customerId: { in: ids } } })) {
-            throw new AppError(400, 'CUSTOMER_HAS_AGREEMENTS', 'Anlaşması veya ana/alt müşteri bağlantısı bulunan kayıtlar birleştirilemez. Önce bu bağlantıları kontrol edin.');
+            throw new AppError(400, 'CUSTOMER_HAS_AGREEMENTS', 'Anlaşması veya şirket bağlantısı bulunan kayıtlar birleştirilemez. Önce bu kayıtları yönetim ekranından kontrol edin.');
           }
           const sources = input.sourceIds.map((id) =>
             customers.find((item) => item.id === id)!,

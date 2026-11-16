@@ -1,3 +1,4 @@
+import { staffCreditReport } from '../services/staff-credit-report.service.js';
 import { getTurnstileSettings, revealTurnstileSecret, saveTurnstileSettings, turnstileSettingsSchema } from '../services/turnstile-settings.service.js';
 import { listFormSources, createFormSource, setFormSourceEnabled, deleteFormSource, formSourceSchema } from '../services/form-sources.service.js';
 import { getFormSettings, saveFormSettings, formSettingsSchema } from '../services/forms.service.js';
@@ -136,4 +137,5 @@ managementRouter.get("/notification-settings", staff, async (req, res) => res.js
 managementRouter.put("/notification-settings", staff, async (req, res) => res.json({ success: true, data: await service.updateNotificationSettings(req.actor, schema.notificationSettingsSchema.parse(req.body)) }));
 managementRouter.get("/profile", async (req, res) => res.json({ success: true, data: await service.profile(req.actor) }));
 managementRouter.patch("/profile", async (req, res) => res.json({ success: true, data: await service.updateProfile(req.actor, schema.profileSchema.parse(req.body)) }));
+managementRouter.get("/reports/credit-usage", staff, async (req, res) => res.json({ success: true, ...await staffCreditReport(req.actor, schema.creditReportQuery.parse(req.query)) }));
 managementRouter.get("/reports", staff, async (req, res) => res.json({ success: true, data: await service.reports(req.actor, schema.reportQuery.parse(req.query)) }));
