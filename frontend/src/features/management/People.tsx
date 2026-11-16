@@ -650,7 +650,7 @@ export function CustomersPage() {
                       {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep Aç</Link>}
                       {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
                       <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları Gör' : 'Dosya Yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><FileText size={15} aria-hidden="true" /></button>
-                      {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => setDeleteTarget(customer)}><Trash2 size={15} aria-hidden="true" /></button>}
+                      {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => { remove.reset(); setDeleteTarget(customer); }}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
                     </td>
                   </tr>
@@ -673,6 +673,7 @@ export function CustomersPage() {
             <button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button>
             <h2>Müşteriyi Sil</h2>
             <p><strong>{deleteTarget.name}</strong> adlı müşteriyi silmek istediğinize emin misiniz?</p>
+            <ErrorMessage error={remove.error} />
             <div className="confirm-actions"><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Müşteriyi Sil"}</button></div>
           </form>
         </div>
@@ -681,6 +682,7 @@ export function CustomersPage() {
         <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Toplu Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); bulkRemove.mutate(selectedCustomerIds); }}>
           <button className="confirm-close" type="button" onClick={() => setBulkDeleteConfirm(false)} aria-label="Kapat">×</button>
           <h2>Müşterileri Sil</h2>
+          <ErrorMessage error={bulkRemove.error} />
           <p>Seçilen <strong>{selectedCustomerIds.length}</strong> müşteriyi silmek istediğinize emin misiniz?</p>
           <div className="confirm-actions"><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri Sil"}</button></div>
         </form>

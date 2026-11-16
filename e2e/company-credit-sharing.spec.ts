@@ -1,7 +1,7 @@
 import {test,expect,type Page} from '@playwright/test';
 const companyId='11111111-1111-4111-8111-111111111111',childId='22222222-2222-4222-8222-222222222222';
 async function setup(page:Page,role='ADMIN',permissions?:string[]){
- const company={id:companyId,name:'Merkez Şirket',company:'Merkez Şirket',role:'CUSTOMER',isActive:true,parentCustomerId:null};
+ const company={id:companyId,name:role==='CUSTOMER'?'Şirket Yetkilisi':'Merkez Şirket',company:'Merkez Şirket',role:'CUSTOMER',isActive:true,parentCustomerId:null};
  const children:any[]=Array.from({length:12},(_,i)=>({id:i===0?childId:'contact-'+i,name:'Kişi '+String(i+1).padStart(2,'0'),role:'CUSTOMER',email:i===0?'baran@xn--gzelteknoloji-wob.com':'person'+i+'@example.test',phone:'5301234567',isActive:true,parentCustomerId:companyId}));
  const pack={id:'package',name:'Şirket Paketi',customerId:companyId,customer:company,type:'ONE_OFF',startsOn:'2020-01-01',endsOn:'2099-01-01',credits:100,usedCredits:20,remainingCredits:80,usable:true,state:'ACTIVE'};
  const legacy={...pack,id:'legacy',name:'Eski Kişisel Paket',customerId:childId,customer:children[0],usable:false};
@@ -18,7 +18,7 @@ async function setup(page:Page,role='ADMIN',permissions?:string[]){
    if(method==='POST'){const input=route.request().postDataJSON();writes.push(input);children.push({...input.customer,id:'created',isActive:true,parentCustomerId:companyId});return send(children.at(-1));}
    return send({customer:company,parent:null,children});
   }
-  if(path==='/customers/'+companyId+'/agreements'||path==='/customers/'+childId+'/agreements')return send({customer:path.includes(childId)?children[0]:company,parent:path.includes(childId)?company:null,children:path.includes(childId)?[]:children,agreements:[pack],legacyAgreements:role==='CUSTOMER'?[]:[legacy],charges:[],personalCredits:path.includes(childId)?0:80,parentCredits:80,sharedCredits:80,availableCredits:80});
+  if(path==='/customers/'+companyId+'/agreements'||path==='/customers/'+childId+'/agreements')return send({companyName:company.company,customer:path.includes(childId)?children[0]:company,parent:path.includes(childId)?company:null,children:path.includes(childId)?[]:children,agreements:[pack],legacyAgreements:role==='CUSTOMER'?[]:[legacy],charges:[],personalCredits:path.includes(childId)?0:80,parentCredits:80,sharedCredits:80,availableCredits:80});
   if(path==='/customers/'+childId && method==='PATCH'){const req=route.request();const input=req.headers()['content-type']?.includes('multipart/form-data')?Object.fromEntries((await new Request(req.url(),{method:'POST',headers:{'content-type':req.headers()['content-type']},body:req.postDataBuffer()!}).formData()).entries()):req.postDataJSON();writes.push({path,...input});Object.assign(children[0],input);return send(children[0]);}
   if(path==='/customers/'+childId+'/files')return send([{id:'file',originalName:'Eski Dosya.pdf',size:1024}]);
   if(path==='/staff-presence')return send({staff:[]});
@@ -73,7 +73,12 @@ test('one management dialog contains company people, create/edit and preserved l
 });
 test('company contact portal has only company balance without personal packages or controls',async({page})=>{
  await setup(page,'CUSTOMER');await page.goto('/customer/agreements');
- await expect(page.getByText('Şirket kredisi',{exact:true})).toBeVisible();await expect(page.locator('.agreement-overview>div')).toHaveCount(1);
+ await expect(page.getByText('Şirket kredisi',{exact:true})).toBeVisible();await expect(page.locator('.agreement-overview')).toHaveCount(0);
+ await expect(page.locator('.customer-agreements-company')).toHaveText('Merkez Şirket');
+ await expect(page.locator('.customer-agreements-heading')).not.toContainText('Şirket Yetkilisi');
+ await expect(page.locator('.customer-agreements-actions .agreement-header-credit')).toContainText('80');
+ const balance=await page.locator('.customer-agreements-actions .agreement-header-credit').boundingBox();const history=await page.getByRole('button',{name:'Kredi Hareketleri',exact:true}).boundingBox();expect(balance!.x+balance!.width).toBeLessThanOrEqual(history!.x);
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
  await expect(page.getByText('Şirket Paketi',{exact:true})).toBeVisible();await expect(page.getByText('Eski Kişisel Paket',{exact:true})).toHaveCount(0);
  await expect(page.getByRole('switch')).toHaveCount(0);await expect(page.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);
  await page.screenshot({path:'.local/company-contact-credit.png',fullPage:true});
@@ -126,3 +131,15 @@ test('company person form keeps input and identifies email and phone conflicts',
   await dialog.getByRole('button',{name:'Kapat',exact:true}).click();companyName='Yeni Şirket';
   await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();await expect(dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true})).toBeVisible();
  });
+
+test('blocked company deletion displays guidance inside the delete dialog',async({page})=>{
+ await setup(page);await page.route('**/api/v1/customers/'+companyId,route=>route.request().method()==='DELETE'?route.fulfill({status:409,json:{success:false,error:{code:'COMPANY_HAS_PEOPLE',message:'Bu şirket silinemez çünkü şirkete bağlı kişiler bulunuyor. Önce Yönetim → Şirkete Bağlı Kişiler bölümünden bağlı kişileri silin, ardından şirketi tekrar silmeyi deneyin.'}}}):route.fallback());
+ await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket sil',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Müşteri Silme Onayı',exact:true});await dialog.getByRole('button',{name:'Müşteriyi Sil',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('bağlı kişileri silin');await expect(dialog).toBeVisible();
+});
+
+test('customer agreement heading never substitutes a contact name for a missing company name',async({page})=>{
+ await setup(page,'CUSTOMER');
+ await page.route('**/api/v1/customers/'+childId+'/agreements',route=>route.fulfill({json:{success:true,data:{customer:{id:childId,name:'Kişi',company:'Eski şirket',parentCustomerId:companyId},parent:{id:companyId,name:'ERCAN GÜZEL',company:null},children:[],agreements:[],charges:[],availableCredits:150}}}));
+ await page.goto('/customer/agreements');await expect(page.getByText('Henüz anlaşma bulunmuyor.',{exact:true})).toBeVisible();await expect(page.locator('.customer-agreements-company')).toHaveCount(0);await expect(page.locator('.customer-agreements-heading')).not.toContainText('ERCAN GÜZEL');
+});

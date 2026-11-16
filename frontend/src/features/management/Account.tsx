@@ -1,3 +1,4 @@
+import {displayEmail} from '../../utils/email';
 import { TurnstileSettingsPanel } from './TurnstileSettingsPanel';
 import { FormSettingsPanel } from './FormSettingsPanel';
 import { SortableTableHead } from "../../components/TableSorting";
@@ -356,8 +357,10 @@ export function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [emailChanged,setEmailChanged]=useState(false);
   const profile = useQuery({
     queryKey: ["/profile"],
+    staleTime:0,
     queryFn: async () => (await api.get("/profile")).data.data as User,
   });
   const save = useMutation({
@@ -367,6 +370,7 @@ export function ProfilePage() {
       await client.invalidateQueries({ queryKey: ["/profile"] });
       setFormVersion((v) => v + 1);
       setSuccess(true);
+      setEmailChanged(false);
     },
   });
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -377,7 +381,7 @@ export function ProfilePage() {
     const email = String(values.get("email"));
     save.mutate({
       name: values.get("name"),
-      ...(email !== profile.data?.email ? { email } : {}),
+      ...(displayEmail(email).trim().toLocaleLowerCase('en-US') !== displayEmail(profile.data?.email).trim().toLocaleLowerCase('en-US') ? { email } : {}),
       phone: values.get("phone"),
       ...(values.get("password") ? { password: values.get("password") } : {}),
       ...(values.get("currentPassword")
@@ -392,7 +396,8 @@ export function ProfilePage() {
     const email = form.elements.namedItem('email') as HTMLInputElement;
     repeat.required = Boolean(password.value);
     repeat.setCustomValidity(repeat.value !== password.value ? 'Yeni şifreler eşleşmiyor.' : '');
-    current.required = (Boolean(password.value) && !profile.data?.canSetPasswordWithoutCurrent) || email.value !== (profile.data?.email ?? '');
+    setEmailChanged(displayEmail(email.value).trim().toLocaleLowerCase('en-US') !== displayEmail(profile.data?.email).trim().toLocaleLowerCase('en-US'));
+    if(current) current.required = (Boolean(password.value) && !profile.data?.canSetPasswordWithoutCurrent) || displayEmail(email.value).trim().toLocaleLowerCase('en-US') !== displayEmail(profile.data?.email).trim().toLocaleLowerCase('en-US');
   }
   return (
     <main className="page profile-page">
@@ -438,11 +443,11 @@ export function ProfilePage() {
             </section>
             <section className="profile-security" aria-labelledby="profile-security-title">
               <h2 id="profile-security-title">Güvenlik</h2>
-              {profile.data.canSetPasswordWithoutCurrent && <p className="muted">E-posta koduyla doğrulandınız. Girişten sonraki 15 dakika içinde mevcut şifreyi girmeden yeni şifre belirleyebilirsiniz.</p>}
-            <label>
+              {profile.data.canSetPasswordWithoutCurrent && <p className="muted">E-posta koduyla doğrulandınız. Mevcut şifre gerekmeden ilk şifrenizi oluşturabilirsiniz.</p>}
+            {((profile.data.hasPassword ?? !profile.data.canSetPasswordWithoutCurrent) || emailChanged) && <label>
               <span className="field-label">Mevcut Şifre</span>
               <span className="password-field"><input name="currentPassword" type={showCurrentPassword ? "text" : "password"} maxLength={72} autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowCurrentPassword((visible) => !visible)} aria-label={showCurrentPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showCurrentPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
-            </label>
+            </label>}
             <label>
               <span className="field-label">Yeni Şifre</span>
               <span className="password-field"><input name="password" type={showNewPassword ? "text" : "password"} minLength={5} maxLength={72} autoComplete="new-password" /><button className="password-toggle" type="button" onClick={() => setShowNewPassword((visible) => !visible)} aria-label={showNewPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}>{showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
@@ -452,7 +457,7 @@ export function ProfilePage() {
               <span className="password-field"><input name="passwordRepeat" type={showRepeatPassword ? "text" : "password"} minLength={5} maxLength={72} autoComplete="new-password" /><button className="password-toggle" type="button" onClick={() => setShowRepeatPassword((visible) => !visible)} aria-label={showRepeatPassword ? "Şifre Tekrarını Gizle" : "Şifre Tekrarını Göster"}>{showRepeatPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
             </label>
             <p className="muted">
-              {profile.data.canSetPasswordWithoutCurrent ? 'E-posta adresi değişikliği için mevcut şifre gerekir. ' : 'E-posta veya şifre değişikliği için mevcut şifrenizi girin. '}Yeni şifre en az 5 karakter olmalıdır.
+              {profile.data.hasPassword === false && !profile.data.canSetPasswordWithoutCurrent ? 'İlk şifrenizi oluşturmak için e-posta koduyla yeniden giriş yapın. ' : profile.data.canSetPasswordWithoutCurrent ? 'E-posta adresi değişikliği için önce bir şifre oluşturun. ' : 'E-posta veya şifre değişikliği için mevcut şifrenizi girin. '}Yeni şifre en az 5 karakter olmalıdır.
             </p>
             </section>
             <ErrorMessage error={save.error} />

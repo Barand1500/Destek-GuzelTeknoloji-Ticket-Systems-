@@ -71,7 +71,7 @@ export async function listCustomerRelations(actor: Actor, customerId: string) {
   if (actor.role === 'CUSTOMER') {
     if (actor.id !== person.id && person.parentCustomerId !== actor.id) throw new AppError(403, 'FORBIDDEN', 'Bu müşteriye erişim izniniz yok.');
   } else staff(actor);
-  const parent = person.parentCustomerId ? await db.user.findFirst({ where: { id: person.parentCustomerId, isActive: true, deletedAt: null }, select: { id: true, name: true, shareCreditsWithChildren: true } }) : null;
+  const parent = person.parentCustomerId ? await db.user.findFirst({ where: { id: person.parentCustomerId, isActive: true, deletedAt: null }, select: { id: true, name: true, company: true, shareCreditsWithChildren: true } }) : null;
   const children = await db.user.findMany({ where: { parentCustomerId: person.id, deletedAt: null, role: 'CUSTOMER' }, select: { id: true, name: true, company: true, email: true, phone: true, isActive: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] });
   return { customer: person, parent, children };
 }
@@ -91,7 +91,7 @@ export async function listAgreements(actor: Actor, customerId: string) {
   const currentRows = rows.filter(a => a.customerId === ownerId);
   const availableCredits = currentRows.filter(a => a.usable).reduce((sum,a) => sum + a.remainingCredits, 0);
   const charges = await db.creditCharge.findMany({ where: person.parentCustomerId ? { conversation: { customerId: person.id } } : { OR: [{ conversation: { customerId: { in: [person.id, ...children.map(c => c.id)] } } }, { agreement: { customerId: person.id } }] }, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } }, orderBy: { createdAt: 'desc' }, take: 100 });
-  return { customer: person, parent: parent ? { ...parent, shareCreditsWithChildren: true } : null, children, agreements: currentRows, charges,
+  return { customer: person, companyName: (person.parentCustomerId ? parent?.company : person.company)?.trim() || null, parent: parent ? { ...parent, shareCreditsWithChildren: true } : null, children, agreements: currentRows, charges,
     personalCredits: person.parentCustomerId ? 0 : availableCredits, parentCredits: person.parentCustomerId ? availableCredits : 0, sharedCredits: person.parentCustomerId ? availableCredits : 0, availableCredits };
 }
 export async function setCompanyCreditSharing(actor: Actor, customerId: string, _enabled: boolean) {

@@ -42,9 +42,15 @@ test('Customer email OTP creates a normal session exactly once, rejects ambiguit
     const session = (attempts.find(x => x.status === 'fulfilled') as PromiseFulfilledResult<Awaited<ReturnType<typeof verifyCustomerEmailLogin>>>).value;
     const actor = await resolveActor(session.accessToken);
     assert.equal(actor.role, 'CUSTOMER'); assert.equal(actor.id, customer.id);
+    assert.equal((await profile(actor)).hasPassword,false);
     assert.equal((await profile(actor)).canSetPasswordWithoutCurrent, true);
+    const oldVerification=new Date(Date.now()-60*60_000);
+    await db.session.update({where:{id:actor.sessionId},data:{customerEmailVerifiedAt:oldVerification}});
+    await db.customerLoginChallenge.update({where:{userId:customer.id},data:{consumedAt:oldVerification}});
+    assert.equal((await profile(actor)).canSetPasswordWithoutCurrent,true,'first password remains available in the verified session beyond 15 minutes');
     await assert.rejects(updateProfile(actor, profileSchema.parse({ email: `changed-${email}` })));
     await updateProfile(actor, profileSchema.parse({ password: 'new-password-123' }));
+    assert.equal((await profile(actor)).hasPassword,true);
     assert.equal((await profile(actor)).canSetPasswordWithoutCurrent, false);
     await assert.rejects(updateProfile(actor, profileSchema.parse({ password: 'without-proof-123' })));
     await updateCustomer({ id: staff.id, name: staff.name, email: '', role: 'ADMIN', departmentIds: [], sessionId: '' } as Actor, customer.id, updateCustomerSchema.parse({ name: 'Updated OTP customer' }));

@@ -17,7 +17,7 @@ import './agreements.css';
 type Person = { id: string; name: string; company?: string | null; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
 export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
 type Charge = { id: string; credits: number; createdAt: string; agreement: { name: string } | null; conversation: { id: string; number: number; subject: string; customer: { name: string } } };
-type Summary = { customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
+type Summary = { companyName?: string | null; customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
 const types: Record<string, string> = { MONTHLY: 'Aylık', YEARLY: 'Yıllık', ONE_OFF: 'Ek Destek Kredisi', MAINTENANCE: 'Bakım Anlaşması' };
 const states: Record<string, string> = { ACTIVE: 'Aktif', UPCOMING: 'Başlamadı', EXPIRED: 'Süresi Doldu', CANCELLED: 'İptal Edildi' };
 const date = (value: string) => value.slice(0, 10).split('-').reverse().join('.');
@@ -68,7 +68,10 @@ export function CustomerAgreementsPage() {
   const { user } = useAuth(); const [params] = useSearchParams();
   const [history, setHistory] = useState(false);
   const customerId = params.get('customerId') || user!.id;
-  return <main className="page"><div className="page-heading"><h1>Anlaşmalarım ve Kredilerim</h1><button className="button secondary" type="button" onClick={() => setHistory(true)}><History size={17} /> Kredi Hareketleri</button></div><AgreementWorkspace key={customerId} customerId={customerId} />
+  const summary = useQuery({queryKey:['agreements',customerId],queryFn:async()=>(await api.get(`/customers/${customerId}/agreements`)).data.data as Summary});
+  const data=summary.data;
+  const companyName=data?.companyName?.trim() || (data?.parent ? data.parent.company?.trim() : data?.customer.company?.trim());
+  return <main className="page customer-agreements-page"><div className="page-heading customer-agreements-heading"><div><h1>Anlaşmalarım ve Kredilerim</h1>{companyName&&<p className="customer-agreements-company">{companyName}</p>}</div><div className="customer-agreements-actions">{data&&<div className="agreement-header-credit"><span>{data.parent||data.children.length?'Şirket kredisi':'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(data.availableCredits)}</strong></div>}<button className="button secondary" type="button" onClick={() => setHistory(true)}><History size={17} /> Kredi Hareketleri</button></div></div><AgreementWorkspace key={customerId} customerId={customerId} />
     {history && <AgreementDialog title="Kredi Hareketleri" onClose={() => setHistory(false)}><CreditHistory customerId={customerId} /></AgreementDialog>}
   </main>;
 }
@@ -118,7 +121,6 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
   return <section className="agreement-workspace">
     {error && <p className="error" role="alert">{errorText(error)}</p>}
     {data && <>
-      {!modalControl && <div className="agreement-overview company-single-balance"><div><span>{data.parent || data.children.length ? 'Şirket kredisi' : 'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(data.availableCredits)}</strong>{data.parent && <small>{data.parent.name}</small>}</div></div>}
         <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
         {editing && <EditAgreementForm key={editing.id} agreement={editing} formId={formId} onPendingChange={setEditPending} inlineActions={!modalControl} onClose={() => setEditing(null)} onSaved={async () => { setEditing(null); setNotice("Anlaşma güncellendi."); await refresh(); }} />}
         {adding && !editing && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {

@@ -9,7 +9,7 @@ import { visibility, updateConversation, addMessage } from '../src/services/conv
 test('Agreements preserve dated purchases, enforce family scope and debit atomically exactly once', async () => {
   assert.equal(agreementInput.safeParse({ name: 'x', startsOn: '2026-02-30', endsOn: '2027-01-01', fee: '100', credits: 1, type: 'MONTHLY' }).success, false);
   const suffix = randomUUID();
-  const users = await Promise.all(['ADMIN', 'CUSTOMER', 'CUSTOMER', 'CUSTOMER', 'CUSTOMER'].map((role, i) => db.user.create({ data: { role: role as 'ADMIN' | 'CUSTOMER', name: `Agreement fixture ${suffix} ${i}`, passwordHash: 'fixture' } })));
+  const users = await Promise.all(['ADMIN', 'CUSTOMER', 'CUSTOMER', 'CUSTOMER', 'CUSTOMER'].map((role, i) => db.user.create({ data: { role: role as 'ADMIN' | 'CUSTOMER', name: `Agreement fixture ${suffix} ${i}`, passwordHash: 'fixture',company:i===1?'Legal Company Name':i===2?'Old Contact Company':null } })));
   const [staff, parent, child, stranger, sibling] = users;
   const actor: Actor = { id: staff.id, name: staff.name, email: '', role: 'ADMIN', departmentIds: [], sessionId: '' };
   const client: Actor = { ...actor, id: parent.id, role: 'CUSTOMER' };
@@ -25,6 +25,8 @@ test('Agreements preserve dated purchases, enforce family scope and debit atomic
     await assert.rejects(createAgreement(actor, child.id, { name: 'Child credit', type: 'ONE_OFF', startsOn: '2020-01-01', endsOn: '2099-01-01', fee: '25', credits: 3 }));
     const childActor = { ...client, id: child.id };
     const childSummary = await listAgreements(childActor, child.id);
+    assert.equal(childSummary.companyName,'Legal Company Name');
+    assert.equal(childSummary.parent?.company,'Legal Company Name');
     assert.equal(childSummary.availableCredits, 10);
     assert.equal(childSummary.personalCredits, 0);
     assert.equal(childSummary.agreements[0].customerId, parent.id);

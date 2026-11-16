@@ -65,6 +65,7 @@ model User {
   extraPhones String? @db.VarChar(500)
   extraEmails String? @db.VarChar(500)
   deletedAt DateTime?
+  passwordConfigured Boolean @default(false)
   passwordHash String
   role Role @default(CUSTOMER)
   accessRoleId String?

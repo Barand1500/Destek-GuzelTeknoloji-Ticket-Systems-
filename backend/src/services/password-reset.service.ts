@@ -54,7 +54,7 @@ export async function completePasswordReset(token: string, password: string) {
     if (!reset || reset.expiresAt <= new Date() || !reset.user.isActive || reset.user.deletedAt) throw invalid();
     const consumed = await tx.passwordReset.deleteMany({ where: { id: reset.id, tokenHash: hash(token), expiresAt: { gt: new Date() } } });
     if (!consumed.count) throw invalid();
-    await tx.user.update({ where: { id: reset.userId }, data: { passwordHash } });
+    await tx.user.update({ where: { id: reset.userId }, data: { passwordHash, passwordConfigured:true } });
     await tx.session.updateMany({ where: { userId: reset.userId, revokedAt: null }, data: { revokedAt: new Date() } });
   });
 }

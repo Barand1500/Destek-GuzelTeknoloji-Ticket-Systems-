@@ -296,6 +296,7 @@ export async function createUser(
         ...rest,
         loginEmail: rest.email,
         passwordHash,
+        ...(passwordHash ? {passwordConfigured:true} : {}),
         skills: { create: rest.role === 'CUSTOMER' ? [] : skills },
         departments: {
           create: departmentIds.map((departmentId) => ({ departmentId })),
@@ -510,7 +511,7 @@ export async function deleteCustomer(actor: Actor, id: string) {
       select: { id: true, name: true, phone: true, email: true },
     });
     if (!current) throw notFound();
-    if (await tx.user.count({ where: { parentCustomerId: id, deletedAt: null } })) throw new AppError(409, 'COMPANY_HAS_PEOPLE', 'Şirkete bağlı kişiler varken şirket silinemez. Önce şirketin kişiler listesini düzenleyin.');
+    if (await tx.user.count({ where: { parentCustomerId: id, deletedAt: null } })) throw new AppError(409, 'COMPANY_HAS_PEOPLE', 'Bu şirket silinemez çünkü şirkete bağlı kişiler bulunuyor. Önce Yönetim → Şirkete Bağlı Kişiler bölümünden bağlı kişileri silin, ardından şirketi tekrar silmeyi deneyin.');
     const deletedAt = new Date();
     // Customer deletion follows the application's soft-delete model. Hide every
     // associated conversation at the same time so its messages cannot remain in
@@ -713,6 +714,7 @@ export async function updateUser(
         ...(input.email !== undefined ? { loginEmail: input.email } : {}),
         ...(role === 'CUSTOMER' || skills !== undefined ? { skills: { deleteMany: {}, create: role === 'CUSTOMER' ? [] : skills } } : {}),
         passwordHash,
+        ...(passwordHash ? {passwordConfigured:true} : {}),
         ...(departmentIds
           ? {
               departments: {
@@ -1982,12 +1984,12 @@ export async function testIntegration(
 }
 export async function profile(actor: Actor) {
   const data = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: person });
-  const identity = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { email: true, loginEmail: true } });
-  return { ...data, canSetPasswordWithoutCurrent: await customerPasswordProof(db, actor, identity) };
+  const identity = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { email: true, loginEmail: true, passwordConfigured: true } });
+  return { ...data, hasPassword: actor.role !== 'CUSTOMER' || identity.passwordConfigured, canSetPasswordWithoutCurrent: await customerPasswordProof(db, actor, identity) };
 }
-async function customerPasswordProof(tx: Prisma.TransactionClient, actor: Actor, user: { email: string | null; loginEmail: string | null }) {
-  if (actor.role !== 'CUSTOMER' || !(user.loginEmail || user.email)) return false;
-  const session = await tx.session.findFirst({ where: { id: actor.sessionId, userId: actor.id, revokedAt: null, expiresAt: { gt: new Date() }, customerEmailVerifiedAt: { gt: new Date(Date.now() - 15 * 60_000) } }, select: { customerEmailVerifiedAt: true } });
+async function customerPasswordProof(tx: Prisma.TransactionClient, actor: Actor, user: { email: string | null; loginEmail: string | null; passwordConfigured:boolean }) {
+  if (actor.role !== 'CUSTOMER' || user.passwordConfigured || !(user.loginEmail || user.email)) return false;
+  const session = await tx.session.findFirst({ where: { id: actor.sessionId, userId: actor.id, revokedAt: null, expiresAt: { gt: new Date() }, customerEmailVerifiedAt: { not:null } }, select: { customerEmailVerifiedAt: true } });
   return Boolean(session?.customerEmailVerifiedAt && await tx.customerLoginChallenge.count({ where: { userId: actor.id, email: user.loginEmail || user.email!, consumedAt: session.customerEmailVerifiedAt } }));
 }
 export async function user(actor: Actor, id: string) {
@@ -2017,7 +2019,7 @@ export async function updateProfile(
     throw new AppError(
       400,
       "CURRENT_PASSWORD_REQUIRED",
-      "E-posta veya şifre değişikliği için mevcut şifrenizi doğru girin.",
+      actor.role === 'CUSTOMER' && input.password && !input.currentPassword ? 'Şifre belirlemek için e-posta koduyla yeniden giriş yapın veya mevcut şifrenizi girin.' : 'E-posta veya şifre değişikliği için mevcut şifrenizi doğru girin.',
     );
   const passwordHash = input.password
     ? await bcrypt.hash(input.password, 12)
@@ -2044,6 +2046,7 @@ export async function updateProfile(
         ...(input.email !== undefined ? { loginEmail: input.email } : {}),
         ...(actor.role === 'CUSTOMER' && passwordHash ? { loginEmail: input.email ?? latest.loginEmail ?? latest.email } : {}),
         passwordHash,
+        ...(passwordHash ? {passwordConfigured:true} : {}),
       },
       select: person,
     });

@@ -55,6 +55,7 @@ export async function register(input: {
         name: input.name,
         email: input.email,
         loginEmail: input.email,
+        passwordConfigured: true,
         passwordHash: await bcrypt.hash(input.password, 12),
       },
     });
@@ -82,6 +83,7 @@ export async function login(input: { email: string; password: string }) {
       "INVALID_CREDENTIALS",
       "E-posta veya şifre hatalı.",
     );
+  if(!user.passwordConfigured) await db.user.update({where:{id:user.id},data:{passwordConfigured:true}});
   return issue(user.id);
 }
 export async function refresh(token: string) {

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 test('Customer email code opens the portal and allows password setup without announcements', async ({ page }) => {
   let loggedIn = false;
   let profileWrite: any;
-  const user = { id: 'customer', name: 'Kod Müşterisi', email: 'customer@example.test', phone: '5301234567', role: 'CUSTOMER' };
+  const user = { id: 'customer', name: 'Kod Müşterisi', email: 'customer@xn--gzelteknoloji-wob.com', phone: '5301234567', role: 'CUSTOMER' };
   await page.route('**/socket.io/**', route => route.abort());
   await page.route('**/api/v1/**', route => {
     const path = new URL(route.request().url()).pathname.replace('/api/v1', '');
@@ -16,7 +16,7 @@ test('Customer email code opens the portal and allows password setup without ann
     }
     if (path === '/profile') {
       if (route.request().method() === 'PATCH') profileWrite = route.request().postDataJSON();
-      return send({ ...user, canSetPasswordWithoutCurrent: !profileWrite });
+      return send({ ...user, hasPassword:Boolean(profileWrite), canSetPasswordWithoutCurrent: !profileWrite });
     }
     if (path === '/staff-presence') return send({ staff: [], idleMinutes: 5 });
     if (path.includes('dashboard')) return send({ total: 0, unassigned: 0, conversationsToday: 0, statuses: {} });
@@ -35,10 +35,23 @@ test('Customer email code opens the portal and allows password setup without ann
   await expect(page.getByRole('button', { name: 'Duyurular', exact: true })).toHaveCount(0);
   await page.goto('/customer/profile');
   await expect(page.getByText(/E-posta koduyla doğrulandınız/)).toBeVisible();
+  await expect(page.locator('input[name=currentPassword]')).toHaveCount(0);
+  await page.locator('input[name=email]').fill('changed@example.test');
+  await expect(page.locator('input[name=currentPassword]')).toBeVisible();
+  await page.locator('input[name=email]').fill('customer@güzelteknoloji.com');
+  await expect(page.locator('input[name=currentPassword]')).toHaveCount(0);
   await page.locator('input[name=password]').fill('new-password-123');
   await page.locator('input[name=passwordRepeat]').fill('new-password-123');
   await page.screenshot({ path: '.local/customer-email-profile.png', fullPage: true });
   await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
   await expect.poll(() => profileWrite?.password).toBe('new-password-123');
   expect(profileWrite.currentPassword).toBeUndefined();
+  expect(profileWrite.email).toBeUndefined();
+  await expect(page.locator('input[name=currentPassword]')).toBeVisible();
+});
+
+test('customer without a configured password never sees current password even without recent proof',async({page})=>{
+ const user={id:'customer',name:'Kod Müşterisi',email:'customer@example.test',role:'CUSTOMER',hasPassword:false,canSetPasswordWithoutCurrent:false};
+ await page.route('**/api/v1/**',route=>{const path=new URL(route.request().url()).pathname;return route.fulfill({json:{success:true,data:path.endsWith('/auth/refresh')?{accessToken:'test',user}:path.endsWith('/profile')?user:[]}});});
+ await page.goto('/customer/profile');await expect(page.locator('input[name=password]')).toBeVisible();await expect(page.locator('input[name=currentPassword]')).toHaveCount(0);await expect(page.getByText('İlk şifrenizi oluşturmak için e-posta koduyla yeniden giriş yapın.',{exact:false})).toBeVisible();
 });

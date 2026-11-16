@@ -3903,6 +3903,7 @@ export const UserScalarFieldEnum = {
   extraPhones: 'extraPhones',
   extraEmails: 'extraEmails',
   deletedAt: 'deletedAt',
+  passwordConfigured: 'passwordConfigured',
   passwordHash: 'passwordHash',
   role: 'role',
   accessRoleId: 'accessRoleId',
