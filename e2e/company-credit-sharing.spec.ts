@@ -103,9 +103,9 @@ test('company person form keeps input and identifies email and phone conflicts',
 });
 
  test('existing people can be searched and linked inside company management',async({page})=>{
-  await setup(page);let linked=false;
+  await setup(page);let linked=false;const candidateSearches:string[]=[];
   const existingId='33333333-3333-4333-8333-333333333333';
-  await page.route('**/api/v1/customers/'+companyId+'/relation-candidates**',route=>{const url=new URL(route.request().url());return route.fulfill({json:{success:true,data:[{id:existingId,name:'Mevcut Kişi',email:'baran@xn--gzelteknoloji-wob.com',company:null}],pagination:{total:1,totalPages:1}}});});
+  await page.route('**/api/v1/customers/'+companyId+'/relation-candidates**',route=>{const url=new URL(route.request().url());candidateSearches.push(url.searchParams.get('search')??'');return route.fulfill({json:{success:true,data:[{id:existingId,name:'Mevcut Kişi',email:'baran@xn--gzelteknoloji-wob.com',company:null}],pagination:{total:1,totalPages:1}}});});
   await page.route('**/api/v1/customers/'+existingId+'/parent',route=>{expect(route.request().method()).toBe('PUT');expect(route.request().postDataJSON()).toEqual({parentCustomerId:companyId});linked=true;return route.fulfill({json:{success:true}});});
   await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
@@ -114,7 +114,8 @@ test('company person form keeps input and identifies email and phone conflicts',
   await expect(dialog.getByRole('button',{name:'Yeni Kişi',exact:true})).toHaveAttribute('aria-pressed','true');
   await dialog.getByRole('button',{name:'Mevcut Kişi',exact:true}).click();
   await expect(dialog.getByLabel('Ad Soyad',{exact:true})).toHaveCount(0);
-  await dialog.getByRole('textbox',{name:'Eklenecek kişiyi ara',exact:true}).fill('Mevcut');await dialog.getByRole('button',{name:'Ara',exact:true}).click();
+  await dialog.getByRole('textbox',{name:'Eklenecek kişiyi ara',exact:true}).fill('Mevcut');await expect(dialog.getByRole('button',{name:'Ara',exact:true})).toHaveCount(0);
+  await expect.poll(()=>candidateSearches.includes('Mevcut')).toBe(true);
   const candidate=dialog.locator('.company-existing-options>label').first();
   await expect(candidate).toContainText('baran@güzelteknoloji.com');await expect(candidate).not.toContainText('xn--');
   const positions=await candidate.evaluate(node=>{const radio=node.querySelector('input')!.getBoundingClientRect(),name=node.querySelector('strong')!.getBoundingClientRect();return {radioX:radio.x,radioY:radio.y,nameX:name.x,nameBottom:name.bottom};});

@@ -1,5 +1,5 @@
 import {displayEmail} from '../../utils/email';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {useMutation,useQuery} from '@tanstack/react-query';
 import {api,errorText} from '../../services/api';
 
@@ -8,14 +8,15 @@ type Candidates={data:Candidate[];pagination:{total:number;totalPages:number}};
 
 export function ExistingCompanyPerson({customerId,onPendingChange,onCancel,onAdded}:{customerId:string;onPendingChange:(value:boolean)=>void;onCancel:()=>void;onAdded:()=>Promise<void>}){
  const [input,setInput]=useState(''),[search,setSearch]=useState(''),[page,setPage]=useState(1),[selected,setSelected]=useState<Candidate|null>(null);
+ useEffect(()=>{const timer=window.setTimeout(()=>{setSearch(input.trim());setPage(1);},300);return()=>window.clearTimeout(timer);},[input]);
  const query=useQuery({queryKey:['company-person-candidates',customerId,search,page],queryFn:async({signal})=>(await api.get<Candidates>(`/customers/${customerId}/relation-candidates`,{signal,params:{direction:'CHILD',search,page,limit:10}})).data});
  const add=useMutation({mutationFn:async()=>{if(!selected) return;onPendingChange(true);await api.put(`/customers/${selected.id}/parent`,{parentCustomerId:customerId});},onSuccess:onAdded,onSettled:()=>onPendingChange(false)});
  return <section className="company-existing-person">
   <h3>Mevcut Kişiyi Şirkete Ekle</h3>
   <p className="muted">Başka bir şirkete bağlı olmayan kişiler listelenir. Eklenen kişi şirket kredisini kullanır.</p>
-  <form className="company-existing-search" onSubmit={event=>{event.preventDefault();setSearch(input.trim());setPage(1);setSelected(null);add.reset();}}>
-   <label className="agreement-field"><span className="field-label">Kişi Ara</span><input aria-label="Eklenecek kişiyi ara" value={input} maxLength={150} placeholder="Ad, e-posta veya telefon" disabled={add.isPending} onChange={event=>setInput(event.target.value)} /></label>
-   <button className="button secondary" disabled={add.isPending}>Ara</button>
+  <form className="company-existing-search" onSubmit={event=>event.preventDefault()}>
+   <label className="agreement-field"><span className="field-label">Kişi Ara</span><input aria-label="Eklenecek kişiyi ara" value={input} maxLength={150} placeholder="Ad, e-posta veya telefon" disabled={add.isPending} onChange={event=>{setInput(event.target.value);setSelected(null);add.reset();}} /></label>
+   
   </form>
   {(query.error||add.error)&&<p className="error" role="alert">{errorText(query.error||add.error)}</p>}
   {query.isPending&&<p role="status">Kişiler yükleniyor…</p>}

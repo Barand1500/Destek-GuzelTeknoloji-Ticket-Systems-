@@ -129,7 +129,7 @@ test("settings reports: tabs, filtered metrics, CSV download and responsive them
   await creditPanel.getByRole('button',{name:'Sonraki',exact:true}).click();
   await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('page')).toBe('2');
   await creditPanel.getByRole('textbox',{name:'Personel, Talep veya Müşteri Ara'}).fill('Ece');
-  await creditPanel.getByRole('button',{name:'Ara',exact:true}).click();
+  await expect(creditPanel.getByRole('button',{name:'Ara',exact:true})).toHaveCount(0);
   await expect.poll(()=>creditRequests.at(-1)?.searchParams.get('search')).toBe('Ece');
   expect(creditRequests.at(-1)?.searchParams.get('page')).toBe('1');
   await creditPanel.getByRole('button',{name:'Kredi Kullanımı Filtresi',exact:true}).click();

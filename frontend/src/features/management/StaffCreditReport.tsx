@@ -1,5 +1,5 @@
 import {DropdownSelect} from '../../components/DropdownSelect';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {Link} from 'react-router-dom';
 import {api,errorText} from '../../services/api';
@@ -12,14 +12,15 @@ const number=(value:number)=>new Intl.NumberFormat('tr-TR').format(value);
 
 export function StaffCreditReport({days,agentId,departmentId,onPersonSelect}:{days:number;agentId?:string;departmentId?:string;onPersonSelect:(id:string)=>void}){
  const {user}=useAuth();const [page,setPage]=useState(1);const [searchInput,setSearchInput]=useState('');const [search,setSearch]=useState('');const [creditType,setCreditType]=useState('all');const [limit,setLimit]=useState(20);
+ useEffect(()=>{const timer=window.setTimeout(()=>{setSearch(searchInput.trim());setPage(1);},300);return()=>window.clearTimeout(timer);},[searchInput]);
  const query=useQuery({queryKey:['/reports','credit-usage',days,agentId,departmentId,page,search,creditType,limit],staleTime:30_000,queryFn:async({signal})=>(await api.get<CreditReport>('/reports/credit-usage',{signal,params:{days,agentId,departmentId,page,limit,search:search||undefined,creditType}})).data});
  const data=query.data;
  return <section className="report-panel report-credit-usage">
   <div className="report-panel-heading"><h2>Personel Kredi Kullanımları</h2>{data&&<div className="report-credit-totals" aria-label="Kredi ve Talep Toplamları"><strong className="report-credit-total">{number(data.totalCredits)} kredi</strong><strong className="report-credit-count">{number(data.pagination.total)} talep</strong></div>}</div>
   <p className="report-note">Son {days} gün içindeki kredi kullanımları. Personel bilgisi krediyi kullanan kişiyi gösterir.</p>
-  <form className="report-credit-filters" onSubmit={event=>{event.preventDefault();setSearch(searchInput.trim());setPage(1);}}>
+  <form className="report-credit-filters" onSubmit={event=>event.preventDefault()}>
    <label className="report-credit-search"><span>Personel, Talep veya Müşteri Ara</span><input value={searchInput} maxLength={100} onChange={event=>setSearchInput(event.target.value)} placeholder="Ad, talep numarası, konu veya anlaşma" /></label>
-   <button className="button secondary" type="submit">Ara</button>
+   
    <DropdownSelect label="Kredi Kullanımı" ariaLabel="Kredi Kullanımı Filtresi" value={creditType} options={[{value:'all',label:'Tüm Kullanımlar'},{value:'paid',label:'Kredi Harcananlar'},{value:'free',label:'Ücretsiz Destekler'}]} onChange={value=>{setCreditType(value);setPage(1);}} />
    <DropdownSelect label="Sayfa Başına" ariaLabel="Kredi Kayıt Sayısı" value={String(limit)} options={[10,20,50].map(value=>({value:String(value),label:String(value)+' kayıt'}))} onChange={value=>{setLimit(Number(value));setPage(1);}} />
    {(search||searchInput||creditType!=='all')&&<button className="button secondary" type="button" onClick={()=>{setSearch('');setSearchInput('');setCreditType('all');setPage(1);}}>Temizle</button>}
