@@ -116,11 +116,12 @@ test('Agreements preserve dated purchases, enforce family scope and debit atomic
     assert.equal((await listAgreements(actor, child.id)).sharedCredits, 2);
     await updateAgreement(actor, parent.id, a.id, { ...changes, credits: 10 });
     await assert.rejects(deleteAgreement(client, parent.id, a.id));
+    await assert.rejects(deleteAgreement({ ...actor, role: 'AGENT', rolePermissions: ['customers.update'] }, parent.id, a.id));
     await assert.rejects(deleteAgreement(actor, stranger.id, a.id));
     await assert.rejects(deleteAgreement({ ...actor, role: 'AGENT', rolePermissions: ['customers.view'] }, parent.id, a.id));
     const removable = await createAgreement(actor, parent.id, { name: 'Remove remaining balance', type: 'ONE_OFF', startsOn: '2020-01-01', endsOn: '2099-01-01', fee: '0', credits: 4 });
     assert.equal((await listAgreements(actor, child.id)).sharedCredits, 4);
-    await deleteAgreement(actor, parent.id, removable.id);
+    await deleteAgreement({ ...actor, role: 'AGENT', rolePermissions: ['customers.delete'] }, parent.id, removable.id);
     assert.equal((await listAgreements(actor, child.id)).sharedCredits, 0);
     const unusedAttempt = await make();
     await assert.rejects(db.$transaction(tx => debitResolution(tx, actor, unusedAttempt, { agreementId: removable.id, credits: 1 })));

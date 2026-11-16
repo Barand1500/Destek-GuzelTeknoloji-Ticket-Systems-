@@ -158,7 +158,7 @@ export async function reactivateAgreement(actor: Actor, customerId: string, id: 
   });
 }
 export async function deleteAgreement(actor: Actor, customerId: string, id: string) {
-  staff(actor, true);
+  if (actor.role === 'CUSTOMER' || !can(actor, 'customers.delete')) throw new AppError(403, 'FORBIDDEN', 'Anlaşma silmek için müşteri silme yetkisi gerekir.');
   return db.$transaction(async tx => {
     const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null }, data: { deletedAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten silinmiş.');

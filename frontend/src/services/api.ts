@@ -42,6 +42,7 @@ export function errorText(error: unknown) {
     const failure = error.response?.data?.error;
     if (failure?.code === "VALIDATION_ERROR" && failure.details?.fieldErrors) {
       const labels: Record<string, string> = {
+        subject: "Konu", message: "Açıklama", websiteId: "Proje", departmentId: "Departman", priority: "Öncelik",
         name: "Ad Soyad", email: "E-Posta", phone: "Telefon", password: "Şifre",
         role: "Rol", accessRoleId: "Yetki Rolü", departmentIds: "Departman Üyelikleri",
         skills: "Yetenekler", assignmentTransfers: "Talep Aktarımları",

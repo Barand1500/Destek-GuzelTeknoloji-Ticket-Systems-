@@ -44,11 +44,11 @@ test('Company policy and child summaries use standard modals without mixing bala
   await expect(family).toContainText('Kişisel kalan kredi: 20');
   await page.screenshot({ path: '.local/company-credit-policy.png', fullPage: true });
   await dialog.getByRole('button', { name: 'Ahmet Anlaşmaları', exact: true }).click();
-  await expect(dialog.getByText('Kendi kredisi', { exact: true })).toBeVisible();
+  await expect(dialog.locator('.agreement-header-credit')).toContainText('Kullanılabilir kredi');
   await expect(dialog.getByText('Şirket ortak bakiyesi', { exact: true })).toHaveCount(0);
   await expect(dialog.locator('.agreement-workspace')).not.toContainText('Şirket Paketi');
-  await expect(dialog.locator('.agreement-overview>div')).toHaveCount(1);
-  await expect(dialog.locator('.agreement-overview')).toContainText('20');
+  await expect(dialog.locator('.agreement-overview>div')).toHaveCount(0);
+  await expect(dialog.locator('.agreement-header-credit')).toContainText('20');
   await expect(dialog.getByRole('switch')).toHaveCount(0);
   await expect(dialog.getByText(/Ortak kullanım kapalı; yalnızca kendi krediniz/)).toHaveCount(0);
   await page.screenshot({ path: '.local/child-credit-balances.png', fullPage: true });

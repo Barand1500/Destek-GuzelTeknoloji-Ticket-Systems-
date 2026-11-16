@@ -102,3 +102,5 @@ Ortak kredi paylaşımı kapalıyken alt müşterinin Anlaşmalar görünümünd
 İptal edilmiş anlaşmanın detayında Yeniden Etkinleştir işlemi vardır. customers.update yetkili personel yalnızca silinmemiş ve iptal durumundaki anlaşmayı açabilir. cancelledAt temizlenir; tarihler, toplam/kullanılan kredi ve geçmiş hareketler korunur. Süresi dolmuş paket EXPIRED kalır; gelecekte başlayan paket başlangıcı gelene kadar kullanılamaz. agreement.reactivated işlem günlüğü oluşturulur.
 
 Anlaşma silme için ek onay modalı açılmaz: çöp kutusu doğrudan silme isteği gönderir. İstek sürerken işlem düğmeleri kilitlenir; hata mevcut ekranda gösterilir. Geçmişi koruyan silme davranışı aynıdır.
+
+Anlaşma yetkileri: ekleme/düzenleme/iptal/yeniden etkinleştirme customers.update, silme customers.delete. Müşteri rolü bu yazma işlemlerinden bağımsız olarak engellenir. Personelde silme ve düzenleme düğmeleri ayrı kontrol edilir; yalnızca düzenleme yetkisi silme API erişimi sağlamaz.

@@ -535,7 +535,7 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
             </section>
             <aside className="assignment-transfer-builder"><h3>Seçilenleri Aktarım Grubuna Ekle</h3><p>{selectedAssignmentIds.length} talep seçildi. Farklı hedefler için bu adımı tekrarlayabilirsiniz.</p><DirectorySelect endpoint="/departments" label="Hedef Departman" value={transferDepartmentId} onChange={(value) => { setTransferDepartmentId(value); setTransferAgentId(""); }} params={{ accessible: "true" }} /><DropdownSelect label="Atanan Personel" ariaLabel="Aktarım Hedefi Personeli" value={transferAgentId} onChange={setTransferAgentId} options={canAssignStaff ? [{ value: "", label: transferDepartmentId ? "Atanmamış · departman kuyruğu" : "Önce departman seçin" }, ...(editedUserCanReceive && !transferAgents.data?.some((agent) => agent.id === editing?.id) ? [{ value: editing!.id, label: `${editing!.name} (bu kullanıcı)` }] : []), ...(transferAgents.data ?? []).map((agent) => ({ value: agent.id, label: agent.name }))] : [{ value: "", label: "Atama İzniniz Yok" }]} />{!canTransferDepartments && <small className="assignment-transfer-permission-note">Farklı departmana aktarım için “Talepleri departmanlar arasında aktar” izni gerekir.</small>}{!canAssignStaff && <small className="assignment-transfer-permission-note">Personel atama izni olmadan atanan kişiyi değiştiremez veya talebi kuyruğa bırakamazsınız.</small>}<button type="button" className="button secondary assignment-transfer-add" onClick={addTransferGroup} disabled={!selectedAssignmentIds.length || !transferDepartmentId || (!canTransferDepartments && selectedChangesDepartment) || (!canAssignStaff && transferAgentId !== editing?.id)}><Plus size={16} /> Aktarım Grubuna Ekle</button></aside>
           </div>
-          <footer className="assignment-transfer-footer"><ErrorMessage error={checkAssignmentImpact.error ?? save.error ?? remove.error} /><div className="confirm-actions"><button type="button" className="button secondary" onClick={() => { setAssignmentModalOpen(false); if (assignmentAction === "delete") setDeleteTarget(null); }} disabled={save.isPending || remove.isPending}>Vazgeç</button><button type="button" className="button primary" onClick={applyTransferGroups} disabled={save.isPending || remove.isPending || remainingAssignments.length > 0 || !transferGroups.length || (transferGroupsNeedDepartmentPermission && !canTransferDepartments) || (!canAssignStaff && transferGroups.some((group) => group.assignedAgentId !== editing?.id))}>{save.isPending || remove.isPending ? "İşleniyor…" : <><Check size={16} /> {assignmentAction === "delete" ? "Aktarımları uygula ve kullanıcıyı sil" : "Aktarımları uygula ve kullanıcıyı kaydet"}</>}</button></div></footer>
+          <footer className="assignment-transfer-footer"><ErrorMessage error={checkAssignmentImpact.error ?? save.error ?? remove.error} /><div className="confirm-actions"><button type="button" className="button primary" onClick={applyTransferGroups} disabled={save.isPending || remove.isPending || remainingAssignments.length > 0 || !transferGroups.length || (transferGroupsNeedDepartmentPermission && !canTransferDepartments) || (!canAssignStaff && transferGroups.some((group) => group.assignedAgentId !== editing?.id))}>{save.isPending || remove.isPending ? "İşleniyor…" : <><Check size={16} /> {assignmentAction === "delete" ? "Aktarımları uygula ve kullanıcıyı sil" : "Aktarımları uygula ve kullanıcıyı kaydet"}</>}</button></div></footer>
         </section>
       </div>}
     </main>
@@ -616,7 +616,7 @@ export function CustomersPage() {
                   <th aria-sort={customerSort === 'asc' ? 'ascending' : customerSort === 'desc' ? 'descending' : 'none'}>{bulkSelectionMode ? 'Seç' : <button className="customer-sort-button" type="button" title={customerSort === 'asc' ? 'Z → A sırala' : customerSort === 'desc' ? 'Varsayılan sıralamaya dön' : 'A → Z sırala'} onClick={() => { setCustomerSort(current => current === null ? 'asc' : current === 'asc' ? 'desc' : null); list.setPage(1); }}>Müşteri<span aria-hidden="true">{customerSort === 'asc' ? '↑' : customerSort === 'desc' ? '↓' : '↕'}</span></button>}</th>
                   <th>İletişim</th>
                   <th>Hesap Durumu</th>
-                  <th><div className="customer-table-heading-actions"><span>Görüşmeler</span><button className="customer-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setCustomerSort(null); list.setPage(1); void queryClient.invalidateQueries({ queryKey: ["/customers"] }); }}><RotateCcw size={15}/></button></div></th>
+                  <th><div className="customer-table-heading-actions"><span>İşlemler</span><button className="customer-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setCustomerSort(null); list.setPage(1); void queryClient.invalidateQueries({ queryKey: ["/customers"] }); }}><RotateCcw size={15}/></button></div></th>
                 </tr>
               </thead>
               <tbody>
@@ -677,7 +677,7 @@ export function CustomersPage() {
             <button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button>
             <h2>Müşteriyi Sil</h2>
             <p><strong>{deleteTarget.name}</strong> adlı müşteriyi silmek istediğinize emin misiniz?</p>
-            <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeleteTarget(null)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Müşteriyi Sil"}</button></div>
+            <div className="confirm-actions"><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Müşteriyi Sil"}</button></div>
           </form>
         </div>
       )}
@@ -686,7 +686,7 @@ export function CustomersPage() {
           <button className="confirm-close" type="button" onClick={() => setBulkDeleteConfirm(false)} aria-label="Kapat">×</button>
           <h2>Müşterileri Sil</h2>
           <p>Seçilen <strong>{selectedCustomerIds.length}</strong> müşteriyi silmek istediğinize emin misiniz?</p>
-          <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setBulkDeleteConfirm(false)}>Vazgeç</button><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri Sil"}</button></div>
+          <div className="confirm-actions"><button className="button danger" type="submit" autoFocus disabled={bulkRemove.isPending}>{bulkRemove.isPending ? "Siliniyor…" : "Seçilenleri Sil"}</button></div>
         </form>
       </div>}
       {customerModalOpen && <div className="confirm-backdrop customer-form-backdrop" role="presentation">
@@ -723,7 +723,7 @@ export function CustomersPage() {
           <ErrorMessage error={save.error}/>
           </div>
           <footer className="customer-form-footer">
-            <button className="button secondary" type="button" onClick={() => setCustomerModalOpen(false)} disabled={save.isPending}>İptal</button>
+            
             <button className="button primary" type="submit" disabled={save.isPending}>{save.isPending ? "Kaydediliyor…" : "Kaydet"}</button>
           </footer>
         </form>

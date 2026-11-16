@@ -6,6 +6,7 @@ import { AppError } from '../utils/errors.js';
 export const enforceRolePermissions: RequestHandler = (req, _res, next) => {
   if (!req.actor.accessRole && !['SUPERVISOR', 'AGENT'].includes(req.actor.role)) { next(); return; }
   const path = req.path, read = req.method === 'GET';
+  if (req.actor.role === 'CUSTOMER' && req.method === 'PATCH' && /^\/conversations\/[^/]+$/.test(path) && Object.keys(req.body ?? {}).length === 1 && req.body.websiteId !== undefined) { next(); return; } // Ownership, state and field checks run in the service.
   if (path.startsWith('/agreement-types')) { next(); return; }
   if (path.startsWith('/my/agreements')) { next(); return; }
   if (/^\/customers\/[^/]+\/(agreements|parent|relations|credit-sharing|relation-candidates)(\/|$)/.test(path)) { next(); return; } // Service enforces the specific customer permissions.

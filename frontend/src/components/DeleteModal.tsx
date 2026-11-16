@@ -23,6 +23,6 @@ export function DeleteModal({ title, children, pending, onClose, onConfirm, erro
   }}>
     <button className="confirm-close" type="button" aria-label="Kapat" disabled={pending} onClick={onClose}>×</button>
     <h2>{title}</h2><div>{children}</div>{error}
-    <div className="confirm-actions"><button className="button secondary" type="button" disabled={pending} onClick={onClose}>Vazgeç</button><button className="button danger" type="button" disabled={pending} onClick={onConfirm}>{pending ? 'Siliniyor…' : 'Sil'}</button></div>
+    <div className="confirm-actions"><button className="button danger" type="button" disabled={pending} onClick={onConfirm}>{pending ? 'Siliniyor…' : 'Sil'}</button></div>
   </div></div>, document.body);
 }

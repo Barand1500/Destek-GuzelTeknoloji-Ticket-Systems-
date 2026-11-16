@@ -188,6 +188,10 @@ router.use((req, _res, next) => {
 });
 router.use((req,res,next)=>{if(req.method!=='GET')res.on('finish',()=>{if(res.statusCode<400&&!req.path.startsWith('/conversations'))publishChange();});next();});
 router.use(enforceRolePermissions);
+// Minimal active project directory for the customer ticket form.
+router.get('/conversations/project-options', async (_req, res) => {
+  res.json({ success: true, data: await db.website.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] }) });
+});
 router.use(agreementsRouter);
 router.use(rolesRouter);
 router.use(managementRouter);

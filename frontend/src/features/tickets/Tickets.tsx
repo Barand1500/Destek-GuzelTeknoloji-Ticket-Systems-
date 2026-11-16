@@ -41,7 +41,7 @@ import { DirectorySelect } from '../../components/DirectorySelect';
 import { DeleteModal } from '../../components/DeleteModal';
 import { DropdownSelect, MultiDropdownSelect } from '../../components/DropdownSelect';
 import { SearchableDropdown } from '../../components/SearchableDropdown';
-import { AttachmentLinks,CompactFilePicker,ComposerFiles,FilePicker,SavedReplyPicker,TagEditor,TagPicker,FormDropdown } from './TicketExtras';
+import { AttachmentLinks,CompactFilePicker,ComposerFiles,FilePicker,SavedReplyPicker,TagEditor,FormDropdown } from './TicketExtras';
 import './extras.css';
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
@@ -393,7 +393,7 @@ export function TicketList() {
               options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))}
             />
           </div>
-          {hasPermission(user, 'conversations.delete') && (
+          {user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.delete') && (
             <div className={`notification-delete inbox-delete${deleteMenuOpen ? " open" : ""}`}>
               <button type="button" className="notification-delete-trigger" aria-label="Talepleri Sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
                 <Trash2 size={16} aria-hidden="true" />
@@ -567,7 +567,7 @@ export function TicketList() {
             <p>Bu talepleri silmek istediğinize emin misiniz?</p>
             {remove.isError && <QueryError error={remove.error} />}
             <div className="confirm-actions">
-              <button className="button secondary" type="button" onClick={() => setDeletePeriod(null)}>Vazgeç</button>
+
               <button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>
                 {remove.isPending ? "Siliniyor…" : "Sil"}
               </button>
@@ -580,7 +580,8 @@ export function TicketList() {
 }
 export function NewTicket() {
   const [files,setFiles]=useState<File[]>([]),[departmentId,setDepartmentId]=useState('');
-  const [tagIds,setTagIds]=useState<string[]>([]);
+  const [websiteId,setWebsiteId]=useState('');
+  const projects = useQuery({ queryKey: ['customer-project-options'], queryFn: async () => (await api.get<{ data: Array<{ id: string; name: string }> }>('/conversations/project-options')).data.data });
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -608,7 +609,7 @@ export function NewTicket() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     form.set('departmentId',departmentId);
-    tagIds.forEach((id) => form.append('tagIds', id));
+    if (websiteId) form.set('websiteId', websiteId); else form.delete('websiteId');
     for(const file of files)form.append('files',file);
     mutation.mutate(form);
   }
@@ -625,7 +626,7 @@ export function NewTicket() {
           <p>Konuyu bize anlatın, doğru ekibimiz sizinle iletişime geçsin.</p>
         </div>
       </div>
-      <form className="form-card" onSubmit={submit}>
+      <form className="form-card customer-new-ticket-form" onSubmit={submit}>
         <label>
           <span className="field-label">Konu</span>
           <input
@@ -638,7 +639,8 @@ export function NewTicket() {
             placeholder="Talebinizi kısaca özetleyin"
           />
         </label>
-        <TagPicker value={tagIds} onChange={setTagIds} />
+        <SearchableDropdown label="Proje" name="websiteId" value={websiteId} onChange={setWebsiteId} disabled={projects.isLoading || mutation.isPending} options={[{ value: "", label: "Proje seçin (isteğe bağlı)" }, ...(projects.data ?? []).map(project => ({ value: project.id, label: project.name }))]} />
+        {projects.isError && <QueryError error={projects.error} />}
         <div className="form-row">
           <DirectorySelect label="Departman" endpoint="/departments" value={departmentId} onChange={setDepartmentId}/>
           <FormDropdown name="priority" label="Öncelik" defaultValue="NORMAL" options={Object.entries(priorities).map(([value, label]) => ({ value, label }))} />
@@ -723,19 +725,19 @@ export function TicketDetail() {
   const statusOptionsQuery = useQuery({
     queryKey: ["status-options"],
     queryFn: async () => (await api.get<Page<{ id: string; code: string; name: string; color: string }>>("/status-options", { params: { limit: 100 } })).data.data,
-    enabled: !!user,
+    enabled: !!user && user.role !== 'CUSTOMER',
   });
   const priorityOptionsQuery = useQuery({
     queryKey: ["priority-options"],
     queryFn: async () => (await api.get<Page<{ id: string; code: string; name: string; color: string }>>("/priority-options", { params: { limit: 100 } })).data.data,
-    enabled: !!user,
+    enabled: !!user && user.role !== 'CUSTOMER',
   });
   const statusOptions = statusOptionsQuery.data?.map((option) => ({ value: option.code, label: option.name })) ?? Object.entries(statuses).map(([value, label]) => ({ value, label }));
   const priorityOptions = priorityOptionsQuery.data?.map((option) => ({ value: option.code, label: option.name })) ?? Object.entries(priorities).map(([value, label]) => ({ value, label }));
   const manager = ["ADMIN", "SUPERVISOR"].includes(user?.role ?? "");
-  const canEditProject = hasPermission(user, 'conversations.update');
-  const canAssignStaff = hasPermission(user, 'conversations.assign');
-  const canTransferDepartments = hasPermission(user, 'conversations.transfer');
+  const canEditProject = user?.role === 'CUSTOMER' ? ticket.data?.customerId === user.id && !['RESOLVED', 'CLOSED'].includes(ticket.data?.status ?? '') : hasPermission(user, 'conversations.update');
+  const canAssignStaff = user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.assign');
+  const canTransferDepartments = user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.transfer');
   const agents = useQuery({
     queryKey: ["agents", ticket.data?.department.id],
     queryFn: async () =>
@@ -750,8 +752,8 @@ export function TicketDetail() {
   const presence = useQuery({ queryKey: ["/staff-presence"], enabled: canAssignStaff && !!ticket.data, queryFn: async () => (await api.get<{ data: { staff: Array<{ id: string; state: "ONLINE" | "IDLE" | "OFFLINE" }> } }>("/staff-presence")).data.data });
   const presenceById = new Map((presence.data?.staff ?? []).map((person) => [person.id, person.state]));
   const websites = useQuery({
-    queryKey: ["websites", "conversation-picker"],
-    queryFn: async () => (await api.get<Page<{ id: string; name: string; url: string; isActive: boolean }>>("/websites", { params: { limit: 100 } })).data.data,
+    queryKey: ["websites", "conversation-picker", user?.role],
+    queryFn: async () => user?.role === 'CUSTOMER' ? (await api.get<{data: Array<{id:string;name:string}>}>('/conversations/project-options')).data.data.map(site => ({...site,url:'',isActive:true})) : (await api.get<Page<{ id: string; name: string; url: string; isActive: boolean }>>("/websites", { params: { limit: 100 } })).data.data,
     enabled: canEditProject,
   });
   function invalidate() {
@@ -994,20 +996,16 @@ export function TicketDetail() {
         <aside className={`ticket-properties${mobilePropertiesOpen ? ' mobile-properties-open' : ''}`}>
           <button className="mobile-properties-toggle" type="button" aria-expanded={mobilePropertiesOpen} onClick={() => setMobilePropertiesOpen(value => !value)}>Talep Bilgileri <span aria-hidden="true">{mobilePropertiesOpen ? '−' : '+'}</span></button>
           <h2>Talep Bilgileri</h2>
-          {(canEditProject || t.website) && <div className="property-editor">
-            {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <label>Proje{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</label>}
+          {(canEditProject || t.website || user?.role === 'CUSTOMER') && <div className="property-editor">
+            {canEditProject ? <DropdownSelect label="Proje" ariaLabel="Proje" value={t.website?.id ?? ""} onChange={(websiteId) => { if (websiteId !== (t.website?.id ?? "")) update.mutate({ websiteId: websiteId || null }); }} options={websiteOptions} /> : <div className="customer-ticket-property"><span>Proje</span>{t.websiteUrl ? <a href={t.websiteUrl} target="_blank" rel="noreferrer">{t.website?.name ?? t.websiteUrl}</a> : <span>{t.website?.name ?? "Proje seçilmedi"}</span>}</div>}
           </div>}
-          <div className="ticket-status-priority-row" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, order: 2, gridColumn: "1 / -1" }}>
-          <div className="property-editor">
-            {user?.role === "CUSTOMER" ? (
-              <Badge status={t.status} />
-            ) : (
+          <div className="ticket-status-priority-row" style={{ display: "grid", gridTemplateColumns: user?.role === "CUSTOMER" ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))", gap: 12, order: 2, gridColumn: "1 / -1" }}>
+          {user?.role !== "CUSTOMER" && <div className="property-editor">
               <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status) && !t.creditCharge) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
-            )}
-          </div>
+          </div>}
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
-              <span>{priorityOptions.find((option) => option.value === t.priority)?.label ?? t.priority}</span>
+              <div className="customer-ticket-property"><span>Öncelik</span><strong>{priorityOptions.find((option) => option.value === t.priority)?.label ?? t.priority}</strong></div>
             ) : (
               <SearchableDropdown label="Öncelik" name="priority" disabled={!hasPermission(user, 'conversations.update')} value={t.priority} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=priorities")} onChange={(value) => { if (priorityOptions.some((option) => option.value === value)) update.mutate({ priority: value }); }} options={priorityOptions} />
             )}
@@ -1017,13 +1015,14 @@ export function TicketDetail() {
             {canAssignStaff ? (
               <MultiDropdownSelect preserveOrderWhileOpen className="assignee-multi-select" label="Atanan Personeller" ariaLabel="Atanan Personeller" value={assignedPeople.map(person => person.id)} selectionLabel={assignedPeople.map(person => person.name).join(', ')} emptyLabel="Atanmamış" disabled={update.isPending || !hasPermission(user, 'conversations.assign')} onChange={assignedAgentIds => update.mutate({ assignedAgentIds })} options={assigneeOptions.filter(option => option.value)} />
             ) : (
-              <label>Atanan personel<span>{assignedPeople.map(person => person.name).join(", ") || "Atanmamış"}</span></label>
+              <div className="customer-ticket-property"><span>Destek personeli</span><strong>{assignedPeople.map(person => person.name).join(", ") || "Atanmamış"}</strong></div>
             )}
           </div>
+          {user?.role === "CUSTOMER" && <div className="customer-ticket-property"><span>Departman</span><strong>{t.department.name}</strong></div>}
           {agents.isError && <QueryError error={agents.error} />}
           {canTransferDepartments&&<DirectorySelect endpoint="/departments" label="Departmana Aktar" value={t.department.id} current={t.department} params={{ accessible: "true" }} onChange={departmentId=>update.mutate({departmentId})} disabled={update.isPending}/>}
           {user?.role!=='CUSTOMER'&&<TagEditor ticket={t} onChange={tagIds=>update.mutate({tagIds})} disabled={update.isPending || !hasPermission(user, 'conversations.update')}/>}
-          {user?.role==='CUSTOMER'&&t.tags?.length>0&&<div className="ticket-tags">{t.tags.map(({tag})=><span key={tag.id}>{tag.name}</span>)}</div>}
+
           {update.isError && <QueryError error={update.error} />}{" "}
           {agentNeedsClaim && <div><p className="muted">Yanıt verdiğinizde talebe otomatik atanırsınız.</p>{canAssignStaff && <button className="button primary" disabled={claim.isPending} onClick={() => claim.mutate()}>{claim.isPending ? 'Üzerinize Alınıyor…' : 'Üzerime Ata'}</button>}{claim.isError && <QueryError error={claim.error}/>}</div>}
           <div className="ticket-actions">
@@ -1040,12 +1039,12 @@ export function TicketDetail() {
                 <CheckCheck size={16} /> Çözüldü Olarak İşaretle
               </button>
             )}
-          {hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi Sil" title="Görüşmeyi Sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
+          {user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi Sil" title="Görüşmeyi Sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}
           </div>
         </aside>
       </div>
       {resolutionStatus && <ResolveWithCreditModal conversationId={t.id} status={resolutionStatus} onClose={() => setResolutionStatus(null)} onResolved={invalidate} />}
-      {hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi Sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
+      {user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.delete') && deleteConfirm && <DeleteModal title="Görüşmeyi Sil" pending={remove.isPending} onClose={() => setDeleteConfirm(false)} onConfirm={() => remove.mutate()} error={remove.isError ? <QueryError error={remove.error} /> : undefined}><p><strong>{t.subject}</strong> görüşmesi gelen kutusundan kaldırılacak. Silmek istediğinize emin misiniz?</p></DeleteModal>}
     </main>
   );
 }

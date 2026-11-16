@@ -52,8 +52,8 @@ test('Custom types use the ticket dropdown with add and custom-only trash, prese
   await page.screenshot({ path: '.local/custom-agreement-types.png', fullPage: true });
   await dialog.getByRole('option', { name: 'Danışmanlık', exact: true }).click();
   await dialog.getByLabel('Anlaşma Adı', { exact: true }).fill('Özel Paket');
-  await dialog.getByLabel('Başlangıç Tarihi').fill('2026-11-14');
-  await dialog.getByLabel('Bitiş Tarihi').fill('2027-03-01');
+  await dialog.getByLabel('Başlangıç Tarihi', { exact: true }).fill('2026-11-14');
+  await dialog.getByLabel('Bitiş Tarihi', { exact: true }).fill('2027-03-01');
   await dialog.getByLabel('Kredi Miktarı').fill('100');
   await dialog.getByRole('button', { name: 'Anlaşmayı Kaydet', exact: true }).click();
   await expect.poll(() => writes[0]?.type).toBe(typeId);
@@ -277,8 +277,69 @@ test('Cancelled agreement can be reactivated without resetting its spent credit'
   const dialog = page.getByRole('dialog'); await dialog.locator('.agreement-card>summary').click();
   await dialog.getByRole('button', { name: 'Yeniden Etkinleştir', exact: true }).click();
   await expect(dialog.locator('.agreement-card>summary')).toContainText('Aktif');
-  await expect(dialog.locator('.agreement-overview')).toContainText('6');
+  await expect(dialog.locator('.agreement-header-credit')).toContainText('6');
   await expect(dialog.locator('.agreement-card-body')).toContainText('Kullanılan: 4');
   await expect(dialog.getByRole('button', { name: 'Anlaşmayı İptal Et', exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Yeniden Etkinleştir', exact: true })).toHaveCount(0);
+});
+
+for (const allowed of ['customers.update', 'customers.delete']) {
+  test('Agreement row actions respect separate permission ' + allowed, async ({ page }) => {
+    await setup(page);
+    await page.route('**/api/v1/auth/refresh', route => route.fulfill({ json: { success: true, data: { accessToken: 'test', user: { id: 'staff', name: 'Yetkili', role: 'ADMIN', accessRole: { permissions: ['customers.view', allowed], scope: 'ALL' } } } } }));
+    await page.route('**/api/v1/customers/' + customerId + '/agreements', route => route.fulfill({ json: { success: true, data: { customer: { id: customerId, name: 'Test Şirketi' }, parent: null, children: [], charges: [], personalCredits: 10, availableCredits: 10, agreements: [{ id: 'agreement', customerId, customer: { id: customerId, name: 'Test Şirketi' }, name: 'Yetki Paketi', type: 'ONE_OFF', startsOn: '2020-01-01', endsOn: '2099-01-01', credits: 10, usedCredits: 0, remainingCredits: 10, state: 'ACTIVE' }] } } }));
+    await page.goto('/admin/customers');
+    await page.getByRole('button', { name: 'Test Şirketi anlaşmaları', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Yetki Paketi anlaşmasını düzenle', exact: true })).toHaveCount(allowed === 'customers.update' ? 1 : 0);
+    await expect(page.getByRole('button', { name: 'Yetki Paketi anlaşmasını sil', exact: true })).toHaveCount(allowed === 'customers.delete' ? 1 : 0);
+  });
+}
+
+test('Agreement calendar uses app styling, changes dates and keeps the form context', async ({ page }) => {
+  await setup(page); await page.goto('/admin/customers');
+  await page.getByRole('button', { name: 'Test Şirketi anlaşmaları', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.agreement-header-credit')).toContainText('0');
+  await expect(dialog.locator('.agreement-overview')).toHaveCount(0);
+  await dialog.getByRole('button', { name: '+ Anlaşma Ekle', exact: true }).click();
+  await expect(dialog.getByText('Paketler otomatik yenilenmez.', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByText('Başlangıca göre bir aylık süre hesaplanır.', { exact: true })).toHaveCount(0);
+  await dialog.locator('input[name=startsOn]').fill('2026-11-14');
+  await dialog.getByRole('button', { name: 'Başlangıç Tarihi takvimini aç', exact: true }).click();
+  const calendar = dialog.getByRole('dialog', { name: 'Başlangıç Tarihi takvimi', exact: true });
+  await expect(calendar).toBeVisible();
+  await expect(calendar).toHaveCSS('border-radius', '12px');
+  const trigger = (await dialog.getByRole('button', { name: 'Başlangıç Tarihi takvimini aç', exact: true }).boundingBox())!, popup = (await calendar.boundingBox())!;
+  expect(Math.abs(popup.x - trigger.x)).toBeLessThanOrEqual(1);
+  expect(popup.y).toBeGreaterThan(trigger.y + trigger.height);
+  await calendar.getByRole('button', { name: 'Sonraki ay', exact: true }).click();
+  await calendar.getByRole('button', { name: '16 Aralık 2026', exact: true }).click();
+  await expect(calendar).toHaveCount(0);
+  await expect(dialog.locator('input[name=startsOn]')).toHaveValue('2026-12-16');
+  await expect(dialog.locator('input[name=endsOn]')).toHaveValue('2027-01-15');
+  await dialog.getByRole('button', { name: 'Başlangıç Tarihi takvimini aç', exact: true }).click();
+  await page.screenshot({ path: '.local/agreement-custom-calendar.png', fullPage: true });
+  await page.keyboard.press('Escape'); await expect(calendar).toHaveCount(0); await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Başlangıç Tarihi takvimini aç', exact: true }).click();
+  await calendar.getByRole('button', { name: 'Temizle', exact: true }).click();
+  await expect(dialog.locator('input[name=startsOn]')).toHaveValue('');
+  await expect(dialog.locator('input[name=endsOn]')).toHaveValue('');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await dialog.getByRole('button', { name: 'Başlangıç Tarihi takvimini aç', exact: true }).click();
+  const mobilePopup = (await calendar.boundingBox())!;
+  expect(mobilePopup.x).toBeGreaterThanOrEqual(0); expect(mobilePopup.x + mobilePopup.width).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: '.local/agreement-calendar-mobile.png', fullPage: true });
+});
+
+test('Large single balances remain compact in the header on mobile', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/customers/' + customerId + '/agreements', route => route.fulfill({ json: { success: true, data: { customer: { id: customerId, name: 'Test Şirketi' }, parent: null, children: [], charges: [], agreements: [], personalCredits: 1234567890123, availableCredits: 1234567890123 } } }));
+  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/admin/customers');
+  await page.getByRole('button', { name: 'Test Şirketi anlaşmaları', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.agreement-header-credit')).toContainText('1.234.567.890.123');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const header = (await dialog.locator('header').boundingBox())!, credit = (await dialog.locator('.agreement-header-credit').boundingBox())!;
+  expect(credit.x).toBeGreaterThanOrEqual(header.x); expect(credit.x + credit.width).toBeLessThanOrEqual(header.x + header.width);
+  await page.screenshot({ path: '.local/agreement-header-mobile.png', fullPage: true });
 });

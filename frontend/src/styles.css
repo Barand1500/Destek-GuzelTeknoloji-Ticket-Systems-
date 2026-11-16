@@ -2175,6 +2175,15 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   color: var(--ui-text-secondary);
 }
 .confirm-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 9px;
+  line-height: 1;
+  transition: background 140ms ease, color 140ms ease;
   position: absolute;
   top: 15px;
   right: 16px;
@@ -2183,6 +2192,14 @@ html[data-theme="dark"] .notification-conversation-link:hover {
   color: var(--ui-text-secondary);
   font-size: 24px;
   cursor: pointer;
+}
+.confirm-close:hover {
+  background: #e8f7fd;
+  color: var(--ui-text-navigation);
+}
+.confirm-close:focus-visible {
+  outline: 2px solid #1b577f;
+  outline-offset: 2px;
 }
 .confirm-actions {
   display: flex;
@@ -2474,7 +2491,7 @@ html[data-theme="dark"] .confirm-modal .confirm-close {
 }
 html[data-theme="dark"] .confirm-modal .confirm-close:hover {
   color: #e5eaee;
-  background: #2b3d49;
+  background: #29363f;
 }
 html[data-theme="dark"] .assignment-transfer-modal > .confirm-close:hover {
   color: #e5eaee;

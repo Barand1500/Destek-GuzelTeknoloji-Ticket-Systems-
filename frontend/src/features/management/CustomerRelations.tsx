@@ -50,8 +50,8 @@ export function CustomerRelationsModal({ customer, onClose }: { customer: Person
     {creating ? <button className="button primary" type="submit" form={formId} disabled={pending}>{create.isPending ? 'Kaydediliyor…' : 'Oluştur ve Bağla'}</button> : editable && <button className="button primary" type="button" disabled={!canLink || pending} onClick={saveLink}>{action === 'children' ? 'Alt Müşteri Ekle' : 'Ana Müşteriye Bağla'}</button>}
   </>}>
     <div className="customer-relation-choices">
-      <button type="button" disabled={pending} className={'button ' + (action === 'children' ? 'primary' : 'secondary')} aria-pressed={action === 'children'} onClick={() => chooseAction('children')}>Bu müşteriye alt müşteri ekle</button>
-      <button type="button" disabled={pending} className={'button ' + (action === 'parent' ? 'primary' : 'secondary')} aria-pressed={action === 'parent'} onClick={() => chooseAction('parent')}>Bu müşteriyi bir ana müşteriye bağla</button>
+      <button type="button" disabled={pending} className={'relation-tab' + (action === 'children' ? ' active' : '')} aria-pressed={action === 'children'} onClick={() => chooseAction('children')}>Bu müşteriye alt müşteri ekle</button>
+      <button type="button" disabled={pending} className={'relation-tab' + (action === 'parent' ? ' active' : '')} aria-pressed={action === 'parent'} onClick={() => chooseAction('parent')}>Bu müşteriyi bir ana müşteriye bağla</button>
     </div>
     {data.isPending && <p role="status">Bağlı müşteriler yükleniyor…</p>}
     {(data.error || link.error || create.error) && <p className="error" role="alert">{errorText(data.error || link.error || create.error)}</p>}

@@ -45,7 +45,7 @@ export function CustomerMergeModal({ onClose }: { onClose: () => void }) {
       <DropdownSelect label="Korunacak Ana Kayıt" ariaLabel="Korunacak Ana Kayıt" value={target} onChange={value=>{if(!merge.isPending){setTarget(value);}}} options={[{value:'',label:'Ana Kaydı Seçin'},...group.customers.filter(customer=>selected.includes(customer.id)).map(customer=>({value:customer.id,label:[customer.name,customer.email,customer.phone].filter(Boolean).join(' · ')}))]}/>
       <p>{selected.length} kayıt seçildi. Ana kaydın adı korunur; diğer iletişim bilgileri, talepler ve dosyalar bu kayda aktarılır.</p>
       {merge.isError&&<p className="error" role="alert">{errorText(merge.error)}</p>}
-      <div className="management-actions"><button className="button primary" disabled={selected.length<2||!selected.includes(target)||merge.isPending} onClick={()=>merge.mutate()}>{merge.isPending?'Birleştiriliyor…':'Seçilenleri Birleştir'}</button><button className="button secondary" disabled={merge.isPending} onClick={onClose}>Vazgeç</button></div>
+      <div className="management-actions"><button className="button primary" disabled={selected.length<2||!selected.includes(target)||merge.isPending} onClick={()=>merge.mutate()}>{merge.isPending?'Birleştiriliyor…':'Seçilenleri Birleştir'}</button></div>
     </>}
   </section></div>;
 }

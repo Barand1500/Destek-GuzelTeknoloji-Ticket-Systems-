@@ -36,7 +36,7 @@ export function IncomingStartModal({ value, canEdit, onClose }: { value: string 
       <label className="incoming-start-field"><span>Başlangıç tarihi ve saati</span><input type="datetime-local" aria-label="Başlangıç tarihi ve saati" value={date} disabled={!canEdit || save.isPending} onChange={event => { setDate(event.target.value); save.reset(); }} /></label>
       <div className="incoming-start-warning"><AlertTriangle size={19} aria-hidden="true" /><p>Tarih boşsa eski e-postalar da gelebilir. WhatsApp ve SMS geçmişi taranmaz. Tarih seçiliyse, tarihi belli olmayan mesajlar alınmaz.</p></div>
       <ErrorMessage error={save.error} />
-      <div className="incoming-start-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={onClose}>Vazgeç</button><button className="button primary" disabled={!canEdit || save.isPending}>{save.isPending ? 'Kaydediliyor…' : 'Kaydet'}</button></div>
+      <div className="incoming-start-actions"><button className="button primary" disabled={!canEdit || save.isPending}>{save.isPending ? 'Kaydediliyor…' : 'Kaydet'}</button></div>
     </form>
   </dialog>, document.body);
 }

@@ -484,8 +484,8 @@ export async function updateConversation(
   id: string,
   input: z.infer<typeof updateConversationSchema>,
 ) {
-  if (actor.role === "CUSTOMER")
-    throw new AppError(403, "FORBIDDEN", "Bu işlem için yetkiniz yok.");
+  if (actor.role === "CUSTOMER" && (input.websiteId === undefined || Object.keys(input).some(key => key !== "websiteId")))
+    throw new AppError(403, "FORBIDDEN", "Yalnızca kendi açık talebinizin projesini değiştirebilirsiniz.");
   if (input.replyChannels !== undefined && !can(actor, 'conversations.reply')) throw new AppError(403, 'FORBIDDEN', 'Yanıt kanallarını değiştirme yetkiniz yok.');
   if (((input.assignedAgentId !== undefined || input.assignedAgentIds !== undefined) && !can(actor, 'conversations.assign')) || (input.departmentId !== undefined && !can(actor, 'conversations.transfer')) || (input.departmentId !== undefined && permissionScope(actor) !== 'ALL' && !actor.departmentIds.includes(input.departmentId)))
     throw new AppError(
@@ -496,7 +496,7 @@ export async function updateConversation(
   const result=await db.$transaction(async (tx) => {
     const accessScope = input.assignedAgentId !== undefined || input.assignedAgentIds !== undefined || input.departmentId !== undefined
       ? visibility(actor)
-      : mutationVisibility(actor);
+      : actor.role === "CUSTOMER" ? { AND: [visibility(actor), { customerId: actor.id }] } : mutationVisibility(actor);
     const lock = await tx.conversation.updateMany({
       where: { AND: [accessScope, { id }] },
       data: { updatedAt: new Date() },
@@ -504,6 +504,7 @@ export async function updateConversation(
     if (lock.count !== 1)
       throw new AppError(404, "TICKET_NOT_FOUND", "Talep bulunamadı.");
     const conversation = await tx.conversation.findUniqueOrThrow({ where: { id } });
+    if (actor.role === "CUSTOMER" && ["RESOLVED", "CLOSED"].includes(conversation.status)) throw new AppError(409, "TICKET_CLOSED", "Çözülmüş veya kapanmış taleplerin projesi değiştirilemez.");
     if (input.status && !(await tx.statusOption.findFirst({ where: { code: input.status, isActive: true } }))) throw new AppError(400, "INVALID_STATUS", "Durum seçeneği geçersiz.");
     if (input.priority && !(await tx.priorityOption.findFirst({ where: { code: input.priority, isActive: true } }))) throw new AppError(400, "INVALID_PRIORITY", "Öncelik seçeneği geçersiz.");
     if(input.departmentId&&!await tx.department.findFirst({where:{id:input.departmentId,isActive:true}}))throw new AppError(400,'INVALID_DEPARTMENT','Aktif bir departman seçin.');

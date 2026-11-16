@@ -78,7 +78,7 @@ export function ActivityLogsPage() {
           onChange={list.setPage}
         />
       </section>
-      {deletePeriod && <div className="confirm-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-label="İşlem Geçmişi Silme Onayı" onMouseDown={(event) => event.stopPropagation()}><button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button><h2>{deleteLabels[deletePeriod]}</h2><p>Seçilen işlem geçmişi kayıtları kalıcı olarak silinecek.</p><div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeletePeriod(null)}>Vazgeç</button><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></section></div>}
+      {deletePeriod && <div className="confirm-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-label="İşlem Geçmişi Silme Onayı" onMouseDown={(event) => event.stopPropagation()}><button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button><h2>{deleteLabels[deletePeriod]}</h2><p>Seçilen işlem geçmişi kayıtları kalıcı olarak silinecek.</p><div className="confirm-actions"><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></section></div>}
     </main>
   );
 }

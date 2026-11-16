@@ -38,7 +38,7 @@ test('assigned staff name is visible before the department directory arrives', a
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Atama görünümü testi', { exact: true })).toBeVisible();
     await expect(page.locator('.ticket-properties').getByRole('dialog')).toHaveCount(0);
-    await dialog.getByRole('button', { name: 'Vazgeç' }).click();
+    await dialog.getByRole('button', { name: 'Kapat', exact: true }).click();
     await expect(dialog).toHaveCount(0);
     assertNoWrites();
   } finally {

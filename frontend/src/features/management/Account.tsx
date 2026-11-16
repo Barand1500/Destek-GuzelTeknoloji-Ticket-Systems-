@@ -141,7 +141,7 @@ export function NotificationsPage() {
             <button className="confirm-close" type="button" onClick={() => setDeletePeriod(null)} aria-label="Kapat">×</button>
             <h2>{notificationDeleteLabels[deletePeriod]}</h2>
             <p>Bu bildirimleri silmek istediğinize emin misiniz?</p>
-            <div className="confirm-actions"><button className="button secondary" type="button" onClick={() => setDeletePeriod(null)}>Vazgeç</button><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div>
+            <div className="confirm-actions"><button className="button danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate(deletePeriod, { onSuccess: () => setDeletePeriod(null) })}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div>
           </section>
         </div>
       )}
