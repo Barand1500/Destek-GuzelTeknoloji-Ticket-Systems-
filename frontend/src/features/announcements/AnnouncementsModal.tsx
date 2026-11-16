@@ -780,14 +780,6 @@ export function AnnouncementsModal({
             </span>
             <div>
               <button
-                type="button"
-                className="announcement-cancel"
-                onClick={onClose}
-                disabled={publish.isPending}
-              >
-                İptal
-              </button>
-              <button
                 type="submit"
                 className="announcement-submit"
                 disabled={

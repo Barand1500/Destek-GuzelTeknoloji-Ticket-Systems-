@@ -126,3 +126,17 @@ test("anonymous written responses do not show the participant name", async ({ pa
   await expect(modal.getByText("Anonim katılımcı", { exact: true }).first()).toBeVisible();
   await expect(modal.getByText("Yemek saati biraz erken olabilir.", { exact: true })).toBeVisible();
 });
+
+test('Survey delete action has a full rounded hover target in both themes', async ({ page }) => {
+  await mockSurveys(page); await page.goto('/admin/surveys');
+  const button = page.getByRole('button', { name: 'Anketi Sil', exact: true });
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+    const before = (await button.boundingBox())!;
+    await button.hover();
+    await expect(button).toHaveCSS('border-radius', '8px');
+    await expect(button).toHaveCSS('background-color', 'rgba(227, 108, 102, 0.12)');
+    const after = (await button.boundingBox())!;
+    expect(after.width).toBe(32); expect(after.height).toBe(32); expect(after).toEqual(before);
+  }
+});

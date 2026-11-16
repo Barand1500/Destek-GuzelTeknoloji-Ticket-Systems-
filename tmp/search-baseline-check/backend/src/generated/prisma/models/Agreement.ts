@@ -48,6 +48,7 @@ export type AgreementMinAggregateOutputType = {
   fee: runtime.Decimal | null
   credits: number | null
   usedCredits: number | null
+  deletedAt: Date | null
   cancelledAt: Date | null
   createdAt: Date | null
 }
@@ -62,6 +63,7 @@ export type AgreementMaxAggregateOutputType = {
   fee: runtime.Decimal | null
   credits: number | null
   usedCredits: number | null
+  deletedAt: Date | null
   cancelledAt: Date | null
   createdAt: Date | null
 }
@@ -76,6 +78,7 @@ export type AgreementCountAggregateOutputType = {
   fee: number
   credits: number
   usedCredits: number
+  deletedAt: number
   cancelledAt: number
   createdAt: number
   _all: number
@@ -104,6 +107,7 @@ export type AgreementMinAggregateInputType = {
   fee?: true
   credits?: true
   usedCredits?: true
+  deletedAt?: true
   cancelledAt?: true
   createdAt?: true
 }
@@ -118,6 +122,7 @@ export type AgreementMaxAggregateInputType = {
   fee?: true
   credits?: true
   usedCredits?: true
+  deletedAt?: true
   cancelledAt?: true
   createdAt?: true
 }
@@ -132,6 +137,7 @@ export type AgreementCountAggregateInputType = {
   fee?: true
   credits?: true
   usedCredits?: true
+  deletedAt?: true
   cancelledAt?: true
   createdAt?: true
   _all?: true
@@ -233,6 +239,7 @@ export type AgreementGroupByOutputType = {
   fee: runtime.Decimal
   credits: number
   usedCredits: number
+  deletedAt: Date | null
   cancelledAt: Date | null
   createdAt: Date
   _count: AgreementCountAggregateOutputType | null
@@ -270,6 +277,7 @@ export type AgreementWhereInput = {
   fee?: Prisma.DecimalFilter<"Agreement"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFilter<"Agreement"> | number
   usedCredits?: Prisma.IntFilter<"Agreement"> | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Agreement"> | Date | string
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -286,6 +294,7 @@ export type AgreementOrderByWithRelationInput = {
   fee?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   usedCredits?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   customer?: Prisma.UserOrderByWithRelationInput
@@ -306,6 +315,7 @@ export type AgreementWhereUniqueInput = Prisma.AtLeast<{
   fee?: Prisma.DecimalFilter<"Agreement"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFilter<"Agreement"> | number
   usedCredits?: Prisma.IntFilter<"Agreement"> | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Agreement"> | Date | string
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -322,6 +332,7 @@ export type AgreementOrderByWithAggregationInput = {
   fee?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   usedCredits?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.AgreementCountOrderByAggregateInput
@@ -344,6 +355,7 @@ export type AgreementScalarWhereWithAggregatesInput = {
   fee?: Prisma.DecimalWithAggregatesFilter<"Agreement"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntWithAggregatesFilter<"Agreement"> | number
   usedCredits?: Prisma.IntWithAggregatesFilter<"Agreement"> | number
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Agreement"> | Date | string
 }
@@ -357,6 +369,7 @@ export type AgreementCreateInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutAgreementsInput
@@ -373,6 +386,7 @@ export type AgreementUncheckedCreateInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   charges?: Prisma.CreditChargeUncheckedCreateNestedManyWithoutAgreementInput
@@ -387,6 +401,7 @@ export type AgreementUpdateInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutAgreementsNestedInput
@@ -403,6 +418,7 @@ export type AgreementUncheckedUpdateInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   charges?: Prisma.CreditChargeUncheckedUpdateManyWithoutAgreementNestedInput
@@ -418,6 +434,7 @@ export type AgreementCreateManyInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
 }
@@ -431,6 +448,7 @@ export type AgreementUpdateManyMutationInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -445,6 +463,7 @@ export type AgreementUncheckedUpdateManyInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -475,6 +494,7 @@ export type AgreementCountOrderByAggregateInput = {
   fee?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   usedCredits?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -495,6 +515,7 @@ export type AgreementMaxOrderByAggregateInput = {
   fee?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   usedCredits?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -509,6 +530,7 @@ export type AgreementMinOrderByAggregateInput = {
   fee?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   usedCredits?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -599,6 +621,7 @@ export type AgreementCreateWithoutCustomerInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   charges?: Prisma.CreditChargeCreateNestedManyWithoutAgreementInput
@@ -613,6 +636,7 @@ export type AgreementUncheckedCreateWithoutCustomerInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   charges?: Prisma.CreditChargeUncheckedCreateNestedManyWithoutAgreementInput
@@ -657,6 +681,7 @@ export type AgreementScalarWhereInput = {
   fee?: Prisma.DecimalFilter<"Agreement"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFilter<"Agreement"> | number
   usedCredits?: Prisma.IntFilter<"Agreement"> | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Agreement"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Agreement"> | Date | string
 }
@@ -670,6 +695,7 @@ export type AgreementCreateWithoutChargesInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutAgreementsInput
@@ -685,6 +711,7 @@ export type AgreementUncheckedCreateWithoutChargesInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
 }
@@ -714,6 +741,7 @@ export type AgreementUpdateWithoutChargesInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutAgreementsNestedInput
@@ -729,6 +757,7 @@ export type AgreementUncheckedUpdateWithoutChargesInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -742,6 +771,7 @@ export type AgreementCreateManyCustomerInput = {
   fee: runtime.Decimal | runtime.DecimalJsLike | number | string
   credits: number
   usedCredits?: number
+  deletedAt?: Date | string | null
   cancelledAt?: Date | string | null
   createdAt?: Date | string
 }
@@ -755,6 +785,7 @@ export type AgreementUpdateWithoutCustomerInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   charges?: Prisma.CreditChargeUpdateManyWithoutAgreementNestedInput
@@ -769,6 +800,7 @@ export type AgreementUncheckedUpdateWithoutCustomerInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   charges?: Prisma.CreditChargeUncheckedUpdateManyWithoutAgreementNestedInput
@@ -783,6 +815,7 @@ export type AgreementUncheckedUpdateManyWithoutCustomerInput = {
   fee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   usedCredits?: Prisma.IntFieldUpdateOperationsInput | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -828,6 +861,7 @@ export type AgreementSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   fee?: boolean
   credits?: boolean
   usedCredits?: boolean
+  deletedAt?: boolean
   cancelledAt?: boolean
   createdAt?: boolean
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -847,11 +881,12 @@ export type AgreementSelectScalar = {
   fee?: boolean
   credits?: boolean
   usedCredits?: boolean
+  deletedAt?: boolean
   cancelledAt?: boolean
   createdAt?: boolean
 }
 
-export type AgreementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customerId" | "name" | "type" | "startsOn" | "endsOn" | "fee" | "credits" | "usedCredits" | "cancelledAt" | "createdAt", ExtArgs["result"]["agreement"]>
+export type AgreementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customerId" | "name" | "type" | "startsOn" | "endsOn" | "fee" | "credits" | "usedCredits" | "deletedAt" | "cancelledAt" | "createdAt", ExtArgs["result"]["agreement"]>
 export type AgreementInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   charges?: boolean | Prisma.Agreement$chargesArgs<ExtArgs>
@@ -874,6 +909,7 @@ export type $AgreementPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     fee: runtime.Decimal
     credits: number
     usedCredits: number
+    deletedAt: Date | null
     cancelledAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["agreement"]>
@@ -1256,6 +1292,7 @@ export interface AgreementFieldRefs {
   readonly fee: Prisma.FieldRef<"Agreement", 'Decimal'>
   readonly credits: Prisma.FieldRef<"Agreement", 'Int'>
   readonly usedCredits: Prisma.FieldRef<"Agreement", 'Int'>
+  readonly deletedAt: Prisma.FieldRef<"Agreement", 'DateTime'>
   readonly cancelledAt: Prisma.FieldRef<"Agreement", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Agreement", 'DateTime'>
 }

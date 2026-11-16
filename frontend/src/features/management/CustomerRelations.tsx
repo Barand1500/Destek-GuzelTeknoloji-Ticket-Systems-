@@ -1,10 +1,10 @@
 import { useEffect, useId, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { api, errorText } from '../../services/api';
 import { SearchableDropdown } from '../../components/SearchableDropdown';
-import { AgreementDialog, CompanyCreditSharing } from '../agreements/Agreements';
+import { AgreementDialog } from '../agreements/Agreements';
 import { useAuth } from '../auth/Auth';
 import { hasPermission } from '../auth/permissions';
 import { inboxPath } from '../../router/paths';
@@ -23,6 +23,13 @@ export function CustomerRelationsModal({ customer, onClose }: { customer: Person
   useEffect(() => { setSelection(data.data?.parent ?? null); setAction(data.data?.parent ? 'parent' : 'children'); setPage(1); }, [data.data?.parent?.id]);
   const blocked = Boolean(data.data && (action === 'children' ? data.data.parent : data.data.children.length > 0));
   const candidates = useQuery({ queryKey: ['relation-candidates', customer.id, action, search, page], enabled: Boolean(editable && data.data && !blocked), queryFn: async () => (await api.get('/customers/' + customer.id + '/relation-candidates', { params: { direction: action === 'children' ? 'CHILD' : 'PARENT', search, page, limit: 5 } })).data as Candidates });
+  const picker = useInfiniteQuery({
+    queryKey: ['relation-candidates', customer.id, 'options', action],
+    enabled: Boolean(editable && data.data && !blocked), initialPageParam: 1,
+    queryFn: async ({ pageParam }) => (await api.get('/customers/' + customer.id + '/relation-candidates', { params: { direction: action === 'children' ? 'CHILD' : 'PARENT', page: pageParam, limit: 25 } })).data as Candidates,
+    getNextPageParam: (last, pages) => pages.length < last.pagination.totalPages ? pages.length + 1 : undefined,
+  });
+  const loadMoreChoices = () => { if (picker.hasNextPage && !picker.isFetching) void picker.fetchNextPage(); };
   const refresh = async () => { await Promise.all(['customer-relations', 'relation-candidates', 'agreements', '/customers', 'conversations', 'directory'].map(key => client.invalidateQueries({ queryKey: [key] }))); };
   const link = useMutation({ mutationFn: ({ id, parent }: { id: string; parent: string | null }) => api.put('/customers/' + id + '/parent', { parentCustomerId: parent }), onSuccess: async () => { setSelection(null); setSearch(''); setPage(1); setNotice('Bağlantı kaydedildi.'); await refresh(); } });
   const create = useMutation({ mutationFn: (input: object) => api.post('/customers/' + customer.id + '/relations', input), onSuccess: async () => { setCreating(false); setSearch(''); setPage(1); setNotice('Müşteri oluşturuldu ve bağlandı.'); await refresh(); } });
@@ -32,14 +39,14 @@ export function CustomerRelationsModal({ customer, onClose }: { customer: Person
   const linked = action === 'children' ? data.data?.children ?? [] : data.data?.parent ? [data.data.parent] : [];
   const rows = searching ? candidates.data?.data ?? [] : linked.slice((page - 1) * 5, page * 5);
   const pages = searching ? candidates.data?.pagination.totalPages ?? 1 : Math.max(1, Math.ceil(linked.length / 5));
-  const choices = candidates.data?.data ?? [];
+  const choices = [...new Map((picker.data?.pages.flatMap(p => p.data) ?? []).map(person => [person.id, person])).values()];
   const options = [{ value: '', label: 'Seçin' }, ...(selection && !choices.some(c => c.id === selection.id) ? [{ value: selection.id, label: selection.name }] : []), ...choices.map(c => ({ value: c.id, label: c.name }))];
   const chooseAction = (next: 'children' | 'parent') => { setAction(next); setSelection(next === 'parent' ? data.data?.parent ?? null : null); setSearch(''); setPage(1); setCreating(false); setNotice(''); link.reset(); create.reset(); };
   const saveLink = () => { if (!selection || pending) return; link.mutate(action === 'children' ? { id: selection.id, parent: customer.id } : { id: customer.id, parent: selection.id }); };
   const canLink = editable && !blocked && selection && (action === 'children' || selection.id !== data.data?.parent?.id);
   return <AgreementDialog title={customer.name + ' — Bağlı Müşteriler'} onClose={onClose} pending={pending} footer={<>
     {mayCreate && !creating && <button className="button secondary relation-footer-create" type="button" disabled={pending} onClick={() => { setCreating(true); create.reset(); }}>{action === 'children' ? '+ Yeni Kişi Ekle' : '+ Yeni Ana Müşteri Ekle'}</button>}
-    <button className="button secondary" type="button" disabled={pending} onClick={() => creating ? setCreating(false) : onClose()}>Vazgeç</button>
+    {creating && <button className="button secondary" type="button" disabled={pending} onClick={() => setCreating(false)}>Vazgeç</button>}
     {creating ? <button className="button primary" type="submit" form={formId} disabled={pending}>{create.isPending ? 'Kaydediliyor…' : 'Oluştur ve Bağla'}</button> : editable && <button className="button primary" type="button" disabled={!canLink || pending} onClick={saveLink}>{action === 'children' ? 'Alt Müşteri Ekle' : 'Ana Müşteriye Bağla'}</button>}
   </>}>
     <div className="customer-relation-choices">
@@ -49,10 +56,9 @@ export function CustomerRelationsModal({ customer, onClose }: { customer: Person
     {data.isPending && <p role="status">Bağlı müşteriler yükleniyor…</p>}
     {(data.error || link.error || create.error) && <p className="error" role="alert">{errorText(data.error || link.error || create.error)}</p>}
     {data.data && <>
-      {!data.data.customer?.parentCustomerId && !data.data.parent && data.data.children.length > 0 && <CompanyCreditSharing customer={data.data.customer ?? customer} />}
       <section className="customer-relation-panel">
         <div className="relation-list-heading"><h3>{action === 'children' ? 'Alt Müşteriler' : 'Ana Müşteri'}</h3>
-          {editable && !blocked && <div className="relation-list-tools"><SearchableDropdown placement="bottom" label={action === 'children' ? 'Eklenecek Alt Müşteri' : 'Ana Müşteri Seçin'} name="relatedCustomerId" value={selection?.id ?? ''} options={options} disabled={pending} onChange={id => setSelection(choices.find(c => c.id === id) ?? (selection?.id === id ? selection : null))} />
+          {editable && !blocked && <div className="relation-list-tools"><SearchableDropdown placement="bottom" label={action === 'children' ? 'Eklenecek Alt Müşteri' : 'Ana Müşteri Seçin'} name="relatedCustomerId" value={selection?.id ?? ''} options={options} onMenuEnd={loadMoreChoices} footer={(picker.hasNextPage || picker.isFetching || picker.error) ? <div className="relation-picker-more">{picker.error && <span role="alert">{errorText(picker.error)}</span>}<button type="button" className="button secondary" disabled={picker.isFetching} onClick={() => picker.error ? void picker.refetch() : loadMoreChoices()}>{picker.isFetching ? 'Yükleniyor…' : picker.error ? 'Tekrar Dene' : 'Daha Fazla Göster'}</button></div> : undefined} disabled={pending} onChange={id => setSelection(choices.find(c => c.id === id) ?? (selection?.id === id ? selection : null))} />
             <label className="relation-list-search"><Search size={15} /><input aria-label="Bağlı Müşterilerde Ara" placeholder="Müşteri ara…" value={search} onChange={e => { setSearch(e.target.value); setSelection(null); setPage(1); }} disabled={pending} /></label>
           </div>}
         </div>

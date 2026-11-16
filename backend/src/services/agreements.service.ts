@@ -77,8 +77,8 @@ export async function listCustomerRelations(actor: Actor, customerId: string) {
 }
 export async function listAgreements(actor: Actor, customerId: string) {
   const { customer: person, parent, children } = await listCustomerRelations(actor, customerId);
-  const ownerIds = [person.id, ...(parent ? [parent.id] : []), ...children.filter(c => c.isActive).map(c => c.id)];
-  const agreements = await db.agreement.findMany({ where: { customerId: { in: ownerIds } }, include: { customer: { select: { id: true, name: true } } }, orderBy: [{ endsOn: 'asc' }, { createdAt: 'desc' }] });
+  const ownerIds = [person.id, ...(parent?.shareCreditsWithChildren ? [parent.id] : []), ...children.filter(c => c.isActive).map(c => c.id)];
+  const agreements = await db.agreement.findMany({ where: { customerId: { in: ownerIds }, deletedAt: null }, include: { customer: { select: { id: true, name: true } } }, orderBy: [{ endsOn: 'asc' }, { createdAt: 'desc' }] });
   const customTypes = await db.agreementType.findMany({ where: { id: { in: agreements.map(a => a.type).filter(t => !builtInAgreementTypes[t]) } } });
   const typeNames = new Map(customTypes.map(t => [t.id, t.name]));
   const now = today();
@@ -91,7 +91,7 @@ export async function listAgreements(actor: Actor, customerId: string) {
   rows.sort((a, b) => rank(a.customerId) - rank(b.customerId) || a.endsOn.getTime() - b.endsOn.getTime() || a.id.localeCompare(b.id));
   const balanceFor = (id: string) => agreements.filter(a => a.customerId === id && active(a)).reduce((sum, a) => sum + a.credits - a.usedCredits, 0);
   const personalCredits = person.isActive ? balanceFor(person.id) : 0;
-  const parentCredits = parent ? balanceFor(parent.id) : 0;
+  const parentCredits = parent?.shareCreditsWithChildren ? balanceFor(parent.id) : 0;
   const sharedCredits = person.isActive && parent?.shareCreditsWithChildren ? parentCredits : 0;
   const childSummaries = children.map(c => ({ ...c, personalCredits: c.isActive ? balanceFor(c.id) : 0 }));
   const charges = await db.creditCharge.findMany({ where: { conversation: { customerId: { in: [person.id, ...children.map(c => c.id)] } } }, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } }, orderBy: { createdAt: 'desc' }, take: 100 });
@@ -124,12 +124,45 @@ export async function createAgreement(actor: Actor, customerId: string, input: z
     return { ...result, fee: result.fee.toString() };
   });
 }
+export async function updateAgreement(actor: Actor, customerId: string, id: string, raw: unknown) {
+  staff(actor, true);
+  const input = agreementInput.parse(raw);
+  return db.$transaction(async tx => {
+    const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM Agreement WHERE id = ${id} AND customerId = ${customerId} AND deletedAt IS NULL FOR UPDATE`;
+    if (!locked.length) throw invalid('Anlaşma bulunamadı veya silinmiş.');
+    const before = await tx.agreement.findUniqueOrThrow({ where: { id } });
+    if (input.credits < before.usedCredits) throw invalid('Kredi miktarı kullanılan krediden az olamaz.');
+    if (input.type !== before.type && !builtInAgreementTypes[input.type]) {
+      const types = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${input.type} AND archivedAt IS NULL FOR UPDATE`;
+      if (!types.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
+    }
+    const result = await tx.agreement.update({ where: { id }, data: { name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits }, after: { name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits } }, ipAddress: actor.ipAddress } });
+    return { ...result, fee: result.fee.toString() };
+  });
+}
 export async function cancelAgreement(actor: Actor, customerId: string, id: string) {
   staff(actor, true);
   return db.$transaction(async tx => {
-    const changed = await tx.agreement.updateMany({ where: { id, customerId, cancelledAt: null }, data: { cancelledAt: new Date() } });
+    const changed = await tx.agreement.updateMany({ where: { id, customerId, cancelledAt: null, deletedAt: null }, data: { cancelledAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten iptal edilmiş.');
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.cancelled', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
+  });
+}
+export async function reactivateAgreement(actor: Actor, customerId: string, id: string) {
+  staff(actor, true);
+  return db.$transaction(async tx => {
+    const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null, cancelledAt: { not: null } }, data: { cancelledAt: null } });
+    if (!changed.count) throw invalid('İptal edilmiş anlaşma bulunamadı.');
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.reactivated', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
+  });
+}
+export async function deleteAgreement(actor: Actor, customerId: string, id: string) {
+  staff(actor, true);
+  return db.$transaction(async tx => {
+    const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null }, data: { deletedAt: new Date() } });
+    if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten silinmiş.');
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.deleted', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
   });
 }
 export async function setCustomerParent(actor: Actor, customerId: string, parentId: string | null) {
@@ -183,13 +216,13 @@ export async function debitResolution(tx: Prisma.TransactionClient, actor: Actor
     if (companies.length) ownerIds.push(companies[0].id);
   }
   if (!input) {
-    if (await tx.agreement.count({ where: { customerId: { in: ownerIds } } })) throw new AppError(400, 'CREDIT_REQUIRED', 'Talebi çözerken kullanılacak kredi miktarını belirtin. Ücretsiz destek için 0 girin.');
+    if (await tx.agreement.count({ where: { customerId: { in: ownerIds }, deletedAt: null } })) throw new AppError(400, 'CREDIT_REQUIRED', 'Talebi çözerken kullanılacak kredi miktarını belirtin. Ücretsiz destek için 0 girin.');
     return null; // Preserve resolution behavior for existing customers without agreements.
   }
   if (input.credits > 0) {
     if (!input.agreementId) throw invalid('Kredi kullanılacak anlaşmayı seçin.');
     const now = today();
-    const result = await tx.agreement.updateMany({ where: { id: input.agreementId, customerId: { in: ownerIds }, cancelledAt: null, startsOn: { lte: now }, endsOn: { gte: now }, credits: { gte: input.credits }, usedCredits: { lte: 1_000_000 } }, data: { usedCredits: { increment: input.credits } } });
+    const result = await tx.agreement.updateMany({ where: { id: input.agreementId, customerId: { in: ownerIds }, deletedAt: null, cancelledAt: null, startsOn: { lte: now }, endsOn: { gte: now }, credits: { gte: input.credits }, usedCredits: { lte: 1_000_000 } }, data: { usedCredits: { increment: input.credits } } });
     if (!result.count) throw invalid('Anlaşma geçersiz, süresi dolmuş veya bu müşteriye ait değil.');
     const agreement = await tx.agreement.findUniqueOrThrow({ where: { id: input.agreementId } });
     if (agreement.usedCredits > agreement.credits) throw invalid('Yeterli kredi bulunmuyor.'); // Entire transaction rolls back, including the increment.

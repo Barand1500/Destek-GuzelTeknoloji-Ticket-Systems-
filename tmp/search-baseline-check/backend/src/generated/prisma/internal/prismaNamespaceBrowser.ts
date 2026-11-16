@@ -808,6 +808,7 @@ export const AgreementScalarFieldEnum = {
   fee: 'fee',
   credits: 'credits',
   usedCredits: 'usedCredits',
+  deletedAt: 'deletedAt',
   cancelledAt: 'cancelledAt',
   createdAt: 'createdAt'
 } as const

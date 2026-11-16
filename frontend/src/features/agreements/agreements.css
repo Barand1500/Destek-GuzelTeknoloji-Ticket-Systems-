@@ -41,3 +41,22 @@
 .agreement-date-field input::-webkit-datetime-edit{display:none}
 .agreement-date-field input::-webkit-calendar-picker-indicator{margin:0;padding:3px}
 .searchable-dropdown-menu[popover]{color:var(--text);box-sizing:border-box;animation:none}
+
+.relation-picker-more{display:grid;gap:6px}.relation-picker-more>.button{width:100%;min-height:30px;padding:6px;font-size:12px}
+
+.customer-relation-choices{align-items:center}
+.customer-relation-choices>.company-credit-policy--compact{margin:0 0 0 auto;padding:0;border:0;border-radius:0;gap:10px;flex-wrap:nowrap;min-height:42px}
+.company-credit-policy--compact>div:first-child{flex:0 1 auto;min-width:0}
+.company-credit-policy--compact h3{margin:0;white-space:nowrap;font-size:13px}
+.company-credit-policy--compact .status-toggle{gap:0}
+.company-credit-policy--compact:has(.error){flex-wrap:wrap}
+@media(max-width:650px){.customer-relation-choices>.company-credit-policy--compact{margin-left:0}}
+
+.agreement-summary-actions{display:inline-flex;align-items:center;gap:14px;min-width:0}.agreement-delete-button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:6px;border:0;border-radius:6px;background:transparent;color:var(--muted);flex-shrink:0;cursor:pointer}.agreement-delete-button:hover{color:#e36c66;background:rgba(227,108,102,.1)}
+
+.agreement-edit-form{margin-bottom:0}.agreement-edit-button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:6px;border:0;border-radius:6px;background:transparent;color:var(--muted);flex-shrink:0;cursor:pointer}.agreement-edit-button:hover{color:var(--text);background:rgba(24,167,223,.1)}
+
+.agreement-form input[name="credits"]::-webkit-inner-spin-button,.agreement-form input[name="credits"]::-webkit-outer-spin-button,.agreement-resolution input[type="number"]::-webkit-inner-spin-button,.agreement-resolution input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.agreement-form input[name="credits"],.agreement-resolution input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+
+.agreement-family-block{position:relative;margin:20px 0}.agreement-family-block>.agreement-children{margin:0}.agreement-family-block>.agreement-children>summary{padding-right:145px;min-height:24px;box-sizing:border-box}.agreement-family-block>.company-credit-policy--compact{position:absolute;top:14px;right:18px;margin:0;padding:0;border:0;border-radius:0;gap:10px;min-height:24px;flex-wrap:nowrap}.agreement-family-block>.company-credit-policy--compact h3{font-size:12px}

@@ -82,3 +82,23 @@ Anlaşmaların alt müşteri listesi kapalı gelen akordiyondur; ana müşteri k
 Anlaşma formunun etiketleri standart çerçeve etiketidir; alanlar 46px ve aynı satırda hizalıdır. Kaydet/Vazgeç modalın çizgiyle ayrılan alt sağ bölümündedir. Tür ekleme + düğmesi girişin sağındadır. Tür kataloğunda işlem sürerken anlaşma kaydı bekler. Bağlı müşteri seçimi aramayla aynı 38px yüksekliği kullanır. Açılır liste modalın kaydırma alanına göre yön ve yükseklik seçer; kesilmez ve Escape önce listeyi kapatır. Input odak/hover gölgeleri uygulama genelinde kaldırılmıştır; tercih [UI kuralları](ui-conventions.md) dosyasında kayıtlıdır.
 
 Kontrol edilen akışlar: kişisel/ortak bakiye ayrımı, ortak kredi kapatma yetkisi, eşzamanlı tüketim ve tekrar çözümde tek düşüm; özel tür arşivleme ve eski etiketlerin korunması; aday arama/sayfalama/bağlama; e-posta koduyla giriş. Bunlar hedefli testlerdir, kapsamlı bağımsız denetim değildir. Bilinen kapsam sınırları: kredi iade/düzeltme arayüzü yok; kullanım geçmişinde son 100 kayıt gösteriliyor; tek çözüm bir paketten düşüyor.
+
+## Anlaşma silme
+
+Yetkili personel satırdaki çöp kutusundan onayla anlaşmayı silebilir. Ana müşteriye ait ortak paket de görüntülendiği ekrandan kendi müşteri kimliğiyle silinir. Agreement.deletedAt listeden ve bakiyeden çıkarır; CreditCharge ve anlaşma adı korunur, silinmiş paketten yeni kredi tüketilemez. İşlem agreement.deleted günlüğüne yazılır. Yeni migration: 20261116120000_agreement_soft_delete (prisma/mysql/migrations). Yerelde uygulanmıştır; canlı dağıtımda migration uygulanmalıdır.
+
+## Anlaşma düzenleme
+
+Personel satırdaki kalem simgesinden ad, tür, başlangıç/bitiş ve kredi miktarını düzenler. Form mevcut tarihleri açılışta değiştirmez; aylık/yıllık tür veya başlangıç değişince dönem yeniden hesaplanır. Kullanılmış kredi korunur, yeni toplam bunun altına inemez. Güncelleme kredi tüketimiyle aynı anlaşma satırında kilitlenir, silinmiş anlaşma güncellenemez. Arşivlenmiş mevcut tür korunabilir, yeni tür seçiminde yalnızca aktif tür kabul edilir. Eski ücret korunur; arayüzde ücret alanı yoktur. Önceki/yeni değerler agreement.updated günlüğüne kaydedilir.
+
+Düzenleme mevcut Anlaşmalar penceresinin iç görünümüdür; ikinci modal açılmaz. Kaydet/Vazgeç mevcut alt işlem alanında kalır. Kredi miktarı alanlarında sayısal doğrulama korunur; tarayıcı spinner okları gösterilmez.
+
+Ortak kredi ayarı yalnızca Anlaşmalar görünümünde Alt Müşteriler akordiyon başlığının sağında yer alır; Bağlı Müşteriler ekranında bulunmaz. Toggle akordiyonu açıp kapatmaz. Ortak paketten kullanılan kredi, talebin customerId kaydının ve ana müşterisinin hareketlerinde görünür; aynı isimli farklı müşteri kayıtlarının geçmişleri birleştirilmez.
+
+Düzenleme formu, ekleme formuyla aynı konumda (Anlaşmalar başlığının altında) açılır. Kredi özetleri ve anlaşma listesi görünür kalır; pencere başlığı Anlaşmalar olarak korunur.
+
+Ortak kredi paylaşımı kapalıyken alt müşterinin Anlaşmalar görünümünde şirket bakiyesi, kullanılabilir toplam kartı, ortak kullanım açıklaması ve ana müşterinin paketleri gösterilmez. API de ana müşterinin paketlerini sorguya dahil etmez ve parentCredits değerini 0 döndürür. Ana müşterinin kendi bakiyesi/paketleri ve geçmiş kredi hareketleri korunur; paylaşım açıldığında ortak alanlar geri gelir.
+
+İptal edilmiş anlaşmanın detayında Yeniden Etkinleştir işlemi vardır. customers.update yetkili personel yalnızca silinmemiş ve iptal durumundaki anlaşmayı açabilir. cancelledAt temizlenir; tarihler, toplam/kullanılan kredi ve geçmiş hareketler korunur. Süresi dolmuş paket EXPIRED kalır; gelecekte başlayan paket başlangıcı gelene kadar kullanılamaz. agreement.reactivated işlem günlüğü oluşturulur.
+
+Anlaşma silme için ek onay modalı açılmaz: çöp kutusu doğrudan silme isteği gönderir. İstek sürerken işlem düğmeleri kilitlenir; hata mevcut ekranda gösterilir. Geçmişi koruyan silme davranışı aynıdır.

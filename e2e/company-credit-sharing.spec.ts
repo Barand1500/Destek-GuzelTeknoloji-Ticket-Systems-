@@ -33,8 +33,11 @@ test('Company policy and child summaries use standard modals without mixing bala
   await expect(dialog.getByRole('button', { name: 'Kapat', exact: true }).locator('svg')).toBeVisible();
   await expect(dialog).toHaveClass(/confirm-modal/);
   const toggle = dialog.getByRole('switch');
+  const accordion = dialog.locator('details.agreement-children');
+  await expect(accordion).not.toHaveAttribute('open');
   await expect(toggle).toBeChecked();
   await toggle.uncheck(); await expect(toggle).not.toBeChecked();
+  await expect(accordion).not.toHaveAttribute('open');
   const family = dialog.locator('details.agreement-children');
   await expect(family).not.toHaveAttribute('open');
   await family.locator('summary').click();
@@ -42,10 +45,12 @@ test('Company policy and child summaries use standard modals without mixing bala
   await page.screenshot({ path: '.local/company-credit-policy.png', fullPage: true });
   await dialog.getByRole('button', { name: 'Ahmet Anlaşmaları', exact: true }).click();
   await expect(dialog.getByText('Kendi kredisi', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Şirket ortak bakiyesi', { exact: true })).toBeVisible();
-  await expect(dialog.locator('.agreement-overview>div').nth(2)).toContainText('20');
+  await expect(dialog.getByText('Şirket ortak bakiyesi', { exact: true })).toHaveCount(0);
+  await expect(dialog.locator('.agreement-workspace')).not.toContainText('Şirket Paketi');
+  await expect(dialog.locator('.agreement-overview>div')).toHaveCount(1);
+  await expect(dialog.locator('.agreement-overview')).toContainText('20');
   await expect(dialog.getByRole('switch')).toHaveCount(0);
-  await expect(dialog.getByText(/Ortak kullanım kapalı; yalnızca kendi krediniz/)).toBeVisible();
+  await expect(dialog.getByText(/Ortak kullanım kapalı; yalnızca kendi krediniz/)).toHaveCount(0);
   await page.screenshot({ path: '.local/child-credit-balances.png', fullPage: true });
   await dialog.getByRole('button', { name: /Merkez Şirket Anlaşmalarına Dön/ }).click();
   await expect(dialog.getByRole('switch')).not.toBeChecked();
@@ -60,7 +65,7 @@ test('Company customer can control sharing and inspect child balances', async ({
   await expect(page).toHaveURL(new RegExp(childId));
   await expect(page.getByText('Kendi kredisi', { exact: true })).toBeVisible();
   await expect(page.getByRole('switch')).toHaveCount(0);
-  const valueBoxes = await page.locator('.agreement-overview.has-parent>div>strong').all();
+  const valueBoxes = await page.locator('.agreement-overview>div>strong').all();
   const valueYs = await Promise.all(valueBoxes.map(async value => (await value.boundingBox())!.y));
   expect(Math.max(...valueYs) - Math.min(...valueYs)).toBeLessThanOrEqual(1);
   await page.setViewportSize({ width: 390, height: 844 });

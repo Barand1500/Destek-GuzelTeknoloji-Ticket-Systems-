@@ -1389,3 +1389,8 @@ html[data-theme="dark"]
   color: #e5eaee;
   opacity: 1;
 }
+
+/* Card actions share a full, rounded hover target in both themes. */
+.survey-card-actions>button{width:32px;height:32px;box-sizing:border-box;padding:7px;border-radius:8px;transition:background-color .15s,color .15s}
+.survey-card-actions>button:hover:not(:disabled){background:rgba(24,167,223,.12);color:var(--text)}
+.survey-card-actions>button.danger-icon:hover:not(:disabled){background:rgba(227,108,102,.12);color:#e36c66}

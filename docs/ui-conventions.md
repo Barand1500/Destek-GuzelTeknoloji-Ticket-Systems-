@@ -7,3 +7,5 @@ Modal başlığı ve alt işlem alanı çizgiyle ayrılır. Kaydet/Vazgeç alt s
 Bağlı müşteri seçimi aşağı açılır, sınırlı yükseklikten sonra kaydırılır. Salt okunur seçim kutularında metin imleci gösterilmez. Gerçek arama inputlarında imleç için yeterli satır yüksekliği ve iç boşluk bırakılır.
 
 Anlaşma türü ve bağlı müşteri listeleri aşağı açılır; açılınca modal boyutu değişmez. Liste üst katmanda gösterilir, ekranın alt sınırına göre yüksekliği kısıtlanır ve içeriden kaydırılır. Şirket ortak kredi ayarı yalnızca alt müşterileri olan ana kayıtta gösterilir.
+
+Anlaşmalar, Bağlı Müşteriler ve Duyurular modallarında yalnızca X ile aynı kapatma işini yapan alt Kapat/İptal/Vazgeç butonları gösterilmez. Mevcut pencere içinde ekleme/düzenleme modundan geri döndüren Vazgeç korunur. Anket kartı işlem simgeleri 32px, 8px köşe yarıçapı ve tema uyumlu yarı saydam hover kullanır.
