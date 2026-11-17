@@ -14,7 +14,7 @@ test('IMAP polling imports old unread and read messages, isolates individual fai
   const key = imapSyncKey(host, 993, user, mailbox, '123');
   let customerId = '', departmentId = '', upperUid = 4, failTwo = true;
   let incomingMessagesSince: Date | null = null;
-  const fetched: number[] = [], searches: string[] = [];
+  const fetched: number[] = [], sourceFetched: number[] = [], searches: string[] = [];
   const originalSettings = db.integrationSettings.findUnique;
   t.mock.method(console, 'error', () => {});
   t.mock.method(console, 'warn', () => {});
@@ -30,12 +30,23 @@ test('IMAP polling imports old unread and read messages, isolates individual fai
     const [from, through] = query.uid.split(':').map(Number);
     return Array.from({ length: through - from + 1 }, (_, index) => from + index);
   });
-  t.mock.method(ImapFlow.prototype, 'fetchOne', async (uid: any) => {
-    fetched.push(Number(uid));
-    if (Number(uid) === 2 && failTwo) throw new Error('Temporary message download failure');
+  t.mock.method(ImapFlow.prototype, 'fetchOne', async (uid: any, query: any, options: any) => {
+    assert.deepEqual(options, { uid: true });
+    assert.equal(query.uid, true);
+    if (query.source) {
+      sourceFetched.push(Number(uid));
+      assert.equal(query.size, undefined);
+      if (Number(uid) === 2 && failTwo) throw new Error('Temporary message download failure');
+    } else {
+      fetched.push(Number(uid));
+      assert.equal(query.size, true);
+      assert.equal(query.internalDate, true);
+    }
     const number = Number(uid) === 5 ? 1 : Number(uid);
     const source = Buffer.from(`From: Customer <${number === 4 ? ownAlias : email}>\r\nTo: support@example.test\r\nMessage-ID: <imap-${suffix}-${number}@example.test>\r\nDate: Sat, 1 Jan 2000 00:00:00 +0000\r\nSubject: IMAP test ${number}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nReply ${number}`);
-    return { uid: Number(uid), source, internalDate: new Date(Number(uid) === 7 ? '2026-10-16T09:00:00Z' : '2000-01-01T00:00:00Z') };
+    if (query.source) return { uid: Number(uid), source };
+    // Metadata response intentionally has no source: download requires a separate request.
+    return { uid: Number(uid), size: source.length, internalDate: new Date(Number(uid) === 7 ? '2026-10-16T09:00:00Z' : '2000-01-01T00:00:00Z') };
   });
   t.mock.method(ImapFlow.prototype, 'messageFlagsAdd', async (uid: any) => { if (Number(uid) === 3) throw new Error('Flag update failed'); return true; });
   try {
@@ -48,6 +59,7 @@ test('IMAP polling imports old unread and read messages, isolates individual fai
     assert.equal((await db.imapSyncState.findUniqueOrThrow({ where: { id: key } })).lastUid, 4);
     assert.equal((await syncInboundEmail()).processed, 0);
     assert.deepEqual(fetched, [1, 2, 3, 4]);
+    assert.deepEqual(sourceFetched, [1, 2, 3, 4]);
     failTwo = false;
     await db.imapSyncRetry.updateMany({ where: { syncId: key }, data: { nextAttemptAt: new Date(0) } });
     assert.equal((await syncInboundEmail()).processed, 1);
@@ -65,6 +77,8 @@ test('IMAP polling imports old unread and read messages, isolates individual fai
     assert.equal(await db.conversation.count({ where: { customerId } }), 4);
     assert.equal(await db.incomingEmail.count({ where: { messageId: `<imap-${suffix}-6@example.test>` } }), 0);
     assert.equal((await syncInboundEmail()).processed, 0);
+    assert.equal(sourceFetched.includes(6), false, 'old mail must be filtered using metadata before downloading source');
+    assert.equal(sourceFetched.filter(uid => uid === 7).length, 1);
   } finally {
     db.integrationSettings.findUnique = originalSettings;
     const ids = customerId ? (await db.conversation.findMany({ where: { customerId }, select: { id: true } })).map(row => row.id) : [];

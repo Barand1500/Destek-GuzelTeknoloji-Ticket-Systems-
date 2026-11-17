@@ -14,7 +14,8 @@ import { conversationChannelFilter } from './reply-channels.js';
 import { discardStoredUploads, withStoredUploads, type StoredUpload } from './uploads.service.js';
 import { prepareInboundEmailAttachments } from './inbound-email-attachments.js';
 import { drainImapMailbox, imapSyncKey } from './imap-sync.service.js';
-import { acceptsIncomingDate } from './inbound-start-date.js';
+import { fetchBoundedInboundEmail } from './inbound-email-source.js';
+import { isPermanentlySkippedImapUid, recordPermanentImapSkip } from './imap-skip.service.js';
 
 let running = false;
 let timer: NodeJS.Timeout | undefined;
@@ -251,10 +252,10 @@ export async function syncInboundEmail() {
         process: async (uid, storageMailbox) => {
           const known = await db.incomingEmail.findUnique({ where: { mailbox_uid: { mailbox: storageMailbox, uid } } });
           if (known) return false;
-          const message = await client.fetchOne(uid, { uid: true, source: true, internalDate: true }, { uid: true });
-          if (!message) return false; // Expunged since SEARCH: that UID cannot return.
-          if (!acceptsIncomingDate(integration?.incomingMessagesSince, message.internalDate)) return false;
-          if (!message.source || message.uid !== uid) throw new Error('IMAP mesaj içeriği tam alınamadı.');
+          if (await isPermanentlySkippedImapUid(storageMailbox, uid)) return false;
+          const message = await fetchBoundedInboundEmail(client, uid, integration?.incomingMessagesSince,
+            diagnostic => recordPermanentImapSkip(storageMailbox, uid, diagnostic));
+          if (!message) return false;
           const parsed = await simpleParser(message.source);
           const sender = parsed.from?.value.find((value) => value.address)?.address;
           const body = await parsedEmailReplyText(parsed);

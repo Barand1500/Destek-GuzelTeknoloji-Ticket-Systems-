@@ -124,6 +124,7 @@ managementRouter.post('/integrations/form/sources', staff, async (req, res) => r
 managementRouter.patch('/integrations/form/sources/:id', staff, async (req, res) => res.json({ success: true, data: await setFormSourceEnabled(req.actor, idSchema.parse(req.params.id), z.object({ enabled: z.boolean() }).strict().parse(req.body).enabled) }));
 managementRouter.get('/integrations/form', staff, async (_req, res) => res.json({ success: true, data: await getFormSettings() }));
 managementRouter.put('/integrations/form', staff, async (req, res) => res.json({ success: true, data: await saveFormSettings(req.actor, formSettingsSchema.parse(req.body)) }));
+managementRouter.get('/integrations/inbound-warnings', staff, async (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, data: await service.inboundEmailWarnings(req.actor) }));
 managementRouter.get("/integrations", staff, async (req, res) => res.json({ success: true, data: await service.integrationSettings(req.actor) }));
 managementRouter.patch('/integrations/incoming-start', staff, async (req, res) => {
   const { incomingMessagesSince } = z.object({ incomingMessagesSince: z.iso.datetime().transform(value => new Date(value)).nullable() }).strict().parse(req.body);

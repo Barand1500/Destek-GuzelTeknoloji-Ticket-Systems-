@@ -1,0 +1,9 @@
+# Conversation history database pagination
+
+The existing history endpoint and frontend payload remain unchanged. Permission/visibility checks still run through history() and getConversation(). The combined timeline is selected within RepeatableRead using parameterized UNION ALL SQL, ordered by createdAt descending, canonical UUID binary descending, then a deterministic message/log discriminator. LIMIT/OFFSET is applied before message bodies, attachments or audit metadata are hydrated.
+
+Counts match the visible timeline: all messages plus Conversation logs excluding email_received, email_sent, replied and note_added; replied/note metadata enriches message rows instead of duplicating them. Only selected-page keys are hydrated. Earliest message and creation log lookups are bounded; the original creator/INITIAL_MESSAGE label is retained even on later pages. Reply metadata picks the latest matching audit record deterministically; previous duplicate selection relied on unspecified DB iteration. Legacy messages without a creation log retain their own author/type.
+
+The count and SQL ordering still perform database work proportional to the relevant history/index range; this is bounded application memory/payload hydration, not an assertion that very deep OFFSET pages have constant cost. No data was deleted, no schema migration was added, and the existing conversationId/createdAt and entityId/createdAt indexes remain in use. For noncanonical imported IDs binary ordering can differ from JavaScript localeCompare; application-generated canonical UUIDs retain order.
+
+Focused integration tests cover mixed pages, same-time ordering, identical IDs across the two tables, no overlap/missing rows, metadata enrichment, original creator, absent creation legacy data, empty/out-of-range pages, denied customer and out-of-scope staff, and a guard against unbounded hydrated findMany calls.

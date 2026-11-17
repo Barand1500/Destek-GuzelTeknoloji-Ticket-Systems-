@@ -647,7 +647,7 @@ export function CustomersPage() {
                       >
                         Görüşmeleri Aç
                       </Link>}
-                      {canCreateConversations && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep Aç</Link>}
+                      {canCreateConversations && customer.isActive && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep Aç</Link>}
                       {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
                       <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları Gör' : 'Dosya Yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><FileText size={15} aria-hidden="true" /></button>
                       {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => { remove.reset(); setDeleteTarget(customer); }}><Trash2 size={15} aria-hidden="true" /></button>}
@@ -777,7 +777,7 @@ export function PhoneSupportPage() {
   const customers = useQuery({
     queryKey: ["/customers", "phone-support", phonePage, deferredSearch],
     queryFn: async () =>
-      (await api.get<Page<ManagedUser>>("/customers", { params: { page: phonePage, limit: 15, search: deferredSearch } })).data,
+      (await api.get<Page<ManagedUser>>("/customers", { params: { page: phonePage, limit: 15, search: deferredSearch, isActive: true } })).data,
     enabled: hasSearched && deferredSearch.trim().length > 0,
     placeholderData: previous => previous,
     staleTime: 15_000,
@@ -786,8 +786,9 @@ export function PhoneSupportPage() {
   const createCustomer = useSave("/customers", undefined, ["/customers"]);
   const createConversation = useSave("/conversations");
   const results = customers.data?.data ?? [];
-  const displayResults = hasSearched && !showCreate ? results : [];
-  const activeCustomer = selected ?? (!hasSearched ? initialCustomer.data : null) ?? displayResults.find(customer => customer.id === customerId) ?? null;
+  const displayResults = hasSearched && !showCreate ? results.filter(customer=>customer.isActive !== false) : [];
+  const candidateCustomer = selected ?? (!hasSearched ? initialCustomer.data : null) ?? displayResults.find(customer => customer.id === customerId) ?? null;
+  const activeCustomer = candidateCustomer?.isActive === false ? null : candidateCustomer;
   const contact: { phone?: string | null; email?: string | null } = showCreate ? newContact : activeCustomer ?? {};
   const availableChannels = contactChannels(contact, communicationChannels.data);
   const channelAvailable = selectedChannels.length > 0 && selectedChannels.every(value => availableChannels.includes(value));
@@ -893,6 +894,7 @@ export function PhoneSupportPage() {
     <main className="page">
       <Heading title={activeCustomer ? `${activeCustomer.name} için Telefon desteği aç` : "Telefon Desteği İçin Talep Aç"} description={activeCustomer ? "Bu kişi için talep bilgilerini doldurun ve destek kuyruğuna gönderin." : "Arayan kişiyi bulun, seçin ve görüşmeyi doğrudan destek kuyruğuna gönderin."} />
       {activeCustomer && <button type="button" className="button secondary phone-support-back" onClick={returnToSearch}>← Aramaya Geri Dön</button>}
+      {candidateCustomer?.isActive === false && <p className="error" role="alert">Bu müşteri hesabı pasif. Yeni talep açmak için önce hesabı aktif hale getirin.</p>}
       <div className="management-grid phone-support-grid">
         <section className="management-panel phone-support-search-panel">
           <label className="phone-support-search">

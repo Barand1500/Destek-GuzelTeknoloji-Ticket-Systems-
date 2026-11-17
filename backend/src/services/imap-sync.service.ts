@@ -32,7 +32,7 @@ export async function drainImapMailbox(options: SyncOptions) {
     if (Date.now() - lastRenewal >= 60_000) await checkpoint();
     try {
       if (await options.process(uid, storageMailbox)) processed++;
-      if (attempts) await db.imapSyncRetry.deleteMany({ where: { syncId: options.id, uid } });
+      if (attempts) await db.imapSyncRetry.deleteMany({ where: { syncId: options.id, uid, attempts: { gt: 0 } } });
       return true;
     } catch (error) {
       const lastError = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
@@ -46,7 +46,7 @@ export async function drainImapMailbox(options: SyncOptions) {
   try {
     // Another worker may have finished between upsert and acquiring the lease.
     const state = await db.imapSyncState.findUniqueOrThrow({ where: { id: options.id } });
-    const retries = await db.imapSyncRetry.findMany({ where: { syncId: options.id, nextAttemptAt: { lte: new Date() } }, orderBy: [{ nextAttemptAt: 'asc' }, { uid: 'asc' }], take: 50 });
+    const retries = await db.imapSyncRetry.findMany({ where: { syncId: options.id, attempts: { gt: 0 }, nextAttemptAt: { lte: new Date() } }, orderBy: [{ nextAttemptAt: 'asc' }, { uid: 'asc' }], take: 50 });
     const retried = new Set<number>();
     for (const retry of retries) {
       if (!continuing()) return { processed, failed, busy: false };
@@ -62,7 +62,7 @@ export async function drainImapMailbox(options: SyncOptions) {
         if (!retried.has(uid) && await processOne(uid)) completed.push(uid);
         lastUid = uid;
       }
-      if (completed.length) await db.imapSyncRetry.deleteMany({ where: { syncId: options.id, uid: { in: completed } } });
+      if (completed.length) await db.imapSyncRetry.deleteMany({ where: { syncId: options.id, attempts: { gt: 0 }, uid: { in: completed } } });
       await checkpoint(lastUid);
     }
     // UID gaps are normal (deleted/expunged messages). Do not rescan them forever.

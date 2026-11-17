@@ -1,3 +1,4 @@
+import { conversationHistoryPage } from './conversation-history.js';
 import { issueFormLink } from './form-access.service.js';
 import { debitResolution } from './agreements.service.js';
 import { whatsappWindow } from './whatsapp-window.js';
@@ -373,18 +374,7 @@ export async function mentionCandidates(actor: Actor, id: string, search: string
 export async function history(actor: Actor, id: string, page: number, limit: number) {
   if (actor.role === 'CUSTOMER') throw new AppError(403, 'FORBIDDEN', 'İşlem geçmişi personele açıktır.');
   await getConversation(actor, id);
-  const entries = await db.$transaction(async tx => {
-    const messages = await tx.conversationMessage.findMany({ where: { conversationId: id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], include: { author: { select: person }, attachments: { select: { id: true, originalName: true, mimeType: true, size: true } } } });
-    const logs = await tx.activityLog.findMany({ where: { entityId: id, entityType: 'Conversation', action: { notIn: ['conversation.email_received', 'conversation.email_sent'] } }, include: { user: { select: person } } });
-    const messageMetadata = new Map(logs.filter(log => ['conversation.replied', 'conversation.note_added'].includes(log.action)).map(log => { const metadata = log.metadata as Record<string, unknown> | null; return [metadata?.messageId, metadata]; }));
-    const labels: Record<string, string> = { 'conversation.created': 'Talep oluşturuldu', 'conversation.updated': 'Talep bilgileri güncellendi', 'conversation.claimed': 'Temsilci talebi üzerine aldı', 'conversation.email_failed': 'E-posta bildirimi gönderilemedi' };
-    const creation = logs.find(log => log.action === 'conversation.created');
-    return [
-      ...messages.map((message, index) => ({ ...message, author: index === 0 && creation ? creation.user : message.author, action: index === 0 && creation ? 'INITIAL_MESSAGE' : message.type, metadata: messageMetadata.get(message.id) ? { channel: messageMetadata.get(message.id)?.channel, replyChannels: messageMetadata.get(message.id)?.replyChannels } : null })),
-      ...logs.filter(log => !['conversation.replied', 'conversation.note_added'].includes(log.action)).map(log => ({ id: log.id, conversationId: id, type: 'SYSTEM' as const, action: log.action, body: labels[log.action] ?? log.action, createdAt: log.createdAt, author: log.user, attachments: [], metadata: log.metadata })),
-    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id));
-  }, { isolationLevel: 'RepeatableRead' });
-  return { data: entries.slice((page - 1) * limit, page * limit), pagination: { page, limit, total: entries.length, totalPages: Math.ceil(entries.length / limit) } };
+  return db.$transaction(tx => conversationHistoryPage(tx, id, page, limit), { isolationLevel: 'RepeatableRead' });
 }
 export async function addMessage(
   actor: Actor,

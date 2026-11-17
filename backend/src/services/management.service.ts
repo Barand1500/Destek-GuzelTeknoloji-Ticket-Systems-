@@ -1,3 +1,5 @@
+import { env } from '../config/env.js';
+import { imapSyncKey } from './imap-sync.service.js';
 import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import { assignedTo, transferAssignee, assignmentCounts } from './conversation-assignees.js';
 import { managementOrder, sortManagementRows } from './management-sorting.js';
@@ -193,7 +195,7 @@ export async function users(
     role: customersOnly
       ? "CUSTOMER"
       : (q.role ?? { in: ["ADMIN", "SUPERVISOR", "AGENT"] }),
-    isActive: customersOnly ? undefined : q.isActive,
+    isActive: q.isActive,
     deletedAt: null,
     ...(!customersOnly ? staffDirectoryScope(actor) : {}),
     ...(q.search
@@ -1731,6 +1733,32 @@ export async function deleteActivityLogs(
   });
   return { deleted: result.count };
 }
+export async function inboundEmailWarnings(actor: Actor) {
+  requirePermission(actor, "integrations.view");
+  const settings = await db.integrationSettings.findUnique({ where: { id: "default" } });
+  const hasStored = Boolean(settings && (settings.imapHost || settings.imapUser || settings.imapPassword));
+  const account = settings?.imapUser || env.IMAP_USER;
+  const host = settings?.imapHost || env.IMAP_HOST;
+  const port = hasStored ? settings!.imapPort : env.IMAP_PORT;
+  const mailbox = hasStored ? settings!.imapMailbox : env.IMAP_MAILBOX;
+  if (!host || !account) return { total: 0, items: [] };
+  const states = await db.imapSyncState.findMany({ where: { mailbox }, select: { id: true, uidValidity: true } });
+  const ids = states.filter(state => state.id === imapSyncKey(host, port, account, mailbox, state.uidValidity)).map(state => state.id);
+  const where = { syncId: { in: ids }, attempts: 0 };
+  const [total, rows] = await Promise.all([
+    db.imapSyncRetry.count({ where }),
+    db.imapSyncRetry.findMany({ where, orderBy: [{ uid: 'desc' }, { syncId: 'asc' }], take: 20, select: { syncId: true, uid: true, lastError: true } }),
+  ]);
+  const items = rows.map(row => {
+    let diagnostic: Record<string, unknown> = {};
+    try { const parsed: unknown = JSON.parse(row.lastError); if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) diagnostic = parsed as Record<string, unknown>; } catch { /* Legacy diagnostic. */ }
+    const sizeBytes = typeof diagnostic.sizeBytes === 'number' && Number.isSafeInteger(diagnostic.sizeBytes) && diagnostic.sizeBytes >= 0 ? diagnostic.sizeBytes : null;
+    const reason = diagnostic.reason === 'message_too_large' || diagnostic.reason === 'source_too_large' ? 'Boyut sınırı aşıldı' : 'İleti boyutu doğrulanamadı';
+    return { id: row.syncId + ':' + row.uid, uid: row.uid, account, mailbox, sizeBytes, reason };
+  });
+  return { total, items };
+}
+
 export async function integrationSettings(actor: Actor) {
   requirePermission(actor, "integrations.view");
   return db.integrationSettings.upsert({
