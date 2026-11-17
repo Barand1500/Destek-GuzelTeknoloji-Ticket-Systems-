@@ -339,3 +339,20 @@ async function recordWhatsappStatus(status: any) {
   }
   publishChange(source.entityId);
 }
+
+/** Sends an explicitly configured approved utility template, never a session text or OTP template. */
+export async function sendWhatsappTemplate(phone: string, template: { name: string; language: string; parameters: string[] }, callbackId?: string) {
+  const settings = await db.integrationSettings.findUnique({ where: { id: 'default' } });
+  const to = whatsappRecipient(phone);
+  if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !/^[1-9]\d{9,14}$/.test(to) || !/^[a-z0-9_]+$/.test(template.name) || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(template.language) || template.parameters.length !== 1) {
+    throw Object.assign(new Error('WhatsApp þablon gönderim ayarlarý geçersiz.'), { code: 'INVALID_WHATSAPP_TEMPLATE' });
+  }
+  const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
+    method: 'POST', headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to, type: 'template', template: { name: template.name, language: { code: template.language }, components: [{ type: 'body', parameters: template.parameters.map(text => ({ type: 'text', text })) }] }, ...(callbackId ? { biz_opaque_callback_data: callbackId } : {}) }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await responseJson<MetaResponse>(response);
+  if (!response.ok || !data.messages?.[0]?.id) throw Object.assign(new Error(providerMessage('WhatsApp þablonu gönderilemedi', response, data)), { statusCode: response.status, providerCode: data.error?.code });
+  return data.messages[0].id;
+}

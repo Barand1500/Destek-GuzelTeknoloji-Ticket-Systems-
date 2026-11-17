@@ -1,0 +1,9 @@
+# Flexible credit periods and package tracking
+User approved implementation including reusable calendar-derived day periods and renewal toggle.
+- Existing monthly/yearly plans remain unchanged. Admin period picker matches agreement type picker with + editor, named day/month/year choices; date range saves inclusive day duration, never fixed dates. 3 months remains calendar duration, not 90 days.
+- CreditSalesPeriod persisted templates (id,name,unit DAY|MONTH|YEAR,value), read integrations.view, write integrations.update, audit; bounded 100 rows. Plans snapshot periodMonths nullable or periodDays nullable (exactly one), periodName, renewalRequested defaultfalse. Orders snapshot same conditions and renewal preference; fingerprints include new terms; legacy quotes unchanged when no new terms.
+- Renewal toggles on plan, customer plan preview, agreement create/edit persist preference only. Explicit UI states no automatic charging/renewal until payment integration; no free credit or unapproved money movement.
+- Customer existing agreements show dates, total/used/remaining, upcoming/active/expired/cancelled/depleted status. No start dates or entitlements for pending orders. No payment integration/refund work.
+- Date durations 1..3650 days or 1..120months, years converted to months. Inclusive day ranges; month end clamping and leap-year handling tested. Expiry-first selection existing behavior retained, no unrequested multi-agreement debit rewrite.
+
+User UI correction: do not render a separate period editor, duration mode, or unit form. Match agreement-type footer: compact calendar icon on left, one name input in center, + on right. One calendar supports two clicks for an inclusive range, then + persists its day duration. Existing day/month/year saved templates and built-in month choices remain selectable.

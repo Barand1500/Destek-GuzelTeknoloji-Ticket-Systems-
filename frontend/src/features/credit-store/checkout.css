@@ -1,0 +1,36 @@
+.checkout-heading { margin: 26px 0 22px; }
+.checkout-heading h2 { margin-top: 9px; font-size: 24px; }
+.checkout-heading p { margin: 0; }
+.checkout-card-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--text); }
+.checkout-card-heading h3 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.checkout-fields { margin-top: 18px; }
+.checkout-card-field { position: relative; }
+.checkout-card-field > input { padding-right: 132px; }
+.checkout-bank-badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 7px; max-width: 124px; pointer-events: none; }
+.checkout-bank-logo { display: block; width: auto; height: 22px; max-width: 124px; object-fit: contain; }
+html[data-theme="dark"] .checkout-bank-badge { max-width: 136px; padding: 2px 6px; border-radius: 5px; background: #fff; }
+html[data-theme="dark"] .checkout-bank-logo { max-width: 116px; height: 20px; }
+.checkout-bank-badge > i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; font-size: 9px; font-style: normal; font-weight: 800; }
+.checkout-bank-badge > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 1.2; }
+.checkout-card-scheme { color: var(--muted); font-size: 11px; font-style: normal; font-weight: 700; }
+.checkout-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 24px; align-items: start; }
+.checkout-form .credit-fields { margin-top: 30px; }
+.checkout-preview { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.checkout-preview svg { flex-shrink: 0; margin-top: 3px; }
+.checkout-bank { border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; gap: 12px; margin: 24px 0; }
+.checkout-bank svg { flex-shrink: 0; margin-top: 2px; }
+.checkout-bank strong { font-size: 13px; }
+.checkout-bank p { font-size: 12px; margin: 5px 0 0; }
+.checkout-pay { width: 100%; justify-content: center; min-height: 46px; }
+.checkout-summary h3 { margin-top: 14px; line-height: 1.5; }
+.checkout-summary dl { margin: 24px 0 0; }
+.checkout-summary dl > div { display: flex; gap: 15px; justify-content: space-between; padding: 13px 0; border-top: 1px solid var(--border); }
+.checkout-summary dt { color: var(--muted); }
+.checkout-summary dd { margin: 0; font-weight: 600; text-align: right; }
+.checkout-total dd { font-size: 22px; }
+.checkout-error { color: var(--danger, #c93749); font-size: 12px; }
+.checkout-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.checkout-form [aria-invalid="true"] { color: var(--danger, #c93749); }
+@media (max-width: 760px) { .checkout-grid { grid-template-columns: minmax(0, 1fr); } .checkout-summary { grid-row: 1; } }
+@media (max-width: 440px) { .checkout-form.credit-sales-card, .checkout-summary.credit-sales-card { padding: 18px; } .checkout-form .credit-fields { grid-template-columns: minmax(0, 1fr); } .checkout-card-field > input { padding-right: 126px; } .checkout-bank-badge { max-width: 114px; } .checkout-bank-logo { max-width: 108px; height: 20px; } .checkout-bank-badge > strong { font-size: 11px; } }
+.checkout-bank-unknown { color: var(--muted); font-size: 11px; font-style: normal; font-weight: 600; }

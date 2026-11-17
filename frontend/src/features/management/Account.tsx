@@ -36,6 +36,7 @@ type IntegrationSettings = {
   lastTestChannel: string | null; lastTestSuccess: boolean | null; lastTestMessage: string | null; lastTestedAt: string | null; updatedAt: string;
 };
 type Notification = {
+  type?: string;
   id: string;
   title: string;
   message: string;
@@ -115,7 +116,7 @@ export function NotificationsPage() {
           <table className="management-table notification-table" aria-label="Bildirimler">
             <SortableTableHead sorting={list} columns={[{label:'Bildirim',field:'title'},{label:'Mesaj',field:'message'},{label:'Tarih',field:'createdAt',date:true},{label:'Durum'},{label:'İşlem'}]} />
             <tbody>{list.data.data.map((notification) => <tr key={notification.id}>
-              <td><strong>{notification.title}</strong></td>
+              <td>{user?.role === "CUSTOMER" && notification.type?.startsWith("CREDIT_") ? <Link to={notification.type.startsWith("CREDIT_ORDER_") ? "/customer/agreements?view=orders" : "/customer/agreements"}><strong>{notification.title}</strong></Link> : <strong>{notification.title}</strong>}</td>
               <td>{notification.message}</td>
               <td><time>{formatDate(notification.createdAt)}</time></td>
               <td><span className="notification-read-state">{notification.isRead ? "Okundu" : "Okunmadı"}</span></td>

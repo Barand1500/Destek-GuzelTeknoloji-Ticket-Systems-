@@ -278,6 +278,7 @@ function WorkspaceLayout() {
           { label: "Kategoriler", group: "Yönetim", to: path("tags") },
           { label: "Raporlar", group: "Yönetim", to: path("reports") },
           { label: "Yetenekler", group: "Kategoriler", to: path("tags/skills") },
+          { label: "Kredi ve Paketler", group: "Yönetim", to: path("credit-sales") },
           { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations/channels") },
           { label: "Yanıt Süreleri", group: "Yönetim", to: path("response-time-rules") },
           { label: "Personel Etkinliği", group: "Yönetim", to: path("staff-presence") },
@@ -431,6 +432,7 @@ function WorkspaceLayout() {
                     <Settings size={16} />
                     Entegrasyonlar
                   </NavLink>
+                  <NavLink to={path("credit-sales")}><FileText size={16} />Kredi ve Paketler</NavLink>
                   <NavLink to={path("response-time-rules")}>
                     <Timer size={16} />
                     Yanıt Süreleri
@@ -686,7 +688,7 @@ function WorkspaceLayout() {
                                   user.role,
                                   notification.conversationId,
                                 )
-                              : path("notifications")
+                              : notification.type?.startsWith("CREDIT_ORDER_") && user.role === "CUSTOMER" ? "/customer/agreements?view=orders" : notification.type?.startsWith("CREDIT_") && user.role === "CUSTOMER" ? "/customer/agreements" : path("notifications")
                           }
                           className="notification-popover-item unread"
                           onClick={(event) => {

@@ -101,7 +101,12 @@ export const ModelName = {
   Agreement: 'Agreement',
   CreditCharge: 'CreditCharge',
   CustomerLoginChallenge: 'CustomerLoginChallenge',
-  AgreementType: 'AgreementType'
+  AgreementType: 'AgreementType',
+  CreditSalesSettings: 'CreditSalesSettings',
+  CreditSalesPlan: 'CreditSalesPlan',
+  CreditOrder: 'CreditOrder',
+  CreditAlertReceipt: 'CreditAlertReceipt',
+  CreditSalesPeriod: 'CreditSalesPeriod'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -800,6 +805,7 @@ export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnu
 
 
 export const AgreementScalarFieldEnum = {
+  renewalRequested: 'renewalRequested',
   id: 'id',
   customerId: 'customerId',
   name: 'name',
@@ -852,6 +858,95 @@ export const AgreementTypeScalarFieldEnum = {
 } as const
 
 export type AgreementTypeScalarFieldEnum = (typeof AgreementTypeScalarFieldEnum)[keyof typeof AgreementTypeScalarFieldEnum]
+
+
+export const CreditSalesSettingsScalarFieldEnum = {
+  alertChannels: 'alertChannels',
+  whatsappCreditTemplateName: 'whatsappCreditTemplateName',
+  whatsappCreditTemplateLanguage: 'whatsappCreditTemplateLanguage',
+  alertsEnabled: 'alertsEnabled',
+  lowCreditPercent: 'lowCreditPercent',
+  expiryNoticeDays: 'expiryNoticeDays',
+  currency: 'currency',
+  id: 'id',
+  enabled: 'enabled',
+  unitPrice: 'unitPrice',
+  minCredits: 'minCredits',
+  maxCredits: 'maxCredits',
+  validityDays: 'validityDays',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSalesSettingsScalarFieldEnum = (typeof CreditSalesSettingsScalarFieldEnum)[keyof typeof CreditSalesSettingsScalarFieldEnum]
+
+
+export const CreditSalesPlanScalarFieldEnum = {
+  periodDays: 'periodDays',
+  periodName: 'periodName',
+  renewalRequested: 'renewalRequested',
+  currency: 'currency',
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  periodMonths: 'periodMonths',
+  price: 'price',
+  credits: 'credits',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSalesPlanScalarFieldEnum = (typeof CreditSalesPlanScalarFieldEnum)[keyof typeof CreditSalesPlanScalarFieldEnum]
+
+
+export const CreditOrderScalarFieldEnum = {
+  periodName: 'periodName',
+  renewalRequested: 'renewalRequested',
+  id: 'id',
+  number: 'number',
+  customerId: 'customerId',
+  requestedById: 'requestedById',
+  requestKey: 'requestKey',
+  inputHash: 'inputHash',
+  kind: 'kind',
+  name: 'name',
+  credits: 'credits',
+  total: 'total',
+  currency: 'currency',
+  unitPrice: 'unitPrice',
+  validityDays: 'validityDays',
+  periodMonths: 'periodMonths',
+  status: 'status',
+  cancelledAt: 'cancelledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditOrderScalarFieldEnum = (typeof CreditOrderScalarFieldEnum)[keyof typeof CreditOrderScalarFieldEnum]
+
+
+export const CreditAlertReceiptScalarFieldEnum = {
+  channel: 'channel',
+  id: 'id',
+  agreementId: 'agreementId',
+  customerId: 'customerId',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditAlertReceiptScalarFieldEnum = (typeof CreditAlertReceiptScalarFieldEnum)[keyof typeof CreditAlertReceiptScalarFieldEnum]
+
+
+export const CreditSalesPeriodScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  unit: 'unit',
+  value: 'value',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditSalesPeriodScalarFieldEnum = (typeof CreditSalesPeriodScalarFieldEnum)[keyof typeof CreditSalesPeriodScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1469,4 +1564,61 @@ export const AgreementTypeOrderByRelevanceFieldEnum = {
 } as const
 
 export type AgreementTypeOrderByRelevanceFieldEnum = (typeof AgreementTypeOrderByRelevanceFieldEnum)[keyof typeof AgreementTypeOrderByRelevanceFieldEnum]
+
+
+export const CreditSalesSettingsOrderByRelevanceFieldEnum = {
+  whatsappCreditTemplateName: 'whatsappCreditTemplateName',
+  whatsappCreditTemplateLanguage: 'whatsappCreditTemplateLanguage',
+  currency: 'currency',
+  id: 'id'
+} as const
+
+export type CreditSalesSettingsOrderByRelevanceFieldEnum = (typeof CreditSalesSettingsOrderByRelevanceFieldEnum)[keyof typeof CreditSalesSettingsOrderByRelevanceFieldEnum]
+
+
+export const CreditSalesPlanOrderByRelevanceFieldEnum = {
+  periodName: 'periodName',
+  currency: 'currency',
+  id: 'id',
+  name: 'name',
+  description: 'description'
+} as const
+
+export type CreditSalesPlanOrderByRelevanceFieldEnum = (typeof CreditSalesPlanOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPlanOrderByRelevanceFieldEnum]
+
+
+export const CreditOrderOrderByRelevanceFieldEnum = {
+  periodName: 'periodName',
+  id: 'id',
+  customerId: 'customerId',
+  requestedById: 'requestedById',
+  requestKey: 'requestKey',
+  inputHash: 'inputHash',
+  kind: 'kind',
+  name: 'name',
+  currency: 'currency',
+  status: 'status'
+} as const
+
+export type CreditOrderOrderByRelevanceFieldEnum = (typeof CreditOrderOrderByRelevanceFieldEnum)[keyof typeof CreditOrderOrderByRelevanceFieldEnum]
+
+
+export const CreditAlertReceiptOrderByRelevanceFieldEnum = {
+  channel: 'channel',
+  id: 'id',
+  agreementId: 'agreementId',
+  customerId: 'customerId',
+  kind: 'kind'
+} as const
+
+export type CreditAlertReceiptOrderByRelevanceFieldEnum = (typeof CreditAlertReceiptOrderByRelevanceFieldEnum)[keyof typeof CreditAlertReceiptOrderByRelevanceFieldEnum]
+
+
+export const CreditSalesPeriodOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  unit: 'unit'
+} as const
+
+export type CreditSalesPeriodOrderByRelevanceFieldEnum = (typeof CreditSalesPeriodOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPeriodOrderByRelevanceFieldEnum]
 

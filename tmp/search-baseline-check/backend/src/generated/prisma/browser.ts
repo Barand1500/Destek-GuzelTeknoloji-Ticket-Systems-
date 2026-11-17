@@ -272,3 +272,28 @@ export type CustomerLoginChallenge = Prisma.CustomerLoginChallengeModel
  * 
  */
 export type AgreementType = Prisma.AgreementTypeModel
+/**
+ * Model CreditSalesSettings
+ * 
+ */
+export type CreditSalesSettings = Prisma.CreditSalesSettingsModel
+/**
+ * Model CreditSalesPlan
+ * 
+ */
+export type CreditSalesPlan = Prisma.CreditSalesPlanModel
+/**
+ * Model CreditOrder
+ * 
+ */
+export type CreditOrder = Prisma.CreditOrderModel
+/**
+ * Model CreditAlertReceipt
+ * 
+ */
+export type CreditAlertReceipt = Prisma.CreditAlertReceiptModel
+/**
+ * Model CreditSalesPeriod
+ * 
+ */
+export type CreditSalesPeriod = Prisma.CreditSalesPeriodModel

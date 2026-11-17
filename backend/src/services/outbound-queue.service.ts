@@ -4,7 +4,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import type { OutboundMessage } from '../generated/prisma/client.js';
 import type { OutboundPayload } from './outbound-queue.store.js';
 import { sendSupportEmail, smtpFailureReason } from './mailer.service.js';
-import { sendChannelReply } from './integrations.service.js';
+import { sendChannelReply, sendWhatsappTemplate } from './integrations.service.js';
 import { whatsappOutboundProvider } from './whatsapp-routing.service.js';
 import { publishChange } from './events.service.js';
 
@@ -12,7 +12,7 @@ const leaseMs = 5 * 60_000;
 let running = false, stopping = false;
 let timer: NodeJS.Timeout | undefined, active: Promise<unknown> | undefined;
 export function retryableDeliveryError(error: { code?: string; responseCode?: number; statusCode?: number; providerCode?: number }) {
-  if (['EAUTH', 'SMTP_NOT_CONFIGURED', 'RECIPIENT_REJECTED', 'EENVELOPE', 'ENOENT', 'INVALID_FILE', 'INVALID_WHATSAPP_FILE'].includes(error.code ?? '')) return false;
+  if (['EAUTH', 'SMTP_NOT_CONFIGURED', 'RECIPIENT_REJECTED', 'EENVELOPE', 'ENOENT', 'INVALID_FILE', 'INVALID_WHATSAPP_FILE', 'INVALID_WHATSAPP_TEMPLATE'].includes(error.code ?? '')) return false;
   if (error.responseCode && error.responseCode >= 500) return false;
   if ([1, 2, 4, 17, 341, 80007, 130429, 131000, 131056].includes(error.providerCode ?? -1)) return true;
   if (error.providerCode) return false;
@@ -34,7 +34,8 @@ async function deliver(job: OutboundMessage, token: string) {
     if (channel === 'EMAIL') {
       smtpReceipt = await sendSupportEmail(payload.recipient.email!, payload.subject ?? '', payload.text, audit, payload.attachments, `<outbox-${job.id}@helpdesk.invalid>`);
       providerMessageId = smtpReceipt.messageId;
-    } else providerMessageId = await sendChannelReply(channel, payload.recipient, payload.text, job.id, payload.file);
+    } else if (channel === 'WHATSAPP' && payload.whatsappTemplate) providerMessageId = await sendWhatsappTemplate(payload.recipient.phone!, payload.whatsappTemplate, job.id);
+    else providerMessageId = await sendChannelReply(channel, payload.recipient, payload.text, job.id, payload.file);
     await db.$transaction(async tx => {
       const saved = await tx.outboundMessage.updateMany({ where: { id: job.id, status: 'PROCESSING', leaseToken: token }, data: { status: 'SENT', providerMessageId, lastError: null, leaseToken: null, leaseUntil: null } });
       if (!saved.count) return; // A signed early WhatsApp receipt may have completed it.

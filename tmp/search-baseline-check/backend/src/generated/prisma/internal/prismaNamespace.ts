@@ -447,7 +447,12 @@ export const ModelName = {
   Agreement: 'Agreement',
   CreditCharge: 'CreditCharge',
   CustomerLoginChallenge: 'CustomerLoginChallenge',
-  AgreementType: 'AgreementType'
+  AgreementType: 'AgreementType',
+  CreditSalesSettings: 'CreditSalesSettings',
+  CreditSalesPlan: 'CreditSalesPlan',
+  CreditOrder: 'CreditOrder',
+  CreditAlertReceipt: 'CreditAlertReceipt',
+  CreditSalesPeriod: 'CreditSalesPeriod'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -463,7 +468,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3833,6 +3838,336 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CreditSalesSettings: {
+      payload: Prisma.$CreditSalesSettingsPayload<ExtArgs>
+      fields: Prisma.CreditSalesSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditSalesSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditSalesSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditSalesSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditSalesSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.CreditSalesSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.CreditSalesSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.CreditSalesSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditSalesSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        update: {
+          args: Prisma.CreditSalesSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditSalesSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditSalesSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditSalesSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditSalesSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditSalesSettings>
+        }
+        groupBy: {
+          args: Prisma.CreditSalesSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditSalesSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditSalesPlan: {
+      payload: Prisma.$CreditSalesPlanPayload<ExtArgs>
+      fields: Prisma.CreditSalesPlanFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditSalesPlanFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditSalesPlanFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditSalesPlanFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditSalesPlanFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        findMany: {
+          args: Prisma.CreditSalesPlanFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>[]
+        }
+        create: {
+          args: Prisma.CreditSalesPlanCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        createMany: {
+          args: Prisma.CreditSalesPlanCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditSalesPlanDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        update: {
+          args: Prisma.CreditSalesPlanUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditSalesPlanDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditSalesPlanUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditSalesPlanUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPlanPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditSalesPlanAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditSalesPlan>
+        }
+        groupBy: {
+          args: Prisma.CreditSalesPlanGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesPlanGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditSalesPlanCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesPlanCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditOrder: {
+      payload: Prisma.$CreditOrderPayload<ExtArgs>
+      fields: Prisma.CreditOrderFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditOrderFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditOrderFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditOrderFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditOrderFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        findMany: {
+          args: Prisma.CreditOrderFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>[]
+        }
+        create: {
+          args: Prisma.CreditOrderCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        createMany: {
+          args: Prisma.CreditOrderCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditOrderDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        update: {
+          args: Prisma.CreditOrderUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditOrderDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditOrderUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditOrderUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditOrderPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditOrderAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditOrder>
+        }
+        groupBy: {
+          args: Prisma.CreditOrderGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditOrderGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditOrderCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditOrderCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditAlertReceipt: {
+      payload: Prisma.$CreditAlertReceiptPayload<ExtArgs>
+      fields: Prisma.CreditAlertReceiptFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditAlertReceiptFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditAlertReceiptFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditAlertReceiptFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditAlertReceiptFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        findMany: {
+          args: Prisma.CreditAlertReceiptFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>[]
+        }
+        create: {
+          args: Prisma.CreditAlertReceiptCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        createMany: {
+          args: Prisma.CreditAlertReceiptCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditAlertReceiptDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        update: {
+          args: Prisma.CreditAlertReceiptUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditAlertReceiptDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditAlertReceiptUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditAlertReceiptUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditAlertReceiptPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditAlertReceiptAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditAlertReceipt>
+        }
+        groupBy: {
+          args: Prisma.CreditAlertReceiptGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditAlertReceiptGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditAlertReceiptCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditAlertReceiptCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditSalesPeriod: {
+      payload: Prisma.$CreditSalesPeriodPayload<ExtArgs>
+      fields: Prisma.CreditSalesPeriodFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditSalesPeriodFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditSalesPeriodFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditSalesPeriodFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditSalesPeriodFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        findMany: {
+          args: Prisma.CreditSalesPeriodFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>[]
+        }
+        create: {
+          args: Prisma.CreditSalesPeriodCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        createMany: {
+          args: Prisma.CreditSalesPeriodCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditSalesPeriodDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        update: {
+          args: Prisma.CreditSalesPeriodUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditSalesPeriodDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditSalesPeriodUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditSalesPeriodUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSalesPeriodPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditSalesPeriodAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditSalesPeriod>
+        }
+        groupBy: {
+          args: Prisma.CreditSalesPeriodGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesPeriodGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditSalesPeriodCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSalesPeriodCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4552,6 +4887,7 @@ export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnu
 
 
 export const AgreementScalarFieldEnum = {
+  renewalRequested: 'renewalRequested',
   id: 'id',
   customerId: 'customerId',
   name: 'name',
@@ -4604,6 +4940,95 @@ export const AgreementTypeScalarFieldEnum = {
 } as const
 
 export type AgreementTypeScalarFieldEnum = (typeof AgreementTypeScalarFieldEnum)[keyof typeof AgreementTypeScalarFieldEnum]
+
+
+export const CreditSalesSettingsScalarFieldEnum = {
+  alertChannels: 'alertChannels',
+  whatsappCreditTemplateName: 'whatsappCreditTemplateName',
+  whatsappCreditTemplateLanguage: 'whatsappCreditTemplateLanguage',
+  alertsEnabled: 'alertsEnabled',
+  lowCreditPercent: 'lowCreditPercent',
+  expiryNoticeDays: 'expiryNoticeDays',
+  currency: 'currency',
+  id: 'id',
+  enabled: 'enabled',
+  unitPrice: 'unitPrice',
+  minCredits: 'minCredits',
+  maxCredits: 'maxCredits',
+  validityDays: 'validityDays',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSalesSettingsScalarFieldEnum = (typeof CreditSalesSettingsScalarFieldEnum)[keyof typeof CreditSalesSettingsScalarFieldEnum]
+
+
+export const CreditSalesPlanScalarFieldEnum = {
+  periodDays: 'periodDays',
+  periodName: 'periodName',
+  renewalRequested: 'renewalRequested',
+  currency: 'currency',
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  periodMonths: 'periodMonths',
+  price: 'price',
+  credits: 'credits',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSalesPlanScalarFieldEnum = (typeof CreditSalesPlanScalarFieldEnum)[keyof typeof CreditSalesPlanScalarFieldEnum]
+
+
+export const CreditOrderScalarFieldEnum = {
+  periodName: 'periodName',
+  renewalRequested: 'renewalRequested',
+  id: 'id',
+  number: 'number',
+  customerId: 'customerId',
+  requestedById: 'requestedById',
+  requestKey: 'requestKey',
+  inputHash: 'inputHash',
+  kind: 'kind',
+  name: 'name',
+  credits: 'credits',
+  total: 'total',
+  currency: 'currency',
+  unitPrice: 'unitPrice',
+  validityDays: 'validityDays',
+  periodMonths: 'periodMonths',
+  status: 'status',
+  cancelledAt: 'cancelledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditOrderScalarFieldEnum = (typeof CreditOrderScalarFieldEnum)[keyof typeof CreditOrderScalarFieldEnum]
+
+
+export const CreditAlertReceiptScalarFieldEnum = {
+  channel: 'channel',
+  id: 'id',
+  agreementId: 'agreementId',
+  customerId: 'customerId',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditAlertReceiptScalarFieldEnum = (typeof CreditAlertReceiptScalarFieldEnum)[keyof typeof CreditAlertReceiptScalarFieldEnum]
+
+
+export const CreditSalesPeriodScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  unit: 'unit',
+  value: 'value',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CreditSalesPeriodScalarFieldEnum = (typeof CreditSalesPeriodScalarFieldEnum)[keyof typeof CreditSalesPeriodScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -5223,6 +5648,63 @@ export const AgreementTypeOrderByRelevanceFieldEnum = {
 export type AgreementTypeOrderByRelevanceFieldEnum = (typeof AgreementTypeOrderByRelevanceFieldEnum)[keyof typeof AgreementTypeOrderByRelevanceFieldEnum]
 
 
+export const CreditSalesSettingsOrderByRelevanceFieldEnum = {
+  whatsappCreditTemplateName: 'whatsappCreditTemplateName',
+  whatsappCreditTemplateLanguage: 'whatsappCreditTemplateLanguage',
+  currency: 'currency',
+  id: 'id'
+} as const
+
+export type CreditSalesSettingsOrderByRelevanceFieldEnum = (typeof CreditSalesSettingsOrderByRelevanceFieldEnum)[keyof typeof CreditSalesSettingsOrderByRelevanceFieldEnum]
+
+
+export const CreditSalesPlanOrderByRelevanceFieldEnum = {
+  periodName: 'periodName',
+  currency: 'currency',
+  id: 'id',
+  name: 'name',
+  description: 'description'
+} as const
+
+export type CreditSalesPlanOrderByRelevanceFieldEnum = (typeof CreditSalesPlanOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPlanOrderByRelevanceFieldEnum]
+
+
+export const CreditOrderOrderByRelevanceFieldEnum = {
+  periodName: 'periodName',
+  id: 'id',
+  customerId: 'customerId',
+  requestedById: 'requestedById',
+  requestKey: 'requestKey',
+  inputHash: 'inputHash',
+  kind: 'kind',
+  name: 'name',
+  currency: 'currency',
+  status: 'status'
+} as const
+
+export type CreditOrderOrderByRelevanceFieldEnum = (typeof CreditOrderOrderByRelevanceFieldEnum)[keyof typeof CreditOrderOrderByRelevanceFieldEnum]
+
+
+export const CreditAlertReceiptOrderByRelevanceFieldEnum = {
+  channel: 'channel',
+  id: 'id',
+  agreementId: 'agreementId',
+  customerId: 'customerId',
+  kind: 'kind'
+} as const
+
+export type CreditAlertReceiptOrderByRelevanceFieldEnum = (typeof CreditAlertReceiptOrderByRelevanceFieldEnum)[keyof typeof CreditAlertReceiptOrderByRelevanceFieldEnum]
+
+
+export const CreditSalesPeriodOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  unit: 'unit'
+} as const
+
+export type CreditSalesPeriodOrderByRelevanceFieldEnum = (typeof CreditSalesPeriodOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPeriodOrderByRelevanceFieldEnum]
+
+
 
 /**
  * Field references
@@ -5507,6 +5989,11 @@ export type GlobalOmitConfig = {
   creditCharge?: Prisma.CreditChargeOmit
   customerLoginChallenge?: Prisma.CustomerLoginChallengeOmit
   agreementType?: Prisma.AgreementTypeOmit
+  creditSalesSettings?: Prisma.CreditSalesSettingsOmit
+  creditSalesPlan?: Prisma.CreditSalesPlanOmit
+  creditOrder?: Prisma.CreditOrderOmit
+  creditAlertReceipt?: Prisma.CreditAlertReceiptOmit
+  creditSalesPeriod?: Prisma.CreditSalesPeriodOmit
 }
 
 /* Types for Logging */

@@ -14,6 +14,7 @@ export const agreementInput = z.object({
   startsOn: day, endsOn: day,
   fee: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ücret en fazla iki ondalık basamak içermelidir.')).default('0'),
   credits: z.number().int().min(0).max(1_000_000),
+  renewalRequested: z.boolean().optional(),
 }).strict().refine(v => v.endsOn >= v.startsOn, { path: ['endsOn'], message: 'Bitiş tarihi başlangıçtan önce olamaz.' });
 export const creditResolutionInput = z.object({ agreementId: z.uuid().nullable().optional(), credits: z.number().int().min(0).max(1_000_000) }).strict();
 export const relatedCustomerInput = z.object({ direction: z.enum(['CHILD', 'PARENT']), customer: createCustomerSchema }).strict();
@@ -84,10 +85,10 @@ export async function listAgreements(actor: Actor, customerId: string) {
   const typeNames = new Map(customTypes.map(t => [t.id, t.name]));
   const now = today();
   const active = (a: typeof agreements[number]) => !a.cancelledAt && a.startsOn <= now && a.endsOn >= now;
-  const rows = agreements.map(a => ({ ...a, typeLabel: builtInAgreementTypes[a.type] ?? typeNames.get(a.type) ?? 'Özel Anlaşma', fee: a.fee.toString(), remainingCredits: a.credits - a.usedCredits,
-    usable: Boolean(person.isActive && a.customerId === ownerId && active(a)),
+  const rows = agreements.map(a => ({ ...a, typeLabel: builtInAgreementTypes[a.type] ?? typeNames.get(a.type) ?? 'Özel Anlaşma', fee: a.fee.toString(), remainingCredits: Math.max(0, a.credits - a.usedCredits),
+    usable: Boolean(person.isActive && a.customerId === ownerId && active(a) && a.usedCredits < a.credits),
     creditSource: person.parentCustomerId ? 'COMPANY' : 'PERSONAL',
-    state: a.cancelledAt ? 'CANCELLED' : a.startsOn > now ? 'UPCOMING' : a.endsOn < now ? 'EXPIRED' : 'ACTIVE' }));
+    state: a.cancelledAt ? 'CANCELLED' : a.startsOn > now ? 'UPCOMING' : a.endsOn < now ? 'EXPIRED' : a.usedCredits >= a.credits ? 'DEPLETED' : 'ACTIVE' }));
   const currentRows = rows.filter(a => a.customerId === ownerId);
   const availableCredits = currentRows.filter(a => a.usable).reduce((sum,a) => sum + a.remainingCredits, 0);
   const charges = await db.creditCharge.findMany({ where: person.parentCustomerId ? { conversation: { customerId: person.id } } : { OR: [{ conversation: { customerId: { in: [person.id, ...children.map(c => c.id)] } } }, { agreement: { customerId: person.id } }] }, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } }, orderBy: { createdAt: 'desc' }, take: 100 });
@@ -114,7 +115,7 @@ export async function createAgreement(actor: Actor, customerId: string, input: z
       const active = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${checked.type} AND archivedAt IS NULL FOR UPDATE`;
       if (!active.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
     }
-    const result = await tx.agreement.create({ data: { ...checked, customerId, startsOn: new Date(checked.startsOn), endsOn: new Date(checked.endsOn) } });
+    const result = await tx.agreement.create({ data: { ...checked, renewalRequested: checked.renewalRequested ?? false, customerId, startsOn: new Date(checked.startsOn), endsOn: new Date(checked.endsOn) } });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.created', entityType: 'Agreement', entityId: result.id, metadata: { customerId, ...checked }, ipAddress: actor.ipAddress } });
     return { ...result, fee: result.fee.toString() };
   });
@@ -132,8 +133,9 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
       const types = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${input.type} AND archivedAt IS NULL FOR UPDATE`;
       if (!types.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
     }
-    const result = await tx.agreement.update({ where: { id }, data: { name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
-    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits }, after: { name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits } }, ipAddress: actor.ipAddress } });
+    const renewalRequested = input.renewalRequested ?? before.renewalRequested;
+    const result = await tx.agreement.update({ where: { id }, data: { renewalRequested, name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits, renewalRequested: before.renewalRequested }, after: { name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits, renewalRequested } }, ipAddress: actor.ipAddress } });
     return { ...result, fee: result.fee.toString() };
   });
 }

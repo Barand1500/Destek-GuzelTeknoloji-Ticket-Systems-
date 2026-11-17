@@ -6,20 +6,23 @@ import { startInboundEmailPolling, stopInboundEmailPolling } from "./services/in
 import { verifySupportEmail, smtpFailureReason } from './services/mailer.service.js';
 import { startAnnouncementQueue } from './services/announcements.service.js';
 import { startOutboundQueue, stopOutboundQueue } from './services/outbound-queue.service.js';
+import { startCreditAlerts } from './services/credit-alerts.service.js';
 await db.$connect();
 const stopAnnouncementQueue = await startAnnouncementQueue();
 void verifySupportEmail().then(result => console.log('SMTP bağlantısı:', result.configured ? 'hazır' : 'yapılandırılmamış')).catch(error => console.error('SMTP bağlantısı kurulamadı:', smtpFailureReason(error)));
 startInboundEmailPolling();
 startOutboundQueue();
+const stopCreditAlerts = startCreditAlerts(db);
 const server = app.listen(env.PORT, env.HOST, () =>
   console.log(`Helpdesk API: http://localhost:${env.PORT}`),
 );
 const io=attachSockets(server);
-server.on('error',(error:NodeJS.ErrnoException)=>{console.error(error.code==='EADDRINUSE'?`API portu ${env.PORT} kullanımda. Kök dizinde npm run dev kullanın.`:error.message);void db.$disconnect().finally(()=>process.exit(1));});
+server.on('error',(error:NodeJS.ErrnoException)=>{console.error(error.code==='EADDRINUSE'?`API portu ${env.PORT} kullanımda. Kök dizinde npm run dev kullanın.`:error.message);void stopCreditAlerts().then(() => db.$disconnect()).finally(()=>process.exit(1));});
 const shutdown = () =>
   io.close(async () => {
     await stopInboundEmailPolling();
     await stopOutboundQueue();
+    await stopCreditAlerts();
     stopAnnouncementQueue();
     void db.$disconnect().finally(() => process.exit(0));
   });

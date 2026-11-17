@@ -1,3 +1,7 @@
+import { CreditCheckout } from "../credit-store/CreditCheckout";
+import { CreditOrders } from "../credit-store/CreditOrders";
+import { CustomerCreditStore } from '../credit-store/CreditStore';
+import '../credit-store/credit-store.css';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X, ArrowLeft, History, Trash2, Pencil } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -15,11 +19,12 @@ import { agreementEndDate } from '../../utils/agreement-dates';
 import './agreements.css';
 
 type Person = { id: string; name: string; company?: string | null; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
-export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
+export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; credits: number; usedCredits: number; remainingCredits: number; renewalRequested?: boolean; usable: boolean; state: string; customer: Person; customerId: string };
 type Charge = { id: string; credits: number; createdAt: string; agreement: { name: string } | null; conversation: { id: string; number: number; subject: string; customer: { name: string } } };
 type Summary = { companyName?: string | null; customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
 const types: Record<string, string> = { MONTHLY: 'Aylık', YEARLY: 'Yıllık', ONE_OFF: 'Ek Destek Kredisi', MAINTENANCE: 'Bakım Anlaşması' };
-const states: Record<string, string> = { ACTIVE: 'Aktif', UPCOMING: 'Başlamadı', EXPIRED: 'Süresi Doldu', CANCELLED: 'İptal Edildi' };
+const states: Record<string, string> = { ACTIVE: 'Aktif', UPCOMING: 'Başlamadı', EXPIRED: 'Süresi Doldu', CANCELLED: 'İptal Edildi', DEPLETED: 'Kredi Tükendi' };
+const creditNumber = new Intl.NumberFormat('tr-TR');
 const date = (value: string) => value.slice(0, 10).split('-').reverse().join('.');
 
 export function AgreementDialog({ title, children, onClose, pending = false, headerActions, footer, compact = false }: { title: string; children: ReactNode; onClose: () => void; pending?: boolean; headerActions?: ReactNode; footer?: ReactNode; compact?: boolean }) {
@@ -65,13 +70,15 @@ export function CustomerAgreementsModal({ customer, onClose }: { customer: Perso
   </AgreementDialog>;
 }
 export function CustomerAgreementsPage() {
-  const { user } = useAuth(); const [params] = useSearchParams();
+  const { user } = useAuth(); const [params, setParams] = useSearchParams();
   const [history, setHistory] = useState(false);
+  const shopping = params.get("view") === "store", ordersVisible = params.get("view") === "orders", checkoutVisible = params.get("view") === "checkout";
+  const changeView = (view: string) => { const next = new URLSearchParams(params); next.set("view", view); setParams(next); };
   const customerId = params.get('customerId') || user!.id;
   const summary = useQuery({queryKey:['agreements',customerId],queryFn:async()=>(await api.get(`/customers/${customerId}/agreements`)).data.data as Summary});
   const data=summary.data;
   const companyName=data?.companyName?.trim() || (data?.parent ? data.parent.company?.trim() : data?.customer.company?.trim());
-  return <main className="page customer-agreements-page"><div className="page-heading customer-agreements-heading"><div><h1>Anlaşmalarım ve Kredilerim</h1>{companyName&&<p className="customer-agreements-company">{companyName}</p>}</div><div className="customer-agreements-actions">{data&&<div className="agreement-header-credit"><span>{data.parent||data.children.length?'Şirket kredisi':'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(data.availableCredits)}</strong></div>}<button className="button secondary" type="button" onClick={() => setHistory(true)}><History size={17} /> Kredi Hareketleri</button></div></div><AgreementWorkspace key={customerId} customerId={customerId} />
+  return <main className="page customer-agreements-page"><div className="page-heading customer-agreements-heading"><div><h1>Anlaşmalarım ve Kredilerim</h1>{companyName&&<p className="customer-agreements-company">{companyName}</p>}</div><div className="customer-agreements-actions">{data&&<div className="agreement-header-credit"><span>{data.parent||data.children.length?'Şirket kredisi':'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(data.availableCredits)}</strong></div>}{data && !data.customer.parentCustomerId && <button className="button primary" type="button" aria-pressed={shopping} onClick={() => changeView(shopping ? "agreements" : "store")}>{shopping ? "Anlaşmalarıma Dön" : "Kredi Yükle ve Paketler"}</button>}{data && !data.customer.parentCustomerId && <button className="button secondary" type="button" aria-pressed={ordersVisible} onClick={() => changeView(ordersVisible ? "agreements" : "orders")}>{ordersVisible ? "Anlaşmalarıma Dön" : "Siparişlerim"}</button>}<button className="button secondary" type="button" onClick={() => setHistory(true)}><History size={17} /> Kredi Hareketleri</button></div></div>{checkoutVisible && data && !data.customer.parentCustomerId ? <CreditCheckout key={params.get("orderId") || ""} orderId={params.get("orderId") || ""} onBack={() => changeView("orders")} /> : ordersVisible && data && !data.customer.parentCustomerId ? <CreditOrders /> : shopping && data && !data.customer.parentCustomerId ? <CustomerCreditStore /> : <AgreementWorkspace key={customerId} customerId={customerId} />}
     {history && <AgreementDialog title="Kredi Hareketleri" onClose={() => setHistory(false)}><CreditHistory customerId={customerId} /></AgreementDialog>}
   </main>;
 }
@@ -104,6 +111,7 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
   const formId = modalControl?.formId ?? localFormId;
   const typeMutations = useIsMutating({ mutationKey: ['agreement-types'] });
   const [agreementType, setAgreementType] = useState('MONTHLY'), [startsOn, setStartsOn] = useState(''), [manualEnd, setManualEnd] = useState('');
+  const [renewalRequested, setRenewalRequested] = useState(false);
   const automaticPeriod = ['MONTHLY', 'YEARLY'].includes(agreementType);
   const endsOn = automaticPeriod ? agreementEndDate(startsOn, agreementType) : manualEnd;
   const refresh = async () => { await Promise.all([client.invalidateQueries({ queryKey: ['agreements'] }), client.invalidateQueries({ queryKey: ['/customers'] }), client.invalidateQueries({ queryKey: ['conversations'] }), client.invalidateQueries({ queryKey: ['credit-options'] })]); };
@@ -124,17 +132,18 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
         <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
         {editing && <EditAgreementForm key={editing.id} agreement={editing} formId={formId} onPendingChange={setEditPending} inlineActions={!modalControl} onClose={() => setEditing(null)} onSaved={async () => { setEditing(null); setNotice("Anlaşma güncellendi."); await refresh(); }} />}
         {adding && !editing && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {
-          event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, credits: Number(values.credits) });
+          event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, credits: Number(values.credits), renewalRequested });
         }}>
           <label className="agreement-field"><span className="field-label">Anlaşma Adı</span><input name="name" required maxLength={150} /></label>
           <AgreementTypeSelect value={agreementType} onChange={value => { if (automaticPeriod) setManualEnd(endsOn); setAgreementType(value); }} />
           <AgreementDateField label="Başlangıç Tarihi" name="startsOn" min="1000-01-01" max="9998-12-31" value={startsOn} onChange={setStartsOn} />
           <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={startsOn || "1000-01-01"} value={endsOn} readOnly={automaticPeriod} onChange={setManualEnd} />
           <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min="0" max="1000000" step="1" required /></label>
+          <AgreementRenewalToggle checked={renewalRequested} onChange={setRenewalRequested} disabled={pending} />
           {!modalControl && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button><button className="button primary" disabled={pending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button></div>}
         </form>}
         {!adding && !editing && !visibleAgreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
-        {visibleAgreements.map(a => <details className="agreement-card" key={a.id}><summary><strong>{a.name}</strong><span className="agreement-summary-actions"><span>{a.customer.name} · {states[a.state]} · {a.remainingCredits} / {a.credits} kredi</span>{editable && <button className="agreement-edit-button" type="button" aria-label={a.name + " anlaşmasını düzenle"} title="Anlaşmayı Düzenle" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); setAdding(false); setEditing(a); }}><Pencil size={16} /></button>}{canDelete && <button className="agreement-delete-button" type="button" aria-label={a.name + " anlaşmasını sil"} title="Anlaşmayı Sil" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); if (!pending) { remove.reset(); setNotice(''); remove.mutate(a); } }}><Trash2 size={16} /></button>}</span></summary><div className="agreement-card-body"><p className="muted">{data.parent || data.children.length ? 'Şirket paketi' : 'Bireysel müşteri paketi'}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{a.credits}</strong> · Kullanılan: <strong>{a.usedCredits}</strong> · Kalan: <strong>{a.remainingCredits}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state === 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => reactivate.mutate(a.id)}>Yeniden Etkinleştir</button>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
+        {visibleAgreements.map(a => <details className="agreement-card" key={a.id}><summary><span className="agreement-package-overview"><strong>{a.name}</strong><span className="agreement-package-dates">Başlangıç: <time dateTime={a.startsOn}>{date(a.startsOn)}</time> · Bitiş: <time dateTime={a.endsOn}>{date(a.endsOn)}</time></span><span className="agreement-package-credits">Toplam: <strong>{creditNumber.format(a.credits)}</strong> · Kullanılan: <strong>{creditNumber.format(a.usedCredits)}</strong> · Kalan: <strong>{creditNumber.format(a.remainingCredits)}</strong></span></span><span className="agreement-summary-actions"><span>{a.customer.name} · {states[a.state]}</span>{editable && <button className="agreement-edit-button" type="button" aria-label={a.name + " anlaşmasını düzenle"} title="Anlaşmayı Düzenle" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); setAdding(false); setEditing(a); }}><Pencil size={16} /></button>}{canDelete && <button className="agreement-delete-button" type="button" aria-label={a.name + " anlaşmasını sil"} title="Anlaşmayı Sil" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); if (!pending) { remove.reset(); setNotice(''); remove.mutate(a); } }}><Trash2 size={16} /></button>}</span></summary><div className="agreement-card-body"><p className="muted">{data.parent || data.children.length ? 'Şirket paketi' : 'Bireysel müşteri paketi'}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{creditNumber.format(a.credits)}</strong> · Kullanılan: <strong>{creditNumber.format(a.usedCredits)}</strong> · Kalan: <strong>{creditNumber.format(a.remainingCredits)}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state === 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => reactivate.mutate(a.id)}>Yeniden Etkinleştir</button>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
     </>}
     {notice && <p role="status">{notice}</p>}
   </section>;
@@ -167,8 +176,9 @@ function EditAgreementForm({ agreement, formId, onClose, onSaved, onPendingChang
   const [name, setName] = useState(agreement.name), [type, setType] = useState(agreement.type);
   const [start, setStart] = useState(agreement.startsOn.slice(0, 10)), [end, setEnd] = useState(agreement.endsOn.slice(0, 10));
   const [credits, setCredits] = useState(String(agreement.credits));
+  const [renewalRequested, setRenewalRequested] = useState(agreement.renewalRequested ?? false);
   const catalogPending = useIsMutating({ mutationKey: ['agreement-types'] });
-  const save = useMutation({ mutationFn: () => api.put('/customers/' + agreement.customerId + '/agreements/' + agreement.id, { name, type, startsOn: start, endsOn: end, credits: Number(credits) }), onSuccess: onSaved });
+  const save = useMutation({ mutationFn: () => api.put('/customers/' + agreement.customerId + '/agreements/' + agreement.id, { name, type, startsOn: start, endsOn: end, credits: Number(credits), renewalRequested }), onSuccess: onSaved });
   const pending = save.isPending || catalogPending > 0;
   useEffect(() => { onPendingChange?.(pending); return () => onPendingChange?.(false); }, [pending, onPendingChange]);
   const automatic = ['MONTHLY', 'YEARLY'].includes(type);
@@ -180,8 +190,13 @@ function EditAgreementForm({ agreement, formId, onClose, onSaved, onPendingChang
       <AgreementDateField label="Başlangıç Tarihi" name="startsOn" min="1000-01-01" max="9998-12-31" value={start} disabled={pending} onChange={value => { setStart(value); if (automatic) setEnd(agreementEndDate(value, type)); }} />
       <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={start || "1000-01-01"} value={end} readOnly={automatic} disabled={pending} onChange={setEnd} />
       <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min={agreement.usedCredits} max="1000000" step="1" required disabled={pending} value={credits} onChange={e => setCredits(e.target.value)} /></label>
+      <AgreementRenewalToggle checked={renewalRequested} onChange={setRenewalRequested} disabled={pending} />
       {agreement.usedCredits > 0 && <p className="muted">Kullanılan: {agreement.usedCredits} kredi</p>}
     </form>
     {inlineActions && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={onClose}>Vazgeç</button><button className="button primary" type="submit" form={formId} disabled={pending}>Değişiklikleri Kaydet</button></div>}
   </section>;
+}
+
+function AgreementRenewalToggle({ checked, onChange, disabled }: { checked: boolean; onChange: (checked: boolean) => void; disabled: boolean }) {
+  return <label className="integration-toggle agreement-renewal-toggle"><input type="checkbox" checked={checked} disabled={disabled} onChange={event => onChange(event.target.checked)} /><i aria-hidden="true" /><span><strong>Dönem sonunda tekrarla</strong><small>Yenileme tercihi kaydedilir. Otomatik yenileme ve tahsilat henüz etkin değil.</small></span></label>;
 }

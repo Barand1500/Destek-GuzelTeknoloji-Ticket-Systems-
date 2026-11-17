@@ -1,3 +1,4 @@
+import { creditStoreRouter } from './credit-store.js';
 import { formsRouter } from './forms.js';
 import { searchQuery } from '../validators/management.js';
 import { emailSchema } from '../utils/email.js';
@@ -192,6 +193,7 @@ router.use(enforceRolePermissions);
 router.get('/conversations/project-options', async (_req, res) => {
   res.json({ success: true, data: await db.website.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] }) });
 });
+router.use(creditStoreRouter);
 router.use(agreementsRouter);
 router.use(rolesRouter);
 router.use(managementRouter);

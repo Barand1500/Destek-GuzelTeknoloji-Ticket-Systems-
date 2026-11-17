@@ -1,0 +1,616 @@
+.credit-store {
+  margin-top: 28px;
+}
+.credit-store h2,
+.credit-sales-page h2 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.credit-store h3,
+.credit-sales-page h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.credit-store p,
+.credit-sales-page p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.credit-store-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.credit-store-title p {
+  margin: 0;
+}
+.credit-store-owner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+.credit-store-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  margin: 20px 0;
+}
+.credit-store-tabs button {
+  font: inherit;
+  font-weight: 600;
+  background: transparent;
+  color: var(--muted);
+  padding: 14px 20px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+.credit-store-tabs button.active {
+  color: var(--text);
+  border-bottom-color: #67c9ed;
+}
+.credit-purchase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+}
+.credit-sales-card {
+  min-width: 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.credit-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.credit-fields {
+  border: 0;
+  padding: 0;
+  margin: 24px 0 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 18px;
+  min-width: 0;
+}
+.credit-fields > label:not(.credit-check):not(.credit-sales-toggle) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  min-width: 0;
+}
+.credit-fields > label:not(.credit-check):not(.credit-sales-toggle) > span {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  padding: 0 4px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+.credit-fields > label:not(.credit-check):not(.credit-sales-toggle) > input,
+.credit-fields > label > textarea {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  box-sizing: border-box;
+  border-radius: 0;
+}
+.credit-fields > label:focus-within {
+  border-color: #67c9ed;
+}
+.credit-fields > label > textarea {
+  resize: none;
+  line-height: 1.5;
+}
+.credit-fields > .credit-wide {
+  grid-column: 1/-1;
+}
+.credit-check {
+  flex-direction: row;
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 500;
+}
+.credit-check input {
+  appearance: auto;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 18px;
+  accent-color: #008bb5;
+}
+.credit-check span {
+  position: static;
+  background: none;
+}
+.credit-help {
+  font-size: 12px;
+}
+.credit-kicker {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.credit-price {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 16px 0;
+}
+.credit-price small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.credit-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.credit-rule svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.credit-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+.credit-plan-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.credit-plan-card h3 {
+  margin-top: 5px;
+}
+.credit-plan-card p {
+  margin: 0;
+}
+.credit-plan-card .credit-price {
+  margin: 6px 0;
+}
+.credit-plan-card .button {
+  margin-top: auto;
+}
+.credit-plan-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.credit-store-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, #1899bf 9%, var(--surface));
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.credit-store-notice svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.credit-quote {
+  margin-top: 20px;
+  outline: none;
+}
+.credit-quote:focus {
+  border-color: #67c9ed;
+}
+.credit-quote dl {
+  margin: 18px 0;
+  max-width: 650px;
+}
+.credit-quote dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.credit-quote dt {
+  color: var(--muted);
+}
+.credit-quote dd {
+  font-weight: 600;
+  text-align: right;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.credit-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.credit-sales-sections > .credit-sales-card {
+  margin-top: 24px;
+}
+.credit-plan-editor {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px;
+  margin-bottom: 24px;
+}
+.credit-admin-plans {
+  display: grid;
+  gap: 10px;
+}
+.credit-admin-plans article {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.credit-admin-plans article > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.credit-admin-plans article > div > span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.credit-plan-state {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--muted) 10%, transparent);
+  color: var(--muted);
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.credit-plan-state.active {
+  background: rgba(40, 175, 125, 0.14);
+  color: var(--text);
+}
+.credit-success {
+  border: 1px solid #3c9777;
+  border-radius: 8px;
+  padding: 14px;
+}
+.credit-sales-page button:disabled,
+.credit-store button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.credit-settings-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.credit-store .error,
+.credit-sales-page .error {
+  margin-top: 16px;
+  white-space: pre-wrap;
+}
+@media (max-width: 720px) {
+  .credit-purchase-grid,
+  .credit-fields {
+    grid-template-columns: 1fr;
+  }
+  .credit-sales-card {
+    padding: 18px;
+  }
+  .credit-store-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .credit-admin-plans article {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .credit-admin-plans article > .button {
+    margin-left: auto;
+  }
+  .credit-quote dl > div {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .credit-price {
+    font-size: 26px;
+  }
+  .credit-plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.credit-store-title > .button {
+  order: 1;
+}
+
+/* The catalog fields share the same surface as their containing cards. */
+html[data-theme] .credit-fields > .styled-dropdown {
+  background: transparent;
+}
+html[data-theme] .credit-fields .styled-dropdown-label {
+  background: var(--surface);
+}
+html[data-theme] .credit-fields .styled-dropdown-trigger {
+  background: transparent;
+  color: var(--text);
+}
+html[data-theme] .credit-fields > label > textarea {
+  background: transparent;
+  box-shadow: none;
+}
+.credit-fields input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.credit-fields input[type="number"]::-webkit-inner-spin-button,
+.credit-fields input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.credit-sales-page .credit-plan-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  cursor: pointer;
+}
+.credit-sales-page .credit-plan-close:hover {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--text);
+}
+
+html[data-theme]
+  .credit-sales-page
+  .credit-fields
+  > .styled-dropdown:has(.styled-dropdown-label) {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.credit-sales-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.credit-sales-card-heading h2 {
+  margin: 0;
+}
+.credit-sales-page .credit-sales-toggle {
+  width: auto;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.credit-sales-page .credit-sales-toggle strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.credit-sales-page .credit-sales-toggle:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.credit-sales-page .credit-fields > .credit-sales-toggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.credit-sales-page .credit-settings-fields {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1200px) {
+  .credit-sales-page .credit-settings-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .credit-sales-page .credit-settings-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .credit-sales-page .credit-settings-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .credit-sales-card-heading {
+    flex-wrap: wrap;
+  }
+}
+
+.credit-notice-settings {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.credit-period-footer {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+.credit-period-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.credit-period-add-row > input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.credit-period-add-row > .button {
+  flex: 0 0 34px;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.credit-period-remove {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 8px;
+  cursor: pointer;
+}
+.credit-period-range-summary {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+.credit-period-range {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  box-sizing: border-box;
+  width: 280px;
+  margin: 0;
+  overflow: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+.credit-period-range-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.credit-period-range-heading strong {
+  text-transform: capitalize;
+  font-size: 12px;
+}
+.credit-period-range button {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.credit-period-range-heading > button {
+  width: 28px;
+  border: 1px solid var(--border);
+}
+.credit-period-range button:hover {
+  background: rgba(24, 167, 223, 0.14);
+}
+.credit-period-range-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+.credit-period-range-grid > span {
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 22px;
+}
+.credit-period-range-grid > .outside-month {
+  color: var(--muted);
+  opacity: 0.5;
+}
+.credit-period-range-grid > button[data-in-range="true"] {
+  background: rgba(24, 167, 223, 0.14);
+}
+.credit-period-range-grid > button[aria-pressed="true"] {
+  background: #087fa8;
+  color: white;
+}
+.credit-renewal-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.credit-store .credit-sales-toggle {
+  width: auto;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.credit-store .credit-sales-toggle strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bin-search-card { margin-top: 20px; }
+.bin-search-field { display: flex; flex-direction: row; align-items: center; gap: 8px; min-height: 42px; font-weight: 400; margin: 16px 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); }
+.bin-search-field > svg { flex: none; }
+.bin-search-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; }
+.bin-search-table-wrap { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 9px; }
+.bin-search-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bin-search-table th, .bin-search-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.bin-search-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); color: var(--muted); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+.bin-search-table td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bin-search-table small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.bin-search-table tr:last-child td { border-bottom: 0; }
+@media (max-width: 600px) { .bin-search-table { min-width: 520px; } }
+
+.bin-search-bank { display: inline-flex; align-items: center; gap: 8px; }
+.bin-search-bank img { display: block; width: auto; height: 18px; max-width: 74px; object-fit: contain; }
+html[data-theme="dark"] .bin-search-bank img { background: #fff; padding: 1px 4px; border-radius: 3px; }
+.credit-quote-submit { margin-top: 16px; }

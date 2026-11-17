@@ -8,6 +8,7 @@ export type OutboundPayload = {
   recipient: { email?: string | null; phone?: string | null };
   text: string; subject?: string; reason?: string; context?: DeliveryContext;
   attachments?: EmailAttachment[]; file?: StoredUpload;
+  whatsappTemplate?: { name: string; language: string; parameters: string[] };
 };
 export async function enqueueOutbound(channel: 'EMAIL' | 'SMS' | 'WHATSAPP', payload: OutboundPayload, client: Prisma.TransactionClient = db, dedupeKey?: string, sequence = 0) {
   const data = { channel, payload: payload as unknown as Prisma.InputJsonValue, conversationId: payload.context?.conversationId, userId: payload.context?.userId, dedupeKey, sequence, availableAt: new Date() };

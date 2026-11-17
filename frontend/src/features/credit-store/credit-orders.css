@@ -1,0 +1,116 @@
+.credit-orders {
+  margin-top: 24px;
+  min-width: 0;
+}
+.credit-orders h2 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.credit-orders-note {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.credit-orders-filters {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.credit-orders-search {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 260px;
+}
+.credit-orders-search input {
+  width: 100%;
+}
+.credit-orders-filters .styled-dropdown {
+  min-width: 150px;
+}
+.credit-orders-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.credit-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.credit-orders-table th,
+.credit-orders-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.credit-orders-table th {
+  color: var(--muted);
+  font-size: 12px;
+}
+.credit-orders-table small {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.credit-order-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+}
+.credit-order-status-pending {
+  color: var(--text);
+}
+.credit-order-status-cancelled,
+.credit-order-status-failed {
+  color: var(--muted);
+}
+.credit-order-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  margin: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 480px;
+  width: calc(100% - 32px);
+}
+.credit-order-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.credit-order-dialog p {
+  line-height: 1.6;
+}
+.credit-order-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+  .credit-orders-filters {
+    gap: 12px;
+  }
+  .credit-orders-filters .styled-dropdown {
+    flex: 1;
+    min-width: 120px;
+  }
+  .credit-orders-table th,
+  .credit-orders-table td {
+    padding: 12px 9px;
+  }
+}
+
+.credit-order-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
