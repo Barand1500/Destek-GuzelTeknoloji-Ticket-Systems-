@@ -5544,6 +5544,7 @@ export const PaymentReversalScalarFieldEnum = {
   reason: 'reason',
   failureCode: 'failureCode',
   providerReference: 'providerReference',
+  contextCiphertext: 'contextCiphertext',
   nextCheckAt: 'nextCheckAt',
   createdAt: 'createdAt',
   completedAt: 'completedAt'
@@ -6302,7 +6303,8 @@ export const PaymentReversalOrderByRelevanceFieldEnum = {
   actorId: 'actorId',
   reason: 'reason',
   failureCode: 'failureCode',
-  providerReference: 'providerReference'
+  providerReference: 'providerReference',
+  contextCiphertext: 'contextCiphertext'
 } as const
 
 export type PaymentReversalOrderByRelevanceFieldEnum = (typeof PaymentReversalOrderByRelevanceFieldEnum)[keyof typeof PaymentReversalOrderByRelevanceFieldEnum]

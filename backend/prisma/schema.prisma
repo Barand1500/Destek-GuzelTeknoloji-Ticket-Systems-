@@ -934,6 +934,7 @@ model PaymentReversal {
  reason String @db.VarChar(500)
  failureCode String? @db.VarChar(80)
  providerReference String? @db.VarChar(255)
+ contextCiphertext String? @db.Text
  nextCheckAt DateTime?
  createdAt DateTime @default(now())
  completedAt DateTime?

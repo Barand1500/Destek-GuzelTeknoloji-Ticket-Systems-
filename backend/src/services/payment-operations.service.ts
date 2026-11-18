@@ -4,10 +4,11 @@ import type { Actor } from '../types/express.js';
 import { AppError } from '../utils/errors.js';
 import { paymentStaff } from './payment-settings.service.js';
 import { reconcileIyzicoSession } from './iyzico-payments.service.js';
+import { reconcileAkbankSession } from './akbank-payments.service.js';
 
 export async function pendingPaymentReviews(actor: Actor) {
   paymentStaff(actor);
-  const where = { provider: 'iyzico', status: 'PENDING', createdAt: { lte: new Date(Date.now() - 15 * 60_000) } };
+  const where = { provider: { in: ['iyzico', 'akbank'] }, status: 'PENDING', createdAt: { lte: new Date(Date.now() - 15 * 60_000) } };
   const [total, data] = await Promise.all([db.creditPaymentAttempt.count({ where }), db.creditPaymentAttempt.findMany({ where, take: 50, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: { id: true, createdAt: true, order: { select: { number: true, name: true, total: true, currency: true } } } })]);
   return { total, data: data.map(v => ({ ...v, order: { ...v.order, total: v.order.total.toFixed(2) } })) };
@@ -15,7 +16,8 @@ export async function pendingPaymentReviews(actor: Actor) {
 export async function checkPaymentReview(actor: Actor, id: string) {
   paymentStaff(actor, true);
   const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: id } });
-  if (session) await reconcileIyzicoSession(session.id);
+  const attempt = await db.creditPaymentAttempt.findUnique({ where: { id } });
+  if (session) { if (attempt?.provider === 'akbank') await reconcileAkbankSession(session.id); else await reconcileIyzicoSession(session.id); }
   return { message: 'Sağlayıcı sonucu sorgulandı. Belirsiz işlemler yeniden çekilmez.' };
 }
 
@@ -31,7 +33,7 @@ export async function closeUnchargedPayment(actor: Actor, id: string, raw: unkno
     const row = await tx.creditPaymentAttempt.findUniqueOrThrow({ where: { id } });
     const order = await tx.creditOrder.findUniqueOrThrow({ where: { id: initial.orderId } });
     const latest = await tx.creditPaymentAttempt.findFirst({ where: { orderId: order.id }, orderBy: { attemptNumber: 'desc' } });
-    if (row.provider !== 'iyzico' || row.status !== 'PENDING' || row.createdAt.getTime() > Date.now() - 60 * 60_000)
+    if (!['iyzico', 'akbank'].includes(row.provider) || row.status !== 'PENDING' || row.createdAt.getTime() > Date.now() - 60 * 60_000)
       throw new AppError(409, 'PAYMENT_REVIEW_CHANGED', 'Yalnızca en az bir saattir belirsiz kalan ödemeler kapatılabilir.');
     if (latest?.id !== id || !['PENDING', 'FAILED'].includes(order.status) || order.grantedAgreementId)
       throw new AppError(409, 'PAYMENT_REVIEW_CHANGED', 'Siparişin ödeme sonucu değişmiş. Ödenmiş veya iptal edilmiş sipariş yeniden açılamaz.');

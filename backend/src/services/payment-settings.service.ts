@@ -18,8 +18,10 @@ export function paymentStaff(actor: Actor, edit = false) {
     throw new AppError(403, 'FORBIDDEN', 'Ödeme ayarları için yetkiniz yok.');
 }
 export async function paymentAvailability() {
+  const akbank = await db.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } });
+  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: false };
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
-  return { paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: Boolean(row?.enabled && row.testedAt && row.recurringEnabled) };
+  return { provider: 'iyzico', paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: Boolean(row?.enabled && row.testedAt && row.recurringEnabled) };
 }
 export async function getPaymentSettings(actor: Actor) {
   paymentStaff(actor);
@@ -37,6 +39,9 @@ export async function savePaymentSettings(actor: Actor, raw: unknown) {
   await db.$transaction(async tx => {
     // Serialize configuration changes with checkout creation and dispatch claims.
     await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'default' FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'akbank' FOR UPDATE`;
+    if (input.enabled && (await tx.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } }))?.enabled)
+      throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', 'Önce Akbank online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.');
     const current = await tx.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
     const old = current ? openPayment<IyzicoConfig>(current.credentialsCiphertext) : undefined;
     const config: IyzicoConfig = { apiKey: input.apiKey || old?.apiKey || '', secretKey: input.secretKey || old?.secretKey || '', mode: input.mode };

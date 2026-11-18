@@ -50,6 +50,7 @@ export type PaymentReversalMinAggregateOutputType = {
   reason: string | null
   failureCode: string | null
   providerReference: string | null
+  contextCiphertext: string | null
   nextCheckAt: Date | null
   createdAt: Date | null
   completedAt: Date | null
@@ -69,6 +70,7 @@ export type PaymentReversalMaxAggregateOutputType = {
   reason: string | null
   failureCode: string | null
   providerReference: string | null
+  contextCiphertext: string | null
   nextCheckAt: Date | null
   createdAt: Date | null
   completedAt: Date | null
@@ -88,6 +90,7 @@ export type PaymentReversalCountAggregateOutputType = {
   reason: number
   failureCode: number
   providerReference: number
+  contextCiphertext: number
   nextCheckAt: number
   createdAt: number
   completedAt: number
@@ -119,6 +122,7 @@ export type PaymentReversalMinAggregateInputType = {
   reason?: true
   failureCode?: true
   providerReference?: true
+  contextCiphertext?: true
   nextCheckAt?: true
   createdAt?: true
   completedAt?: true
@@ -138,6 +142,7 @@ export type PaymentReversalMaxAggregateInputType = {
   reason?: true
   failureCode?: true
   providerReference?: true
+  contextCiphertext?: true
   nextCheckAt?: true
   createdAt?: true
   completedAt?: true
@@ -157,6 +162,7 @@ export type PaymentReversalCountAggregateInputType = {
   reason?: true
   failureCode?: true
   providerReference?: true
+  contextCiphertext?: true
   nextCheckAt?: true
   createdAt?: true
   completedAt?: true
@@ -263,6 +269,7 @@ export type PaymentReversalGroupByOutputType = {
   reason: string
   failureCode: string | null
   providerReference: string | null
+  contextCiphertext: string | null
   nextCheckAt: Date | null
   createdAt: Date
   completedAt: Date | null
@@ -305,6 +312,7 @@ export type PaymentReversalWhereInput = {
   reason?: Prisma.StringFilter<"PaymentReversal"> | string
   failureCode?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   providerReference?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
+  contextCiphertext?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   nextCheckAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentReversal"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
@@ -325,6 +333,7 @@ export type PaymentReversalOrderByWithRelationInput = {
   reason?: Prisma.SortOrder
   failureCode?: Prisma.SortOrderInput | Prisma.SortOrder
   providerReference?: Prisma.SortOrderInput | Prisma.SortOrder
+  contextCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   nextCheckAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -350,6 +359,7 @@ export type PaymentReversalWhereUniqueInput = Prisma.AtLeast<{
   reason?: Prisma.StringFilter<"PaymentReversal"> | string
   failureCode?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   providerReference?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
+  contextCiphertext?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   nextCheckAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentReversal"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
@@ -370,6 +380,7 @@ export type PaymentReversalOrderByWithAggregationInput = {
   reason?: Prisma.SortOrder
   failureCode?: Prisma.SortOrderInput | Prisma.SortOrder
   providerReference?: Prisma.SortOrderInput | Prisma.SortOrder
+  contextCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   nextCheckAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -397,6 +408,7 @@ export type PaymentReversalScalarWhereWithAggregatesInput = {
   reason?: Prisma.StringWithAggregatesFilter<"PaymentReversal"> | string
   failureCode?: Prisma.StringNullableWithAggregatesFilter<"PaymentReversal"> | string | null
   providerReference?: Prisma.StringNullableWithAggregatesFilter<"PaymentReversal"> | string | null
+  contextCiphertext?: Prisma.StringNullableWithAggregatesFilter<"PaymentReversal"> | string | null
   nextCheckAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PaymentReversal"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PaymentReversal"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PaymentReversal"> | Date | string | null
@@ -415,6 +427,7 @@ export type PaymentReversalCreateInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -435,6 +448,7 @@ export type PaymentReversalUncheckedCreateInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -453,6 +467,7 @@ export type PaymentReversalUpdateInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -473,6 +488,7 @@ export type PaymentReversalUncheckedUpdateInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -492,6 +508,7 @@ export type PaymentReversalCreateManyInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -510,6 +527,7 @@ export type PaymentReversalUpdateManyMutationInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -529,6 +547,7 @@ export type PaymentReversalUncheckedUpdateManyInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -569,6 +588,7 @@ export type PaymentReversalCountOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   failureCode?: Prisma.SortOrder
   providerReference?: Prisma.SortOrder
+  contextCiphertext?: Prisma.SortOrder
   nextCheckAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -593,6 +613,7 @@ export type PaymentReversalMaxOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   failureCode?: Prisma.SortOrder
   providerReference?: Prisma.SortOrder
+  contextCiphertext?: Prisma.SortOrder
   nextCheckAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -612,6 +633,7 @@ export type PaymentReversalMinOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   failureCode?: Prisma.SortOrder
   providerReference?: Prisma.SortOrder
+  contextCiphertext?: Prisma.SortOrder
   nextCheckAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -677,6 +699,7 @@ export type PaymentReversalCreateWithoutOrderInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -695,6 +718,7 @@ export type PaymentReversalUncheckedCreateWithoutOrderInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -743,6 +767,7 @@ export type PaymentReversalScalarWhereInput = {
   reason?: Prisma.StringFilter<"PaymentReversal"> | string
   failureCode?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   providerReference?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
+  contextCiphertext?: Prisma.StringNullableFilter<"PaymentReversal"> | string | null
   nextCheckAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentReversal"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"PaymentReversal"> | Date | string | null
@@ -761,6 +786,7 @@ export type PaymentReversalCreateManyOrderInput = {
   reason: string
   failureCode?: string | null
   providerReference?: string | null
+  contextCiphertext?: string | null
   nextCheckAt?: Date | string | null
   createdAt?: Date | string
   completedAt?: Date | string | null
@@ -779,6 +805,7 @@ export type PaymentReversalUpdateWithoutOrderInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -797,6 +824,7 @@ export type PaymentReversalUncheckedUpdateWithoutOrderInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -815,6 +843,7 @@ export type PaymentReversalUncheckedUpdateManyWithoutOrderInput = {
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   failureCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -836,6 +865,7 @@ export type PaymentReversalSelect<ExtArgs extends runtime.Types.Extensions.Inter
   reason?: boolean
   failureCode?: boolean
   providerReference?: boolean
+  contextCiphertext?: boolean
   nextCheckAt?: boolean
   createdAt?: boolean
   completedAt?: boolean
@@ -858,12 +888,13 @@ export type PaymentReversalSelectScalar = {
   reason?: boolean
   failureCode?: boolean
   providerReference?: boolean
+  contextCiphertext?: boolean
   nextCheckAt?: boolean
   createdAt?: boolean
   completedAt?: boolean
 }
 
-export type PaymentReversalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "requestKey" | "kind" | "status" | "credits" | "amount" | "currency" | "paymentId" | "actorId" | "reason" | "failureCode" | "providerReference" | "nextCheckAt" | "createdAt" | "completedAt", ExtArgs["result"]["paymentReversal"]>
+export type PaymentReversalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "requestKey" | "kind" | "status" | "credits" | "amount" | "currency" | "paymentId" | "actorId" | "reason" | "failureCode" | "providerReference" | "contextCiphertext" | "nextCheckAt" | "createdAt" | "completedAt", ExtArgs["result"]["paymentReversal"]>
 export type PaymentReversalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.CreditOrderDefaultArgs<ExtArgs>
 }
@@ -887,6 +918,7 @@ export type $PaymentReversalPayload<ExtArgs extends runtime.Types.Extensions.Int
     reason: string
     failureCode: string | null
     providerReference: string | null
+    contextCiphertext: string | null
     nextCheckAt: Date | null
     createdAt: Date
     completedAt: Date | null
@@ -1273,6 +1305,7 @@ export interface PaymentReversalFieldRefs {
   readonly reason: Prisma.FieldRef<"PaymentReversal", 'String'>
   readonly failureCode: Prisma.FieldRef<"PaymentReversal", 'String'>
   readonly providerReference: Prisma.FieldRef<"PaymentReversal", 'String'>
+  readonly contextCiphertext: Prisma.FieldRef<"PaymentReversal", 'String'>
   readonly nextCheckAt: Prisma.FieldRef<"PaymentReversal", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"PaymentReversal", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"PaymentReversal", 'DateTime'>

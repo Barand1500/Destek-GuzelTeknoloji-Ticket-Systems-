@@ -14,6 +14,7 @@ test('admin saves masked payment keys, tests connection and enables payments', a
     }
     if (path.endsWith('/payment-settings/test')) { current.testedAt = new Date().toISOString(); data = current; }
     if (path.endsWith('/payment-settings/pending')) data = { total: 0, data: [] };
+    if (path.endsWith('/payment-settings/akbank')) data = { mode: 'sandbox', credentialsConfigured: false, enabled: false, publicUrl: 'https://support.example.test', testedAt: null, lastError: null };
     await route.fulfill({ json: { success: true, data } });
   });
   await page.goto('/admin/settings/payments');

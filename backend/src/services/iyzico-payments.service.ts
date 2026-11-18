@@ -12,6 +12,7 @@ import { sealPayment, openPayment } from './payment-secrets.js';
 import { iyzicoRequest, hostedPaymentUrl, type IyzicoConfig } from './iyzico-client.js';
 import { runCreditRenewals, settleVerifiedCreditPayment, type RecurringPaymentProvider, type VerifiedPayment } from './credit-subscriptions.service.js';
 import { runPaymentReversalChecks } from './payment-reversals.service.js';
+import { runAkbankPaymentChecks } from './akbank-payments.service.js';
 
 export const paymentBillingInput = z.object({
   name: z.string().trim().min(2).max(80), surname: z.string().trim().min(2).max(80),
@@ -53,6 +54,7 @@ export async function beginIyzicoCheckout(actor: Actor, orderId: string, raw: un
   const billing = paymentBillingInput.parse(raw);
   const session = await db.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'default' FOR UPDATE`;
+    if ((await tx.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } }))?.enabled) throw fail('PAYMENT_GATEWAY_CHANGED', 'Ödeme sağlayıcısı değişti. Sayfayı yenileyin.');
     const settings = await tx.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
     if (!settings?.enabled || !settings.testedAt) throw fail('PAYMENT_DISABLED', 'Online ödeme şu anda kapalı.');
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${actor.id} FOR UPDATE`;
@@ -196,7 +198,7 @@ export const iyzicoRecurringProvider: RecurringPaymentProvider = {
 };
 export function startIyzicoPayments() {
   let active: Promise<unknown> | undefined;
-  const tick = () => { if (!active) active = (async () => { await runCreditRenewals(iyzicoRecurringProvider); await runPaymentReversalChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
+  const tick = () => { if (!active) active = (async () => { await runCreditRenewals(iyzicoRecurringProvider); await runAkbankPaymentChecks(); await runPaymentReversalChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
   const timer = setInterval(tick, 60_000); timer.unref(); tick();
   return async () => { clearInterval(timer); await active; };
 }

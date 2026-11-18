@@ -5,6 +5,8 @@ import type { Actor } from '../types/express.js';
 import { AppError } from '../utils/errors.js';
 import { paymentStaff } from './payment-settings.service.js';
 import { openPayment } from './payment-secrets.js';
+import type { AkbankConfig } from './akbank-client.js';
+import { dispatchAkbankReversal, reconcileAkbankReversal } from './akbank-reversals.js';
 import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
 import { publishChange } from './events.service.js';
 
@@ -53,7 +55,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     }
     if (!['PAID', 'PARTIAL_REFUND'].includes(order.status) || !order.grantedAgreementId || !order.grantedAgreement || order.grantedAgreement.deletedAt) throw conflict('Yalnızca ödenmiş ve kredi kaydı bulunan siparişler iade edilebilir.');
     if (await tx.paymentReversal.count({ where: { orderId, status: { in: ['PENDING', 'REVIEW'] } } })) throw conflict('Bu siparişin önceki iade sonucu bekleniyor.');
-    const attempts = await tx.creditPaymentAttempt.findMany({ where: { orderId, status: 'PAID', provider: 'iyzico' }, orderBy: { attemptNumber: 'asc' } });
+    const attempts = await tx.creditPaymentAttempt.findMany({ where: { orderId, status: 'PAID', provider: { in: ['iyzico', 'akbank'] } }, orderBy: { attemptNumber: 'asc' } });
     if (attempts.length !== 1 || !attempts[0].providerPaymentId) throw conflict('Ödeme kimliği tekil olarak doğrulanamadı. Önce ödeme kaydını inceleyin.');
     const session = await tx.paymentCheckoutSession.findUnique({ where: { attemptId: attempts[0].id } });
     if (!session) throw conflict('Sağlayıcı bağlantı kaydı bulunamadı.');
@@ -70,11 +72,15 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     await tx.agreement.update({ where: { id: agreement.id }, data: { credits: { decrement: input.credits } } });
     const row = await tx.paymentReversal.create({ data: { orderId, requestKey: input.requestKey, kind: input.kind, credits: input.credits, amount, currency: order.currency, paymentId: attempts[0].providerPaymentId, actorId: actor.id, reason: input.reason, nextCheckAt: new Date(Date.now() + 60_000) } });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'credit_payment.reversal_requested', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId, kind: input.kind, credits: input.credits, amount: amount.toFixed(2), reason: input.reason }, ipAddress: actor.ipAddress } });
-    return { row, dispatch: true as const, config: openPayment<{ config: IyzicoConfig }>(session.contextCiphertext).config };
+    return { row, dispatch: true as const, provider: attempts[0].provider, originalAmount: order.total.toFixed(2), previousRefundAmount: oldAmount,
+      config: openPayment<{ config: IyzicoConfig | AkbankConfig }>(session.contextCiphertext).config };
   }, { isolationLevel: 'ReadCommitted' });
   if (!prepared.dispatch) return serialize(prepared.row);
   try {
-    const result = await iyzicoRequest(prepared.config, input.kind === 'CANCEL' ? '/payment/cancel' : '/v2/payment/refund', {
+    if (prepared.provider === 'akbank') {
+      await dispatchAkbankReversal(prepared.row, prepared.config as AkbankConfig, prepared.originalAmount, prepared.previousRefundAmount, finishPaymentReversal, actor.ipAddress ?? undefined);
+    } else {
+    const result = await iyzicoRequest(prepared.config as IyzicoConfig, input.kind === 'CANCEL' ? '/payment/cancel' : '/v2/payment/refund', {
       locale: 'tr', conversationId: prepared.row.id, paymentId: prepared.row.paymentId, ip: actor.ipAddress || '127.0.0.1',
       ...(input.kind === 'REFUND' ? { price: prepared.row.amount.toFixed(2), currency: prepared.row.currency } : {}),
     });
@@ -86,6 +92,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
       if (['10005', '10012', '10051', '10223', '10237', '10245', '10246', '5086', '5087'].includes(String(result.errorCode)))
         await finishPaymentReversal(prepared.row.id, false, String(result.errorCode));
       else await db.paymentReversal.update({ where: { id: prepared.row.id }, data: { status: 'REVIEW', failureCode: 'PROVIDER_RESULT_PENDING' } });
+    }
     }
   } catch {
     await db.paymentReversal.updateMany({ where: { id: prepared.row.id, status: 'PENDING' }, data: { status: 'REVIEW', failureCode: 'RESULT_UNCERTAIN' } });
@@ -136,11 +143,16 @@ export async function closeUnrefundedReversal(actor: Actor, id: string, raw: unk
 export async function reconcilePaymentReversal(id: string) {
   const row = await db.paymentReversal.findUniqueOrThrow({ where: { id } });
   if (!['PENDING', 'REVIEW'].includes(row.status)) return serialize(row);
-  const attempt = await db.creditPaymentAttempt.findFirstOrThrow({ where: { orderId: row.orderId, providerPaymentId: row.paymentId, provider: 'iyzico' } });
+  const attempt = await db.creditPaymentAttempt.findFirstOrThrow({ where: { orderId: row.orderId, providerPaymentId: row.paymentId, provider: { in: ['iyzico', 'akbank'] } } });
   const session = await db.paymentCheckoutSession.findUniqueOrThrow({ where: { attemptId: attempt.id } });
-  const { config } = openPayment<{ config: IyzicoConfig }>(session.contextCiphertext);
+  const { config } = openPayment<{ config: IyzicoConfig | AkbankConfig }>(session.contextCiphertext);
+  if (attempt.provider === 'akbank') {
+    await reconcileAkbankReversal(row, config as AkbankConfig, finishPaymentReversal);
+    await db.paymentReversal.updateMany({ where: { id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: new Date(Date.now() + 5 * 60_000) } });
+    return serialize(await db.paymentReversal.findUniqueOrThrow({ where: { id } }));
+  }
   const path = '/v2/reporting/payment/details?locale=tr&paymentId=' + encodeURIComponent(row.paymentId);
-  const result = await iyzicoRequest(config, path, {}, fetch, 'GET');
+  const result = await iyzicoRequest(config as IyzicoConfig, path, {}, fetch, 'GET');
   if (result.status === 'success' && Array.isArray(result.payments)) {
     const payment = result.payments.find((v: any) => String(v.paymentId) === row.paymentId);
     const list = row.kind === 'CANCEL' ? payment?.cancels : payment?.itemTransactions?.flatMap((v: any) => v.refunds ?? []);

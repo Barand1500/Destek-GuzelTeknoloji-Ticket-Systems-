@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, LockKeyhole } from 'lucide-react';
@@ -5,8 +6,9 @@ import { api } from '../../services/api';
 import { ErrorMessage } from '../management/shared';
 import { count, money } from './types';
 import './credit-store.css';
+import { AkbankCardForm } from './AkbankCardForm';
 
-type CheckoutOrder = { id: string; number: number; name: string; credits: number; total: string; currency: string; status: string; paymentAvailable: boolean; recurringAvailable?: boolean; renewalRequested?: boolean; periodStartsOn?: string | null; customer: { name: string; email?: string | null; phone?: string | null } };
+type CheckoutOrder = { id: string; number: number; name: string; credits: number; total: string; currency: string; status: string; provider?: string; paymentAvailable: boolean; recurringAvailable?: boolean; renewalRequested?: boolean; periodStartsOn?: string | null; customer: { name: string; email?: string | null; phone?: string | null } };
 export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: () => void }) {
   const order = useQuery({ queryKey: ['credit-checkout', orderId], queryFn: async () => (await api.get(`/my/credit-store/orders/${encodeURIComponent(orderId)}/checkout`)).data.data as CheckoutOrder });
   const [billing, setBilling] = useState({ name: '', surname: '', identityNumber: '', email: '', phone: '', address: '', city: '', country: 'Turkey', renewalConsent: false });
@@ -23,7 +25,8 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
       <h3>{data.name}</h3><p>Sipariş #{data.number} · {count(data.credits)} kredi</p><strong className="credit-price">{money(data.total, data.currency)}</strong>
       {future && <p className="credit-store-notice">Yeni paketiniz {data.periodStartsOn!.slice(0, 10).split('-').reverse().join('.')} tarihinde başlayacak. Ödemeyi o tarihte yapabilirsiniz; şimdi ücret alınmaz.</p>}
       {!data.paymentAvailable && <p className="credit-store-notice">Online ödeme şu anda kapalı. Siparişiniz kayıtlı; ödeme alınmadı ve kredi yüklenmedi.</p>}
-      {data.paymentAvailable && !future && <form onSubmit={e => { e.preventDefault(); pay.mutate(); }}>
+      {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} />}
+      {data.paymentAvailable && !future && data.provider !== 'akbank' && <form onSubmit={e => { e.preventDefault(); pay.mutate(); }}>
         <h3>Fatura ve İletişim Bilgileri</h3>
         <fieldset className="credit-checkout-billing" disabled={pay.isPending}>
           {field('name', 'Ad', 80)}{field('surname', 'Soyad', 80)}{field('identityNumber', 'T.C. Kimlik No', 11)}{field('email', 'E-posta', 191, 'email')}{field('phone', 'Telefon', 18, 'tel')}{field('city', 'Şehir', 80)}{field('address', 'Fatura adresi', 500)}{field('country', 'Ülke', 80)}

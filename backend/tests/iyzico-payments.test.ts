@@ -36,8 +36,8 @@ test('hosted checkout and recurring payments preserve single grants, consent and
   const admin = { ...actor, role: 'ADMIN' as const };
   const originalFetch = globalThis.fetch, originalTx = db.$transaction, originalGateway = db.paymentGatewaySettings.findUnique;
   const settings = { id: 'default', enabled: true, recurringEnabled: true, testedAt: new Date(), credentialsCiphertext: sealPayment(config), mode: 'sandbox', publicUrl: 'https://payment.example.invalid', fingerprint: 'fixture', lastError: null };
-  db.paymentGatewaySettings.findUnique = (async () => settings) as any;
-  db.$transaction = ((callback: any, options: any) => typeof callback === 'function' ? originalTx.call(db, (tx: any) => { tx.paymentGatewaySettings.findUnique = async () => settings; return callback(tx); }, options) : originalTx.call(db, callback, options)) as typeof originalTx;
+  db.paymentGatewaySettings.findUnique = (async ({ where }: any) => where.id === 'default' ? settings : null) as any;
+  db.$transaction = ((callback: any, options: any) => typeof callback === 'function' ? originalTx.call(db, (tx: any) => { tx.paymentGatewaySettings.findUnique = async ({ where }: any) => where.id === 'default' ? settings : null; return callback(tx); }, options) : originalTx.call(db, callback, options)) as typeof originalTx;
   const results = new Map<string, any>(), requests: { path: string; body: any }[] = [];
   let uncertain = false;
   globalThis.fetch = (async (url: any, init: any) => {
