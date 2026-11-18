@@ -14,6 +14,7 @@ import "./checkout.css";
 type CheckoutOrder = {
   id: string; number: number | string; name: string; credits: number;
   total: string; currency: string; status: string; validityDays: number | null;
+  periodStartsOn?: string | null; periodEndsOn?: string | null;
   periodMonths: number | null; periodName?: string | null; renewalRequested?: boolean;
   customer: { id: string; name: string; company?: string | null; email?: string | null; phone?: string | null };
 };
@@ -114,7 +115,6 @@ function CheckoutForm({ orderId, onBack }: { orderId: string; onBack?: () => voi
       <div className="checkout-heading">
         <span className="credit-kicker">SİPARİŞİNİZİ TAMAMLAYIN</span>
         <h2>Ödeme Bilgileri</h2>
-        <p>Kart ve iletişim bilgilerinizi bu formda inceleyebilirsiniz.</p>
       </div>
       {order.isPending && <p role="status">Sipariş yükleniyor…</p>}
       <ErrorMessage error={order.error} />
@@ -298,6 +298,7 @@ function CheckoutForm({ orderId, onBack }: { orderId: string; onBack?: () => voi
                 <dt>Dönem sonunda tekrarla</dt>
                 <dd>{order.data.renewalRequested ? "Evet" : "Hayır"}</dd>
               </div>
+              {order.data.periodStartsOn && <div><dt>Paket başlangıcı</dt><dd>{order.data.periodStartsOn.slice(0,10).split("-").reverse().join(".")}</dd></div>}
               <div className="checkout-total">
                 <dt>Toplam</dt>
                 <dd>{money(order.data.total, order.data.currency)}</dd>

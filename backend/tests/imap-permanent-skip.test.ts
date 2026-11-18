@@ -33,3 +33,33 @@ test('terminal skip survives checkpoints and restart while later mail continues'
     assert.equal(await db.imapSyncRetry.count({ where: { syncId: id, attempts: { gt: 0 } } }), 0);
   } finally { await db.imapSyncState.deleteMany({ where: { id } }); await db.$disconnect(); }
 });
+
+test('staff mail converts an existing retry into a logged terminal skip', async () => {
+  const { persistInboundEmail } = await import('../src/services/inbound-email.service.js');
+  const id = imapSyncKey('fixture.invalid', 993, randomUUID(), 'INBOX', '1');
+  const email = randomUUID() + '@example.invalid';
+  const staff = await db.user.create({ data: { name: 'Staff sender fixture', role: 'ADMIN', email, passwordHash: 'fixture' } });
+  await db.imapSyncState.create({ data: { id, mailbox: 'INBOX', uidValidity: '1', lastUid: 2 } });
+  await db.imapSyncRetry.create({ data: { syncId: id, uid: 1, attempts: 1, nextAttemptAt: new Date(0), lastError: 'Previous contact conflict' } });
+  let calls = 0;
+  const options = { id, mailbox: 'INBOX', uidValidity: '1', upperUid: 2, listUids: async () => [], process: async (uid: number, mailbox: string) => {
+    calls++;
+    return Boolean(await persistInboundEmail({ mailbox, account: 'support@example.invalid', uid, from: { address: email }, subject: 'Staff mail', body: 'Test' }));
+  } };
+  try {
+    assert.deepEqual(await drainImapMailbox(options), { processed: 0, failed: 0, busy: false });
+    assert.equal(await isPermanentlySkippedImapUid('imap:' + id, 1), true);
+    assert.equal(await db.imapSyncRetry.count({ where: { syncId: id, attempts: { gt: 0 } } }), 0);
+    assert.equal(await db.user.count({ where: { role: 'CUSTOMER', email } }), 0);
+    const log = await db.activityLog.findFirstOrThrow({ where: { userId: staff.id, action: 'email.staff_sender_skipped' } });
+    assert.equal((log.metadata as any).sender, email);
+    assert.equal((log.metadata as any).account, 'support@example.invalid');
+    await drainImapMailbox(options);
+    assert.equal(calls, 1);
+  } finally {
+    await db.activityLog.deleteMany({ where: { userId: staff.id } });
+    await db.imapSyncState.delete({ where: { id } });
+    await db.user.delete({ where: { id: staff.id } });
+    await db.$disconnect();
+  }
+});

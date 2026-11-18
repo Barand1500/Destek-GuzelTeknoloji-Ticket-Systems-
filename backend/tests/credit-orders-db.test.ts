@@ -125,6 +125,7 @@ test("real database serializes concurrent order replays and preserves original p
     });
     await db.notification.deleteMany({ where: { userId: id } });
     await db.creditOrder.deleteMany({ where: { customerId: id } });
+    await db.creditSubscription.deleteMany({ where: { customerId: id } });
     await db.user.deleteMany({ where: { id } });
     await db.creditSalesPlan.deleteMany({ where: { id: planId } });
     await db.$disconnect();

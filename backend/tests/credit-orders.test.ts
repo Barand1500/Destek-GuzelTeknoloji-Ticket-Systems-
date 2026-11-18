@@ -41,6 +41,7 @@ test("orders snapshot current quote, reject stale previews and replay without du
         validityDays: 365,
       }),
     },
+    creditPaymentAttempt: { count: async () => 0 },
     creditOrder: {
       findUnique: async () => row,
       create: async ({ data }: any) =>

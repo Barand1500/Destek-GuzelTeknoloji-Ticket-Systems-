@@ -614,3 +614,39 @@ html[data-theme]
 .bin-search-bank img { display: block; width: auto; height: 18px; max-width: 74px; object-fit: contain; }
 html[data-theme="dark"] .bin-search-bank img { background: #fff; padding: 1px 4px; border-radius: 3px; }
 .credit-quote-submit { margin-top: 16px; }
+.credit-notice-settings .credit-alert-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 16px; align-items: start; }
+@media (max-width: 1000px) { .credit-notice-settings .credit-alert-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .credit-notice-settings .credit-alert-fields { grid-template-columns: minmax(0, 1fr); } }
+
+.credit-admin-plans .credit-plan-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #efc5bf;
+  border-radius: 6px;
+  background: #fff3f1;
+  color: #b42318;
+}
+.credit-admin-plans .credit-plan-delete:hover:not(:disabled) {
+  background: #ffe4df;
+  border-color: #d98b80;
+}
+html[data-theme="dark"] .credit-admin-plans .credit-plan-delete {
+  background: #382825;
+  border-color: #744b45;
+  color: #ffb5ad;
+}
+html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disabled) {
+  background: #51302b;
+  border-color: #bd7067;
+  color: #ffd8d3;
+}
+.credit-admin-plans .credit-plan-delete:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.credit-admin-plans .credit-plan-delete:disabled { opacity: .55; cursor: default; }

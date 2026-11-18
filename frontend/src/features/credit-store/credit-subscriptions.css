@@ -1,0 +1,6 @@
+.credit-subscriptions .subscription-confirmation { margin: 20px 0 24px; }
+.credit-subscriptions .subscription-confirmation h3 { margin-bottom: 12px; }
+.credit-subscriptions .subscription-consent { justify-content: flex-start; gap: 12px; margin: 16px 0; }
+.credit-subscriptions .subscription-consent span { flex: 1; text-align: left; }
+.credit-subscriptions .subscription-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.credit-subscriptions .credit-log-table-wrap { overflow-x: auto; }

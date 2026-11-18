@@ -297,3 +297,13 @@ export type CreditAlertReceipt = Prisma.CreditAlertReceiptModel
  * 
  */
 export type CreditSalesPeriod = Prisma.CreditSalesPeriodModel
+/**
+ * Model CreditSubscription
+ * 
+ */
+export type CreditSubscription = Prisma.CreditSubscriptionModel
+/**
+ * Model CreditPaymentAttempt
+ * 
+ */
+export type CreditPaymentAttempt = Prisma.CreditPaymentAttemptModel

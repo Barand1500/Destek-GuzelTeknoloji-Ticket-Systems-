@@ -79,7 +79,7 @@ export async function customerCardInfo(actor:Actor,raw:unknown) {
 }
 export async function customerCheckout(actor:Actor,id:string) {
  const owner=await creditStoreOwner(actor);
- const row=await db.creditOrder.findFirst({where:{id,customerId:owner.id},select:{id:true,number:true,name:true,credits:true,total:true,currency:true,status:true,periodMonths:true,validityDays:true,periodName:true,renewalRequested:true,customer:{select:{id:true,name:true,company:true,email:true,phone:true}}}});
+ const row=await db.creditOrder.findFirst({where:{id,customerId:owner.id},select:{id:true,number:true,name:true,credits:true,total:true,currency:true,status:true,periodMonths:true,validityDays:true,periodName:true,periodStartsOn:true,periodEndsOn:true,renewalRequested:true,customer:{select:{id:true,name:true,company:true,email:true,phone:true}}}});
  if(!row) throw new AppError(404,'ORDER_NOT_FOUND','Sipariş bulunamadı.');
  if(row.status!=='PENDING') throw new AppError(409,'ORDER_NOT_PENDING','Bu sipariş ödeme beklemiyor.');
  return {...row,total:row.total.toString(),paymentAvailable:false};

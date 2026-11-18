@@ -309,6 +309,7 @@ export type UserWhereInput = {
   passwordResets?: Prisma.PasswordResetListRelationFilter
   outboundMessages?: Prisma.OutboundMessageListRelationFilter
   logs?: Prisma.ActivityLogListRelationFilter
+  creditSubscriptions?: Prisma.CreditSubscriptionListRelationFilter
   creditOrders?: Prisma.CreditOrderListRelationFilter
   requestedCreditOrders?: Prisma.CreditOrderListRelationFilter
   creditAlertReceipts?: Prisma.CreditAlertReceiptListRelationFilter
@@ -356,6 +357,7 @@ export type UserOrderByWithRelationInput = {
   passwordResets?: Prisma.PasswordResetOrderByRelationAggregateInput
   outboundMessages?: Prisma.OutboundMessageOrderByRelationAggregateInput
   logs?: Prisma.ActivityLogOrderByRelationAggregateInput
+  creditSubscriptions?: Prisma.CreditSubscriptionOrderByRelationAggregateInput
   creditOrders?: Prisma.CreditOrderOrderByRelationAggregateInput
   requestedCreditOrders?: Prisma.CreditOrderOrderByRelationAggregateInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptOrderByRelationAggregateInput
@@ -407,6 +409,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   passwordResets?: Prisma.PasswordResetListRelationFilter
   outboundMessages?: Prisma.OutboundMessageListRelationFilter
   logs?: Prisma.ActivityLogListRelationFilter
+  creditSubscriptions?: Prisma.CreditSubscriptionListRelationFilter
   creditOrders?: Prisma.CreditOrderListRelationFilter
   requestedCreditOrders?: Prisma.CreditOrderListRelationFilter
   creditAlertReceipts?: Prisma.CreditAlertReceiptListRelationFilter
@@ -502,6 +505,7 @@ export type UserCreateInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -547,6 +551,7 @@ export type UserUncheckedCreateInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -592,6 +597,7 @@ export type UserUpdateInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -637,6 +643,7 @@ export type UserUncheckedUpdateInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1231,6 +1238,20 @@ export type UserUpdateOneRequiredWithoutCreditAlertReceiptsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreditAlertReceiptsInput, Prisma.UserUpdateWithoutCreditAlertReceiptsInput>, Prisma.UserUncheckedUpdateWithoutCreditAlertReceiptsInput>
 }
 
+export type UserCreateNestedOneWithoutCreditSubscriptionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedCreateWithoutCreditSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreditSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCreditSubscriptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedCreateWithoutCreditSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreditSubscriptionsInput
+  upsert?: Prisma.UserUpsertWithoutCreditSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreditSubscriptionsInput, Prisma.UserUpdateWithoutCreditSubscriptionsInput>, Prisma.UserUncheckedUpdateWithoutCreditSubscriptionsInput>
+}
+
 export type UserCreateWithoutSubCustomersInput = {
   id?: string
   shareCreditsWithChildren?: boolean
@@ -1263,6 +1284,7 @@ export type UserCreateWithoutSubCustomersInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -1307,6 +1329,7 @@ export type UserUncheckedCreateWithoutSubCustomersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1356,6 +1379,7 @@ export type UserCreateWithoutParentCustomerInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -1400,6 +1424,7 @@ export type UserUncheckedCreateWithoutParentCustomerInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1465,6 +1490,7 @@ export type UserUpdateWithoutSubCustomersInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -1509,6 +1535,7 @@ export type UserUncheckedUpdateWithoutSubCustomersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1594,6 +1621,7 @@ export type UserCreateWithoutAccessRoleInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -1638,6 +1666,7 @@ export type UserUncheckedCreateWithoutAccessRoleInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1708,6 +1737,7 @@ export type UserCreateWithoutSkillsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -1752,6 +1782,7 @@ export type UserUncheckedCreateWithoutSkillsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1812,6 +1843,7 @@ export type UserUpdateWithoutSkillsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -1856,6 +1888,7 @@ export type UserUncheckedUpdateWithoutSkillsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1900,6 +1933,7 @@ export type UserCreateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -1944,6 +1978,7 @@ export type UserUncheckedCreateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2004,6 +2039,7 @@ export type UserUpdateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -2048,6 +2084,7 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2092,6 +2129,7 @@ export type UserCreateWithoutSessionsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -2136,6 +2174,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2196,6 +2235,7 @@ export type UserUpdateWithoutSessionsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -2240,6 +2280,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2284,6 +2325,7 @@ export type UserCreateWithoutDepartmentsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -2328,6 +2370,7 @@ export type UserUncheckedCreateWithoutDepartmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2388,6 +2431,7 @@ export type UserUpdateWithoutDepartmentsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -2432,6 +2476,7 @@ export type UserUncheckedUpdateWithoutDepartmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2476,6 +2521,7 @@ export type UserCreateWithoutCustomerConversationsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -2520,6 +2566,7 @@ export type UserUncheckedCreateWithoutCustomerConversationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2569,6 +2616,7 @@ export type UserCreateWithoutAssignedConversationsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -2613,6 +2661,7 @@ export type UserUncheckedCreateWithoutAssignedConversationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2673,6 +2722,7 @@ export type UserUpdateWithoutCustomerConversationsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -2717,6 +2767,7 @@ export type UserUncheckedUpdateWithoutCustomerConversationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2772,6 +2823,7 @@ export type UserUpdateWithoutAssignedConversationsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -2816,6 +2868,7 @@ export type UserUncheckedUpdateWithoutAssignedConversationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -2860,6 +2913,7 @@ export type UserCreateWithoutConversationAssignmentsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -2904,6 +2958,7 @@ export type UserUncheckedCreateWithoutConversationAssignmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -2964,6 +3019,7 @@ export type UserUpdateWithoutConversationAssignmentsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3008,6 +3064,7 @@ export type UserUncheckedUpdateWithoutConversationAssignmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3052,6 +3109,7 @@ export type UserCreateWithoutMessagesInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -3096,6 +3154,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -3156,6 +3215,7 @@ export type UserUpdateWithoutMessagesInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3200,6 +3260,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3245,6 +3306,7 @@ export type UserCreateWithoutConversationParticipantsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -3289,6 +3351,7 @@ export type UserUncheckedCreateWithoutConversationParticipantsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -3349,6 +3412,7 @@ export type UserUpdateWithoutConversationParticipantsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3393,6 +3457,7 @@ export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3437,6 +3502,7 @@ export type UserCreateWithoutMessageMentionsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -3481,6 +3547,7 @@ export type UserUncheckedCreateWithoutMessageMentionsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -3541,6 +3608,7 @@ export type UserUpdateWithoutMessageMentionsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3585,6 +3653,7 @@ export type UserUncheckedUpdateWithoutMessageMentionsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3628,6 +3697,7 @@ export type UserCreateWithoutOutboundMessagesInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -3672,6 +3742,7 @@ export type UserUncheckedCreateWithoutOutboundMessagesInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -3732,6 +3803,7 @@ export type UserUpdateWithoutOutboundMessagesInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3776,6 +3848,7 @@ export type UserUncheckedUpdateWithoutOutboundMessagesInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -3820,6 +3893,7 @@ export type UserCreateWithoutLogsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -3864,6 +3938,7 @@ export type UserUncheckedCreateWithoutLogsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -3924,6 +3999,7 @@ export type UserUpdateWithoutLogsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -3968,6 +4044,7 @@ export type UserUncheckedUpdateWithoutLogsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4013,6 +4090,7 @@ export type UserCreateWithoutAttachmentsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -4057,6 +4135,7 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -4117,6 +4196,7 @@ export type UserUpdateWithoutAttachmentsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -4161,6 +4241,7 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4205,6 +4286,7 @@ export type UserCreateWithoutCustomerFilesInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -4249,6 +4331,7 @@ export type UserUncheckedCreateWithoutCustomerFilesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -4309,6 +4392,7 @@ export type UserUpdateWithoutCustomerFilesInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -4353,6 +4437,7 @@ export type UserUncheckedUpdateWithoutCustomerFilesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4397,6 +4482,7 @@ export type UserCreateWithoutProjectGuideFilesInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -4441,6 +4527,7 @@ export type UserUncheckedCreateWithoutProjectGuideFilesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -4501,6 +4588,7 @@ export type UserUpdateWithoutProjectGuideFilesInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -4545,6 +4633,7 @@ export type UserUncheckedUpdateWithoutProjectGuideFilesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4589,6 +4678,7 @@ export type UserCreateWithoutNotificationsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -4633,6 +4723,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -4693,6 +4784,7 @@ export type UserUpdateWithoutNotificationsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -4737,6 +4829,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4781,6 +4874,7 @@ export type UserCreateWithoutSavedRepliesInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -4825,6 +4919,7 @@ export type UserUncheckedCreateWithoutSavedRepliesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -4885,6 +4980,7 @@ export type UserUpdateWithoutSavedRepliesInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -4929,6 +5025,7 @@ export type UserUncheckedUpdateWithoutSavedRepliesInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -4972,6 +5069,7 @@ export type UserCreateWithoutAgreementsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -5016,6 +5114,7 @@ export type UserUncheckedCreateWithoutAgreementsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -5076,6 +5175,7 @@ export type UserUpdateWithoutAgreementsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -5120,6 +5220,7 @@ export type UserUncheckedUpdateWithoutAgreementsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -5164,6 +5265,7 @@ export type UserCreateWithoutCustomerLoginChallengeInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
@@ -5208,6 +5310,7 @@ export type UserUncheckedCreateWithoutCustomerLoginChallengeInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
@@ -5268,6 +5371,7 @@ export type UserUpdateWithoutCustomerLoginChallengeInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -5312,6 +5416,7 @@ export type UserUncheckedUpdateWithoutCustomerLoginChallengeInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -5357,6 +5462,7 @@ export type UserCreateWithoutCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
@@ -5401,6 +5507,7 @@ export type UserUncheckedCreateWithoutCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -5450,6 +5557,7 @@ export type UserCreateWithoutRequestedCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
@@ -5494,6 +5602,7 @@ export type UserUncheckedCreateWithoutRequestedCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -5554,6 +5663,7 @@ export type UserUpdateWithoutCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
@@ -5598,6 +5708,7 @@ export type UserUncheckedUpdateWithoutCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -5653,6 +5764,7 @@ export type UserUpdateWithoutRequestedCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
@@ -5697,6 +5809,7 @@ export type UserUncheckedUpdateWithoutRequestedCreditOrdersInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -5741,6 +5854,7 @@ export type UserCreateWithoutCreditAlertReceiptsInput = {
   passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
@@ -5785,6 +5899,7 @@ export type UserUncheckedCreateWithoutCreditAlertReceiptsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
   outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
   logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
   creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -5845,6 +5960,7 @@ export type UserUpdateWithoutCreditAlertReceiptsInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
@@ -5889,8 +6005,205 @@ export type UserUncheckedUpdateWithoutCreditAlertReceiptsInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutCreditSubscriptionsInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordConfigured?: boolean
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  parentCustomer?: Prisma.UserCreateNestedOneWithoutSubCustomersInput
+  subCustomers?: Prisma.UserCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeCreateNestedOneWithoutUserInput
+  accessRole?: Prisma.AccessRoleCreateNestedOneWithoutUsersInput
+  departments?: Prisma.DepartmentAgentCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  creditOrders?: Prisma.CreditOrderCreateNestedManyWithoutCustomerInput
+  requestedCreditOrders?: Prisma.CreditOrderCreateNestedManyWithoutRequestedByInput
+  creditAlertReceipts?: Prisma.CreditAlertReceiptCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCreditSubscriptionsInput = {
+  id?: string
+  shareCreditsWithChildren?: boolean
+  parentCustomerId?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  loginEmail?: string | null
+  company?: string | null
+  staffNote?: string | null
+  extraPhones?: string | null
+  extraEmails?: string | null
+  deletedAt?: Date | string | null
+  passwordConfigured?: boolean
+  passwordHash: string
+  role?: $Enums.Role
+  accessRoleId?: string | null
+  isActive?: boolean
+  updatedAt?: Date | string
+  createdAt?: Date | string
+  subCustomers?: Prisma.UserUncheckedCreateNestedManyWithoutParentCustomerInput
+  agreements?: Prisma.AgreementUncheckedCreateNestedManyWithoutCustomerInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedCreateNestedOneWithoutUserInput
+  departments?: Prisma.DepartmentAgentUncheckedCreateNestedManyWithoutUserInput
+  skills?: Prisma.UserSkillUncheckedCreateNestedManyWithoutUserInput
+  customerConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutCustomerInput
+  assignedConversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutAssignedAgentInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutAuthorInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedCreateNestedManyWithoutUserInput
+  logs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  creditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutCustomerInput
+  requestedCreditOrders?: Prisma.CreditOrderUncheckedCreateNestedManyWithoutRequestedByInput
+  creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  savedReplies?: Prisma.SavedReplyUncheckedCreateNestedManyWithoutAuthorInput
+  attachments?: Prisma.ConversationAttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  customerFiles?: Prisma.CustomerAttachmentUncheckedCreateNestedManyWithoutCustomerInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUncheckedCreateNestedManyWithoutUploaderInput
+  conversationParticipants?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messageMentions?: Prisma.ConversationMessageMentionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCreditSubscriptionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedCreateWithoutCreditSubscriptionsInput>
+}
+
+export type UserUpsertWithoutCreditSubscriptionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutCreditSubscriptionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedCreateWithoutCreditSubscriptionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCreditSubscriptionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCreditSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutCreditSubscriptionsInput>
+}
+
+export type UserUpdateWithoutCreditSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordConfigured?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.UserUpdateOneWithoutSubCustomersNestedInput
+  subCustomers?: Prisma.UserUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUpdateOneWithoutUserNestedInput
+  accessRole?: Prisma.AccessRoleUpdateOneWithoutUsersNestedInput
+  departments?: Prisma.DepartmentAgentUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
+  requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
+  creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  savedReplies?: Prisma.SavedReplyUpdateManyWithoutAuthorNestedInput
+  attachments?: Prisma.ConversationAttachmentUpdateManyWithoutUploaderNestedInput
+  customerFiles?: Prisma.CustomerAttachmentUpdateManyWithoutCustomerNestedInput
+  projectGuideFiles?: Prisma.ProjectGuideFileUpdateManyWithoutUploaderNestedInput
+  conversationParticipants?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messageMentions?: Prisma.ConversationMessageMentionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCreditSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  shareCreditsWithChildren?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  staffNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraPhones?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  extraEmails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordConfigured?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  accessRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subCustomers?: Prisma.UserUncheckedUpdateManyWithoutParentCustomerNestedInput
+  agreements?: Prisma.AgreementUncheckedUpdateManyWithoutCustomerNestedInput
+  customerLoginChallenge?: Prisma.CustomerLoginChallengeUncheckedUpdateOneWithoutUserNestedInput
+  departments?: Prisma.DepartmentAgentUncheckedUpdateManyWithoutUserNestedInput
+  skills?: Prisma.UserSkillUncheckedUpdateManyWithoutUserNestedInput
+  customerConversations?: Prisma.ConversationUncheckedUpdateManyWithoutCustomerNestedInput
+  assignedConversations?: Prisma.ConversationUncheckedUpdateManyWithoutAssignedAgentNestedInput
+  conversationAssignments?: Prisma.ConversationAssigneeUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
+  logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
+  requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
+  creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   savedReplies?: Prisma.SavedReplyUncheckedUpdateManyWithoutAuthorNestedInput
   attachments?: Prisma.ConversationAttachmentUncheckedUpdateManyWithoutUploaderNestedInput
@@ -5953,6 +6266,7 @@ export type UserUpdateWithoutParentCustomerInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -5997,6 +6311,7 @@ export type UserUncheckedUpdateWithoutParentCustomerInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -6083,6 +6398,7 @@ export type UserUpdateWithoutAccessRoleInput = {
   passwordResets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUpdateManyWithoutCustomerNestedInput
@@ -6127,6 +6443,7 @@ export type UserUncheckedUpdateWithoutAccessRoleInput = {
   passwordResets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   outboundMessages?: Prisma.OutboundMessageUncheckedUpdateManyWithoutUserNestedInput
   logs?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  creditSubscriptions?: Prisma.CreditSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
   creditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutCustomerNestedInput
   requestedCreditOrders?: Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput
   creditAlertReceipts?: Prisma.CreditAlertReceiptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -6178,6 +6495,7 @@ export type UserCountOutputType = {
   passwordResets: number
   outboundMessages: number
   logs: number
+  creditSubscriptions: number
   creditOrders: number
   requestedCreditOrders: number
   creditAlertReceipts: number
@@ -6203,6 +6521,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   passwordResets?: boolean | UserCountOutputTypeCountPasswordResetsArgs
   outboundMessages?: boolean | UserCountOutputTypeCountOutboundMessagesArgs
   logs?: boolean | UserCountOutputTypeCountLogsArgs
+  creditSubscriptions?: boolean | UserCountOutputTypeCountCreditSubscriptionsArgs
   creditOrders?: boolean | UserCountOutputTypeCountCreditOrdersArgs
   requestedCreditOrders?: boolean | UserCountOutputTypeCountRequestedCreditOrdersArgs
   creditAlertReceipts?: boolean | UserCountOutputTypeCountCreditAlertReceiptsArgs
@@ -6312,6 +6631,13 @@ export type UserCountOutputTypeCountLogsArgs<ExtArgs extends runtime.Types.Exten
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountCreditSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CreditSubscriptionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountCreditOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CreditOrderWhereInput
 }
@@ -6415,6 +6741,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
   outboundMessages?: boolean | Prisma.User$outboundMessagesArgs<ExtArgs>
   logs?: boolean | Prisma.User$logsArgs<ExtArgs>
+  creditSubscriptions?: boolean | Prisma.User$creditSubscriptionsArgs<ExtArgs>
   creditOrders?: boolean | Prisma.User$creditOrdersArgs<ExtArgs>
   requestedCreditOrders?: boolean | Prisma.User$requestedCreditOrdersArgs<ExtArgs>
   creditAlertReceipts?: boolean | Prisma.User$creditAlertReceiptsArgs<ExtArgs>
@@ -6469,6 +6796,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
   outboundMessages?: boolean | Prisma.User$outboundMessagesArgs<ExtArgs>
   logs?: boolean | Prisma.User$logsArgs<ExtArgs>
+  creditSubscriptions?: boolean | Prisma.User$creditSubscriptionsArgs<ExtArgs>
   creditOrders?: boolean | Prisma.User$creditOrdersArgs<ExtArgs>
   requestedCreditOrders?: boolean | Prisma.User$requestedCreditOrdersArgs<ExtArgs>
   creditAlertReceipts?: boolean | Prisma.User$creditAlertReceiptsArgs<ExtArgs>
@@ -6500,6 +6828,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     passwordResets: Prisma.$PasswordResetPayload<ExtArgs>[]
     outboundMessages: Prisma.$OutboundMessagePayload<ExtArgs>[]
     logs: Prisma.$ActivityLogPayload<ExtArgs>[]
+    creditSubscriptions: Prisma.$CreditSubscriptionPayload<ExtArgs>[]
     creditOrders: Prisma.$CreditOrderPayload<ExtArgs>[]
     requestedCreditOrders: Prisma.$CreditOrderPayload<ExtArgs>[]
     creditAlertReceipts: Prisma.$CreditAlertReceiptPayload<ExtArgs>[]
@@ -6886,6 +7215,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   passwordResets<T extends Prisma.User$passwordResetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   outboundMessages<T extends Prisma.User$outboundMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$outboundMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OutboundMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   logs<T extends Prisma.User$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  creditSubscriptions<T extends Prisma.User$creditSubscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$creditSubscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   creditOrders<T extends Prisma.User$creditOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$creditOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requestedCreditOrders<T extends Prisma.User$requestedCreditOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$requestedCreditOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   creditAlertReceipts<T extends Prisma.User$creditAlertReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$creditAlertReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditAlertReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -7634,6 +7964,30 @@ export type User$logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   take?: number
   skip?: number
   distinct?: Prisma.ActivityLogScalarFieldEnum | Prisma.ActivityLogScalarFieldEnum[]
+}
+
+/**
+ * User.creditSubscriptions
+ */
+export type User$creditSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CreditSubscription
+   */
+  select?: Prisma.CreditSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CreditSubscription
+   */
+  omit?: Prisma.CreditSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CreditSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.CreditSubscriptionWhereInput
+  orderBy?: Prisma.CreditSubscriptionOrderByWithRelationInput | Prisma.CreditSubscriptionOrderByWithRelationInput[]
+  cursor?: Prisma.CreditSubscriptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CreditSubscriptionScalarFieldEnum | Prisma.CreditSubscriptionScalarFieldEnum[]
 }
 
 /**

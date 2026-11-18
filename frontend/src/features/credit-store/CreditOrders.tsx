@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
 import { DropdownSelect } from "../../components/DropdownSelect";
@@ -45,6 +45,8 @@ const statuses = {
 export function CreditOrders({ admin = false }: { admin?: boolean }) {
   const { user } = useAuth(),
     client = useQueryClient();
+  const [params] = useSearchParams();
+  const subscriptionId = params.get("subscriptionId") || undefined;
   const base = admin ? "/credit-sales/orders" : "/my/credit-store/orders";
   const canCancel = !admin || hasPermission(user, "integrations.update");
   const [page, setPage] = useState(1),
@@ -63,13 +65,14 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
     return () => clearTimeout(timer);
   }, [search]);
   const orders = useQuery({
-    queryKey: [base, { page, limit, search: term, status }],
+    queryKey: [base, { page, limit, search: term, status, subscriptionId }],
     queryFn: async () =>
       (
         await api.get(base, {
           params: {
             page,
             limit,
+            ...(subscriptionId ? { subscriptionId } : {}),
             ...(term ? { search: term } : {}),
             ...(status ? { status } : {}),
           },

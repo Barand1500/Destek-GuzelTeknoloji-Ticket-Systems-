@@ -27,6 +27,7 @@ export type AggregateCreditOrder = {
 }
 
 export type CreditOrderAvgAggregateOutputType = {
+  periodNumber: number | null
   number: number | null
   credits: number | null
   total: runtime.Decimal | null
@@ -36,6 +37,7 @@ export type CreditOrderAvgAggregateOutputType = {
 }
 
 export type CreditOrderSumAggregateOutputType = {
+  periodNumber: number | null
   number: number | null
   credits: number | null
   total: runtime.Decimal | null
@@ -45,6 +47,12 @@ export type CreditOrderSumAggregateOutputType = {
 }
 
 export type CreditOrderMinAggregateOutputType = {
+  subscriptionId: string | null
+  periodNumber: number | null
+  periodStartsOn: Date | null
+  periodEndsOn: Date | null
+  grantedAgreementId: string | null
+  paidAt: Date | null
   periodName: string | null
   renewalRequested: boolean | null
   id: string | null
@@ -68,6 +76,12 @@ export type CreditOrderMinAggregateOutputType = {
 }
 
 export type CreditOrderMaxAggregateOutputType = {
+  subscriptionId: string | null
+  periodNumber: number | null
+  periodStartsOn: Date | null
+  periodEndsOn: Date | null
+  grantedAgreementId: string | null
+  paidAt: Date | null
   periodName: string | null
   renewalRequested: boolean | null
   id: string | null
@@ -91,6 +105,12 @@ export type CreditOrderMaxAggregateOutputType = {
 }
 
 export type CreditOrderCountAggregateOutputType = {
+  subscriptionId: number
+  periodNumber: number
+  periodStartsOn: number
+  periodEndsOn: number
+  grantedAgreementId: number
+  paidAt: number
   periodName: number
   renewalRequested: number
   id: number
@@ -116,6 +136,7 @@ export type CreditOrderCountAggregateOutputType = {
 
 
 export type CreditOrderAvgAggregateInputType = {
+  periodNumber?: true
   number?: true
   credits?: true
   total?: true
@@ -125,6 +146,7 @@ export type CreditOrderAvgAggregateInputType = {
 }
 
 export type CreditOrderSumAggregateInputType = {
+  periodNumber?: true
   number?: true
   credits?: true
   total?: true
@@ -134,6 +156,12 @@ export type CreditOrderSumAggregateInputType = {
 }
 
 export type CreditOrderMinAggregateInputType = {
+  subscriptionId?: true
+  periodNumber?: true
+  periodStartsOn?: true
+  periodEndsOn?: true
+  grantedAgreementId?: true
+  paidAt?: true
   periodName?: true
   renewalRequested?: true
   id?: true
@@ -157,6 +185,12 @@ export type CreditOrderMinAggregateInputType = {
 }
 
 export type CreditOrderMaxAggregateInputType = {
+  subscriptionId?: true
+  periodNumber?: true
+  periodStartsOn?: true
+  periodEndsOn?: true
+  grantedAgreementId?: true
+  paidAt?: true
   periodName?: true
   renewalRequested?: true
   id?: true
@@ -180,6 +214,12 @@ export type CreditOrderMaxAggregateInputType = {
 }
 
 export type CreditOrderCountAggregateInputType = {
+  subscriptionId?: true
+  periodNumber?: true
+  periodStartsOn?: true
+  periodEndsOn?: true
+  grantedAgreementId?: true
+  paidAt?: true
   periodName?: true
   renewalRequested?: true
   id?: true
@@ -290,6 +330,12 @@ export type CreditOrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 export type CreditOrderGroupByOutputType = {
+  subscriptionId: string | null
+  periodNumber: number | null
+  periodStartsOn: Date | null
+  periodEndsOn: Date | null
+  grantedAgreementId: string | null
+  paidAt: Date | null
   periodName: string | null
   renewalRequested: boolean
   id: string
@@ -336,6 +382,12 @@ export type CreditOrderWhereInput = {
   AND?: Prisma.CreditOrderWhereInput | Prisma.CreditOrderWhereInput[]
   OR?: Prisma.CreditOrderWhereInput[]
   NOT?: Prisma.CreditOrderWhereInput | Prisma.CreditOrderWhereInput[]
+  subscriptionId?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
+  periodNumber?: Prisma.IntNullableFilter<"CreditOrder"> | number | null
+  periodStartsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  periodEndsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  grantedAgreementId?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
   periodName?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
   renewalRequested?: Prisma.BoolFilter<"CreditOrder"> | boolean
   id?: Prisma.StringFilter<"CreditOrder"> | string
@@ -356,11 +408,20 @@ export type CreditOrderWhereInput = {
   cancelledAt?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CreditOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CreditOrder"> | Date | string
+  subscription?: Prisma.XOR<Prisma.CreditSubscriptionNullableScalarRelationFilter, Prisma.CreditSubscriptionWhereInput> | null
+  grantedAgreement?: Prisma.XOR<Prisma.AgreementNullableScalarRelationFilter, Prisma.AgreementWhereInput> | null
+  paymentAttempts?: Prisma.CreditPaymentAttemptListRelationFilter
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   requestedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type CreditOrderOrderByWithRelationInput = {
+  subscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodStartsOn?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodEndsOn?: Prisma.SortOrderInput | Prisma.SortOrder
+  grantedAgreementId?: Prisma.SortOrderInput | Prisma.SortOrder
+  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   periodName?: Prisma.SortOrderInput | Prisma.SortOrder
   renewalRequested?: Prisma.SortOrder
   id?: Prisma.SortOrder
@@ -381,18 +442,28 @@ export type CreditOrderOrderByWithRelationInput = {
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  subscription?: Prisma.CreditSubscriptionOrderByWithRelationInput
+  grantedAgreement?: Prisma.AgreementOrderByWithRelationInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptOrderByRelationAggregateInput
   customer?: Prisma.UserOrderByWithRelationInput
   requestedBy?: Prisma.UserOrderByWithRelationInput
   _relevance?: Prisma.CreditOrderOrderByRelevanceInput
 }
 
 export type CreditOrderWhereUniqueInput = Prisma.AtLeast<{
+  grantedAgreementId?: string
   id?: string
   number?: number
+  subscriptionId_periodNumber?: Prisma.CreditOrderSubscriptionIdPeriodNumberCompoundUniqueInput
   customerId_requestKey?: Prisma.CreditOrderCustomerIdRequestKeyCompoundUniqueInput
   AND?: Prisma.CreditOrderWhereInput | Prisma.CreditOrderWhereInput[]
   OR?: Prisma.CreditOrderWhereInput[]
   NOT?: Prisma.CreditOrderWhereInput | Prisma.CreditOrderWhereInput[]
+  subscriptionId?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
+  periodNumber?: Prisma.IntNullableFilter<"CreditOrder"> | number | null
+  periodStartsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  periodEndsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
   periodName?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
   renewalRequested?: Prisma.BoolFilter<"CreditOrder"> | boolean
   customerId?: Prisma.StringFilter<"CreditOrder"> | string
@@ -411,11 +482,20 @@ export type CreditOrderWhereUniqueInput = Prisma.AtLeast<{
   cancelledAt?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CreditOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CreditOrder"> | Date | string
+  subscription?: Prisma.XOR<Prisma.CreditSubscriptionNullableScalarRelationFilter, Prisma.CreditSubscriptionWhereInput> | null
+  grantedAgreement?: Prisma.XOR<Prisma.AgreementNullableScalarRelationFilter, Prisma.AgreementWhereInput> | null
+  paymentAttempts?: Prisma.CreditPaymentAttemptListRelationFilter
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   requestedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "number" | "customerId_requestKey">
+}, "id" | "grantedAgreementId" | "number" | "subscriptionId_periodNumber" | "customerId_requestKey">
 
 export type CreditOrderOrderByWithAggregationInput = {
+  subscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodStartsOn?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodEndsOn?: Prisma.SortOrderInput | Prisma.SortOrder
+  grantedAgreementId?: Prisma.SortOrderInput | Prisma.SortOrder
+  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   periodName?: Prisma.SortOrderInput | Prisma.SortOrder
   renewalRequested?: Prisma.SortOrder
   id?: Prisma.SortOrder
@@ -447,6 +527,12 @@ export type CreditOrderScalarWhereWithAggregatesInput = {
   AND?: Prisma.CreditOrderScalarWhereWithAggregatesInput | Prisma.CreditOrderScalarWhereWithAggregatesInput[]
   OR?: Prisma.CreditOrderScalarWhereWithAggregatesInput[]
   NOT?: Prisma.CreditOrderScalarWhereWithAggregatesInput | Prisma.CreditOrderScalarWhereWithAggregatesInput[]
+  subscriptionId?: Prisma.StringNullableWithAggregatesFilter<"CreditOrder"> | string | null
+  periodNumber?: Prisma.IntNullableWithAggregatesFilter<"CreditOrder"> | number | null
+  periodStartsOn?: Prisma.DateTimeNullableWithAggregatesFilter<"CreditOrder"> | Date | string | null
+  periodEndsOn?: Prisma.DateTimeNullableWithAggregatesFilter<"CreditOrder"> | Date | string | null
+  grantedAgreementId?: Prisma.StringNullableWithAggregatesFilter<"CreditOrder"> | string | null
+  paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CreditOrder"> | Date | string | null
   periodName?: Prisma.StringNullableWithAggregatesFilter<"CreditOrder"> | string | null
   renewalRequested?: Prisma.BoolWithAggregatesFilter<"CreditOrder"> | boolean
   id?: Prisma.StringWithAggregatesFilter<"CreditOrder"> | string
@@ -470,6 +556,10 @@ export type CreditOrderScalarWhereWithAggregatesInput = {
 }
 
 export type CreditOrderCreateInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -488,11 +578,20 @@ export type CreditOrderCreateInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  subscription?: Prisma.CreditSubscriptionCreateNestedOneWithoutOrdersInput
+  grantedAgreement?: Prisma.AgreementCreateNestedOneWithoutGrantedOrderInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptCreateNestedManyWithoutOrderInput
   customer: Prisma.UserCreateNestedOneWithoutCreditOrdersInput
   requestedBy: Prisma.UserCreateNestedOneWithoutRequestedCreditOrdersInput
 }
 
 export type CreditOrderUncheckedCreateInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -513,9 +612,14 @@ export type CreditOrderUncheckedCreateInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type CreditOrderUpdateInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -533,11 +637,20 @@ export type CreditOrderUpdateInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.CreditSubscriptionUpdateOneWithoutOrdersNestedInput
+  grantedAgreement?: Prisma.AgreementUpdateOneWithoutGrantedOrderNestedInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptUpdateManyWithoutOrderNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCreditOrdersNestedInput
   requestedBy?: Prisma.UserUpdateOneRequiredWithoutRequestedCreditOrdersNestedInput
 }
 
 export type CreditOrderUncheckedUpdateInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -558,9 +671,16 @@ export type CreditOrderUncheckedUpdateInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type CreditOrderCreateManyInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -584,6 +704,10 @@ export type CreditOrderCreateManyInput = {
 }
 
 export type CreditOrderUpdateManyMutationInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -604,6 +728,12 @@ export type CreditOrderUpdateManyMutationInput = {
 }
 
 export type CreditOrderUncheckedUpdateManyInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -636,10 +766,20 @@ export type CreditOrderOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type CreditOrderNullableScalarRelationFilter = {
+  is?: Prisma.CreditOrderWhereInput | null
+  isNot?: Prisma.CreditOrderWhereInput | null
+}
+
 export type CreditOrderOrderByRelevanceInput = {
   fields: Prisma.CreditOrderOrderByRelevanceFieldEnum | Prisma.CreditOrderOrderByRelevanceFieldEnum[]
   sort: Prisma.SortOrder
   search: string
+}
+
+export type CreditOrderSubscriptionIdPeriodNumberCompoundUniqueInput = {
+  subscriptionId: string
+  periodNumber: number
 }
 
 export type CreditOrderCustomerIdRequestKeyCompoundUniqueInput = {
@@ -648,6 +788,12 @@ export type CreditOrderCustomerIdRequestKeyCompoundUniqueInput = {
 }
 
 export type CreditOrderCountOrderByAggregateInput = {
+  subscriptionId?: Prisma.SortOrder
+  periodNumber?: Prisma.SortOrder
+  periodStartsOn?: Prisma.SortOrder
+  periodEndsOn?: Prisma.SortOrder
+  grantedAgreementId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   periodName?: Prisma.SortOrder
   renewalRequested?: Prisma.SortOrder
   id?: Prisma.SortOrder
@@ -671,6 +817,7 @@ export type CreditOrderCountOrderByAggregateInput = {
 }
 
 export type CreditOrderAvgOrderByAggregateInput = {
+  periodNumber?: Prisma.SortOrder
   number?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -680,6 +827,12 @@ export type CreditOrderAvgOrderByAggregateInput = {
 }
 
 export type CreditOrderMaxOrderByAggregateInput = {
+  subscriptionId?: Prisma.SortOrder
+  periodNumber?: Prisma.SortOrder
+  periodStartsOn?: Prisma.SortOrder
+  periodEndsOn?: Prisma.SortOrder
+  grantedAgreementId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   periodName?: Prisma.SortOrder
   renewalRequested?: Prisma.SortOrder
   id?: Prisma.SortOrder
@@ -703,6 +856,12 @@ export type CreditOrderMaxOrderByAggregateInput = {
 }
 
 export type CreditOrderMinOrderByAggregateInput = {
+  subscriptionId?: Prisma.SortOrder
+  periodNumber?: Prisma.SortOrder
+  periodStartsOn?: Prisma.SortOrder
+  periodEndsOn?: Prisma.SortOrder
+  grantedAgreementId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   periodName?: Prisma.SortOrder
   renewalRequested?: Prisma.SortOrder
   id?: Prisma.SortOrder
@@ -726,12 +885,18 @@ export type CreditOrderMinOrderByAggregateInput = {
 }
 
 export type CreditOrderSumOrderByAggregateInput = {
+  periodNumber?: Prisma.SortOrder
   number?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   total?: Prisma.SortOrder
   unitPrice?: Prisma.SortOrder
   validityDays?: Prisma.SortOrder
   periodMonths?: Prisma.SortOrder
+}
+
+export type CreditOrderScalarRelationFilter = {
+  is?: Prisma.CreditOrderWhereInput
+  isNot?: Prisma.CreditOrderWhereInput
 }
 
 export type CreditOrderCreateNestedManyWithoutCustomerInput = {
@@ -818,6 +983,38 @@ export type CreditOrderUncheckedUpdateManyWithoutRequestedByNestedInput = {
   deleteMany?: Prisma.CreditOrderScalarWhereInput | Prisma.CreditOrderScalarWhereInput[]
 }
 
+export type CreditOrderCreateNestedOneWithoutGrantedAgreementInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutGrantedAgreementInput
+  connect?: Prisma.CreditOrderWhereUniqueInput
+}
+
+export type CreditOrderUncheckedCreateNestedOneWithoutGrantedAgreementInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutGrantedAgreementInput
+  connect?: Prisma.CreditOrderWhereUniqueInput
+}
+
+export type CreditOrderUpdateOneWithoutGrantedAgreementNestedInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutGrantedAgreementInput
+  upsert?: Prisma.CreditOrderUpsertWithoutGrantedAgreementInput
+  disconnect?: Prisma.CreditOrderWhereInput | boolean
+  delete?: Prisma.CreditOrderWhereInput | boolean
+  connect?: Prisma.CreditOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CreditOrderUpdateToOneWithWhereWithoutGrantedAgreementInput, Prisma.CreditOrderUpdateWithoutGrantedAgreementInput>, Prisma.CreditOrderUncheckedUpdateWithoutGrantedAgreementInput>
+}
+
+export type CreditOrderUncheckedUpdateOneWithoutGrantedAgreementNestedInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutGrantedAgreementInput
+  upsert?: Prisma.CreditOrderUpsertWithoutGrantedAgreementInput
+  disconnect?: Prisma.CreditOrderWhereInput | boolean
+  delete?: Prisma.CreditOrderWhereInput | boolean
+  connect?: Prisma.CreditOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CreditOrderUpdateToOneWithWhereWithoutGrantedAgreementInput, Prisma.CreditOrderUpdateWithoutGrantedAgreementInput>, Prisma.CreditOrderUncheckedUpdateWithoutGrantedAgreementInput>
+}
+
 export type NullableDecimalFieldUpdateOperationsInput = {
   set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -826,7 +1023,67 @@ export type NullableDecimalFieldUpdateOperationsInput = {
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
+export type CreditOrderCreateNestedManyWithoutSubscriptionInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput> | Prisma.CreditOrderCreateWithoutSubscriptionInput[] | Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput[]
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput | Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput[]
+  createMany?: Prisma.CreditOrderCreateManySubscriptionInputEnvelope
+  connect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+}
+
+export type CreditOrderUncheckedCreateNestedManyWithoutSubscriptionInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput> | Prisma.CreditOrderCreateWithoutSubscriptionInput[] | Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput[]
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput | Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput[]
+  createMany?: Prisma.CreditOrderCreateManySubscriptionInputEnvelope
+  connect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+}
+
+export type CreditOrderUpdateManyWithoutSubscriptionNestedInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput> | Prisma.CreditOrderCreateWithoutSubscriptionInput[] | Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput[]
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput | Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput[]
+  upsert?: Prisma.CreditOrderUpsertWithWhereUniqueWithoutSubscriptionInput | Prisma.CreditOrderUpsertWithWhereUniqueWithoutSubscriptionInput[]
+  createMany?: Prisma.CreditOrderCreateManySubscriptionInputEnvelope
+  set?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  disconnect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  delete?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  connect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  update?: Prisma.CreditOrderUpdateWithWhereUniqueWithoutSubscriptionInput | Prisma.CreditOrderUpdateWithWhereUniqueWithoutSubscriptionInput[]
+  updateMany?: Prisma.CreditOrderUpdateManyWithWhereWithoutSubscriptionInput | Prisma.CreditOrderUpdateManyWithWhereWithoutSubscriptionInput[]
+  deleteMany?: Prisma.CreditOrderScalarWhereInput | Prisma.CreditOrderScalarWhereInput[]
+}
+
+export type CreditOrderUncheckedUpdateManyWithoutSubscriptionNestedInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput> | Prisma.CreditOrderCreateWithoutSubscriptionInput[] | Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput[]
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput | Prisma.CreditOrderCreateOrConnectWithoutSubscriptionInput[]
+  upsert?: Prisma.CreditOrderUpsertWithWhereUniqueWithoutSubscriptionInput | Prisma.CreditOrderUpsertWithWhereUniqueWithoutSubscriptionInput[]
+  createMany?: Prisma.CreditOrderCreateManySubscriptionInputEnvelope
+  set?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  disconnect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  delete?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  connect?: Prisma.CreditOrderWhereUniqueInput | Prisma.CreditOrderWhereUniqueInput[]
+  update?: Prisma.CreditOrderUpdateWithWhereUniqueWithoutSubscriptionInput | Prisma.CreditOrderUpdateWithWhereUniqueWithoutSubscriptionInput[]
+  updateMany?: Prisma.CreditOrderUpdateManyWithWhereWithoutSubscriptionInput | Prisma.CreditOrderUpdateManyWithWhereWithoutSubscriptionInput[]
+  deleteMany?: Prisma.CreditOrderScalarWhereInput | Prisma.CreditOrderScalarWhereInput[]
+}
+
+export type CreditOrderCreateNestedOneWithoutPaymentAttemptsInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedCreateWithoutPaymentAttemptsInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutPaymentAttemptsInput
+  connect?: Prisma.CreditOrderWhereUniqueInput
+}
+
+export type CreditOrderUpdateOneRequiredWithoutPaymentAttemptsNestedInput = {
+  create?: Prisma.XOR<Prisma.CreditOrderCreateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedCreateWithoutPaymentAttemptsInput>
+  connectOrCreate?: Prisma.CreditOrderCreateOrConnectWithoutPaymentAttemptsInput
+  upsert?: Prisma.CreditOrderUpsertWithoutPaymentAttemptsInput
+  connect?: Prisma.CreditOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CreditOrderUpdateToOneWithWhereWithoutPaymentAttemptsInput, Prisma.CreditOrderUpdateWithoutPaymentAttemptsInput>, Prisma.CreditOrderUncheckedUpdateWithoutPaymentAttemptsInput>
+}
+
 export type CreditOrderCreateWithoutCustomerInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -845,10 +1102,19 @@ export type CreditOrderCreateWithoutCustomerInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  subscription?: Prisma.CreditSubscriptionCreateNestedOneWithoutOrdersInput
+  grantedAgreement?: Prisma.AgreementCreateNestedOneWithoutGrantedOrderInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptCreateNestedManyWithoutOrderInput
   requestedBy: Prisma.UserCreateNestedOneWithoutRequestedCreditOrdersInput
 }
 
 export type CreditOrderUncheckedCreateWithoutCustomerInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -868,6 +1134,7 @@ export type CreditOrderUncheckedCreateWithoutCustomerInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type CreditOrderCreateOrConnectWithoutCustomerInput = {
@@ -881,6 +1148,10 @@ export type CreditOrderCreateManyCustomerInputEnvelope = {
 }
 
 export type CreditOrderCreateWithoutRequestedByInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -899,10 +1170,19 @@ export type CreditOrderCreateWithoutRequestedByInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  subscription?: Prisma.CreditSubscriptionCreateNestedOneWithoutOrdersInput
+  grantedAgreement?: Prisma.AgreementCreateNestedOneWithoutGrantedOrderInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptCreateNestedManyWithoutOrderInput
   customer: Prisma.UserCreateNestedOneWithoutCreditOrdersInput
 }
 
 export type CreditOrderUncheckedCreateWithoutRequestedByInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -922,6 +1202,7 @@ export type CreditOrderUncheckedCreateWithoutRequestedByInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type CreditOrderCreateOrConnectWithoutRequestedByInput = {
@@ -954,6 +1235,12 @@ export type CreditOrderScalarWhereInput = {
   AND?: Prisma.CreditOrderScalarWhereInput | Prisma.CreditOrderScalarWhereInput[]
   OR?: Prisma.CreditOrderScalarWhereInput[]
   NOT?: Prisma.CreditOrderScalarWhereInput | Prisma.CreditOrderScalarWhereInput[]
+  subscriptionId?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
+  periodNumber?: Prisma.IntNullableFilter<"CreditOrder"> | number | null
+  periodStartsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  periodEndsOn?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
+  grantedAgreementId?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"CreditOrder"> | Date | string | null
   periodName?: Prisma.StringNullableFilter<"CreditOrder"> | string | null
   renewalRequested?: Prisma.BoolFilter<"CreditOrder"> | boolean
   id?: Prisma.StringFilter<"CreditOrder"> | string
@@ -992,7 +1279,359 @@ export type CreditOrderUpdateManyWithWhereWithoutRequestedByInput = {
   data: Prisma.XOR<Prisma.CreditOrderUpdateManyMutationInput, Prisma.CreditOrderUncheckedUpdateManyWithoutRequestedByInput>
 }
 
+export type CreditOrderCreateWithoutGrantedAgreementInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  subscription?: Prisma.CreditSubscriptionCreateNestedOneWithoutOrdersInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptCreateNestedManyWithoutOrderInput
+  customer: Prisma.UserCreateNestedOneWithoutCreditOrdersInput
+  requestedBy: Prisma.UserCreateNestedOneWithoutRequestedCreditOrdersInput
+}
+
+export type CreditOrderUncheckedCreateWithoutGrantedAgreementInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  customerId: string
+  requestedById: string
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type CreditOrderCreateOrConnectWithoutGrantedAgreementInput = {
+  where: Prisma.CreditOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+}
+
+export type CreditOrderUpsertWithoutGrantedAgreementInput = {
+  update: Prisma.XOR<Prisma.CreditOrderUpdateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedUpdateWithoutGrantedAgreementInput>
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedCreateWithoutGrantedAgreementInput>
+  where?: Prisma.CreditOrderWhereInput
+}
+
+export type CreditOrderUpdateToOneWithWhereWithoutGrantedAgreementInput = {
+  where?: Prisma.CreditOrderWhereInput
+  data: Prisma.XOR<Prisma.CreditOrderUpdateWithoutGrantedAgreementInput, Prisma.CreditOrderUncheckedUpdateWithoutGrantedAgreementInput>
+}
+
+export type CreditOrderUpdateWithoutGrantedAgreementInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.CreditSubscriptionUpdateOneWithoutOrdersNestedInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptUpdateManyWithoutOrderNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCreditOrdersNestedInput
+  requestedBy?: Prisma.UserUpdateOneRequiredWithoutRequestedCreditOrdersNestedInput
+}
+
+export type CreditOrderUncheckedUpdateWithoutGrantedAgreementInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  requestedById?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type CreditOrderCreateWithoutSubscriptionInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  grantedAgreement?: Prisma.AgreementCreateNestedOneWithoutGrantedOrderInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptCreateNestedManyWithoutOrderInput
+  customer: Prisma.UserCreateNestedOneWithoutCreditOrdersInput
+  requestedBy: Prisma.UserCreateNestedOneWithoutRequestedCreditOrdersInput
+}
+
+export type CreditOrderUncheckedCreateWithoutSubscriptionInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  customerId: string
+  requestedById: string
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type CreditOrderCreateOrConnectWithoutSubscriptionInput = {
+  where: Prisma.CreditOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput>
+}
+
+export type CreditOrderCreateManySubscriptionInputEnvelope = {
+  data: Prisma.CreditOrderCreateManySubscriptionInput | Prisma.CreditOrderCreateManySubscriptionInput[]
+  skipDuplicates?: boolean
+}
+
+export type CreditOrderUpsertWithWhereUniqueWithoutSubscriptionInput = {
+  where: Prisma.CreditOrderWhereUniqueInput
+  update: Prisma.XOR<Prisma.CreditOrderUpdateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedUpdateWithoutSubscriptionInput>
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedCreateWithoutSubscriptionInput>
+}
+
+export type CreditOrderUpdateWithWhereUniqueWithoutSubscriptionInput = {
+  where: Prisma.CreditOrderWhereUniqueInput
+  data: Prisma.XOR<Prisma.CreditOrderUpdateWithoutSubscriptionInput, Prisma.CreditOrderUncheckedUpdateWithoutSubscriptionInput>
+}
+
+export type CreditOrderUpdateManyWithWhereWithoutSubscriptionInput = {
+  where: Prisma.CreditOrderScalarWhereInput
+  data: Prisma.XOR<Prisma.CreditOrderUpdateManyMutationInput, Prisma.CreditOrderUncheckedUpdateManyWithoutSubscriptionInput>
+}
+
+export type CreditOrderCreateWithoutPaymentAttemptsInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  subscription?: Prisma.CreditSubscriptionCreateNestedOneWithoutOrdersInput
+  grantedAgreement?: Prisma.AgreementCreateNestedOneWithoutGrantedOrderInput
+  customer: Prisma.UserCreateNestedOneWithoutCreditOrdersInput
+  requestedBy: Prisma.UserCreateNestedOneWithoutRequestedCreditOrdersInput
+}
+
+export type CreditOrderUncheckedCreateWithoutPaymentAttemptsInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  customerId: string
+  requestedById: string
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CreditOrderCreateOrConnectWithoutPaymentAttemptsInput = {
+  where: Prisma.CreditOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedCreateWithoutPaymentAttemptsInput>
+}
+
+export type CreditOrderUpsertWithoutPaymentAttemptsInput = {
+  update: Prisma.XOR<Prisma.CreditOrderUpdateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedUpdateWithoutPaymentAttemptsInput>
+  create: Prisma.XOR<Prisma.CreditOrderCreateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedCreateWithoutPaymentAttemptsInput>
+  where?: Prisma.CreditOrderWhereInput
+}
+
+export type CreditOrderUpdateToOneWithWhereWithoutPaymentAttemptsInput = {
+  where?: Prisma.CreditOrderWhereInput
+  data: Prisma.XOR<Prisma.CreditOrderUpdateWithoutPaymentAttemptsInput, Prisma.CreditOrderUncheckedUpdateWithoutPaymentAttemptsInput>
+}
+
+export type CreditOrderUpdateWithoutPaymentAttemptsInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.CreditSubscriptionUpdateOneWithoutOrdersNestedInput
+  grantedAgreement?: Prisma.AgreementUpdateOneWithoutGrantedOrderNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCreditOrdersNestedInput
+  requestedBy?: Prisma.UserUpdateOneRequiredWithoutRequestedCreditOrdersNestedInput
+}
+
+export type CreditOrderUncheckedUpdateWithoutPaymentAttemptsInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  requestedById?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type CreditOrderCreateManyCustomerInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -1015,6 +1654,12 @@ export type CreditOrderCreateManyCustomerInput = {
 }
 
 export type CreditOrderCreateManyRequestedByInput = {
+  subscriptionId?: string | null
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
   periodName?: string | null
   renewalRequested?: boolean
   id?: string
@@ -1037,6 +1682,10 @@ export type CreditOrderCreateManyRequestedByInput = {
 }
 
 export type CreditOrderUpdateWithoutCustomerInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1054,10 +1703,19 @@ export type CreditOrderUpdateWithoutCustomerInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.CreditSubscriptionUpdateOneWithoutOrdersNestedInput
+  grantedAgreement?: Prisma.AgreementUpdateOneWithoutGrantedOrderNestedInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptUpdateManyWithoutOrderNestedInput
   requestedBy?: Prisma.UserUpdateOneRequiredWithoutRequestedCreditOrdersNestedInput
 }
 
 export type CreditOrderUncheckedUpdateWithoutCustomerInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1077,9 +1735,16 @@ export type CreditOrderUncheckedUpdateWithoutCustomerInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type CreditOrderUncheckedUpdateManyWithoutCustomerInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1102,6 +1767,10 @@ export type CreditOrderUncheckedUpdateManyWithoutCustomerInput = {
 }
 
 export type CreditOrderUpdateWithoutRequestedByInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1119,10 +1788,19 @@ export type CreditOrderUpdateWithoutRequestedByInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.CreditSubscriptionUpdateOneWithoutOrdersNestedInput
+  grantedAgreement?: Prisma.AgreementUpdateOneWithoutGrantedOrderNestedInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptUpdateManyWithoutOrderNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutCreditOrdersNestedInput
 }
 
 export type CreditOrderUncheckedUpdateWithoutRequestedByInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1142,9 +1820,16 @@ export type CreditOrderUncheckedUpdateWithoutRequestedByInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type CreditOrderUncheckedUpdateManyWithoutRequestedByInput = {
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1166,9 +1851,157 @@ export type CreditOrderUncheckedUpdateManyWithoutRequestedByInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type CreditOrderCreateManySubscriptionInput = {
+  periodNumber?: number | null
+  periodStartsOn?: Date | string | null
+  periodEndsOn?: Date | string | null
+  grantedAgreementId?: string | null
+  paidAt?: Date | string | null
+  periodName?: string | null
+  renewalRequested?: boolean
+  id?: string
+  number?: number
+  customerId: string
+  requestedById: string
+  requestKey: string
+  inputHash: string
+  kind: string
+  name: string
+  credits: number
+  total: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency: string
+  unitPrice?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: number | null
+  periodMonths?: number | null
+  status?: string
+  cancelledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CreditOrderUpdateWithoutSubscriptionInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  grantedAgreement?: Prisma.AgreementUpdateOneWithoutGrantedOrderNestedInput
+  paymentAttempts?: Prisma.CreditPaymentAttemptUpdateManyWithoutOrderNestedInput
+  customer?: Prisma.UserUpdateOneRequiredWithoutCreditOrdersNestedInput
+  requestedBy?: Prisma.UserUpdateOneRequiredWithoutRequestedCreditOrdersNestedInput
+}
+
+export type CreditOrderUncheckedUpdateWithoutSubscriptionInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  requestedById?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentAttempts?: Prisma.CreditPaymentAttemptUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type CreditOrderUncheckedUpdateManyWithoutSubscriptionInput = {
+  periodNumber?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodStartsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodEndsOn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  grantedAgreementId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renewalRequested?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  requestedById?: Prisma.StringFieldUpdateOperationsInput | string
+  requestKey?: Prisma.StringFieldUpdateOperationsInput | string
+  inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  unitPrice?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  validityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  periodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+
+/**
+ * Count Type CreditOrderCountOutputType
+ */
+
+export type CreditOrderCountOutputType = {
+  paymentAttempts: number
+}
+
+export type CreditOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  paymentAttempts?: boolean | CreditOrderCountOutputTypeCountPaymentAttemptsArgs
+}
+
+/**
+ * CreditOrderCountOutputType without action
+ */
+export type CreditOrderCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CreditOrderCountOutputType
+   */
+  select?: Prisma.CreditOrderCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * CreditOrderCountOutputType without action
+ */
+export type CreditOrderCountOutputTypeCountPaymentAttemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CreditPaymentAttemptWhereInput
+}
 
 
 export type CreditOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  subscriptionId?: boolean
+  periodNumber?: boolean
+  periodStartsOn?: boolean
+  periodEndsOn?: boolean
+  grantedAgreementId?: boolean
+  paidAt?: boolean
   periodName?: boolean
   renewalRequested?: boolean
   id?: boolean
@@ -1189,13 +2022,23 @@ export type CreditOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   cancelledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  subscription?: boolean | Prisma.CreditOrder$subscriptionArgs<ExtArgs>
+  grantedAgreement?: boolean | Prisma.CreditOrder$grantedAgreementArgs<ExtArgs>
+  paymentAttempts?: boolean | Prisma.CreditOrder$paymentAttemptsArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   requestedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  _count?: boolean | Prisma.CreditOrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["creditOrder"]>
 
 
 
 export type CreditOrderSelectScalar = {
+  subscriptionId?: boolean
+  periodNumber?: boolean
+  periodStartsOn?: boolean
+  periodEndsOn?: boolean
+  grantedAgreementId?: boolean
+  paidAt?: boolean
   periodName?: boolean
   renewalRequested?: boolean
   id?: boolean
@@ -1218,19 +2061,32 @@ export type CreditOrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CreditOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"periodName" | "renewalRequested" | "id" | "number" | "customerId" | "requestedById" | "requestKey" | "inputHash" | "kind" | "name" | "credits" | "total" | "currency" | "unitPrice" | "validityDays" | "periodMonths" | "status" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["creditOrder"]>
+export type CreditOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"subscriptionId" | "periodNumber" | "periodStartsOn" | "periodEndsOn" | "grantedAgreementId" | "paidAt" | "periodName" | "renewalRequested" | "id" | "number" | "customerId" | "requestedById" | "requestKey" | "inputHash" | "kind" | "name" | "credits" | "total" | "currency" | "unitPrice" | "validityDays" | "periodMonths" | "status" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["creditOrder"]>
 export type CreditOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  subscription?: boolean | Prisma.CreditOrder$subscriptionArgs<ExtArgs>
+  grantedAgreement?: boolean | Prisma.CreditOrder$grantedAgreementArgs<ExtArgs>
+  paymentAttempts?: boolean | Prisma.CreditOrder$paymentAttemptsArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   requestedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  _count?: boolean | Prisma.CreditOrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $CreditOrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CreditOrder"
   objects: {
+    subscription: Prisma.$CreditSubscriptionPayload<ExtArgs> | null
+    grantedAgreement: Prisma.$AgreementPayload<ExtArgs> | null
+    paymentAttempts: Prisma.$CreditPaymentAttemptPayload<ExtArgs>[]
     customer: Prisma.$UserPayload<ExtArgs>
     requestedBy: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    subscriptionId: string | null
+    periodNumber: number | null
+    periodStartsOn: Date | null
+    periodEndsOn: Date | null
+    grantedAgreementId: string | null
+    paidAt: Date | null
     periodName: string | null
     renewalRequested: boolean
     id: string
@@ -1334,8 +2190,8 @@ export interface CreditOrderDelegate<ExtArgs extends runtime.Types.Extensions.In
    * // Get first 10 CreditOrders
    * const creditOrders = await prisma.creditOrder.findMany({ take: 10 })
    * 
-   * // Only select the `periodName`
-   * const creditOrderWithPeriodNameOnly = await prisma.creditOrder.findMany({ select: { periodName: true } })
+   * // Only select the `subscriptionId`
+   * const creditOrderWithSubscriptionIdOnly = await prisma.creditOrder.findMany({ select: { subscriptionId: true } })
    * 
    */
   findMany<T extends CreditOrderFindManyArgs>(args?: Prisma.SelectSubset<T, CreditOrderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -1591,6 +2447,9 @@ readonly fields: CreditOrderFieldRefs;
  */
 export interface Prisma__CreditOrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  subscription<T extends Prisma.CreditOrder$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreditOrder$subscriptionArgs<ExtArgs>>): Prisma.Prisma__CreditSubscriptionClient<runtime.Types.Result.GetResult<Prisma.$CreditSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  grantedAgreement<T extends Prisma.CreditOrder$grantedAgreementArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreditOrder$grantedAgreementArgs<ExtArgs>>): Prisma.Prisma__AgreementClient<runtime.Types.Result.GetResult<Prisma.$AgreementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  paymentAttempts<T extends Prisma.CreditOrder$paymentAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreditOrder$paymentAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditPaymentAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   customer<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   requestedBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
@@ -1622,6 +2481,12 @@ export interface Prisma__CreditOrderClient<T, Null = never, ExtArgs extends runt
  * Fields of the CreditOrder model
  */
 export interface CreditOrderFieldRefs {
+  readonly subscriptionId: Prisma.FieldRef<"CreditOrder", 'String'>
+  readonly periodNumber: Prisma.FieldRef<"CreditOrder", 'Int'>
+  readonly periodStartsOn: Prisma.FieldRef<"CreditOrder", 'DateTime'>
+  readonly periodEndsOn: Prisma.FieldRef<"CreditOrder", 'DateTime'>
+  readonly grantedAgreementId: Prisma.FieldRef<"CreditOrder", 'String'>
+  readonly paidAt: Prisma.FieldRef<"CreditOrder", 'DateTime'>
   readonly periodName: Prisma.FieldRef<"CreditOrder", 'String'>
   readonly renewalRequested: Prisma.FieldRef<"CreditOrder", 'Boolean'>
   readonly id: Prisma.FieldRef<"CreditOrder", 'String'>
@@ -1987,6 +2852,68 @@ export type CreditOrderDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many CreditOrders to delete.
    */
   limit?: number
+}
+
+/**
+ * CreditOrder.subscription
+ */
+export type CreditOrder$subscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CreditSubscription
+   */
+  select?: Prisma.CreditSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CreditSubscription
+   */
+  omit?: Prisma.CreditSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CreditSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.CreditSubscriptionWhereInput
+}
+
+/**
+ * CreditOrder.grantedAgreement
+ */
+export type CreditOrder$grantedAgreementArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Agreement
+   */
+  select?: Prisma.AgreementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Agreement
+   */
+  omit?: Prisma.AgreementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AgreementInclude<ExtArgs> | null
+  where?: Prisma.AgreementWhereInput
+}
+
+/**
+ * CreditOrder.paymentAttempts
+ */
+export type CreditOrder$paymentAttemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CreditPaymentAttempt
+   */
+  select?: Prisma.CreditPaymentAttemptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CreditPaymentAttempt
+   */
+  omit?: Prisma.CreditPaymentAttemptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CreditPaymentAttemptInclude<ExtArgs> | null
+  where?: Prisma.CreditPaymentAttemptWhereInput
+  orderBy?: Prisma.CreditPaymentAttemptOrderByWithRelationInput | Prisma.CreditPaymentAttemptOrderByWithRelationInput[]
+  cursor?: Prisma.CreditPaymentAttemptWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CreditPaymentAttemptScalarFieldEnum | Prisma.CreditPaymentAttemptScalarFieldEnum[]
 }
 
 /**

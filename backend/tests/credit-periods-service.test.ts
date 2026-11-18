@@ -69,6 +69,8 @@ test("period catalogs require exact permissions, bound rows, audit and preserve 
         audits++;
       },
     },
+    agreement: { findFirst: async () => null },
+    creditOrder: { findFirst: async () => null },
     creditSalesPlan: {
       count: async () => 0,
       create: async ({ data }: any) =>

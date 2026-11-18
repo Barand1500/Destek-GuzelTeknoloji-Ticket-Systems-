@@ -13,18 +13,24 @@ export const createCreditOrderInput = z
   .object({
     requestKey: z.uuid(),
     selection: quoteInput,
+    confirmPackageChange: z.boolean().default(false),
     quoteKey: z.string().regex(/^[a-f0-9]{64}$/),
   })
   .strict();
 export const creditOrderListInput = paginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).optional(),
+  subscriptionId: z.uuid().optional(),
   status: z.enum(["PENDING", "CANCELLED", "PAID", "FAILED"]).optional(),
   currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
 });
 const fields = {
   id: true,
   number: true,
+  paidAt: true,
+  subscriptionId: true,
+  periodStartsOn: true,
+  periodEndsOn: true,
   customerId: true,
   name: true,
   kind: true,
@@ -72,7 +78,7 @@ export async function createCreditOrder(
     );
     const account = await creditStoreOwner(actor, tx);
     const inputHash = createHash("sha256")
-      .update(JSON.stringify([input.selection, input.quoteKey]))
+      .update(JSON.stringify([input.selection, input.quoteKey, input.confirmPackageChange ?? false]))
       .digest("hex");
     const existing = await tx.creditOrder.findUnique({
       where: {
@@ -102,7 +108,9 @@ export async function createCreditOrder(
         "QUOTE_CHANGED",
         "Fiyat veya paket koşulları değişti. Güncel özeti yeniden inceleyin.",
       );
-    const row = await tx.creditOrder.create({
+    const schedule = 'startsOn' in quote ? quote : null;
+    if (schedule?.currentPackage && !input.confirmPackageChange) throw new AppError(400, 'PACKAGE_CHANGE_CONFIRMATION_REQUIRED', 'Mevcut dönem sonundaki paket değişimini onaylayın.');
+    let row = await tx.creditOrder.create({
       data: {
         customerId: account.id,
         requestedById: actor.id,
@@ -121,9 +129,26 @@ export async function createCreditOrder(
         periodMonths: quote.periodMonths,
         periodName: quote.periodName,
         renewalRequested: quote.renewalRequested,
+        ...(schedule ? { periodStartsOn: new Date(schedule.startsOn), periodEndsOn: new Date(schedule.endsOn) } : {}),
       },
       select: fields,
     });
+    if (row.kind === 'SUBSCRIPTION') {
+      const subscription = await tx.creditSubscription.create({ data: {
+        customerId: account.id, name: row.name, amount: row.total, currency: row.currency,
+        credits: row.credits, periodMonths: row.periodMonths, periodDays: row.validityDays,
+        autoRenew: row.renewalRequested, consentedAt: new Date(),
+        status: 'AWAITING_PAYMENT',
+        anchorOn: schedule ? new Date(schedule.startsOn) : null,
+        nextPaymentOn: schedule ? new Date(schedule.startsOn) : null,
+      } });
+      if (schedule) {
+        const previous = await tx.creditSubscription.findMany({ where: { customerId: account.id, id: { not: subscription.id }, status: { not: 'STOPPED' } }, select: { id: true } });
+        if (await tx.creditPaymentAttempt.count({ where: { order: { subscriptionId: { in: previous.map(v => v.id) } }, status: 'PENDING' } })) throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Mevcut paketinizin ödeme sonucu bekleniyor. Sonuç netleşince paket değiştirebilirsiniz.');
+        await tx.creditSubscription.updateMany({ where: { id: { in: previous.map(v => v.id) } }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
+      }
+      row = await tx.creditOrder.update({ where: { id: row.id }, data: { subscriptionId: subscription.id, periodNumber: 1 }, select: fields });
+    }
     await tx.activityLog.create({
       data: {
         userId: actor.id,
@@ -167,6 +192,7 @@ export async function listCreditOrders(
   const where: Prisma.CreditOrderWhereInput = {
     ...(customerId ? { customerId } : {}),
     ...(input.status ? { status: input.status } : {}),
+    ...(input.subscriptionId ? { subscriptionId: input.subscriptionId } : {}),
     ...(input.currency ? { currency: input.currency } : {}),
     ...(search
       ? {
@@ -229,6 +255,10 @@ export async function cancelCreditOrder(
         "ORDER_NOT_PENDING",
         "Yalnızca ödeme bekleyen sipariş iptal edilebilir.",
       );
+    await tx.$queryRaw(Prisma.sql`SELECT id FROM User WHERE id = ${row.customerId} FOR UPDATE`);
+    if (!admin) await creditStoreOwner(actor, tx);
+    if (await tx.creditPaymentAttempt.count({ where: { orderId: id, status: 'PENDING' } }))
+      throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Ödeme sonucu bekleniyor. Sonuç netleşmeden sipariş iptal edilemez.');
     const claimed = await tx.creditOrder.updateMany({
       where: { id, status: "PENDING" },
       data: { status: "CANCELLED", cancelledAt: new Date() },
@@ -249,6 +279,7 @@ export async function cancelCreditOrder(
         ipAddress: actor.ipAddress,
       },
     });
+    if (row.subscriptionId) await tx.creditSubscription.update({ where: { id: row.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
     await tx.notification.create({
       data: {
         userId: row.customerId,
@@ -261,7 +292,7 @@ export async function cancelCreditOrder(
       },
     });
     return json({ ...row, status: "CANCELLED", cancelledAt: new Date() });
-  });
+  }, { isolationLevel: 'ReadCommitted' });
   publishChange();
   return result;
 }

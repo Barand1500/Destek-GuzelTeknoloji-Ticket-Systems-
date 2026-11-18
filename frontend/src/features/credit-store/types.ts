@@ -50,6 +50,8 @@ export type SalesCatalog = {
 };
 export type Quote = {
   quoteKey: string;
+  startsOn?: string; endsOn?: string;
+  currentPackage?: { id: string; name: string; endsOn: string; remainingDays: number } | null;
   name: string;
   credits: number;
   total: string;

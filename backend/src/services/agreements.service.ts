@@ -1,3 +1,4 @@
+import { syncAgreementRenewal } from './agreement-renewal.js';
 import { publishChange } from './events.service.js';
 import { z } from 'zod';
 import { db } from '../config/db.js';
@@ -15,6 +16,7 @@ export const agreementInput = z.object({
   fee: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ücret en fazla iki ondalık basamak içermelidir.')).default('0'),
   credits: z.number().int().min(0).max(1_000_000),
   renewalRequested: z.boolean().optional(),
+  currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
 }).strict().refine(v => v.endsOn >= v.startsOn, { path: ['endsOn'], message: 'Bitiş tarihi başlangıçtan önce olamaz.' });
 export const creditResolutionInput = z.object({ agreementId: z.uuid().nullable().optional(), credits: z.number().int().min(0).max(1_000_000) }).strict();
 export const relatedCustomerInput = z.object({ direction: z.enum(['CHILD', 'PARENT']), customer: createCustomerSchema }).strict();
@@ -76,6 +78,33 @@ export async function listCustomerRelations(actor: Actor, customerId: string) {
   const children = await db.user.findMany({ where: { parentCustomerId: person.id, deletedAt: null, role: 'CUSTOMER' }, select: { id: true, name: true, company: true, email: true, phone: true, isActive: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] });
   return { customer: person, parent, children };
 }
+export const creditHistoryInput = z.object({
+  page: z.coerce.number().int().min(1).max(100000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export async function listCreditHistory(actor: Actor, customerId: string, raw: z.input<typeof creditHistoryInput>) {
+  const input = creditHistoryInput.parse(raw);
+  const person = await customer(db, customerId);
+  if (actor.role === 'CUSTOMER') {
+    if (actor.id !== person.id && person.parentCustomerId !== actor.id) throw new AppError(403, 'FORBIDDEN', 'Bu müşteriye erişim izniniz yok.');
+  } else staff(actor);
+  const where: Prisma.CreditChargeWhereInput = person.parentCustomerId
+    ? { conversation: { customerId: person.id } }
+    : { OR: [
+      { conversation: { customer: { OR: [{ id: person.id }, { parentCustomerId: person.id, deletedAt: null, role: 'CUSTOMER' }] } } },
+      { agreement: { customerId: person.id } },
+    ] };
+  return db.$transaction(async tx => {
+    const total = await tx.creditCharge.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / input.limit));
+    const page = Math.min(input.page, totalPages);
+    const data = await tx.creditCharge.findMany({
+      where, select: { id: true, credits: true, createdAt: true, agreement: { select: { id: true, name: true } }, conversation: { select: { id: true, number: true, subject: true, customer: { select: { name: true } } } } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * input.limit, take: input.limit,
+    });
+    return { data, pagination: { page, limit: input.limit, total, totalPages } };
+  }, { isolationLevel: 'RepeatableRead' });
+}
 export async function listAgreements(actor: Actor, customerId: string) {
   const { customer: person, parent, children } = await listCustomerRelations(actor, customerId);
   // Linked people use only their active company's agreements. Legacy personal agreements stay intact.
@@ -116,6 +145,7 @@ export async function createAgreement(actor: Actor, customerId: string, input: z
       if (!active.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
     }
     const result = await tx.agreement.create({ data: { ...checked, renewalRequested: checked.renewalRequested ?? false, customerId, startsOn: new Date(checked.startsOn), endsOn: new Date(checked.endsOn) } });
+    await syncAgreementRenewal(tx, result);
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.created', entityType: 'Agreement', entityId: result.id, metadata: { customerId, ...checked }, ipAddress: actor.ipAddress } });
     return { ...result, fee: result.fee.toString() };
   });
@@ -133,9 +163,11 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
       const types = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${input.type} AND archivedAt IS NULL FOR UPDATE`;
       if (!types.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
     }
+    if ((input.startsOn !== before.startsOn.toISOString().slice(0,10) || input.endsOn !== before.endsOn.toISOString().slice(0,10)) && await tx.creditPaymentAttempt.count({ where: { order: { customerId }, status: 'PENDING' } })) throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Ödeme sonucu beklenirken dönem tarihleri değiştirilemez.');
     const renewalRequested = input.renewalRequested ?? before.renewalRequested;
-    const result = await tx.agreement.update({ where: { id }, data: { renewalRequested, name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
-    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits, renewalRequested: before.renewalRequested }, after: { name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits, renewalRequested } }, ipAddress: actor.ipAddress } });
+    const result = await tx.agreement.update({ where: { id }, data: { renewalRequested, fee: typeof raw === "object" && raw !== null && "fee" in raw ? input.fee : before.fee, currency: input.currency ?? before.currency, name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
+    await syncAgreementRenewal(tx, result);
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { fee: before.fee.toString(), currency: before.currency, name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits, renewalRequested: before.renewalRequested }, after: { fee: result.fee.toString(), currency: result.currency, name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits, renewalRequested } }, ipAddress: actor.ipAddress } });
     return { ...result, fee: result.fee.toString() };
   });
 }
@@ -145,6 +177,7 @@ export async function cancelAgreement(actor: Actor, customerId: string, id: stri
     await agreementOwner(tx, customerId);
     const changed = await tx.agreement.updateMany({ where: { id, customerId, cancelledAt: null, deletedAt: null }, data: { cancelledAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten iptal edilmiş.');
+    await syncAgreementRenewal(tx, await tx.agreement.findUniqueOrThrow({ where: { id } }));
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.cancelled', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
   });
 }
@@ -163,6 +196,7 @@ export async function deleteAgreement(actor: Actor, customerId: string, id: stri
     await agreementOwner(tx, customerId);
     const changed = await tx.agreement.updateMany({ where: { id, customerId, deletedAt: null }, data: { deletedAt: new Date() } });
     if (!changed.count) throw invalid('Anlaşma bulunamadı veya zaten silinmiş.');
+    await syncAgreementRenewal(tx, await tx.agreement.findUniqueOrThrow({ where: { id } }));
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.deleted', entityType: 'Agreement', entityId: id, metadata: { customerId }, ipAddress: actor.ipAddress } });
   });
 }

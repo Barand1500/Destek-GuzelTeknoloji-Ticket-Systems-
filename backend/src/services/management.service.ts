@@ -292,7 +292,7 @@ export async function createUser(
     if (rest.accessRoleId && !await tx.accessRole.findUnique({ where: { id: rest.accessRoleId } })) throw notFound();
     if (rest.accessRoleId && rest.role !== 'ADMIN') throw new AppError(400, 'INVALID_ROLE', 'Özel personel rolü geçerli değil.');
     if (actor.accessRole && (!rest.accessRoleId || rest.accessRoleId !== actor.accessRole.id)) throw new AppError(403, 'FORBIDDEN', 'Yalnızca kendi rolünüzde personel oluşturabilirsiniz.');
-    if (rest.role === 'CUSTOMER') await assertUniqueCustomerContact(tx, rest);
+    await assertUniqueCustomerContact(tx, rest);
     const data = await tx.user.create({
       data: {
         ...rest,
@@ -608,7 +608,7 @@ export async function updateUser(
     if (!current) throw notFound();
     assertStaffInScope(actor, current);
     const role = input.role ?? current.role;
-    if (role === 'CUSTOMER') await assertUniqueCustomerContact(tx, current.role === 'CUSTOMER' ? input : { email: input.email ?? current.email, phone: input.phone ?? current.phone }, id);
+    await assertUniqueCustomerContact(tx, input.role && input.role !== current.role ? { email: input.email ?? current.email, phone: input.phone ?? current.phone } : input, id);
     const accessRoleId = input.accessRoleId !== undefined ? input.accessRoleId : current.accessRoleId;
     const isSystemAdmin = actor.role === 'ADMIN' && !actor.accessRole;
     if (!isSystemAdmin && input.role === 'SUPERVISOR' && current.role !== 'SUPERVISOR') throw new AppError(403, 'FORBIDDEN', 'Departman sorumlusu rolünü yalnızca sistem yöneticisi atayabilir.');
@@ -1744,7 +1744,7 @@ export async function inboundEmailWarnings(actor: Actor) {
   if (!host || !account) return { total: 0, items: [] };
   const states = await db.imapSyncState.findMany({ where: { mailbox }, select: { id: true, uidValidity: true } });
   const ids = states.filter(state => state.id === imapSyncKey(host, port, account, mailbox, state.uidValidity)).map(state => state.id);
-  const where = { syncId: { in: ids }, attempts: 0 };
+  const where = { syncId: { in: ids }, attempts: 0, NOT: { lastError: { contains: '"reason":"staff_sender"' } } };
   const [total, rows] = await Promise.all([
     db.imapSyncRetry.count({ where }),
     db.imapSyncRetry.findMany({ where, orderBy: [{ uid: 'desc' }, { syncId: 'asc' }], take: 20, select: { syncId: true, uid: true, lastError: true } }),
@@ -2054,7 +2054,7 @@ export async function updateProfile(
     : undefined;
   return serial(async (tx) => {
     const latest = await tx.user.findUniqueOrThrow({ where: { id: actor.id } });
-    if (latest.role === 'CUSTOMER') await assertUniqueCustomerContact(tx, input, actor.id);
+    await assertUniqueCustomerContact(tx, input, actor.id);
     if (otpPasswordSetup && !await customerPasswordProof(tx, actor, latest)) throw new AppError(400, 'CURRENT_PASSWORD_REQUIRED', 'Doğrulama süresi doldu. E-posta koduyla yeniden giriş yapın veya mevcut şifrenizi girin.');
     if (
       latest.passwordHash !== current.passwordHash ||

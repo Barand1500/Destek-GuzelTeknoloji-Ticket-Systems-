@@ -1,3 +1,4 @@
+import * as subscriptions from '../services/credit-subscriptions.service.js';
 import rateLimit from "express-rate-limit";
 import * as orders from "../services/credit-orders.service.js";
 import * as periods from "../services/credit-periods.service.js";
@@ -67,6 +68,10 @@ creditStoreRouter.put("/credit-sales/plans/:id", async (req, res) =>
     ),
   }),
 );
+creditStoreRouter.delete("/credit-sales/plans/:id", async (req, res) => {
+  await service.deleteSalesPlan(req.actor, idSchema.parse(req.params.id));
+  res.json({ success: true, data: null });
+});
 creditStoreRouter.get("/my/credit-store", async (req, res) =>
   res.json({ success: true, data: await service.storeCatalog(req.actor) }),
 );
@@ -144,3 +149,9 @@ creditStoreRouter.post("/credit-sales/orders/:id/cancel", async (req, res) =>
     ),
   }),
 );
+
+creditStoreRouter.get('/my/credit-store/subscriptions', async (req, res) => res.json({ success: true, ...await subscriptions.listSubscriptions(req.actor, subscriptions.subscriptionListInput.parse(req.query)) }));
+creditStoreRouter.post('/my/credit-store/subscriptions/:id/accept', async (req, res) => res.json(await subscriptions.changeSubscription(req.actor, idSchema.parse(req.params.id), 'accept')));
+creditStoreRouter.post('/my/credit-store/subscriptions/:id/stop', async (req, res) => res.json(await subscriptions.changeSubscription(req.actor, idSchema.parse(req.params.id), 'stop')));
+creditStoreRouter.get('/credit-sales/subscriptions', async (req, res) => res.json({ success: true, ...await subscriptions.listSubscriptions(req.actor, subscriptions.subscriptionListInput.parse(req.query), true) }));
+creditStoreRouter.post('/credit-sales/subscriptions/:id/stop', async (req, res) => res.json(await subscriptions.changeSubscription(req.actor, idSchema.parse(req.params.id), 'stop', true)));

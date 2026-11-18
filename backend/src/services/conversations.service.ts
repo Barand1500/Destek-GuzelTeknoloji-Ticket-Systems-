@@ -474,6 +474,8 @@ export async function updateConversation(
   id: string,
   input: z.infer<typeof updateConversationSchema>,
 ) {
+  if (actor.role === "CUSTOMER" && input.replyChannels !== undefined)
+    throw new AppError(403, "FORBIDDEN", "Yanıt kanallarını yalnızca personel değiştirebilir.");
   if (actor.role === "CUSTOMER" && (input.websiteId === undefined || Object.keys(input).some(key => key !== "websiteId")))
     throw new AppError(403, "FORBIDDEN", "Yalnızca kendi açık talebinizin projesini değiştirebilirsiniz.");
   if (input.replyChannels !== undefined && !can(actor, 'conversations.reply')) throw new AppError(403, 'FORBIDDEN', 'Yanıt kanallarını değiştirme yetkiniz yok.');

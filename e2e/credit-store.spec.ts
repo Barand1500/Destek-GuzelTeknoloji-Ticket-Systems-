@@ -346,3 +346,59 @@ test("credit count can be typed up to 10000 and erased one digit at a time", asy
   await input.press("Backspace");
   await expect(input).toHaveValue("100");
 });
+
+test('switching packages shows remaining time and requires end-of-period confirmation', async ({ page }) => {
+  const writes = await mockApi(page, 'CUSTOMER');
+  await page.route('**/api/v1/my/credit-store/quote', route => route.fulfill({ json: { success: true, data: {
+    owner, name: plan.name, kind: 'SUBSCRIPTION', quoteKey: 'a'.repeat(64), credits: 500, total: '1000.00', currency: 'TRY', periodMonths: 1, renewalRequested: true, paymentAvailable: false,
+    startsOn: '2026-12-01', endsOn: '2026-12-31', currentPackage: { id: 'current', name: 'Mevcut Destek', remainingDays: 12, endsOn: '2026-11-30' }
+  } } }));
+  await page.goto('/customer/agreements?view=store');
+  await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
+  await page.getByRole('button', { name: 'Planı İncele' }).click();
+  await expect(page.getByText(/Döneminizin bitmesine 12 gün var/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeDisabled();
+  await page.locator('.credit-quote .credit-renewal-choice').click();
+  await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Sipariş Oluştur' }).click();
+  await expect.poll(() => writes.find(value => value.confirmPackageChange === true)).toBeTruthy();
+});
+
+
+test('customer billing uses integration tabs for orders and subscriptions', async ({ page }) => {
+  await mockApi(page, 'CUSTOMER');
+  await page.route('**/api/v1/my/credit-store/subscriptions*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
+  await page.route('**/api/v1/my/credit-store/orders?*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
+  await page.goto('/customer/agreements?view=subscriptions');
+  const tabs = page.locator('.customer-billing-workspace .integration-tabs');
+  await expect(tabs).toBeVisible();
+  await expect(tabs).toHaveCSS('display', 'flex');
+  const subscriptions = tabs.getByRole('tab').nth(1);
+  await expect(subscriptions).toHaveAttribute('aria-selected', 'true');
+  await expect(subscriptions).toHaveCSS('border-bottom-style', 'solid');
+  await tabs.getByRole('tab').first().click();
+  await expect(page).toHaveURL(/view=orders/);
+  await expect(tabs.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.credit-orders h2')).toBeVisible();
+});
+
+
+test('admin can delete a sales plan after confirmation', async ({ page }) => {
+  await mockApi(page, 'ADMIN');
+  let removed = false;
+  await page.route('**/api/v1/credit-sales', route => route.fulfill({ json: { success: true, data: { settings, plans: removed ? [] : [plan] } } }));
+  await page.route('**/api/v1/credit-sales/plans/' + plan.id, route => {
+    expect(route.request().method()).toBe('DELETE');
+    removed = true;
+    return route.fulfill({ json: { success: true, data: null } });
+  });
+  await page.goto('/admin/credit-sales');
+  await page.getByRole('button', { name: /Standart Destek plan/ }).click();
+  expect(removed).toBe(false);
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Sil', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator('.credit-admin-plans article')).toHaveCount(0);
+  expect(removed).toBe(true);
+});

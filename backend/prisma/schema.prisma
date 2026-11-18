@@ -83,6 +83,7 @@ model User {
   passwordResets PasswordReset[]
   outboundMessages OutboundMessage[]
   logs ActivityLog[]
+  creditSubscriptions CreditSubscription[]
   creditOrders CreditOrder[] @relation("CreditOrderOwner")
   requestedCreditOrders CreditOrder[] @relation("CreditOrderRequester")
   creditAlertReceipts CreditAlertReceipt[]
@@ -683,6 +684,9 @@ model SurveyResponse {
 }
 
 model Agreement {
+ currency String @default("TRY") @db.VarChar(3)
+ grantedOrder CreditOrder? @relation("OrderGrant")
+ sourceSubscription CreditSubscription? @relation("SubscriptionSource")
  renewalRequested Boolean @default(false)
  alertReceipts CreditAlertReceipt[]
  id String @id @default(uuid())
@@ -768,6 +772,17 @@ model CreditSalesPlan {
 }
 
 model CreditOrder {
+ subscriptionId String?
+ subscription CreditSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+ periodNumber Int?
+ periodStartsOn DateTime? @db.Date
+ periodEndsOn DateTime? @db.Date
+ grantedAgreementId String? @unique
+ grantedAgreement Agreement? @relation("OrderGrant", fields: [grantedAgreementId], references: [id], onDelete: Restrict)
+ paymentAttempts CreditPaymentAttempt[]
+ paidAt DateTime?
+ @@unique([subscriptionId, periodNumber])
+
  periodName String? @db.VarChar(80)
  renewalRequested Boolean @default(false)
  id String @id @default(uuid())
@@ -814,4 +829,54 @@ model CreditSalesPeriod {
  value Int
  archivedAt DateTime?
  createdAt DateTime @default(now())
+}
+
+
+model CreditSubscription {
+ id String @id @default(uuid())
+ customerId String
+ customer User @relation(fields: [customerId], references: [id], onDelete: Restrict)
+ sourceAgreementId String? @unique
+ sourceAgreement Agreement? @relation("SubscriptionSource", fields: [sourceAgreementId], references: [id], onDelete: Restrict)
+ name String @db.VarChar(150)
+ amount Decimal @db.Decimal(12, 2)
+ currency String @db.VarChar(3)
+ credits Int
+ periodMonths Int?
+ periodDays Int?
+ status String @default("AWAITING_PAYMENT") @db.VarChar(24)
+ autoRenew Boolean @default(true)
+ consentedAt DateTime?
+ consentVersion String @default("renewal-v1") @db.VarChar(32)
+ anchorOn DateTime? @db.Date
+ currentStartsOn DateTime? @db.Date
+ currentEndsOn DateTime? @db.Date
+ nextPaymentOn DateTime? @db.Date
+ paidPeriods Int @default(0)
+ anchorPeriod Int @default(0)
+ stoppedAt DateTime?
+ provider String? @db.VarChar(32)
+ paymentMethodRef String? @db.VarChar(255)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ orders CreditOrder[]
+ @@index([customerId, createdAt, id])
+ @@index([autoRenew, status, nextPaymentOn])
+}
+
+model CreditPaymentAttempt {
+ id String @id @default(uuid())
+ orderId String
+ order CreditOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+ attemptNumber Int
+ provider String @db.VarChar(32)
+ providerPaymentId String? @db.VarChar(255)
+ status String @default("PENDING") @db.VarChar(16)
+ failureCode String? @db.VarChar(80)
+ nextRetryAt DateTime?
+ createdAt DateTime @default(now())
+ completedAt DateTime?
+ @@unique([orderId, attemptNumber])
+ @@unique([provider, providerPaymentId])
+ @@index([status, nextRetryAt])
 }

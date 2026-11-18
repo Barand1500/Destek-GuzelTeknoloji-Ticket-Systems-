@@ -1,3 +1,6 @@
+import { Trash2 } from "lucide-react";
+import { DeleteModal } from "../../components/DeleteModal";
+import { CreditSubscriptions } from './CreditSubscriptions';
 import { CreditAlertChannels } from "./newCreditAlertChannels";
 import { PeriodSelect } from "./PeriodSelect";
 import { periodLabel } from "./types";
@@ -50,6 +53,7 @@ const emptyPlan = {
 export function CreditSalesPage() {
   const [params, setParams] = useSearchParams();
   const ordersVisible = params.get("view") === "orders";
+  const subscriptionsVisible = params.get("view") === "subscriptions";
   const { user } = useAuth(),
     client = useQueryClient();
   const periodWrites = useIsMutating({ mutationKey: ["credit-sales-periods"] });
@@ -64,6 +68,7 @@ export function CreditSalesPage() {
   const [plan, setPlan] = useState<
     (Omit<SalesPlan, "id"> & { id?: string }) | null
   >(null);
+  const [deleteTarget, setDeleteTarget] = useState<SalesPlan | null>(null);
   const [message, setMessage] = useState("");
   const [binInput, setBinInput] = useState("");
   const [binTerm, setBinTerm] = useState("");
@@ -124,7 +129,16 @@ export function CreditSalesPage() {
       await refresh();
     },
   });
-  const planPending = savePlan.isPending || periodWrites > 0;
+  const removePlan = useMutation({
+    mutationFn: (id: string) => api.delete('/credit-sales/plans/' + id),
+    onSuccess: async (_, id) => {
+      setDeleteTarget(null);
+      setPlan(current => current?.id === id ? null : current);
+      setMessage('Abonelik planı silindi.');
+      await refresh();
+    },
+  });
+  const planPending = savePlan.isPending || removePlan.isPending || periodWrites > 0;
   const editSetting = <K extends keyof SalesSettings>(
     key: K,
     value: SalesSettings[K],
@@ -165,13 +179,19 @@ export function CreditSalesPage() {
         <button
           className="button secondary"
           type="button"
-          onClick={() => setParams(ordersVisible ? {} : { view: "orders" })}
+          onClick={() => setParams(ordersVisible || subscriptionsVisible ? {} : { view: "orders" })}
         >
-          {ordersVisible ? "Kredi Ayarları" : "Siparişler"}
+          {ordersVisible || subscriptionsVisible ? "Kredi Ayarları" : "Siparişler"}
         </button>
+
       </Heading>
+      {(ordersVisible || subscriptionsVisible) && <div className="relation-tabs" aria-label="Sipariş ve abonelik yönetimi">
+        <button type="button" className={'relation-tab' + (ordersVisible ? ' active' : '')} aria-pressed={ordersVisible} onClick={() => setParams({ view: 'orders' })}>Siparişler</button>
+        <button type="button" className={'relation-tab' + (subscriptionsVisible ? ' active' : '')} aria-pressed={subscriptionsVisible} onClick={() => setParams({ view: 'subscriptions' })}>Abonelikler</button>
+      </div>}
       {ordersVisible && <CreditOrders admin />}
-      <div className="credit-sales-sections" hidden={ordersVisible}>
+      {subscriptionsVisible && <CreditSubscriptions admin />}
+      <div className="credit-sales-sections" hidden={ordersVisible || subscriptionsVisible}>
         <p className="credit-store-notice">
           <Info size={18} /> Katalog ve hesaplama ekranları hazırdır. Ödeme
           sağlayıcısı bağlanana kadar ödeme alınmaz ve kredi yüklenmez.
@@ -190,11 +210,6 @@ export function CreditSalesPage() {
                 onChange={(value) => editSetting("enabled", value)}
               />
             </div>
-            <p>
-              Müşteri tutar veya kredi sayısı girerek karşılığını görebilir.
-              Fiyatlar seçtiğiniz para birimindedir; otomatik kur dönüşümü
-              yapılmaz.
-            </p>
             <fieldset
               disabled={!editable || save.isPending}
               className="credit-fields credit-settings-fields"
@@ -260,11 +275,6 @@ export function CreditSalesPage() {
                 />
               </label>
             </fieldset>
-            <p className="credit-help">
-              Satın alınan kredi ay sonunda sıfırlanmaz; tanımlanan gün sayısı
-              boyunca geçerlidir. Değişiklikler gelecekteki alımlar için geçerli
-              olur.
-            </p>
             <section className="credit-notice-settings">
               <div className="credit-sales-card-heading">
                 <h3>Kredi Bildirimleri</h3>
@@ -276,10 +286,11 @@ export function CreditSalesPage() {
                   onChange={(value) => editSetting("alertsEnabled", value)}
                 />
               </div>
-              <p>Aktif anlaşmalar için ana müşteri/şirket hesabına hatırlatma gönderilir.</p>
-              <fieldset
-                className="credit-fields"
+              <CreditAlertChannels
+                draft={draft}
+                availability={query.data?.channelAvailability}
                 disabled={!editable || save.isPending || !draft.alertsEnabled}
+                onChange={editSetting}
               >
                 <label>
                   <span>Kalan kredi eşiği (%)</span>
@@ -313,13 +324,7 @@ export function CreditSalesPage() {
                     }
                   />
                 </label>
-              </fieldset>
-              <CreditAlertChannels
-                draft={draft}
-                availability={query.data?.channelAvailability}
-                disabled={!editable || save.isPending || !draft.alertsEnabled}
-                onChange={editSetting}
-              />
+              </CreditAlertChannels>
             </section>
             <ErrorMessage error={save.error} />
             <div className="credit-form-actions">
@@ -336,9 +341,6 @@ export function CreditSalesPage() {
           <div className="credit-store-title">
             <div>
               <h2>Abonelik Planları</h2>
-              <p>
-                Seçtiğiniz dönem için toplam kredi ve fiyat belirleyin.
-              </p>
             </div>
             {editable && (
               <button
@@ -455,10 +457,7 @@ export function CreditSalesPage() {
                 />
               </fieldset>
               <p className="credit-help">
-                Kredi {periodLabel(plan)} boyunca toplamdır. Dönem sonunda kalan
-                kredi devretmez. Tekrarlama tercihi kaydedilir; ödeme
-                entegrasyonu tamamlanana kadar otomatik yenileme veya tahsilat
-                yapılmaz.
+                Dönem kredisi devretmez; otomatik yenileme ve tahsilat yapılmaz.
               </p>
               <ErrorMessage error={savePlan.error} />
               <div className="credit-form-actions">
@@ -479,6 +478,7 @@ export function CreditSalesPage() {
               </div>
             </form>
           )}
+          {deleteTarget && <DeleteModal title="Abonelik Planını Sil" pending={removePlan.isPending} onClose={() => setDeleteTarget(null)} onConfirm={() => removePlan.mutate(deleteTarget.id)} error={<ErrorMessage error={removePlan.error} />}><p><strong>{deleteTarget.name}</strong> silinecek. Mevcut siparişler, abonelikler ve alınmış krediler korunur.</p></DeleteModal>}
           <div className="credit-admin-plans">
             {query.data?.plans.map((item) => (
               <article key={item.id}>
@@ -522,6 +522,7 @@ export function CreditSalesPage() {
                     Düzenle
                   </button>
                 )}
+                {editable && <button className="icon-button danger-icon credit-plan-delete" type="button" aria-label={item.name + ' planını sil'} title="Planı Sil" disabled={planPending} onClick={() => { removePlan.reset(); setDeleteTarget(item); }}><Trash2 size={16} /></button>}
               </article>
             ))}
             {query.data && !query.data.plans.length && (

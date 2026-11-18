@@ -1,3 +1,4 @@
+import { packageSchedule } from './credit-package-schedule.js';
 import { createHash } from "node:crypto";
 import { selectedCreditChannels, creditChannelAvailability } from './credit-channel-readiness.js';
 import type { Prisma } from "../generated/prisma/client.js";
@@ -16,7 +17,7 @@ import {
 import type { z } from "zod";
 type StoreClient = Pick<
   Prisma.TransactionClient,
-  "user" | "creditSalesSettings" | "creditSalesPlan"
+  "user" | "creditSalesSettings" | "creditSalesPlan" | "agreement" | "creditOrder"
 >;
 const defaults = {
   enabled: false,
@@ -177,6 +178,20 @@ export async function saveSalesPlan(
     return planJson(row);
   });
 }
+export async function deleteSalesPlan(actor: Actor, id: string) {
+  staff(actor, true);
+  return db.$transaction(async (tx) => {
+    const plan = await tx.creditSalesPlan.findUnique({ where: { id } });
+    if (!plan) throw new AppError(404, "PLAN_NOT_FOUND", "Abonelik planı bulunamadı.");
+    await tx.creditSalesPlan.delete({ where: { id } });
+    await tx.activityLog.create({ data: {
+      userId: actor.id, action: "credit_sales.plan_deleted",
+      entityType: "CreditSalesPlan", entityId: id,
+      metadata: { name: plan.name, price: plan.price.toString(), currency: plan.currency, credits: plan.credits },
+      ipAddress: actor.ipAddress,
+    } });
+  });
+}
 export async function storeCatalog(actor: Actor) {
   const account = await creditStoreOwner(actor),
     config = await settings();
@@ -220,6 +235,7 @@ export async function storeQuote(
       );
     return quoteSnapshot({
       owner: account,
+      ...await packageSchedule(client, account.id, plan.periodMonths, plan.periodDays ?? null),
       kind: "SUBSCRIPTION",
       name: plan.name,
       credits: plan.credits,
@@ -258,6 +274,7 @@ function quoteSnapshot<
     validityDays: number | null;
     periodName?: string | null;
     renewalRequested?: boolean;
+    startsOn?: string; endsOn?: string; currentPackage?: { id: string } | null;
   },
 >(quote: T) {
   const quoteKey = createHash("sha256")
@@ -271,6 +288,7 @@ function quoteSnapshot<
         quote.currency,
         quote.periodMonths,
         quote.validityDays,
+        ...(quote.startsOn ? [quote.startsOn, quote.endsOn, quote.currentPackage?.id ?? null] : []),
         ...(quote.periodName || quote.renewalRequested
           ? [quote.periodName ?? null, quote.renewalRequested ?? false]
           : []),

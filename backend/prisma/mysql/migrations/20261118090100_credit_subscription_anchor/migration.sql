@@ -1,0 +1,1 @@
+ALTER TABLE CreditSubscription MODIFY consentedAt DATETIME(3) NULL, ADD COLUMN anchorPeriod INTEGER NOT NULL DEFAULT 0;

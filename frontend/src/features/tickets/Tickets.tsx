@@ -942,7 +942,7 @@ export function TicketDetail() {
                   Dahili Not
                 </button>
               )}
-              <ReplyChannelSelector key={t.id} conversation={t} editable={hasPermission(user, "conversations.reply") && !internal} />
+              <ReplyChannelSelector key={t.id} conversation={t} editable={Boolean(user && user.role !== "CUSTOMER") && hasPermission(user, "conversations.reply") && !internal} />
             </div>
             {!internal && user?.role !== 'CUSTOMER' && <WhatsappWindowWarning conversation={t} />}
             {internal ? <MentionTextarea

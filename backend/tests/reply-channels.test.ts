@@ -29,3 +29,13 @@ test('elapsed time includes calendar months, weeks, days, hours and minutes',()=
  assert.equal(elapsedDuration('2026-10-01T00:00:00Z',Date.parse('2026-10-01T01:03:00Z')),'1 saat 3 dakika geçti');
  assert.equal(elapsedDuration('2026-10-01T00:00:00Z',Date.parse('2026-10-01T00:00:30Z')),'Az önce');
 });
+
+test('customers cannot edit reply channels and receive a channel-specific error', async () => {
+ const { updateConversation } = await import('../src/services/conversations.service.js');
+ const actor = { id: 'customer', name: 'Customer', email: '', role: 'CUSTOMER' as const, sessionId: '', departmentIds: [] };
+ await assert.rejects(updateConversation(actor, 'ticket', { replyChannels: ['EMAIL'] }), error => {
+   assert.equal((error as any).status, 403);
+   assert.equal((error as Error).message, 'Yanıt kanallarını yalnızca personel değiştirebilir.');
+   return true;
+ });
+});

@@ -1,3 +1,4 @@
+import { startCreditRenewals } from './services/credit-subscriptions.service.js';
 import { app } from "./app.js";
 import { db } from "./config/db.js";
 import { env } from "./config/env.js";
@@ -13,6 +14,7 @@ void verifySupportEmail().then(result => console.log('SMTP bağlantısı:', resu
 startInboundEmailPolling();
 startOutboundQueue();
 const stopCreditAlerts = startCreditAlerts(db);
+const stopCreditRenewals = startCreditRenewals();
 const server = app.listen(env.PORT, env.HOST, () =>
   console.log(`Helpdesk API: http://localhost:${env.PORT}`),
 );
@@ -23,6 +25,7 @@ const shutdown = () =>
     await stopInboundEmailPolling();
     await stopOutboundQueue();
     await stopCreditAlerts();
+    await stopCreditRenewals();
     stopAnnouncementQueue();
     void db.$disconnect().finally(() => process.exit(0));
   });

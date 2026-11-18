@@ -118,6 +118,7 @@ export function parseTahsilatSupportRequest(subject: string, value: string): Web
 
 export async function persistInboundEmail(input: {
   mailbox: string;
+  account?: string;
   uid: number;
   messageId?: string;
   inReplyTo?: string;
@@ -136,6 +137,24 @@ export async function persistInboundEmail(input: {
   if (known) { await discardStoredUploads(input.attachments ?? []); return known.conversationId; }
 
   const email = canonicalEmail(input.from.address);
+  const staffSender = await db.user.findFirst({ where: { deletedAt: null, role: { not: 'CUSTOMER' }, email }, select: { id: true } });
+  if (staffSender) {
+    const reason = 'Personel adresi olduğu için talep oluşturulmadı';
+    await db.$transaction(async tx => {
+      await tx.activityLog.create({ data: {
+        userId: staffSender.id, action: 'email.staff_sender_skipped', entityType: 'IncomingEmail',
+        entityId: input.mailbox + ':' + input.uid,
+        metadata: { mailbox: input.mailbox, ...(input.account ? { account: input.account } : {}), uid: input.uid, sender: email, reason },
+      } });
+      if (input.mailbox.startsWith('imap:')) {
+        const syncId = input.mailbox.slice('imap:'.length);
+        const marker = { attempts: 0, nextAttemptAt: new Date('9999-12-31T00:00:00Z'), lastError: JSON.stringify({ status: 'permanently_skipped', reason: 'staff_sender', sender: email }) };
+        await tx.imapSyncRetry.upsert({ where: { syncId_uid: { syncId, uid: input.uid } }, create: { syncId, uid: input.uid, ...marker }, update: marker });
+      }
+    });
+    await discardStoredUploads(input.attachments ?? []);
+    return null;
+  }
   const matchingCustomers = (await db.user.findMany({ where: { role: "CUSTOMER", deletedAt: null, OR: [{ email }, { extraEmails: { contains: email } }] }, orderBy: { createdAt: "asc" } })).filter(customer => matchesSender(customer, email));
   const senderScope = { OR: [{ customerId: { in: matchingCustomers.map(customer => customer.id) } }, { formRequest: { is: { email } } }], deletedAt: null, status: { not: 'CLOSED' }, AND: [{ OR: [conversationChannelFilter('EMAIL'), conversationChannelFilter('FORM')] }] };
 
@@ -272,6 +291,7 @@ export async function syncInboundEmail() {
           const preparedAttachments = await prepareInboundEmailAttachments(parsed.attachments);
           const conversationId = await withStoredUploads(preparedAttachments.files, attachments => persistInboundEmail({
             mailbox: storageMailbox,
+            account: config.user!,
             uid: message.uid,
             messageId: parsed.messageId || undefined,
             inReplyTo: parsed.inReplyTo || undefined,

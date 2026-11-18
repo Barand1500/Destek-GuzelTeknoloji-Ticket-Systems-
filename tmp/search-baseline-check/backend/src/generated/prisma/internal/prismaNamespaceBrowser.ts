@@ -106,7 +106,9 @@ export const ModelName = {
   CreditSalesPlan: 'CreditSalesPlan',
   CreditOrder: 'CreditOrder',
   CreditAlertReceipt: 'CreditAlertReceipt',
-  CreditSalesPeriod: 'CreditSalesPeriod'
+  CreditSalesPeriod: 'CreditSalesPeriod',
+  CreditSubscription: 'CreditSubscription',
+  CreditPaymentAttempt: 'CreditPaymentAttempt'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -805,6 +807,7 @@ export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnu
 
 
 export const AgreementScalarFieldEnum = {
+  currency: 'currency',
   renewalRequested: 'renewalRequested',
   id: 'id',
   customerId: 'customerId',
@@ -900,6 +903,12 @@ export type CreditSalesPlanScalarFieldEnum = (typeof CreditSalesPlanScalarFieldE
 
 
 export const CreditOrderScalarFieldEnum = {
+  subscriptionId: 'subscriptionId',
+  periodNumber: 'periodNumber',
+  periodStartsOn: 'periodStartsOn',
+  periodEndsOn: 'periodEndsOn',
+  grantedAgreementId: 'grantedAgreementId',
+  paidAt: 'paidAt',
   periodName: 'periodName',
   renewalRequested: 'renewalRequested',
   id: 'id',
@@ -947,6 +956,52 @@ export const CreditSalesPeriodScalarFieldEnum = {
 } as const
 
 export type CreditSalesPeriodScalarFieldEnum = (typeof CreditSalesPeriodScalarFieldEnum)[keyof typeof CreditSalesPeriodScalarFieldEnum]
+
+
+export const CreditSubscriptionScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  sourceAgreementId: 'sourceAgreementId',
+  name: 'name',
+  amount: 'amount',
+  currency: 'currency',
+  credits: 'credits',
+  periodMonths: 'periodMonths',
+  periodDays: 'periodDays',
+  status: 'status',
+  autoRenew: 'autoRenew',
+  consentedAt: 'consentedAt',
+  consentVersion: 'consentVersion',
+  anchorOn: 'anchorOn',
+  currentStartsOn: 'currentStartsOn',
+  currentEndsOn: 'currentEndsOn',
+  nextPaymentOn: 'nextPaymentOn',
+  paidPeriods: 'paidPeriods',
+  anchorPeriod: 'anchorPeriod',
+  stoppedAt: 'stoppedAt',
+  provider: 'provider',
+  paymentMethodRef: 'paymentMethodRef',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSubscriptionScalarFieldEnum = (typeof CreditSubscriptionScalarFieldEnum)[keyof typeof CreditSubscriptionScalarFieldEnum]
+
+
+export const CreditPaymentAttemptScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  attemptNumber: 'attemptNumber',
+  provider: 'provider',
+  providerPaymentId: 'providerPaymentId',
+  status: 'status',
+  failureCode: 'failureCode',
+  nextRetryAt: 'nextRetryAt',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type CreditPaymentAttemptScalarFieldEnum = (typeof CreditPaymentAttemptScalarFieldEnum)[keyof typeof CreditPaymentAttemptScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1529,6 +1584,7 @@ export type SurveyResponseOrderByRelevanceFieldEnum = (typeof SurveyResponseOrde
 
 
 export const AgreementOrderByRelevanceFieldEnum = {
+  currency: 'currency',
   id: 'id',
   customerId: 'customerId',
   name: 'name',
@@ -1588,6 +1644,8 @@ export type CreditSalesPlanOrderByRelevanceFieldEnum = (typeof CreditSalesPlanOr
 
 
 export const CreditOrderOrderByRelevanceFieldEnum = {
+  subscriptionId: 'subscriptionId',
+  grantedAgreementId: 'grantedAgreementId',
   periodName: 'periodName',
   id: 'id',
   customerId: 'customerId',
@@ -1621,4 +1679,31 @@ export const CreditSalesPeriodOrderByRelevanceFieldEnum = {
 } as const
 
 export type CreditSalesPeriodOrderByRelevanceFieldEnum = (typeof CreditSalesPeriodOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPeriodOrderByRelevanceFieldEnum]
+
+
+export const CreditSubscriptionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  sourceAgreementId: 'sourceAgreementId',
+  name: 'name',
+  currency: 'currency',
+  status: 'status',
+  consentVersion: 'consentVersion',
+  provider: 'provider',
+  paymentMethodRef: 'paymentMethodRef'
+} as const
+
+export type CreditSubscriptionOrderByRelevanceFieldEnum = (typeof CreditSubscriptionOrderByRelevanceFieldEnum)[keyof typeof CreditSubscriptionOrderByRelevanceFieldEnum]
+
+
+export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  provider: 'provider',
+  providerPaymentId: 'providerPaymentId',
+  status: 'status',
+  failureCode: 'failureCode'
+} as const
+
+export type CreditPaymentAttemptOrderByRelevanceFieldEnum = (typeof CreditPaymentAttemptOrderByRelevanceFieldEnum)[keyof typeof CreditPaymentAttemptOrderByRelevanceFieldEnum]
 

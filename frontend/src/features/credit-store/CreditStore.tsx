@@ -36,6 +36,7 @@ export function CustomerCreditStore() {
   const [renewalChoices, setRenewalChoices] = useState<Record<string, boolean>>(
     {},
   );
+  const [confirmPackageChange, setConfirmPackageChange] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const catalogVersion = JSON.stringify(catalog.data);
@@ -48,6 +49,7 @@ export function CustomerCreditStore() {
     ) => (await api.post("/my/credit-store/quote", input)).data.data as Quote,
     onSuccess: (value, selection) => {
       create.reset();
+      setConfirmPackageChange(false);
       setPreview({ ...value, selection, requestKey: crypto.randomUUID() });
       requestAnimationFrame(() => previewRef.current?.focus());
     },
@@ -59,6 +61,7 @@ export function CustomerCreditStore() {
           selection: value.selection,
           quoteKey: value.quoteKey,
           requestKey: value.requestKey,
+          confirmPackageChange,
         })
       ).data.data as { id: string; number: number },
     onSuccess: async (created) => {
@@ -132,10 +135,6 @@ export function CustomerCreditStore() {
         </button>
         <div>
           <h2>Kredi ve Abonelikler</h2>
-          <p>
-            İhtiyacınız kadar kredi seçin veya düzenli destek planlarını
-            inceleyin.
-          </p>
         </div>
       </div>
       {catalog.isPending && <p role="status">Paketler yükleniyor…</p>}
@@ -186,10 +185,6 @@ export function CustomerCreditStore() {
                       <Coins size={22} />
                       <h3>İhtiyacınız kadar kredi</h3>
                     </div>
-                    <p>
-                      Tutarı veya kredi sayısını girin. Diğer alan otomatik
-                      hesaplanır.
-                    </p>
                     <fieldset
                       disabled={quote.isPending || create.isPending}
                       className="credit-fields"
@@ -260,15 +255,6 @@ export function CustomerCreditStore() {
                         geçerli.
                       </span>
                     </div>
-                    <p>
-                      Ay sonunda sıfırlanmaz. Geçerlilik süresi sona erene kadar
-                      kullanılabilir.
-                    </p>
-                    <p>
-                      Kredi, yukarıdaki{" "}
-                      {data.owner?.isCompany ? "şirket" : "müşteri"} hesabına
-                      tanımlanır.
-                    </p>
                   </aside>
                 </div>
               ) : (
@@ -292,11 +278,6 @@ export function CustomerCreditStore() {
                           <small>/ {periodLabel(plan)}</small>
                         </div>
                         <strong>{count(plan.credits)} kredi / dönem</strong>
-                        <p>
-                          {periodLabel(plan)} boyunca toplam{" "}
-                          {count(plan.credits)} kredi. Dönem sonunda kalan kredi
-                          sona erer, devretmez.
-                        </p>
                         <label className="integration-toggle credit-sales-toggle credit-renewal-choice">
                           <span>
                             <strong>{"D\u00f6nem sonunda tekrarla"}</strong>
@@ -321,8 +302,7 @@ export function CustomerCreditStore() {
                           <i aria-hidden="true" />
                         </label>
                         <p className="credit-help">
-                          Tercihiniz kaydedilir. Ödeme entegrasyonu tamamlanana
-                          kadar otomatik yenileme veya tahsilat yapılmaz.
+                          Yenileme açıksa aynı tutar ve dönem kullanılır. Ödeme bağlantısı henüz etkin değil.
                         </p>
                         <button
                           className="button primary"
@@ -357,6 +337,7 @@ export function CustomerCreditStore() {
                   ref={previewRef}
                 >
                   <h3>Satın Alma Özeti</h3>
+                  {preview.currentPackage && <p className="credit-store-notice">Mevcut paketiniz: <strong>{preview.currentPackage.name}</strong>. Döneminizin bitmesine {preview.currentPackage.remainingDays.toLocaleString('tr-TR')} gün var ({preview.currentPackage.endsOn.split('-').reverse().join('.')}). Mevcut kredileriniz korunur; yeni paket {preview.startsOn?.split('-').reverse().join('.')} tarihinde başlar.</p>}
                   <dl>
                     <div>
                       <dt>Paket</dt>
@@ -438,7 +419,9 @@ export function CustomerCreditStore() {
                       <dt>Toplam</dt>
                       <dd>{money(preview.total, preview.currency)}</dd>
                     </div>
+                  {preview.startsOn && <div><dt>Yeni dönem</dt><dd>{preview.startsOn.split("-").reverse().join(".")} — {preview.endsOn?.split("-").reverse().join(".")}</dd></div>}
                   </dl>
+                  {preview.currentPackage && <label className="integration-toggle credit-renewal-choice"><span>Mevcut paketin yenilemesini kapatıp yeni paketi dönem sonunda başlatmayı onaylıyorum. Yeni siparişi iptal edersem eski yenileme kendiliğinden açılmaz.</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
                   <p className="credit-store-notice">
                     <Info size={18} /> Online ödeme henüz etkin değil. Sipariş
                     kaydı oluşturabilirsiniz; ödeme alınmaz ve hesabınıza kredi
@@ -450,7 +433,7 @@ export function CustomerCreditStore() {
                     <button
                       className="button primary credit-quote-submit"
                       type="button"
-                      disabled={create.isPending || !preview.quoteKey}
+                      disabled={create.isPending || !preview.quoteKey || (!!preview.currentPackage && !confirmPackageChange)}
                       onClick={() => create.mutate(preview)}
                     >
                       {create.isPending ? "Kaydediliyor…" : "Sipariş Oluştur"}

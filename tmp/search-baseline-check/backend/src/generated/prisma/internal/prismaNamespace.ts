@@ -452,7 +452,9 @@ export const ModelName = {
   CreditSalesPlan: 'CreditSalesPlan',
   CreditOrder: 'CreditOrder',
   CreditAlertReceipt: 'CreditAlertReceipt',
-  CreditSalesPeriod: 'CreditSalesPeriod'
+  CreditSalesPeriod: 'CreditSalesPeriod',
+  CreditSubscription: 'CreditSubscription',
+  CreditPaymentAttempt: 'CreditPaymentAttempt'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -468,7 +470,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "creditPaymentAttempt"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4168,6 +4170,138 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CreditSubscription: {
+      payload: Prisma.$CreditSubscriptionPayload<ExtArgs>
+      fields: Prisma.CreditSubscriptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditSubscriptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditSubscriptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditSubscriptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditSubscriptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        findMany: {
+          args: Prisma.CreditSubscriptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>[]
+        }
+        create: {
+          args: Prisma.CreditSubscriptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        createMany: {
+          args: Prisma.CreditSubscriptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditSubscriptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        update: {
+          args: Prisma.CreditSubscriptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditSubscriptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditSubscriptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditSubscriptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditSubscriptionPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditSubscriptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditSubscription>
+        }
+        groupBy: {
+          args: Prisma.CreditSubscriptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSubscriptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditSubscriptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditSubscriptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    CreditPaymentAttempt: {
+      payload: Prisma.$CreditPaymentAttemptPayload<ExtArgs>
+      fields: Prisma.CreditPaymentAttemptFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditPaymentAttemptFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditPaymentAttemptFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditPaymentAttemptFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditPaymentAttemptFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        findMany: {
+          args: Prisma.CreditPaymentAttemptFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>[]
+        }
+        create: {
+          args: Prisma.CreditPaymentAttemptCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        createMany: {
+          args: Prisma.CreditPaymentAttemptCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditPaymentAttemptDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        update: {
+          args: Prisma.CreditPaymentAttemptUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditPaymentAttemptDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditPaymentAttemptUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditPaymentAttemptUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPaymentAttemptPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditPaymentAttemptAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditPaymentAttempt>
+        }
+        groupBy: {
+          args: Prisma.CreditPaymentAttemptGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditPaymentAttemptGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditPaymentAttemptCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditPaymentAttemptCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4887,6 +5021,7 @@ export type SurveyResponseScalarFieldEnum = (typeof SurveyResponseScalarFieldEnu
 
 
 export const AgreementScalarFieldEnum = {
+  currency: 'currency',
   renewalRequested: 'renewalRequested',
   id: 'id',
   customerId: 'customerId',
@@ -4982,6 +5117,12 @@ export type CreditSalesPlanScalarFieldEnum = (typeof CreditSalesPlanScalarFieldE
 
 
 export const CreditOrderScalarFieldEnum = {
+  subscriptionId: 'subscriptionId',
+  periodNumber: 'periodNumber',
+  periodStartsOn: 'periodStartsOn',
+  periodEndsOn: 'periodEndsOn',
+  grantedAgreementId: 'grantedAgreementId',
+  paidAt: 'paidAt',
   periodName: 'periodName',
   renewalRequested: 'renewalRequested',
   id: 'id',
@@ -5029,6 +5170,52 @@ export const CreditSalesPeriodScalarFieldEnum = {
 } as const
 
 export type CreditSalesPeriodScalarFieldEnum = (typeof CreditSalesPeriodScalarFieldEnum)[keyof typeof CreditSalesPeriodScalarFieldEnum]
+
+
+export const CreditSubscriptionScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  sourceAgreementId: 'sourceAgreementId',
+  name: 'name',
+  amount: 'amount',
+  currency: 'currency',
+  credits: 'credits',
+  periodMonths: 'periodMonths',
+  periodDays: 'periodDays',
+  status: 'status',
+  autoRenew: 'autoRenew',
+  consentedAt: 'consentedAt',
+  consentVersion: 'consentVersion',
+  anchorOn: 'anchorOn',
+  currentStartsOn: 'currentStartsOn',
+  currentEndsOn: 'currentEndsOn',
+  nextPaymentOn: 'nextPaymentOn',
+  paidPeriods: 'paidPeriods',
+  anchorPeriod: 'anchorPeriod',
+  stoppedAt: 'stoppedAt',
+  provider: 'provider',
+  paymentMethodRef: 'paymentMethodRef',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditSubscriptionScalarFieldEnum = (typeof CreditSubscriptionScalarFieldEnum)[keyof typeof CreditSubscriptionScalarFieldEnum]
+
+
+export const CreditPaymentAttemptScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  attemptNumber: 'attemptNumber',
+  provider: 'provider',
+  providerPaymentId: 'providerPaymentId',
+  status: 'status',
+  failureCode: 'failureCode',
+  nextRetryAt: 'nextRetryAt',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type CreditPaymentAttemptScalarFieldEnum = (typeof CreditPaymentAttemptScalarFieldEnum)[keyof typeof CreditPaymentAttemptScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -5611,6 +5798,7 @@ export type SurveyResponseOrderByRelevanceFieldEnum = (typeof SurveyResponseOrde
 
 
 export const AgreementOrderByRelevanceFieldEnum = {
+  currency: 'currency',
   id: 'id',
   customerId: 'customerId',
   name: 'name',
@@ -5670,6 +5858,8 @@ export type CreditSalesPlanOrderByRelevanceFieldEnum = (typeof CreditSalesPlanOr
 
 
 export const CreditOrderOrderByRelevanceFieldEnum = {
+  subscriptionId: 'subscriptionId',
+  grantedAgreementId: 'grantedAgreementId',
   periodName: 'periodName',
   id: 'id',
   customerId: 'customerId',
@@ -5703,6 +5893,33 @@ export const CreditSalesPeriodOrderByRelevanceFieldEnum = {
 } as const
 
 export type CreditSalesPeriodOrderByRelevanceFieldEnum = (typeof CreditSalesPeriodOrderByRelevanceFieldEnum)[keyof typeof CreditSalesPeriodOrderByRelevanceFieldEnum]
+
+
+export const CreditSubscriptionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  sourceAgreementId: 'sourceAgreementId',
+  name: 'name',
+  currency: 'currency',
+  status: 'status',
+  consentVersion: 'consentVersion',
+  provider: 'provider',
+  paymentMethodRef: 'paymentMethodRef'
+} as const
+
+export type CreditSubscriptionOrderByRelevanceFieldEnum = (typeof CreditSubscriptionOrderByRelevanceFieldEnum)[keyof typeof CreditSubscriptionOrderByRelevanceFieldEnum]
+
+
+export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  provider: 'provider',
+  providerPaymentId: 'providerPaymentId',
+  status: 'status',
+  failureCode: 'failureCode'
+} as const
+
+export type CreditPaymentAttemptOrderByRelevanceFieldEnum = (typeof CreditPaymentAttemptOrderByRelevanceFieldEnum)[keyof typeof CreditPaymentAttemptOrderByRelevanceFieldEnum]
 
 
 
@@ -5994,6 +6211,8 @@ export type GlobalOmitConfig = {
   creditOrder?: Prisma.CreditOrderOmit
   creditAlertReceipt?: Prisma.CreditAlertReceiptOmit
   creditSalesPeriod?: Prisma.CreditSalesPeriodOmit
+  creditSubscription?: Prisma.CreditSubscriptionOmit
+  creditPaymentAttempt?: Prisma.CreditPaymentAttemptOmit
 }
 
 /* Types for Logging */

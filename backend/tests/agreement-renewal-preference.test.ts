@@ -5,7 +5,7 @@ import { db } from '../src/config/db.js';
 import type { Actor } from '../src/types/express.js';
 import { agreementInput, createAgreement, updateAgreement, listAgreements } from '../src/services/agreements.service.js';
 
-const terms = { name: 'Renewal preference', type: 'ONE_OFF', startsOn: '2020-01-01', endsOn: '2099-01-01', credits: 5, fee: '0' };
+const terms = { name: 'Renewal preference', type: 'MONTHLY', startsOn: '2020-01-01', endsOn: '2099-01-01', credits: 5, fee: '10' };
 
 test('agreement preference validates booleans without replacing omitted update values', () => {
   assert.equal(agreementInput.parse(terms).renewalRequested, undefined);
@@ -40,6 +40,7 @@ test('agreement preference persists, omission preserves it, and exhausted packag
     assert.equal(depleted.remainingCredits, 0);
     assert.equal(summary.availableCredits, 5);
   } finally {
+    await db.creditSubscription.deleteMany({where:{customerId:customer.id}});
     await db.agreement.deleteMany({ where: { customerId: customer.id } });
     await db.activityLog.deleteMany({ where: { userId: admin.id } });
     await db.user.deleteMany({ where: { id: { in: [admin.id, customer.id] } } });

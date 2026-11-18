@@ -10,14 +10,14 @@ export function customerPhoneKey(value: string) {
   return digits;
 }
 
-// Lock the customer range before checking and writing. This also protects concurrent
+// Lock the account range before checking and writing. This also protects concurrent
 // creates/edits and compares legacy formatted values without rewriting old records.
 export async function assertUniqueCustomerContact(tx:Prisma.TransactionClient, input:{email?:string|null;phone?:string|null}, excludeId?:string) {
   const email=input.email ? canonicalEmail(input.email) : '';
   const phone=input.phone ? customerPhoneKey(input.phone) : '';
   if(!email&&!phone) return;
-  const rows=await tx.$queryRaw<{id:string;email:string|null;phone:string|null}[]>`SELECT id, email, phone FROM User WHERE role = 'CUSTOMER' AND deletedAt IS NULL FOR UPDATE`;
+  const rows=await tx.$queryRaw<{id:string;email:string|null;phone:string|null}[]>`SELECT id, email, phone FROM User WHERE deletedAt IS NULL FOR UPDATE`;
   const others=rows.filter(person=>person.id!==excludeId);
-  if(email&&others.some(person=>person.email&&canonicalEmail(person.email)===email)) throw new AppError(409,'CUSTOMER_EMAIL_EXISTS','Bu e-posta adresi başka bir müşteri kaydında kullanılıyor. Farklı bir e-posta adresi girin.');
-  if(phone&&others.some(person=>person.phone&&customerPhoneKey(person.phone)===phone)) throw new AppError(409,'CUSTOMER_PHONE_EXISTS','Bu telefon numarası başka bir müşteri kaydında kullanılıyor. Farklı bir telefon numarası girin.');
+  if(email&&others.some(person=>person.email&&canonicalEmail(person.email)===email)) throw new AppError(409,'CUSTOMER_EMAIL_EXISTS','Bu e-posta adresi başka bir hesapta kullanılıyor. Farklı bir e-posta adresi girin.');
+  if(phone&&others.some(person=>person.phone&&customerPhoneKey(person.phone)===phone)) throw new AppError(409,'CUSTOMER_PHONE_EXISTS','Bu telefon numarası başka bir hesapta kullanılıyor. Farklı bir telefon numarası girin.');
 }

@@ -1,14 +1,15 @@
+import { persistInboundEmail } from '../src/services/inbound-email.service.js';
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID,randomInt} from 'node:crypto';
 import {db} from '../src/config/db.js';
-import {createCustomer,updateCustomer} from '../src/services/management.service.js';
+import {createCustomer,updateCustomer,createUser,updateUser} from '../src/services/management.service.js';
 import {createRelatedCustomer} from '../src/services/agreements.service.js';
 import type {Actor} from '../src/types/express.js';
 after(async()=>{await db.$disconnect();});
 test('customer email and phone each independently prevent duplicates on create and edit',async()=>{
  const suffix=randomUUID(),phone='05'+String(randomInt(100000000,999999999));
- const staff=await db.user.create({data:{name:'Contact uniqueness staff '+suffix,role:'ADMIN',passwordHash:'test'}});
+ const staff=await db.user.create({data:{name:'Contact uniqueness staff '+suffix,role:'ADMIN',email:'staff-'+suffix+'@example.invalid',phone:'05'+String(randomInt(100000000,999999999)),passwordHash:'test'}});
  const first=await db.user.create({data:{name:'Contact first '+suffix,role:'CUSTOMER',email:'unique-'+suffix+'@example.invalid',phone:phone.slice(0,4)+' '+phone.slice(4,7)+' '+phone.slice(7,9)+' '+phone.slice(9),passwordHash:'test'}});
  const second=await db.user.create({data:{name:'Contact second '+suffix,role:'CUSTOMER',email:'other-'+suffix+'@example.invalid',phone:null,passwordHash:'test',parentCustomerId:first.id}});
  const actor:Actor={id:staff.id,name:staff.name,role:'ADMIN',email:'',departmentIds:[],sessionId:''};
@@ -20,6 +21,16 @@ test('customer email and phone each independently prevent duplicates on create a
   return work(tx);
  },opts)) as typeof db.$transaction;
  try{
+  await assert.rejects(createCustomer(actor,{...input,email:staff.email!}),{code:'CUSTOMER_EMAIL_EXISTS'});
+  await assert.rejects(createCustomer(actor,{...input,email:'fresh-'+suffix+'@example.invalid',phone:staff.phone!}),{code:'CUSTOMER_PHONE_EXISTS'});
+  await assert.rejects(createUser(actor,{name:'Duplicate staff',email:first.email!,password:'test-password',role:'ADMIN',departmentIds:[],skills:[]}),{code:'CUSTOMER_EMAIL_EXISTS'});
+  await assert.rejects(createUser(actor,{name:'Duplicate staff',email:'fresh-'+suffix+'@example.invalid',phone:first.phone!,password:'test-password',role:'ADMIN',departmentIds:[],skills:[]}),{code:'CUSTOMER_PHONE_EXISTS'});
+  await assert.rejects(updateUser(actor,staff.id,{email:first.email!}),{code:'CUSTOMER_EMAIL_EXISTS'});
+  await assert.rejects(updateUser(actor,staff.id,{phone:first.phone!}),{code:'CUSTOMER_PHONE_EXISTS'});
+  assert.equal(await persistInboundEmail({mailbox:'fixture-'+suffix,uid:1,from:{address:staff.email!},subject:'Staff mail test',body:'Test'}),null);
+  assert.equal(await db.activityLog.count({where:{userId:staff.id,action:'email.staff_sender_skipped'}}),1);
+  assert.equal(await db.user.count({where:{email:staff.email,role:'CUSTOMER'}}),0);
+
   await assert.rejects(createCustomer(actor,input),(error:any)=>error.code==='CUSTOMER_EMAIL_EXISTS');
   await assert.rejects(createCustomer(actor,{...input,email:'new-'+suffix+'@example.invalid',phone:'+90'+phone.slice(1)}),(error:any)=>error.code==='CUSTOMER_PHONE_EXISTS');
   await assert.rejects(updateCustomer(actor,second.id,{email:first.email!.toUpperCase()}),(error:any)=>error.code==='CUSTOMER_EMAIL_EXISTS');
