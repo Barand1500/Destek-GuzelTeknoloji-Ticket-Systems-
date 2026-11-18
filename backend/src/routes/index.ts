@@ -1,4 +1,5 @@
 import { creditStoreRouter } from './credit-store.js';
+import { paymentPublicRouter, paymentRouter } from './payments.js';
 import { formsRouter } from './forms.js';
 import { searchQuery } from '../validators/management.js';
 import { emailSchema } from '../utils/email.js';
@@ -169,6 +170,7 @@ router.post('/webhooks/whatsapp', async (req, res) => {
   }
 });
 router.use('/public/form', formsRouter);
+router.use(paymentPublicRouter);
 router.use(authenticate);
 router.get('/communication-channels', async (req, res) => {
   const settings = await db.integrationSettings.findUnique({ where: { id: 'default' }, select: { imapDepartmentId: true, smsEnabled: true, whatsappEnabled: true, smtpEnabled: true, smtpHost: true, smtpFromAddress: true, smtpUser: true, smtpPassword: true } });
@@ -194,6 +196,7 @@ router.get('/conversations/project-options', async (_req, res) => {
   res.json({ success: true, data: await db.website.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] }) });
 });
 router.use(creditStoreRouter);
+router.use(paymentRouter);
 router.use(agreementsRouter);
 router.use(rolesRouter);
 router.use(managementRouter);

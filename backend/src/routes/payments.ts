@@ -1,0 +1,40 @@
+import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
+import { idSchema } from '../validators/index.js';
+import * as settings from '../services/payment-settings.service.js';
+import { beginIyzicoCheckout, iyzicoCallback } from '../services/iyzico-payments.service.js';
+import { subscriptionCheckoutOrder } from '../services/credit-subscriptions.service.js';
+import { pendingPaymentReviews, checkPaymentReview, closeUnchargedPayment } from '../services/payment-operations.service.js';
+import { startPaymentReversal, reversalSummary, reconcilePaymentReversal, closeUnrefundedReversal } from '../services/payment-reversals.service.js';
+
+export const paymentPublicRouter = Router();
+const callbacks = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
+paymentPublicRouter.post('/payments/iyzico/callback/:id', callbacks, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const location = await iyzicoCallback(idSchema.parse(req.params.id), z.string().max(255).parse(req.body?.token));
+  res.redirect(303, location);
+});
+// Webhook payloads only trigger an authenticated provider query. No status in the payload is trusted.
+paymentPublicRouter.post('/payments/iyzico/webhook', callbacks, async (req, res) => {
+  const { handleIyzicoWebhook } = await import('../services/iyzico-webhook.js');
+  await handleIyzicoWebhook(req.body, req.get('X-IYZ-SIGNATURE-V3'));
+  res.set('Cache-Control', 'no-store').json({ success: true });
+});
+
+export const paymentRouter = Router();
+paymentRouter.use(['/credit-sales/payment-settings', '/my/credit-store/orders'], (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+paymentRouter.get('/credit-sales/payment-settings', async (req, res) => res.json({ success: true, data: await settings.getPaymentSettings(req.actor) }));
+paymentRouter.put('/credit-sales/payment-settings', async (req, res) => res.json({ success: true, data: await settings.savePaymentSettings(req.actor, req.body) }));
+paymentRouter.post('/credit-sales/payment-settings/test', async (req, res) => res.json({ success: true, data: await settings.testPaymentConnection(req.actor) }));
+paymentRouter.get('/credit-sales/payment-settings/pending', async (req, res) => res.json({ success: true, data: await pendingPaymentReviews(req.actor) }));
+paymentRouter.post('/credit-sales/payment-settings/pending/:id/check', async (req, res) => res.json({ success: true, data: await checkPaymentReview(req.actor, idSchema.parse(req.params.id)) }));
+paymentRouter.post('/credit-sales/payment-settings/pending/:id/no-charge', async (req, res) => res.json({ success: true, data: await closeUnchargedPayment(req.actor, idSchema.parse(req.params.id), req.body) }));
+const checkoutLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, keyGenerator: req => req.actor.id });
+paymentRouter.post('/my/credit-store/orders/:id/pay', checkoutLimit, async (req, res) => res.json({ success: true, data: await beginIyzicoCheckout(req.actor, idSchema.parse(req.params.id), req.body) }));
+paymentRouter.post('/my/credit-store/subscriptions/:id/checkout', checkoutLimit, async (req, res) => res.json({ success: true, data: await subscriptionCheckoutOrder(req.actor, idSchema.parse(req.params.id)) }));
+paymentRouter.get('/credit-sales/orders/:id/reversals', async (req, res) => res.json({ success: true, data: await reversalSummary(req.actor, idSchema.parse(req.params.id)) }));
+paymentRouter.get('/my/credit-store/orders/:id/reversals', async (req, res) => res.json({ success: true, data: await reversalSummary(req.actor, idSchema.parse(req.params.id), false) }));
+paymentRouter.post('/credit-sales/orders/:id/reversals', checkoutLimit, async (req, res) => res.json({ success: true, data: await startPaymentReversal(req.actor, idSchema.parse(req.params.id), req.body) }));
+paymentRouter.post('/credit-sales/reversals/:id/check', checkoutLimit, async (req, res) => { settings.paymentStaff(req.actor, true); res.json({ success: true, data: await reconcilePaymentReversal(idSchema.parse(req.params.id)) }); });
+paymentRouter.post('/credit-sales/reversals/:id/no-refund', checkoutLimit, async (req, res) => res.json({ success: true, data: await closeUnrefundedReversal(req.actor, idSchema.parse(req.params.id), req.body) }));

@@ -1,4 +1,4 @@
-import { startCreditRenewals } from './services/credit-subscriptions.service.js';
+import { startIyzicoPayments } from './services/iyzico-payments.service.js';
 import { app } from "./app.js";
 import { db } from "./config/db.js";
 import { env } from "./config/env.js";
@@ -14,7 +14,7 @@ void verifySupportEmail().then(result => console.log('SMTP bağlantısı:', resu
 startInboundEmailPolling();
 startOutboundQueue();
 const stopCreditAlerts = startCreditAlerts(db);
-const stopCreditRenewals = startCreditRenewals();
+const stopCreditRenewals = startIyzicoPayments();
 const server = app.listen(env.PORT, env.HOST, () =>
   console.log(`Helpdesk API: http://localhost:${env.PORT}`),
 );

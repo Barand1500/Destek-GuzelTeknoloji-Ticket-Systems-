@@ -172,7 +172,7 @@ test("customer calculates credit both ways, previews plans and cannot start paym
   expect(writes[0]).toEqual({ amount: "25.00" });
   await page.getByRole("button", { name: "Sipariş Oluştur" }).click();
   await expect(page).toHaveURL(/view=checkout&orderId=order-1/);
-  await expect(page.getByRole("heading", { name: "Ödeme Bilgileri" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ödeme Özeti" })).toBeVisible();
   expect(writes[1].selection).toEqual({ amount: "25.00" });
   expect(writes[1].quoteKey).toBe("a".repeat(64));
   expect(writes[1].requestKey).toMatch(/^[a-f0-9-]{36}$/);

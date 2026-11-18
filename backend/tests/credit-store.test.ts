@@ -28,12 +28,16 @@ test("catalog/quotes enforce active customer/company, permissions and current se
     settings: db.creditSalesSettings.findUnique,
     plan: db.creditSalesPlan.findUnique,
     plans: db.creditSalesPlan.findMany,
+    agreement: db.agreement.findFirst,
+    order: db.creditOrder.findFirst,
   };
   t.after(() => {
     db.user.findFirst = originals.user;
     db.creditSalesSettings.findUnique = originals.settings;
     db.creditSalesPlan.findUnique = originals.plan;
     db.creditSalesPlan.findMany = originals.plans;
+    db.agreement.findFirst = originals.agreement;
+    db.creditOrder.findFirst = originals.order;
   });
   db.user.findFirst = (async ({ where }: any) =>
     active
@@ -53,6 +57,8 @@ test("catalog/quotes enforce active customer/company, permissions and current se
     currency: "USD",
   })) as any;
   db.creditSalesPlan.findMany = (async () => []) as any;
+  db.agreement.findFirst = (async () => null) as any;
+  db.creditOrder.findFirst = (async () => null) as any;
   db.creditSalesPlan.findUnique = (async () =>
     planActive
       ? {
@@ -77,7 +83,7 @@ test("catalog/quotes enforce active customer/company, permissions and current se
     code: "PURCHASE_OWNER_ONLY",
   });
   linked = false;
-  assert.equal(quote.paymentAvailable, false);
+  assert.equal("paymentAvailable" in quote, false);
   assert.equal((await storeQuote(actor, { planId: "plan" })).total, "90.00");
   assert.equal((await storeQuote(actor, { planId: "plan" })).currency, "EUR");
   planActive = false;

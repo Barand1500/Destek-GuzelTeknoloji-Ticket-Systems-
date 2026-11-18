@@ -64,7 +64,7 @@ export type Quote = {
   renewalRequested?: boolean;
   expiresAt?: string;
   owner: Owner;
-  paymentAvailable: boolean;
+  paymentAvailable?: boolean;
 };
 export const money = (value: string | number, currency: string = "TRY") =>
   new Intl.NumberFormat("tr-TR", { style: "currency", currency }).format(

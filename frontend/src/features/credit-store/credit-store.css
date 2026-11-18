@@ -650,3 +650,15 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
   outline-offset: 3px;
 }
 .credit-admin-plans .credit-plan-delete:disabled { opacity: .55; cursor: default; }
+
+.payment-settings-toggles { display:flex; flex-wrap:wrap; gap:24px; margin:20px 0; }
+.credit-checkout-billing { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; padding:0; border:0; margin:24px 0; }
+@media(max-width:640px) { .credit-checkout-billing { grid-template-columns:minmax(0,1fr); } }
+
+.payment-settings-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; border:0; padding:0; margin:24px 0; min-width:0; }
+.payment-settings-fields > * { min-width:0; }
+.payment-settings-fields .payment-public-url { grid-column:1 / -1; }
+.payment-settings-toggles > .integration-toggle { flex:1 1 240px; width:auto; }
+.payment-settings-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:16px; }
+.payment-reviews { margin-top:24px; }
+@media(max-width:640px) { .payment-settings-fields { grid-template-columns:minmax(0,1fr); } }

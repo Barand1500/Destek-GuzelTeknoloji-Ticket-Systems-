@@ -307,3 +307,23 @@ export type CreditSubscription = Prisma.CreditSubscriptionModel
  * 
  */
 export type CreditPaymentAttempt = Prisma.CreditPaymentAttemptModel
+/**
+ * Model PaymentGatewaySettings
+ * 
+ */
+export type PaymentGatewaySettings = Prisma.PaymentGatewaySettingsModel
+/**
+ * Model PaymentCheckoutSession
+ * 
+ */
+export type PaymentCheckoutSession = Prisma.PaymentCheckoutSessionModel
+/**
+ * Model PaymentStoredMethod
+ * 
+ */
+export type PaymentStoredMethod = Prisma.PaymentStoredMethodModel
+/**
+ * Model PaymentReversal
+ * 
+ */
+export type PaymentReversal = Prisma.PaymentReversalModel

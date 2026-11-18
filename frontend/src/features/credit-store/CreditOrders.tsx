@@ -1,3 +1,4 @@
+import { PaymentReversalPanel } from "./PaymentReversalPanel";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,8 @@ type Order = {
   periodMonths: number | null;
   periodName?: string | null;
   renewalRequested?: boolean;
-  status: "PENDING" | "CANCELLED" | "PAID" | "FAILED";
+  status: "PENDING" | "CANCELLED" | "PAID" | "FAILED" | "PARTIAL_REFUND" | "REFUNDED";
+  reversals?: { id: string; status: string; amount: string; credits: number }[];
   createdAt: string;
   cancelledAt: string | null;
   customer?: { id: string; name: string; company?: string | null };
@@ -41,6 +43,8 @@ const statuses = {
   CANCELLED: "İptal edildi",
   PAID: "Ödendi",
   FAILED: "Başarısız",
+  PARTIAL_REFUND: "Kısmen iade edildi",
+  REFUNDED: "İade edildi",
 };
 export function CreditOrders({ admin = false }: { admin?: boolean }) {
   const { user } = useAuth(),
@@ -57,6 +61,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
   const [target, setTarget] = useState<Order | null>(null),
     [message, setMessage] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
+  const [refundOrderId, setRefundOrderId] = useState<string | null>(null);
   useEffect(() => {
     const timer = setTimeout(() => {
       setTerm(search.trim());
@@ -104,9 +109,10 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
     <section className="credit-orders" aria-label="Siparişler">
       <h2>{admin ? "Kredi ve Paket Siparişleri" : "Siparişlerim"}</h2>
       <p className="credit-orders-note">
-        Online ödeme henüz kullanılamıyor. Ödeme bekleyen siparişler kredi
+        Ödeme bekleyen siparişler kredi
         bakiyesini değiştirmez. Tutarlar sipariş anındaki fiyatları gösterir.
       </p>
+      {admin && refundOrderId && <PaymentReversalPanel key={refundOrderId} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
           Sipariş Ara
@@ -241,11 +247,14 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         >
                           {statuses[order.status]}
                         </span>
+                        {order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) && <small>İade sonucu bekleniyor</small>}
+                        {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>İade: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
                       </td>
                       {canCancel && (
                         <td>
                           <div className="credit-order-actions">
-                            {!admin && order.status === "PENDING" && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
+                            {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>İade / Banka İptali</button>}
+                            {!admin && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
                             {order.status === "PENDING" && (
                               <button
                                 type="button"

@@ -1,3 +1,4 @@
+import { paymentAvailability } from "./payment-settings.service.js";
 import { packageSchedule } from './credit-package-schedule.js';
 import { createHash } from "node:crypto";
 import { selectedCreditChannels, creditChannelAvailability } from './credit-channel-readiness.js';
@@ -198,7 +199,7 @@ export async function storeCatalog(actor: Actor) {
   return {
     owner: account,
     settings: config,
-    paymentAvailable: false,
+    ...await paymentAvailability(),
     plans: config.enabled
       ? (
           await db.creditSalesPlan.findMany({
@@ -246,7 +247,6 @@ export async function storeQuote(
       periodName: plan.periodName ?? null,
       renewalRequested:
         input.renewalRequested ?? plan.renewalRequested ?? false,
-      paymentAvailable: false,
     });
   }
   return quoteSnapshot({
@@ -258,7 +258,6 @@ export async function storeQuote(
     validityDays: config.validityDays,
     periodName: null,
     renewalRequested: false,
-    paymentAvailable: false,
   });
 }
 

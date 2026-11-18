@@ -108,7 +108,11 @@ export const ModelName = {
   CreditAlertReceipt: 'CreditAlertReceipt',
   CreditSalesPeriod: 'CreditSalesPeriod',
   CreditSubscription: 'CreditSubscription',
-  CreditPaymentAttempt: 'CreditPaymentAttempt'
+  CreditPaymentAttempt: 'CreditPaymentAttempt',
+  PaymentGatewaySettings: 'PaymentGatewaySettings',
+  PaymentCheckoutSession: 'PaymentCheckoutSession',
+  PaymentStoredMethod: 'PaymentStoredMethod',
+  PaymentReversal: 'PaymentReversal'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1004,6 +1008,72 @@ export const CreditPaymentAttemptScalarFieldEnum = {
 export type CreditPaymentAttemptScalarFieldEnum = (typeof CreditPaymentAttemptScalarFieldEnum)[keyof typeof CreditPaymentAttemptScalarFieldEnum]
 
 
+export const PaymentGatewaySettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  recurringEnabled: 'recurringEnabled',
+  mode: 'mode',
+  credentialsCiphertext: 'credentialsCiphertext',
+  fingerprint: 'fingerprint',
+  publicUrl: 'publicUrl',
+  testedAt: 'testedAt',
+  lastError: 'lastError',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentGatewaySettingsScalarFieldEnum = (typeof PaymentGatewaySettingsScalarFieldEnum)[keyof typeof PaymentGatewaySettingsScalarFieldEnum]
+
+
+export const PaymentCheckoutSessionScalarFieldEnum = {
+  id: 'id',
+  attemptId: 'attemptId',
+  orderId: 'orderId',
+  customerId: 'customerId',
+  token: 'token',
+  paymentUrl: 'paymentUrl',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  expiresAt: 'expiresAt',
+  claimedAt: 'claimedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentCheckoutSessionScalarFieldEnum = (typeof PaymentCheckoutSessionScalarFieldEnum)[keyof typeof PaymentCheckoutSessionScalarFieldEnum]
+
+
+export const PaymentStoredMethodScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  contextCiphertext: 'contextCiphertext',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentStoredMethodScalarFieldEnum = (typeof PaymentStoredMethodScalarFieldEnum)[keyof typeof PaymentStoredMethodScalarFieldEnum]
+
+
+export const PaymentReversalScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  requestKey: 'requestKey',
+  kind: 'kind',
+  status: 'status',
+  credits: 'credits',
+  amount: 'amount',
+  currency: 'currency',
+  paymentId: 'paymentId',
+  actorId: 'actorId',
+  reason: 'reason',
+  failureCode: 'failureCode',
+  providerReference: 'providerReference',
+  nextCheckAt: 'nextCheckAt',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type PaymentReversalScalarFieldEnum = (typeof PaymentReversalScalarFieldEnum)[keyof typeof PaymentReversalScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1706,4 +1776,56 @@ export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {
 } as const
 
 export type CreditPaymentAttemptOrderByRelevanceFieldEnum = (typeof CreditPaymentAttemptOrderByRelevanceFieldEnum)[keyof typeof CreditPaymentAttemptOrderByRelevanceFieldEnum]
+
+
+export const PaymentGatewaySettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  mode: 'mode',
+  credentialsCiphertext: 'credentialsCiphertext',
+  fingerprint: 'fingerprint',
+  publicUrl: 'publicUrl',
+  lastError: 'lastError'
+} as const
+
+export type PaymentGatewaySettingsOrderByRelevanceFieldEnum = (typeof PaymentGatewaySettingsOrderByRelevanceFieldEnum)[keyof typeof PaymentGatewaySettingsOrderByRelevanceFieldEnum]
+
+
+export const PaymentCheckoutSessionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  attemptId: 'attemptId',
+  orderId: 'orderId',
+  customerId: 'customerId',
+  token: 'token',
+  paymentUrl: 'paymentUrl',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext'
+} as const
+
+export type PaymentCheckoutSessionOrderByRelevanceFieldEnum = (typeof PaymentCheckoutSessionOrderByRelevanceFieldEnum)[keyof typeof PaymentCheckoutSessionOrderByRelevanceFieldEnum]
+
+
+export const PaymentStoredMethodOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  contextCiphertext: 'contextCiphertext'
+} as const
+
+export type PaymentStoredMethodOrderByRelevanceFieldEnum = (typeof PaymentStoredMethodOrderByRelevanceFieldEnum)[keyof typeof PaymentStoredMethodOrderByRelevanceFieldEnum]
+
+
+export const PaymentReversalOrderByRelevanceFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  requestKey: 'requestKey',
+  kind: 'kind',
+  status: 'status',
+  currency: 'currency',
+  paymentId: 'paymentId',
+  actorId: 'actorId',
+  reason: 'reason',
+  failureCode: 'failureCode',
+  providerReference: 'providerReference'
+} as const
+
+export type PaymentReversalOrderByRelevanceFieldEnum = (typeof PaymentReversalOrderByRelevanceFieldEnum)[keyof typeof PaymentReversalOrderByRelevanceFieldEnum]
 

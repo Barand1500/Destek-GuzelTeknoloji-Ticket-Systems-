@@ -454,7 +454,11 @@ export const ModelName = {
   CreditAlertReceipt: 'CreditAlertReceipt',
   CreditSalesPeriod: 'CreditSalesPeriod',
   CreditSubscription: 'CreditSubscription',
-  CreditPaymentAttempt: 'CreditPaymentAttempt'
+  CreditPaymentAttempt: 'CreditPaymentAttempt',
+  PaymentGatewaySettings: 'PaymentGatewaySettings',
+  PaymentCheckoutSession: 'PaymentCheckoutSession',
+  PaymentStoredMethod: 'PaymentStoredMethod',
+  PaymentReversal: 'PaymentReversal'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -470,7 +474,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "creditPaymentAttempt"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "creditPaymentAttempt" | "paymentGatewaySettings" | "paymentCheckoutSession" | "paymentStoredMethod" | "paymentReversal"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4302,6 +4306,270 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PaymentGatewaySettings: {
+      payload: Prisma.$PaymentGatewaySettingsPayload<ExtArgs>
+      fields: Prisma.PaymentGatewaySettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentGatewaySettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentGatewaySettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentGatewaySettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentGatewaySettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentGatewaySettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentGatewaySettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentGatewaySettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PaymentGatewaySettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        update: {
+          args: Prisma.PaymentGatewaySettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentGatewaySettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentGatewaySettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PaymentGatewaySettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentGatewaySettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentGatewaySettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentGatewaySettings>
+        }
+        groupBy: {
+          args: Prisma.PaymentGatewaySettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentGatewaySettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentGatewaySettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentGatewaySettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentCheckoutSession: {
+      payload: Prisma.$PaymentCheckoutSessionPayload<ExtArgs>
+      fields: Prisma.PaymentCheckoutSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentCheckoutSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentCheckoutSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentCheckoutSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentCheckoutSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentCheckoutSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentCheckoutSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentCheckoutSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PaymentCheckoutSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        update: {
+          args: Prisma.PaymentCheckoutSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentCheckoutSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentCheckoutSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PaymentCheckoutSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentCheckoutSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentCheckoutSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentCheckoutSession>
+        }
+        groupBy: {
+          args: Prisma.PaymentCheckoutSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentCheckoutSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentCheckoutSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentCheckoutSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentStoredMethod: {
+      payload: Prisma.$PaymentStoredMethodPayload<ExtArgs>
+      fields: Prisma.PaymentStoredMethodFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentStoredMethodFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentStoredMethodFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentStoredMethodFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentStoredMethodFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentStoredMethodFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentStoredMethodCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentStoredMethodCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PaymentStoredMethodDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        update: {
+          args: Prisma.PaymentStoredMethodUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentStoredMethodDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentStoredMethodUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PaymentStoredMethodUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentStoredMethodPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentStoredMethodAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentStoredMethod>
+        }
+        groupBy: {
+          args: Prisma.PaymentStoredMethodGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentStoredMethodGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentStoredMethodCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentStoredMethodCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentReversal: {
+      payload: Prisma.$PaymentReversalPayload<ExtArgs>
+      fields: Prisma.PaymentReversalFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentReversalFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentReversalFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentReversalFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentReversalFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentReversalFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentReversalCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentReversalCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PaymentReversalDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        update: {
+          args: Prisma.PaymentReversalUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentReversalDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentReversalUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PaymentReversalUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReversalPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentReversalAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentReversal>
+        }
+        groupBy: {
+          args: Prisma.PaymentReversalGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentReversalGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentReversalCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentReversalCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5218,6 +5486,72 @@ export const CreditPaymentAttemptScalarFieldEnum = {
 export type CreditPaymentAttemptScalarFieldEnum = (typeof CreditPaymentAttemptScalarFieldEnum)[keyof typeof CreditPaymentAttemptScalarFieldEnum]
 
 
+export const PaymentGatewaySettingsScalarFieldEnum = {
+  id: 'id',
+  enabled: 'enabled',
+  recurringEnabled: 'recurringEnabled',
+  mode: 'mode',
+  credentialsCiphertext: 'credentialsCiphertext',
+  fingerprint: 'fingerprint',
+  publicUrl: 'publicUrl',
+  testedAt: 'testedAt',
+  lastError: 'lastError',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentGatewaySettingsScalarFieldEnum = (typeof PaymentGatewaySettingsScalarFieldEnum)[keyof typeof PaymentGatewaySettingsScalarFieldEnum]
+
+
+export const PaymentCheckoutSessionScalarFieldEnum = {
+  id: 'id',
+  attemptId: 'attemptId',
+  orderId: 'orderId',
+  customerId: 'customerId',
+  token: 'token',
+  paymentUrl: 'paymentUrl',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  expiresAt: 'expiresAt',
+  claimedAt: 'claimedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentCheckoutSessionScalarFieldEnum = (typeof PaymentCheckoutSessionScalarFieldEnum)[keyof typeof PaymentCheckoutSessionScalarFieldEnum]
+
+
+export const PaymentStoredMethodScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  contextCiphertext: 'contextCiphertext',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentStoredMethodScalarFieldEnum = (typeof PaymentStoredMethodScalarFieldEnum)[keyof typeof PaymentStoredMethodScalarFieldEnum]
+
+
+export const PaymentReversalScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  requestKey: 'requestKey',
+  kind: 'kind',
+  status: 'status',
+  credits: 'credits',
+  amount: 'amount',
+  currency: 'currency',
+  paymentId: 'paymentId',
+  actorId: 'actorId',
+  reason: 'reason',
+  failureCode: 'failureCode',
+  providerReference: 'providerReference',
+  nextCheckAt: 'nextCheckAt',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type PaymentReversalScalarFieldEnum = (typeof PaymentReversalScalarFieldEnum)[keyof typeof PaymentReversalScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5922,6 +6256,58 @@ export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {
 export type CreditPaymentAttemptOrderByRelevanceFieldEnum = (typeof CreditPaymentAttemptOrderByRelevanceFieldEnum)[keyof typeof CreditPaymentAttemptOrderByRelevanceFieldEnum]
 
 
+export const PaymentGatewaySettingsOrderByRelevanceFieldEnum = {
+  id: 'id',
+  mode: 'mode',
+  credentialsCiphertext: 'credentialsCiphertext',
+  fingerprint: 'fingerprint',
+  publicUrl: 'publicUrl',
+  lastError: 'lastError'
+} as const
+
+export type PaymentGatewaySettingsOrderByRelevanceFieldEnum = (typeof PaymentGatewaySettingsOrderByRelevanceFieldEnum)[keyof typeof PaymentGatewaySettingsOrderByRelevanceFieldEnum]
+
+
+export const PaymentCheckoutSessionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  attemptId: 'attemptId',
+  orderId: 'orderId',
+  customerId: 'customerId',
+  token: 'token',
+  paymentUrl: 'paymentUrl',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext'
+} as const
+
+export type PaymentCheckoutSessionOrderByRelevanceFieldEnum = (typeof PaymentCheckoutSessionOrderByRelevanceFieldEnum)[keyof typeof PaymentCheckoutSessionOrderByRelevanceFieldEnum]
+
+
+export const PaymentStoredMethodOrderByRelevanceFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  contextCiphertext: 'contextCiphertext'
+} as const
+
+export type PaymentStoredMethodOrderByRelevanceFieldEnum = (typeof PaymentStoredMethodOrderByRelevanceFieldEnum)[keyof typeof PaymentStoredMethodOrderByRelevanceFieldEnum]
+
+
+export const PaymentReversalOrderByRelevanceFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  requestKey: 'requestKey',
+  kind: 'kind',
+  status: 'status',
+  currency: 'currency',
+  paymentId: 'paymentId',
+  actorId: 'actorId',
+  reason: 'reason',
+  failureCode: 'failureCode',
+  providerReference: 'providerReference'
+} as const
+
+export type PaymentReversalOrderByRelevanceFieldEnum = (typeof PaymentReversalOrderByRelevanceFieldEnum)[keyof typeof PaymentReversalOrderByRelevanceFieldEnum]
+
+
 
 /**
  * Field references
@@ -6213,6 +6599,10 @@ export type GlobalOmitConfig = {
   creditSalesPeriod?: Prisma.CreditSalesPeriodOmit
   creditSubscription?: Prisma.CreditSubscriptionOmit
   creditPaymentAttempt?: Prisma.CreditPaymentAttemptOmit
+  paymentGatewaySettings?: Prisma.PaymentGatewaySettingsOmit
+  paymentCheckoutSession?: Prisma.PaymentCheckoutSessionOmit
+  paymentStoredMethod?: Prisma.PaymentStoredMethodOmit
+  paymentReversal?: Prisma.PaymentReversalOmit
 }
 
 /* Types for Logging */

@@ -5,7 +5,6 @@ import { CreditAlertChannels } from "./newCreditAlertChannels";
 import { PeriodSelect } from "./PeriodSelect";
 import { periodLabel } from "./types";
 import { CreditOrders } from "./CreditOrders";
-import { bankLogo } from "./bank-logos";
 import { useSearchParams } from "react-router-dom";
 import { MoneyInput } from "./MoneyInput";
 import { currencyOptions, type Currency } from "./types";
@@ -16,7 +15,7 @@ import {
   useQueryClient,
   useIsMutating,
 } from "@tanstack/react-query";
-import { Coins, Plus, Pencil, X, Info, Search } from "lucide-react";
+import { Coins, Plus, Pencil, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from "../auth/permissions";
@@ -30,14 +29,6 @@ import {
   type SalesSettings,
 } from "./types";
 import "./credit-store.css";
-type BinRecord = {
-  bin: string;
-  bankName: string;
-  bankKey?: string;
-  cardAssociation?: string;
-  cardType?: string;
-  cardFamily?: string;
-};
 const emptyPlan = {
   name: "",
   description: "",
@@ -70,21 +61,6 @@ export function CreditSalesPage() {
   >(null);
   const [deleteTarget, setDeleteTarget] = useState<SalesPlan | null>(null);
   const [message, setMessage] = useState("");
-  const [binInput, setBinInput] = useState("");
-  const [binTerm, setBinTerm] = useState("");
-  useEffect(() => {
-    const timer = setTimeout(() => setBinTerm(binInput.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [binInput]);
-  const binResults = useQuery({
-    queryKey: ["credit-sales", "bin-search", binTerm],
-    enabled: binTerm.length >= 2,
-    queryFn: async () =>
-      (await api.get("/credit-sales/bin-search", { params: { search: binTerm } })).data as {
-        data: BinRecord[];
-        total: number;
-      },
-  });
   useEffect(() => {
     if (query.data && !dirty)
       setDraft({
@@ -192,10 +168,7 @@ export function CreditSalesPage() {
       {ordersVisible && <CreditOrders admin />}
       {subscriptionsVisible && <CreditSubscriptions admin />}
       <div className="credit-sales-sections" hidden={ordersVisible || subscriptionsVisible}>
-        <p className="credit-store-notice">
-          <Info size={18} /> Katalog ve hesaplama ekranları hazırdır. Ödeme
-          sağlayıcısı bağlanana kadar ödeme alınmaz ve kredi yüklenmez.
-        </p>
+
         {query.isPending && <p role="status">Ayarlar yükleniyor…</p>}
         <ErrorMessage error={query.error} />
         {draft && (
@@ -529,58 +502,6 @@ export function CreditSalesPage() {
               <p>Henüz abonelik planı yok. Plan ekleyerek başlayabilirsiniz.</p>
             )}
           </div>
-        </section>
-        <section className="credit-sales-card bin-search-card">
-          <div className="credit-store-title">
-            <div>
-              <h2>BIN Sorgulama</h2>
-              <p>Kart numarasının ilk 6 hanesini veya banka adını arayın. Ödeme ekranındaki banka tanıma bu kayıtları kullanır.</p>
-            </div>
-          </div>
-          <label className="bin-search-field">
-            <Search size={16} />
-            <input
-              aria-label="BIN veya banka ara"
-              placeholder="Örn. 454671 veya Ziraat"
-              maxLength={80}
-              value={binInput}
-              onChange={event => setBinInput(event.target.value)}
-            />
-          </label>
-          {binTerm.length < 2 && <p className="credit-help">En az 2 karakter veya 2 hane girin.</p>}
-          {binResults.isFetching && <p role="status">Aranıyor…</p>}
-          <ErrorMessage error={binResults.error} />
-          {binResults.data && <>
-            <p className="credit-help">
-              {binResults.data.total} kayıt bulundu{binResults.data.total > 50 ? " · ilk 50 gösteriliyor" : ""}.
-            </p>
-            <div className="bin-search-table-wrap">
-              <table className="bin-search-table">
-                <thead><tr><th>BIN</th><th>Banka</th><th>Kart Ağı</th><th>Kart Türü</th></tr></thead>
-                <tbody>
-                  {binResults.data.data.map(record => {
-                    const logo = bankLogo(record.bankKey);
-                    return (
-                      <tr key={record.bin}>
-                        <td><strong>{record.bin}</strong></td>
-                        <td>
-                          <span className="bin-search-bank">
-                            {logo ? <img src={logo} alt={record.bankName} title={record.bankName} /> : <span>{record.bankName}</span>}
-                          </span>
-                        </td>
-                        <td>{record.cardAssociation || "—"}</td>
-                        <td>
-                          {record.cardType === "CREDIT" ? "Kredi" : record.cardType === "DEBIT" ? "Banka kartı" : "—"}
-                          {record.cardFamily && <small>{record.cardFamily}</small>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!binResults.data.data.length && <tr><td colSpan={4} className="muted">Kayıt bulunamadı.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-          </>}
         </section>
         {message && (
           <p className="credit-success" role="status">

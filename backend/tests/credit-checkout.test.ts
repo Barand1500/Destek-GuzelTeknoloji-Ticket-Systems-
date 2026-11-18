@@ -38,8 +38,9 @@ test('bundled Turkish BIN list identifies the issuer without a provider call',()
  assert.equal(localCardInfo('00000000'),null);
 });
 test('checkout is scoped to active root owner and only unpaid orders, prices immutable',async t=>{
- const userFindFirst=db.user.findFirst, orderFindFirst=db.creditOrder.findFirst;
- t.after(()=>{ (db.user as any).findFirst=userFindFirst; (db.creditOrder as any).findFirst=orderFindFirst; });
+ const userFindFirst=db.user.findFirst, orderFindFirst=db.creditOrder.findFirst, gatewayFind=db.paymentGatewaySettings.findUnique;
+ (db.paymentGatewaySettings as any).findUnique=async()=>null;
+ t.after(()=>{ (db.user as any).findFirst=userFindFirst; (db.creditOrder as any).findFirst=orderFindFirst; (db.paymentGatewaySettings as any).findUnique=gatewayFind; });
  (db.user as any).findFirst=async()=>({id:owner.id,name:'Root',company:'Company',parentCustomerId:null});
  let status='PENDING';
  (db.creditOrder as any).findFirst=async({where}:any)=>{

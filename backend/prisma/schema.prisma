@@ -772,6 +772,7 @@ model CreditSalesPlan {
 }
 
 model CreditOrder {
+ reversals PaymentReversal[]
  subscriptionId String?
  subscription CreditSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
  periodNumber Int?
@@ -879,4 +880,63 @@ model CreditPaymentAttempt {
  @@unique([orderId, attemptNumber])
  @@unique([provider, providerPaymentId])
  @@index([status, nextRetryAt])
+}
+
+model PaymentGatewaySettings {
+ id String @id @default("default")
+ enabled Boolean @default(false)
+ recurringEnabled Boolean @default(false)
+ mode String @default("sandbox") @db.VarChar(16)
+ credentialsCiphertext String @db.Text
+ fingerprint String @db.VarChar(64)
+ publicUrl String @db.VarChar(500)
+ testedAt DateTime?
+ lastError String? @db.VarChar(160)
+ updatedAt DateTime @updatedAt
+}
+
+model PaymentCheckoutSession {
+ id String @id @default(uuid())
+ attemptId String @unique
+ orderId String
+ customerId String
+ token String? @unique @db.VarChar(255)
+ paymentUrl String? @db.Text
+ state String @default("INITIALIZING") @db.VarChar(24)
+ contextCiphertext String @db.Text
+ expiresAt DateTime
+ claimedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([state, updatedAt])
+ @@index([orderId])
+}
+
+model PaymentStoredMethod {
+ id String @id @default(uuid())
+ customerId String
+ contextCiphertext String @db.Text
+ createdAt DateTime @default(now())
+}
+
+model PaymentReversal {
+ id String @id @default(uuid())
+ orderId String
+ order CreditOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+ requestKey String @db.VarChar(36)
+ kind String @db.VarChar(16)
+ status String @default("PENDING") @db.VarChar(16)
+ credits Int
+ amount Decimal @db.Decimal(12, 2)
+ currency String @db.VarChar(3)
+ paymentId String @db.VarChar(255)
+ actorId String
+ reason String @db.VarChar(500)
+ failureCode String? @db.VarChar(80)
+ providerReference String? @db.VarChar(255)
+ nextCheckAt DateTime?
+ createdAt DateTime @default(now())
+ completedAt DateTime?
+ @@unique([orderId, requestKey])
+ @@index([status, nextCheckAt])
 }

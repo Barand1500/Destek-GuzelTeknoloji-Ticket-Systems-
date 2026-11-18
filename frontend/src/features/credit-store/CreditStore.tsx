@@ -302,7 +302,7 @@ export function CustomerCreditStore() {
                           <i aria-hidden="true" />
                         </label>
                         <p className="credit-help">
-                          Yenileme açıksa aynı tutar ve dönem kullanılır. Ödeme bağlantısı henüz etkin değil.
+                          Yenileme açıksa aynı tutar ve dönem kullanılır. Kart saklama onayı ödeme adımında alınır.
                         </p>
                         <button
                           className="button primary"
@@ -409,7 +409,7 @@ export function CustomerCreditStore() {
                           </label>
                           <small>
                             {
-                              "Yaln\u0131zca tercih; otomatik tahsilat yap\u0131lmaz."
+                              "Kart saklama onay\u0131yla otomatik yenilenir; istedi\u011finizde kapatabilirsiniz."
                             }
                           </small>
                         </dd>
@@ -423,9 +423,7 @@ export function CustomerCreditStore() {
                   </dl>
                   {preview.currentPackage && <label className="integration-toggle credit-renewal-choice"><span>Mevcut paketin yenilemesini kapatıp yeni paketi dönem sonunda başlatmayı onaylıyorum. Yeni siparişi iptal edersem eski yenileme kendiliğinden açılmaz.</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
                   <p className="credit-store-notice">
-                    <Info size={18} /> Online ödeme henüz etkin değil. Sipariş
-                    kaydı oluşturabilirsiniz; ödeme alınmaz ve hesabınıza kredi
-                    yüklenmez.
+                    <Info size={18} /> {data.paymentAvailable ? 'Siparişi oluşturduktan sonra güvenli ödeme sayfasına geçebilirsiniz. Kredi, ödeme doğrulanınca yüklenir.' : 'Online ödeme şu anda kapalı. Sipariş oluşturabilirsiniz; ödeme alınmaz ve kredi yüklenmez.'}
                   </p>
                   {create.isSuccess ? (
                     <p>Bu sipariş kaydedildi.</p>

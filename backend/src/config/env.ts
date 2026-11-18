@@ -21,6 +21,7 @@ export const env = z
     MAX_FILE_SIZE: z.coerce.number().int().min(1024).max(26214400).default(26214400),
     SMTP_HOST: z.string().trim().min(1).optional(),
     IYZICO_API_KEY: z.string().trim().default(''),
+    PAYMENT_ENCRYPTION_KEY: z.string().min(32).optional(),
     IYZICO_SECRET_KEY: z.string().trim().default(''),
     IYZICO_BIN_MODE: z.enum(['sandbox','production']).default('sandbox'),
     SMTP_PORT: z.coerce.number().int().positive().default(587),

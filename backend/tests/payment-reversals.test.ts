@@ -1,0 +1,124 @@
+import 'dotenv/config';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID, createHmac } from 'node:crypto';
+import { db } from '../src/config/db.js';
+import { sealPayment } from '../src/services/payment-secrets.js';
+import { refundValue, reversalSummary, startPaymentReversal, reconcilePaymentReversal, closeUnrefundedReversal } from '../src/services/payment-reversals.service.js';
+import { updateAgreement } from '../src/services/agreements.service.js';
+import { settleVerifiedCreditPayment } from '../src/services/credit-subscriptions.service.js';
+
+test('partial refunds round cumulatively and finish at the exact original amount', () => {
+  assert.equal(refundValue('10.00', 3, 0, '0', 1).toFixed(2), '3.33');
+  assert.equal(refundValue('10.00', 3, 1, '3.33', 1).toFixed(2), '3.33');
+  assert.equal(refundValue('10.00', 3, 2, '6.66', 1).toFixed(2), '3.34');
+  assert.throws(() => refundValue('0.01', 100, 0, '0', 1), { code: 'REFUND_NOT_ALLOWED' });
+});
+
+test('refund/cancel reserve unused credit, serialize replays, reconcile uncertainty and preserve paid history', async () => {
+  const owner = await db.user.create({ data: { name: 'Reversal fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
+  const actor = { id: owner.id, name: owner.name, email: '', role: 'ADMIN' as const, departmentIds: [], sessionId: '', ipAddress: '127.0.0.1' };
+  const config = { apiKey: 'refund-test-api', secretKey: 'refund-test-secret', mode: 'sandbox' };
+  const fetchOriginal = globalThis.fetch;
+  const calls: any[] = [], reports = new Map<string, any>();
+  let response: 'success' | 'failure' | 'timeout' = 'success';
+  let reportingUnavailable = false;
+  globalThis.fetch = (async (url: any, init: any) => {
+    const uri = new URL(String(url)), body = init.body ? JSON.parse(init.body) : {};
+    calls.push({ path: uri.pathname, body });
+    if (init.method === 'GET') {
+      if (reportingUnavailable) throw new Error('simulated reporting outage');
+      assert.equal(init.body, undefined);
+      const nonce = init.headers['x-iyzi-rnd'];
+      const decoded = Buffer.from(init.headers.Authorization.slice(8), 'base64').toString();
+      assert.ok(decoded.endsWith(createHmac('sha256', config.secretKey).update(nonce + uri.pathname).digest('hex')), 'GET signature excludes query and has no body');
+      return Response.json({ status: 'success', payments: reports.has(uri.searchParams.get('paymentId')!) ? [reports.get(uri.searchParams.get('paymentId')!)] : [] });
+    }
+    if (response === 'timeout') throw new Error('simulated ambiguous network failure');
+    if (response === 'failure') return Response.json({ status: 'failure', errorCode: '10223' });
+    return Response.json({ status: 'success', paymentId: body.paymentId, price: body.price ?? '101.01', currency: body.currency ?? 'TRY', refundHostReference: randomUUID() });
+  }) as typeof fetch;
+  const paidOrder = async (used = 0) => {
+    const order = await db.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, requestKey: randomUUID(), inputHash: 'a'.repeat(64), kind: 'TOP_UP', name: 'Reversal fixture', credits: 100, total: '101.01', currency: 'TRY', validityDays: 365 } });
+    const paymentId = randomUUID();
+    const attempt = await db.creditPaymentAttempt.create({ data: { orderId: order.id, attemptNumber: 1, provider: 'iyzico', status: 'PAID', providerPaymentId: paymentId } });
+    const grant = await db.agreement.create({ data: { customerId: owner.id, name: 'Reversal fixture grant', type: 'ONE_OFF', credits: 100, usedCredits: used, fee: '101.01', currency: 'TRY', startsOn: new Date('2026-01-01'), endsOn: new Date('2028-01-01') } });
+    await db.creditOrder.update({ where: { id: order.id }, data: { grantedAgreementId: grant.id, status: 'PAID', paidAt: new Date() } });
+    await db.paymentCheckoutSession.create({ data: { attemptId: attempt.id, orderId: order.id, customerId: owner.id, contextCiphertext: sealPayment({ config }), state: 'PAID', expiresAt: new Date() } });
+    return { order, grant, paymentId, attempt };
+  };
+  try {
+    const first = await paidOrder(10);
+    await assert.rejects(startPaymentReversal({ ...actor, role: 'CUSTOMER' }, first.order.id, {}), { code: 'FORBIDDEN' });
+    await assert.rejects(reversalSummary({ ...actor, id: randomUUID(), role: 'CUSTOMER' }, first.order.id, false), { code: 'ORDER_NOT_FOUND' });
+    const request = { requestKey: randomUUID(), kind: 'REFUND', credits: 40, reason: 'Fixture partial refund' };
+    await assert.rejects(startPaymentReversal(actor, first.order.id, { ...request, credits: 91 }), { code: 'REFUND_NOT_ALLOWED' });
+    await assert.rejects(startPaymentReversal(actor, first.order.id, { ...request, kind: 'CANCEL', credits: 100 }), { code: 'REFUND_NOT_ALLOWED' });
+    await Promise.all([startPaymentReversal(actor, first.order.id, request), startPaymentReversal(actor, first.order.id, request)]);
+    assert.equal(calls.filter(v => v.path === '/v2/payment/refund').length, 1);
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 60);
+    assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: first.order.id } })).status, 'PARTIAL_REFUND');
+    assert.equal((await reversalSummary(actor, first.order.id)).refundableCredits, 50);
+    const edit = { name: first.grant.name, type: 'ONE_OFF', credits: 100, fee: '101.01', startsOn: '2026-01-01', endsOn: '2028-01-01' };
+    await assert.rejects(updateAgreement(actor, owner.id, first.grant.id, edit), { code: 'REFUNDED_CREDITS' });
+    response = 'timeout';
+    const pending = await startPaymentReversal(actor, first.order.id, { ...request, requestKey: randomUUID(), credits: 20 });
+    assert.equal(pending.status, 'REVIEW');
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 40);
+    await assert.rejects(updateAgreement(actor, owner.id, first.grant.id, { ...edit, credits: 40 }), { code: 'REFUND_IN_PROGRESS' });
+    await assert.rejects(startPaymentReversal(actor, first.order.id, { ...request, requestKey: randomUUID(), credits: 10 }), { code: 'REFUND_NOT_ALLOWED' });
+    const requestsBefore = calls.filter(v => v.path === '/v2/payment/refund').length;
+    reports.set(first.paymentId, { paymentId: first.paymentId, itemTransactions: [{ refunds: [{ refundConversationId: pending.id, refundStatus: 1, refundPrice: pending.amount, currencyCode: 'USD' }] }] });
+    await assert.rejects(reconcilePaymentReversal(pending.id), { code: 'PAYMENT_MISMATCH' });
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 40);
+    reports.set(first.paymentId, { paymentId: first.paymentId, itemTransactions: [{ refunds: [{ refundConversationId: pending.id, refundStatus: 1, refundPrice: pending.amount, currencyCode: 'TRY', refundTxId: 'refund-recovered' }] }] });
+    await Promise.all([reconcilePaymentReversal(pending.id), reconcilePaymentReversal(pending.id)]);
+    assert.equal((await db.paymentReversal.findUniqueOrThrow({ where: { id: pending.id } })).status, 'SUCCEEDED');
+    assert.equal(calls.filter(v => v.path === '/v2/payment/refund').length, requestsBefore);
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 40);
+    response = 'failure';
+    const failed = await startPaymentReversal(actor, first.order.id, { ...request, requestKey: randomUUID(), credits: 10 });
+    assert.equal(failed.status, 'FAILED');
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 40);
+    response = 'timeout';
+    const unsent = await startPaymentReversal(actor, first.order.id, { ...request, requestKey: randomUUID(), credits: 10 });
+    await assert.rejects(closeUnrefundedReversal(actor, unsent.id, { confirmedNoRefund: true, providerReference: 'Provider confirmed no refund fixture' }), { code: 'REFUND_NOT_ALLOWED' });
+    await db.paymentReversal.update({ where: { id: unsent.id }, data: { createdAt: new Date(Date.now() - 7200000) } });
+    reportingUnavailable = true;
+    await closeUnrefundedReversal(actor, unsent.id, { confirmedNoRefund: true, providerReference: 'Provider confirmed no refund fixture' });
+    reportingUnavailable = false;
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: first.grant.id } })).credits, 40);
+    const full = await paidOrder(); response = 'success';
+    await db.creditOrder.update({ where: { id: full.order.id }, data: { paidAt: new Date(Date.now() - 86400000) } });
+    await assert.rejects(startPaymentReversal(actor, full.order.id, { ...request, requestKey: randomUUID(), kind: 'CANCEL', credits: 100 }), { code: 'REFUND_NOT_ALLOWED' });
+    await db.creditOrder.update({ where: { id: full.order.id }, data: { paidAt: new Date() } });
+    const cancel = await startPaymentReversal(actor, full.order.id, { ...request, requestKey: randomUUID(), kind: 'CANCEL', credits: 100 });
+    assert.equal(cancel.status, 'SUCCEEDED');
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: full.grant.id } })).credits, 0);
+    assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: full.order.id } })).status, 'REFUNDED');
+    await settleVerifiedCreditPayment({ attemptId: full.attempt.id, provider: 'iyzico', paymentId: full.paymentId, amount: '101.01', currency: 'TRY', outcome: 'PAID' });
+    assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: full.grant.id } })).credits, 0, 'Late success callback must not regrant refunded credit');
+    assert.equal((await reversalSummary(actor, full.order.id)).refundableCredits, 0);
+    const subscription = await db.creditSubscription.create({ data: { customerId: owner.id, name: 'Refund renewal fixture', amount: '101.01', currency: 'TRY', credits: 100, periodMonths: 1, status: 'ACTIVE', autoRenew: true, consentedAt: new Date() } });
+    const renewal = await paidOrder();
+    await db.creditOrder.update({ where: { id: renewal.order.id }, data: { subscriptionId: subscription.id, periodNumber: 1, kind: 'SUBSCRIPTION' } });
+    response = 'failure';
+    await startPaymentReversal(actor, renewal.order.id, { ...request, requestKey: randomUUID(), credits: 10 });
+    assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: subscription.id } })).autoRenew, true, 'A failed refund must not cancel renewal');
+    response = 'success';
+    await startPaymentReversal(actor, renewal.order.id, { ...request, requestKey: randomUUID(), credits: 10 });
+    assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: subscription.id } })).autoRenew, false);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+    await db.paymentReversal.deleteMany({ where: { order: { customerId: owner.id } } });
+    await db.paymentCheckoutSession.deleteMany({ where: { customerId: owner.id } });
+    await db.creditPaymentAttempt.deleteMany({ where: { order: { customerId: owner.id } } });
+    await db.creditOrder.deleteMany({ where: { customerId: owner.id } });
+    await db.creditSubscription.deleteMany({ where: { customerId: owner.id } });
+    await db.agreement.deleteMany({ where: { customerId: owner.id } });
+    await db.activityLog.deleteMany({ where: { userId: owner.id } });
+    await db.notification.deleteMany({ where: { userId: owner.id } });
+    await db.user.delete({ where: { id: owner.id } });
+    await db.$disconnect();
+  }
+});

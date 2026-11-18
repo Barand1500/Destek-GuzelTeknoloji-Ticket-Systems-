@@ -158,6 +158,12 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
     const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM Agreement WHERE id = ${id} AND customerId = ${customerId} AND deletedAt IS NULL FOR UPDATE`;
     if (!locked.length) throw invalid('Anlaşma bulunamadı veya silinmiş.');
     const before = await tx.agreement.findUniqueOrThrow({ where: { id } });
+    if (await tx.paymentReversal.count({ where: { order: { grantedAgreementId: id }, status: { in: ['PENDING', 'REVIEW'] } } })) throw new AppError(409, 'REFUND_IN_PROGRESS', 'İade sonucu beklenirken anlaşma düzenlenemez.');
+    const purchase = await tx.creditOrder.findUnique({ where: { grantedAgreementId: id }, select: { id: true, credits: true } });
+    if (purchase) {
+      const refunded = await tx.paymentReversal.aggregate({ where: { orderId: purchase.id, status: 'SUCCEEDED' }, _sum: { credits: true } });
+      if ((refunded._sum.credits ?? 0) > 0 && input.credits > purchase.credits - (refunded._sum.credits ?? 0)) throw new AppError(409, 'REFUNDED_CREDITS', 'İade edilmiş krediler anlaşmaya yeniden eklenemez.');
+    }
     if (input.credits < before.usedCredits) throw invalid('Kredi miktarı kullanılan krediden az olamaz.');
     if (input.type !== before.type && !builtInAgreementTypes[input.type]) {
       const types = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM AgreementType WHERE id = ${input.type} AND archivedAt IS NULL FOR UPDATE`;

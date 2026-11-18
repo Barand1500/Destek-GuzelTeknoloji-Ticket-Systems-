@@ -39,7 +39,7 @@ export async function listSubscriptions(actor: Actor, input: z.infer<typeof subs
   return db.$transaction(async tx => {
     const total = await tx.creditSubscription.count({ where });
     const rows = await tx.creditSubscription.findMany({ where, select: safeFields, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: input.limit, skip: (input.page - 1) * input.limit });
-    return { data: rows.map(row => ({ ...row, amount: row.amount.toFixed(2) })), paymentAvailable: false,
+    return { data: rows.map(row => ({ ...row, amount: row.amount.toFixed(2) })),
       pagination: { total, page: input.page, limit: input.limit, totalPages: Math.max(1, Math.ceil(total / input.limit)) } };
   }, { isolationLevel: 'RepeatableRead' });
 }
@@ -69,10 +69,32 @@ export async function changeSubscription(actor: Actor, id: string, action: 'acce
   publishChange(); return { success: true };
 }
 
+/** Create a checkout order for a manually offered agreement after customer consent. */
+export async function subscriptionCheckoutOrder(actor: Actor, id: string) {
+  return db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM User WHERE id = ${actor.id} FOR UPDATE`;
+    const owner = await creditStoreOwner(actor, tx);
+    const sub = await tx.creditSubscription.findFirst({ where: { id, customerId: owner.id } });
+    if (!sub || !sub.consentedAt || sub.status === 'AWAITING_CONSENT' || sub.status === 'STOPPED') throw new AppError(409, 'SUBSCRIPTION_CHANGED', 'Önce yenileme koşullarını onaylayın.');
+    const existing = await tx.creditOrder.findFirst({ where: { subscriptionId: sub.id, status: { in: ['PENDING', 'FAILED'] } }, orderBy: { periodNumber: 'desc' } });
+    if (existing) return { id: existing.id };
+    const start = sub.nextPaymentOn && sub.nextPaymentOn > billingToday() ? sub.nextPaymentOn : billingToday();
+    const end = new Date(billingBoundary(start, sub.periodMonths, sub.periodDays, 1).getTime() - dayMs);
+    const latest = await tx.creditOrder.findFirst({ where: { subscriptionId: sub.id }, orderBy: { periodNumber: 'desc' } });
+    const number = (latest?.periodNumber ?? sub.paidPeriods) + 1;
+    const row = await tx.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, subscriptionId: sub.id,
+      periodNumber: number, requestKey: randomUUID(), inputHash: createHash('sha256').update(sub.id + ':' + number).digest('hex'),
+      name: sub.name.slice(0, 100), kind: 'SUBSCRIPTION', credits: sub.credits, total: sub.amount, currency: sub.currency,
+      validityDays: sub.periodDays, periodMonths: sub.periodMonths, renewalRequested: sub.autoRenew, periodStartsOn: start, periodEndsOn: end } });
+    return { id: row.id };
+  }, { isolationLevel: 'ReadCommitted' });
+}
+
 /** Internal seam. Provider adapter must verify authenticity BEFORE returning a result. No public settlement route. */
 export type VerifiedPayment = { attemptId: string; provider: string; paymentId: string; outcome: 'PAID' | 'FAILED'; amount: string; currency: string; failureCode?: string };
 export interface RecurringPaymentProvider {
   name: string;
+  canDispatch?(): Promise<boolean>;
   charge(input: { attemptId: string; orderId: string; amount: string; currency: string; paymentMethodRef: string }): Promise<VerifiedPayment | null>;
   reconcile(input: { attemptId: string; orderId: string }): Promise<VerifiedPayment | null>;
 }
@@ -110,7 +132,7 @@ export async function settleVerifiedCreditPayment(result: VerifiedPayment, now =
     if (latest.provider !== result.provider || !result.paymentId || !order.total.eq(result.amount) || order.currency !== result.currency)
       throw new AppError(409, 'PAYMENT_MISMATCH', 'Ödeme kimliği, tutarı veya para birimi eşleşmiyor.');
     if (latest.providerPaymentId && latest.providerPaymentId !== result.paymentId) throw new AppError(409, 'PAYMENT_MISMATCH', 'Ödeme kimliği değişti.');
-    if (order.status === 'PAID') return;
+    if (order.paidAt || order.grantedAgreementId || ['PAID', 'PARTIAL_REFUND', 'REFUNDED'].includes(order.status)) return;
     if (latest.status === 'FAILED' && result.outcome === 'FAILED') return;
     const sub = order.subscription;
     if (result.outcome === 'FAILED') {
@@ -160,8 +182,9 @@ export async function runCreditRenewals(provider?: RecurringPaymentProvider, now
     } catch { console.error('[CreditRenewal] Bekleyen ödeme doğrulanamadı; yeniden sorgulanacak.', { attemptId: attempt.id }); }
     await db.creditPaymentAttempt.updateMany({ where: { id: attempt.id, status: 'PENDING' }, data: { nextRetryAt: new Date(now.getTime() + 60_000) } });
   }
+  if (provider.canDispatch && !(await provider.canDispatch())) return { dispatched };
   const today = new Date(new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Istanbul' }).format(now) + 'T00:00:00Z');
-  const due = await db.creditSubscription.findMany({ where: { OR: [{ autoRenew: true }, { status: 'AWAITING_PAYMENT', stoppedAt: null }], consentedAt: { not: null }, status: { in: ['ACTIVE', 'PAST_DUE', 'AWAITING_PAYMENT'] }, nextPaymentOn: { lte: today }, provider: provider.name, paymentMethodRef: { not: null }, customer: { isActive: true, deletedAt: null, parentCustomerId: null }, orders: { none: { OR: [{ status: 'PENDING', paymentAttempts: { some: { status: 'PENDING' } } }, { status: 'FAILED', paymentAttempts: { some: { status: 'FAILED', OR: [{ attemptNumber: { gte: 3 } }, { nextRetryAt: { gt: now } }] } } }] } } }, orderBy: [{ nextPaymentOn: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, customerId: true } });
+  const due = await db.creditSubscription.findMany({ where: { OR: [{ autoRenew: true }, { status: 'AWAITING_PAYMENT', stoppedAt: null }], consentedAt: { not: null }, status: { in: ['ACTIVE', 'PAST_DUE', 'AWAITING_PAYMENT'] }, nextPaymentOn: { lte: today }, provider: provider.name, paymentMethodRef: { not: null }, customer: { isActive: true, deletedAt: null, parentCustomerId: null }, orders: { none: { OR: [{ reversals: { some: { status: { in: ['PENDING', 'REVIEW'] } } } }, { status: 'PENDING', paymentAttempts: { some: { status: 'PENDING' } } }, { status: 'FAILED', paymentAttempts: { some: { status: 'FAILED', OR: [{ attemptNumber: { gte: 3 } }, { nextRetryAt: { gt: now } }] } } }] } } }, orderBy: [{ nextPaymentOn: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, customerId: true } });
   for (const candidate of due) {
     const dispatch = await db.$transaction(async tx => {
       await tx.$queryRaw`SELECT id FROM User WHERE id = ${candidate.customerId} FOR UPDATE`;

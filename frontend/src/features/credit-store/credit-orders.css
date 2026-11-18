@@ -114,3 +114,8 @@
 
 .credit-order-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
+
+.payment-reversal-panel { margin:24px 0; }
+.payment-reversal-row { border-top:1px solid var(--border); padding:16px 0; margin-top:16px; }
+.credit-order-status-partial_refund { background:rgba(181,125,22,.15); color:var(--text); }
+.credit-order-status-refunded { background:rgba(128,128,128,.14); color:var(--muted); }

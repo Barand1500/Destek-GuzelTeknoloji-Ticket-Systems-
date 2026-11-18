@@ -1,0 +1,22 @@
+CREATE TABLE `PaymentReversal` (
+ `id` VARCHAR(191) NOT NULL,
+ `orderId` VARCHAR(191) NOT NULL,
+ `requestKey` VARCHAR(36) NOT NULL,
+ `kind` VARCHAR(16) NOT NULL,
+ `status` VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+ `credits` INTEGER NOT NULL,
+ `amount` DECIMAL(12,2) NOT NULL,
+ `currency` VARCHAR(3) NOT NULL,
+ `paymentId` VARCHAR(255) NOT NULL,
+ `actorId` VARCHAR(191) NOT NULL,
+ `reason` VARCHAR(500) NOT NULL,
+ `failureCode` VARCHAR(80) NULL,
+ `providerReference` VARCHAR(255) NULL,
+ `nextCheckAt` DATETIME(3) NULL,
+ `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+ `completedAt` DATETIME(3) NULL,
+ PRIMARY KEY (`id`),
+ UNIQUE INDEX `PaymentReversal_orderId_requestKey_key` (`orderId`, `requestKey`),
+ INDEX `PaymentReversal_status_nextCheckAt_idx` (`status`, `nextCheckAt`),
+ CONSTRAINT `PaymentReversal_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `CreditOrder` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

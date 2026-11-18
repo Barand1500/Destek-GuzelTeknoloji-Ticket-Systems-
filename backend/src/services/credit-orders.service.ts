@@ -21,7 +21,7 @@ export const creditOrderListInput = paginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).optional(),
   subscriptionId: z.uuid().optional(),
-  status: z.enum(["PENDING", "CANCELLED", "PAID", "FAILED"]).optional(),
+  status: z.enum(["PENDING", "CANCELLED", "PAID", "FAILED", "PARTIAL_REFUND", "REFUNDED"]).optional(),
   currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
 });
 const fields = {
@@ -47,6 +47,7 @@ const fields = {
   createdAt: true,
   updatedAt: true,
   customer: { select: { id: true, name: true, company: true } },
+  reversals: { select: { id: true, status: true, kind: true, amount: true, credits: true }, orderBy: { createdAt: 'desc' }, take: 100 },
 } as const;
 const json = <
   T extends {
