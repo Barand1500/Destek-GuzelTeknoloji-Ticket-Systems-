@@ -160,7 +160,7 @@ test("customer calculates credit both ways, previews plans and cannot start paym
 }) => {
   const writes = await mockApi(page, "CUSTOMER");
   await page.goto("/customer/agreements");
-  await page.getByRole("button", { name: "Kredi Yükle ve Paketler" }).click();
+  await page.getByRole("tab", { name: "Kredi Yükle ve Paketler" }).click();
   await page.getByLabel("Kredi için ödenecek tutar").fill("25,00");
   await expect(page.getByLabel("Satın alınacak kredi sayısı")).toHaveValue(
     "10",
@@ -178,7 +178,7 @@ test("customer calculates credit both ways, previews plans and cannot start paym
   expect(writes[1].requestKey).toMatch(/^[a-f0-9-]{36}$/);
 
   await page.goto("/customer/agreements");
-  await page.getByRole("button", { name: "Kredi Yükle ve Paketler" }).click();
+  await page.getByRole("tab", { name: "Kredi Yükle ve Paketler" }).click();
   await page.screenshot({
     path: "test-results/credit-store-customer.png",
     fullPage: true,
@@ -219,7 +219,7 @@ test("price refresh clears stale calculator values before another preview", asyn
     }),
   );
   await page.goto("/customer/agreements");
-  await page.getByRole("button", { name: "Kredi Yükle ve Paketler" }).click();
+  await page.getByRole("tab", { name: "Kredi Yükle ve Paketler" }).click();
   await page.getByLabel("Satın alınacak kredi sayısı").fill("10");
   await expect(page.getByLabel("Kredi için ödenecek tutar")).toHaveValue(
     "25,00",
@@ -280,7 +280,7 @@ test("linked company people cannot see the purchase entry", async ({
     page.getByText("Güzel Teknoloji", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Kredi Yükle ve Paketler" }),
+    page.getByRole("tab", { name: "Kredi Yükle ve Paketler" }),
   ).toHaveCount(0);
   expect(calls).toBe(0);
 });
@@ -357,11 +357,26 @@ test('switching packages shows remaining time and requires end-of-period confirm
   await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
   await page.getByRole('button', { name: 'Planı İncele' }).click();
   await expect(page.getByText(/Döneminizin bitmesine 12 gün var/)).toBeVisible();
+  await expect(page.getByText('Yeni paketin mevcut dönem bittikten sonra başlamasını onaylıyorum.')).toBeVisible();
+  await expect(page.getByText(/Mevcut paketin yenilemesini kapatıp/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeDisabled();
   await page.locator('.credit-quote .credit-renewal-choice').click();
   await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeEnabled();
   await page.getByRole('button', { name: 'Sipariş Oluştur' }).click();
   await expect.poll(() => writes.find(value => value.confirmPackageChange === true)).toBeTruthy();
+});
+
+test('Akbank catalog does not promise automatic renewal', async ({ page }) => {
+  const writes = await mockApi(page, 'CUSTOMER');
+  await page.route('**/api/v1/my/credit-store', route => route.fulfill({ json: { success: true, data: { settings, plans: [{ ...plan, renewalRequested: true }], owner, provider: 'akbank', paymentAvailable: true, recurringAvailable: false } } }));
+  await page.goto('/customer/agreements?view=store');
+  await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
+  const toggle = page.getByRole('switch', { name: plan.name + ' dönem sonunda tekrarla' });
+  await expect(toggle).toBeDisabled();
+  await expect(toggle).not.toBeChecked();
+  await page.getByRole('button', { name: 'Planı İncele' }).click();
+  await expect.poll(() => writes.find(value => value.planId === plan.id)?.renewalRequested).toBe(false);
+  await expect(page.getByRole('switch', { name: 'Özette dönem sonunda tekrarla' })).toBeDisabled();
 });
 
 
@@ -370,7 +385,7 @@ test('customer billing uses integration tabs for orders and subscriptions', asyn
   await page.route('**/api/v1/my/credit-store/subscriptions*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
   await page.route('**/api/v1/my/credit-store/orders?*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
   await page.goto('/customer/agreements?view=subscriptions');
-  const tabs = page.locator('.customer-billing-workspace .integration-tabs');
+  const tabs = page.locator('.customer-billing-workspace .integration-subtabs');
   await expect(tabs).toBeVisible();
   await expect(tabs).toHaveCSS('display', 'flex');
   const subscriptions = tabs.getByRole('tab').nth(1);
@@ -380,6 +395,17 @@ test('customer billing uses integration tabs for orders and subscriptions', asyn
   await expect(page).toHaveURL(/view=orders/);
   await expect(tabs.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('.credit-orders h2')).toBeVisible();
+});
+
+test('staff billing uses the same styled integration tabs', async ({ page }) => {
+  await mockApi(page, 'ADMIN');
+  await page.route('**/api/v1/credit-sales/orders?*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
+  await page.route('**/api/v1/credit-sales/subscriptions*', route => route.fulfill({ json: { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } }));
+  await page.goto('/admin/credit-sales?view=orders');
+  const tabs = page.getByRole('tablist', { name: 'Sipariş ve abonelik yönetimi' });
+  await expect(tabs).toHaveCSS('display', 'flex');
+  await tabs.getByRole('tab', { name: 'Abonelikler', exact: true }).click();
+  await expect(tabs.getByRole('tab', { name: 'Abonelikler', exact: true })).toHaveAttribute('aria-selected', 'true');
 });
 
 

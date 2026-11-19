@@ -215,13 +215,13 @@ export async function listCreditOrders(
       const total = await tx.creditOrder.count({ where });
       const rows = await tx.creditOrder.findMany({
         where,
-        select: fields,
+        select: { ...fields, paymentAttempts: { where: { status: 'PENDING' }, select: { id: true }, take: 1 } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: input.limit,
         skip: (input.page - 1) * input.limit,
       });
       return {
-        data: rows.map(json),
+        data: rows.map(({ paymentAttempts, ...row }) => ({ ...json(row), paymentInProgress: paymentAttempts.length > 0 })),
         pagination: {
           page: input.page,
           limit: input.limit,

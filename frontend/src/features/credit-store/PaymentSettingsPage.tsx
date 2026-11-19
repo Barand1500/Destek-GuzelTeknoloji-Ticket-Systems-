@@ -1,4 +1,4 @@
-import { PaymentSettings, PaymentReviews } from './PaymentSettings';
+import { PaymentSettings } from './PaymentSettings';
 import { AkbankSettings } from './AkbankSettings';
 import { Heading } from '../management/shared';
 import { useAuth } from '../auth/Auth';
@@ -12,7 +12,6 @@ export function PaymentSettingsPage() {
     <div className="credit-sales-sections">
       <AkbankSettings editable={hasPermission(user, 'integrations.update')} />
       <PaymentSettings editable={hasPermission(user, 'integrations.update')} />
-      <PaymentReviews editable={hasPermission(user, 'integrations.update')} />
     </div>
   </main>;
 }

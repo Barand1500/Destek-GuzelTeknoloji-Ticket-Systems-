@@ -23,7 +23,7 @@ type Credentials = { merchantSafeId: string; terminalSafeId: string; secretKey: 
 export async function getAkbankSettings(actor: Actor) {
   paymentStaff(actor);
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: settingsId } });
-  return { provider: 'akbank', mode: row?.mode ?? 'sandbox', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false,
+  return { provider: 'akbank', mode: row?.mode ?? 'production', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false,
     publicUrl: row?.publicUrl || env.FRONTEND_URL, testedAt: row?.testedAt ?? null, lastError: row?.lastError ?? null, paymentAvailable: Boolean(row?.enabled && row.testedAt) };
 }
 

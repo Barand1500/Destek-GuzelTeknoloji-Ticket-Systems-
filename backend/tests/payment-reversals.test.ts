@@ -48,6 +48,26 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     return { order, grant, paymentId, attempt };
   };
   try {
+    const customer = { ...actor, role: 'CUSTOMER' as const };
+    const unused = await paidOrder();
+    const selfRequest = { requestKey: randomUUID(), reason: 'Kullanılmamış sipariş iadesi' };
+    await assert.rejects(startPaymentReversal({ ...customer, id: randomUUID() }, unused.order.id, selfRequest, false), { code: 'ORDER_NOT_FOUND' });
+    await assert.rejects(startPaymentReversal(customer, unused.order.id, { ...selfRequest, credits: 1 }, false));
+    assert.equal((await reversalSummary(customer, unused.order.id, false)).canSelfRefund, true);
+    const beforeSelf = calls.length;
+    const selfResult = await startPaymentReversal(customer, unused.order.id, selfRequest, false);
+    assert.equal(selfResult.status, 'SUCCEEDED');
+    assert.equal(selfResult.credits, 100);
+    assert.equal(selfResult.kind, 'CANCEL');
+    assert.equal((await startPaymentReversal(customer, unused.order.id, selfRequest, false)).id, selfResult.id);
+    assert.equal(calls.length, beforeSelf + 1, 'Customer replay cannot dispatch a second bank reversal');
+    const used = await paidOrder(1);
+    assert.equal((await reversalSummary(customer, used.order.id, false)).canSelfRefund, false);
+    await assert.rejects(startPaymentReversal(customer, used.order.id, { ...selfRequest, requestKey: randomUUID() }, false), { code: 'REFUND_NOT_ALLOWED' });
+    const older = await paidOrder();
+    await db.creditOrder.update({ where: { id: older.order.id }, data: { paidAt: new Date(Date.now() - 172800000) } });
+    assert.equal((await startPaymentReversal(customer, older.order.id, { ...selfRequest, requestKey: randomUUID() }, false)).kind, 'REFUND');
+    calls.length = 0;
     const first = await paidOrder(10);
     await assert.rejects(startPaymentReversal({ ...actor, role: 'CUSTOMER' }, first.order.id, {}), { code: 'FORBIDDEN' });
     await assert.rejects(reversalSummary({ ...actor, id: randomUUID(), role: 'CUSTOMER' }, first.order.id, false), { code: 'ORDER_NOT_FOUND' });

@@ -175,3 +175,12 @@ test("failed list requests show a retry action", async ({ page }) => {
     timeout: 15000,
   });
 });
+
+test('unresolved payments explain and disable cancellation and repeat payment', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/my/credit-store/orders?**', route => route.fulfill({ json: { success: true, data: [{ ...order, paymentInProgress: true }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } }));
+  await page.reload();
+  await expect(page.getByText('Ödeme sonucu kontrol ediliyor; sonuçlanınca işlem yapabilirsiniz.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Siparişi İptal Et' })).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Ödemeye Geç' })).toHaveCount(0);
+});

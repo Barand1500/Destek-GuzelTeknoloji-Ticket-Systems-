@@ -7,9 +7,9 @@ import { openPayment, sealPayment } from '../src/services/payment-secrets.js';
 import { akbankHash } from '../src/services/akbank-client.js';
 import { beginAkbankCheckout, akbankCallback, reconcileAkbankSession, runAkbankPaymentChecks } from '../src/services/akbank-payments.service.js';
 import { startPaymentReversal, reconcilePaymentReversal, closeUnrefundedReversal } from '../src/services/payment-reversals.service.js';
-import { closeUnchargedPayment, checkPaymentReview } from '../src/services/payment-operations.service.js';
+import { closeUnchargedPayment, checkPaymentReview, pendingPaymentReviews } from '../src/services/payment-operations.service.js';
 import { saveAkbankSettings } from '../src/services/akbank-settings.service.js';
-import { cancelCreditOrder } from '../src/services/credit-orders.service.js';
+import { cancelCreditOrder, listCreditOrders, creditOrderListInput } from '../src/services/credit-orders.service.js';
 
 test('Akbank bank ledger settles once, isolates card data, queries uncertain refunds and preserves credit history', async () => {
   const owner = await db.user.create({ data: { name: 'Akbank fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
@@ -57,6 +57,10 @@ test('Akbank bank ledger settles once, isolates card data, queries uncertain ref
     const session = await db.paymentCheckoutSession.findUniqueOrThrow({ where: { attemptId: form.fields.orderId } });
     assert.equal(new URL(form.fields.okUrl).pathname, '/api/v1/payments/akbank/callback/' + session.id);
     assert.deepEqual(openPayment(session.contextCiphertext), { config });
+    const listed = await listCreditOrders(actor, creditOrderListInput.parse({}));
+    assert.equal(listed.data.find(row => row.id === order.id)?.paymentInProgress, true);
+    assert.equal((await pendingPaymentReviews(admin, order.id)).total, 1);
+    assert.equal((await pendingPaymentReviews(admin, randomUUID())).total, 0);
     const noRecordReview = await checkPaymentReview(admin, form.fields.orderId);
     assert.equal(noRecordReview.outcome, 'NO_BANK_RECORD');
     assert.equal(noRecordReview.status, 'PENDING');
@@ -131,6 +135,15 @@ test('Akbank bank ledger settles once, isolates card data, queries uncertain ref
     const cancel = await startPaymentReversal(admin, cancelledOrder.id, { requestKey: randomUUID(), kind: 'CANCEL', credits: 100, reason: 'Bank cancel fixture' });
     assert.equal(cancel.status, 'SUCCEEDED');
     assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: cancelledOrder.id } })).status, 'REFUNDED');
+    const selfOrder = await makeOrder();
+    const selfForm = await beginAkbankCheckout(actor, selfOrder.id, { card }); paid(selfForm.fields);
+    const selfSession = await db.paymentCheckoutSession.findUniqueOrThrow({ where: { attemptId: selfForm.fields.orderId } });
+    await akbankCallback(selfSession.id, callback(selfForm.fields));
+    const selfRequest = { requestKey: randomUUID(), reason: 'Customer unused Akbank payment' };
+    const selfRefund = await startPaymentReversal(actor, selfOrder.id, selfRequest, false);
+    assert.equal(selfRefund.status, 'SUCCEEDED');
+    assert.equal(selfRefund.kind, 'CANCEL');
+    assert.equal((await startPaymentReversal(actor, selfOrder.id, selfRequest, false)).id, selfRefund.id);
     const pendingOrder = await makeOrder();
     const pendingForm = await beginAkbankCheckout(actor, pendingOrder.id, { card });
     queryUnavailable = true;

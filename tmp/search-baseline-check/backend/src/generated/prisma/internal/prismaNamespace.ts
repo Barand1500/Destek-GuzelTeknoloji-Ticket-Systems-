@@ -454,6 +454,7 @@ export const ModelName = {
   CreditAlertReceipt: 'CreditAlertReceipt',
   CreditSalesPeriod: 'CreditSalesPeriod',
   CreditSubscription: 'CreditSubscription',
+  AkbankRecurringInstruction: 'AkbankRecurringInstruction',
   CreditPaymentAttempt: 'CreditPaymentAttempt',
   PaymentGatewaySettings: 'PaymentGatewaySettings',
   PaymentCheckoutSession: 'PaymentCheckoutSession',
@@ -474,7 +475,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "creditPaymentAttempt" | "paymentGatewaySettings" | "paymentCheckoutSession" | "paymentStoredMethod" | "paymentReversal"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "akbankRecurringInstruction" | "creditPaymentAttempt" | "paymentGatewaySettings" | "paymentCheckoutSession" | "paymentStoredMethod" | "paymentReversal"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4240,6 +4241,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AkbankRecurringInstruction: {
+      payload: Prisma.$AkbankRecurringInstructionPayload<ExtArgs>
+      fields: Prisma.AkbankRecurringInstructionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AkbankRecurringInstructionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AkbankRecurringInstructionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        findFirst: {
+          args: Prisma.AkbankRecurringInstructionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AkbankRecurringInstructionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        findMany: {
+          args: Prisma.AkbankRecurringInstructionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>[]
+        }
+        create: {
+          args: Prisma.AkbankRecurringInstructionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        createMany: {
+          args: Prisma.AkbankRecurringInstructionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.AkbankRecurringInstructionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        update: {
+          args: Prisma.AkbankRecurringInstructionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        deleteMany: {
+          args: Prisma.AkbankRecurringInstructionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AkbankRecurringInstructionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.AkbankRecurringInstructionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AkbankRecurringInstructionPayload>
+        }
+        aggregate: {
+          args: Prisma.AkbankRecurringInstructionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAkbankRecurringInstruction>
+        }
+        groupBy: {
+          args: Prisma.AkbankRecurringInstructionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AkbankRecurringInstructionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AkbankRecurringInstructionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AkbankRecurringInstructionCountAggregateOutputType> | number
+        }
+      }
+    }
     CreditPaymentAttempt: {
       payload: Prisma.$CreditPaymentAttemptPayload<ExtArgs>
       fields: Prisma.CreditPaymentAttemptFieldRefs
@@ -5470,6 +5537,21 @@ export const CreditSubscriptionScalarFieldEnum = {
 export type CreditSubscriptionScalarFieldEnum = (typeof CreditSubscriptionScalarFieldEnum)[keyof typeof CreditSubscriptionScalarFieldEnum]
 
 
+export const AkbankRecurringInstructionScalarFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  checkoutSessionId: 'checkoutSessionId',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  failureCode: 'failureCode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  nextCheckAt: 'nextCheckAt'
+} as const
+
+export type AkbankRecurringInstructionScalarFieldEnum = (typeof AkbankRecurringInstructionScalarFieldEnum)[keyof typeof AkbankRecurringInstructionScalarFieldEnum]
+
+
 export const CreditPaymentAttemptScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
@@ -6245,6 +6327,18 @@ export const CreditSubscriptionOrderByRelevanceFieldEnum = {
 export type CreditSubscriptionOrderByRelevanceFieldEnum = (typeof CreditSubscriptionOrderByRelevanceFieldEnum)[keyof typeof CreditSubscriptionOrderByRelevanceFieldEnum]
 
 
+export const AkbankRecurringInstructionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  checkoutSessionId: 'checkoutSessionId',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  failureCode: 'failureCode'
+} as const
+
+export type AkbankRecurringInstructionOrderByRelevanceFieldEnum = (typeof AkbankRecurringInstructionOrderByRelevanceFieldEnum)[keyof typeof AkbankRecurringInstructionOrderByRelevanceFieldEnum]
+
+
 export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {
   id: 'id',
   orderId: 'orderId',
@@ -6600,6 +6694,7 @@ export type GlobalOmitConfig = {
   creditAlertReceipt?: Prisma.CreditAlertReceiptOmit
   creditSalesPeriod?: Prisma.CreditSalesPeriodOmit
   creditSubscription?: Prisma.CreditSubscriptionOmit
+  akbankRecurringInstruction?: Prisma.AkbankRecurringInstructionOmit
   creditPaymentAttempt?: Prisma.CreditPaymentAttemptOmit
   paymentGatewaySettings?: Prisma.PaymentGatewaySettingsOmit
   paymentCheckoutSession?: Prisma.PaymentCheckoutSessionOmit

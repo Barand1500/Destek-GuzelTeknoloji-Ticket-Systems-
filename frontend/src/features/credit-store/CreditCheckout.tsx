@@ -23,8 +23,8 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
     {order.isPending && <p role="status">Sipariş yükleniyor…</p>}
     {data && <div className="credit-sales-card">
       <h3>{data.name}</h3><p>Sipariş #{data.number} · {count(data.credits)} kredi</p><strong className="credit-price">{money(data.total, data.currency)}</strong>
-      {future && <p className="credit-store-notice">Yeni paketiniz {data.periodStartsOn!.slice(0, 10).split('-').reverse().join('.')} tarihinde başlayacak. Ödemeyi o tarihte yapabilirsiniz; şimdi ücret alınmaz.</p>}
-      {!data.paymentAvailable && <p className="credit-store-notice">Online ödeme şu anda kapalı. Siparişiniz kayıtlı; ödeme alınmadı ve kredi yüklenmedi.</p>}
+      {future && <p className="credit-store-notice">Ödeme {data.periodStartsOn!.slice(0, 10).split('-').reverse().join('.')} tarihinde açılacak.</p>}
+      {!data.paymentAvailable && <p className="credit-store-notice">Online ödeme şu anda kapalı.</p>}
       {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} />}
       {data.paymentAvailable && !future && data.provider !== 'akbank' && <form onSubmit={e => { e.preventDefault(); pay.mutate(); }}>
         <h3>Fatura ve İletişim Bilgileri</h3>
@@ -32,7 +32,7 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
           {field('name', 'Ad', 80)}{field('surname', 'Soyad', 80)}{field('identityNumber', 'T.C. Kimlik No', 11)}{field('email', 'E-posta', 191, 'email')}{field('phone', 'Telefon', 18, 'tel')}{field('city', 'Şehir', 80)}{field('address', 'Fatura adresi', 500)}{field('country', 'Ülke', 80)}
         </fieldset>
         {data.renewalRequested && <label className="integration-toggle credit-renewal-choice"><span>Kartımın iyzico tarafından saklanmasını ve seçtiğim dönemlerde aynı tutarın otomatik çekilmesini onaylıyorum. Yenilemeyi Aboneliklerim bölümünden kapatabilirim.</span><input type="checkbox" role="switch" checked={billing.renewalConsent} onChange={e => setBilling(v => ({ ...v, renewalConsent: e.target.checked }))} /><i aria-hidden="true" /></label>}
-        <p><LockKeyhole size={16} /> Kart bilgilerinizi iyzico'nun güvenli ödeme sayfasında gireceksiniz. Ödeme tek çekim yapılır.</p>
+        <p><LockKeyhole size={16} /> Kart bilgilerinizi sonraki adımda gireceksiniz.</p>
         <ErrorMessage error={pay.error} />
         <button className="button primary" disabled={pay.isPending || Boolean(data.renewalRequested && (!billing.renewalConsent || !data.recurringAvailable))}>{pay.isPending ? 'Yönlendiriliyor…' : money(data.total, data.currency) + ' Ödemeye Geç'}</button>
         {data.renewalRequested && !data.recurringAvailable && <p role="alert">Otomatik yenileme şu anda kapalı. Yenilemesiz paket seçin veya yöneticiyle iletişime geçin.</p>}

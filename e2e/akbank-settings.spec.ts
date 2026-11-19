@@ -17,6 +17,10 @@ test('Akbank setup saves credentials then clears and masks them without enabling
   });
   await page.goto('/admin/settings/payments');
   const panel = page.getByRole('region', { name: 'Akbank Sanal POS', exact: true });
+  await expect(panel.getByRole('button', { name: 'Akbank ortamı' })).toContainText('Test ortamı');
+  const heading = await panel.getByRole('heading', { name: 'Akbank Sanal POS' }).boundingBox();
+  const toggle = await panel.getByRole('switch', { name: 'Akbank online ödeme' }).locator('..').boundingBox();
+  expect(Math.abs(heading!.y - toggle!.y)).toBeLessThan(35);
   await panel.getByLabel('İşyeri kimliği (Merchant Safe ID)').fill('fixture-merchant');
   await panel.getByLabel('Terminal Safe ID').fill('fixture-terminal');
   await panel.getByLabel('Güvenlik anahtarı').fill('fixture-secret');
@@ -26,4 +30,9 @@ test('Akbank setup saves credentials then clears and masks them without enabling
   await expect(panel.getByLabel('Terminal Safe ID')).toHaveValue('');
   expect(writes).toEqual([{ mode: 'sandbox', enabled: false, publicUrl: 'https://portal.test', merchantSafeId: 'fixture-merchant', terminalSafeId: 'fixture-terminal', secretKey: 'fixture-secret' }]);
   await expect(panel.getByRole('switch', { name: 'Akbank online ödeme' })).toBeDisabled();
+  await panel.getByRole('button', { name: 'Akbank ortamı' }).click();
+  await panel.getByRole('option', { name: 'Canlı ortam', exact: true }).click();
+  await expect(panel.getByLabel('Güvenlik anahtarı')).toHaveAttribute('required', '');
+  await expect(panel.getByRole('switch', { name: 'Akbank online ödeme' })).toBeDisabled();
+  await expect(panel.getByText('Seçtiğiniz ortama ait üç bilgiyi yeniden girin.')).toBeVisible();
 });

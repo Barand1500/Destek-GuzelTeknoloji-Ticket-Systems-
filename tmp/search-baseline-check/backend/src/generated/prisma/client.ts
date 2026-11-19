@@ -327,6 +327,11 @@ export type CreditSalesPeriod = Prisma.CreditSalesPeriodModel
  */
 export type CreditSubscription = Prisma.CreditSubscriptionModel
 /**
+ * Model AkbankRecurringInstruction
+ * 
+ */
+export type AkbankRecurringInstruction = Prisma.AkbankRecurringInstructionModel
+/**
  * Model CreditPaymentAttempt
  * 
  */

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { CreditCard, LockKeyhole } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { api, errorText } from '../../services/api';
 import { money } from './types';
 
@@ -38,7 +38,6 @@ export function AkbankCardForm({ orderId, total, currency, renewalRequested }: {
       <label><span className="field-label">CVC *</span><input required type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{3}" maxLength={3} placeholder="•••" value={card.cvc} onChange={e => setCard(v => ({ ...v, cvc: digits(e.target.value, 3) }))} /></label>
     </fieldset>
     {renewalRequested && <label className="integration-toggle credit-renewal-choice"><span>Bu paketi tek ödemeyle almayı kabul ediyorum. Sonraki dönemde kartımdan otomatik ödeme çekilmeyecek.</span><input type="checkbox" role="switch" checked={consent} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>}
-    <p className="credit-help"><LockKeyhole size={16} /> Tek çekim. Kartı doğrulamak için bankanızın 3D ekranına geçeceksiniz. Kart bilgileriniz kaydedilmez.</p>
     {error && <p className="notice error" role="alert">{error}</p>}
     <button type="submit" className="button primary" disabled={busy || Boolean(renewalRequested && !consent)}>{busy ? 'Bankaya yönlendiriliyor…' : money(total, currency) + ' Öde'}</button>
   </form>;

@@ -83,6 +83,7 @@ export function CustomerCreditStore() {
     setPreview(null);
   }, [catalog.data?.settings.unitPrice, catalog.data?.settings.currency]);
   const data = catalog.data;
+  const renewalSupported = data?.provider !== 'akbank';
   const priceMinor = Math.round(Number(data?.settings.unitPrice ?? 0) * 100);
   const reset = () => {
     setPreview(null);
@@ -161,7 +162,7 @@ export function CustomerCreditStore() {
             </p>
           ) : (
             <>
-              <div className="credit-store-tabs" aria-label="Satın alma türü">
+              <div className="integration-subtabs credit-catalog-tabs" aria-label="Satın alma türü">
                 {(["credits", "plans"] as const).map((value) => (
                   <button
                     type="button"
@@ -287,10 +288,11 @@ export function CustomerCreditStore() {
                             role="switch"
                             aria-label={plan.name + " dönem sonunda tekrarla"}
                             checked={
-                              renewalChoices[plan.id] ??
+                              renewalSupported && (renewalChoices[plan.id] ??
                               plan.renewalRequested ??
-                              false
+                              false)
                             }
+                            disabled={!renewalSupported}
                             onChange={(event) => {
                               reset();
                               setRenewalChoices((current) => ({
@@ -302,7 +304,7 @@ export function CustomerCreditStore() {
                           <i aria-hidden="true" />
                         </label>
                         <p className="credit-help">
-                          Yenileme açıksa aynı tutar ve dönem kullanılır. Kart saklama onayı ödeme adımında alınır.
+                          {renewalSupported ? 'Yenileme için ödeme adımında kart saklama onayı gerekir.' : 'Akbank ödemelerinde otomatik yenileme yok.'}
                         </p>
                         <button
                           className="button primary"
@@ -313,9 +315,9 @@ export function CustomerCreditStore() {
                             quote.mutate({
                               planId: plan.id,
                               renewalRequested:
-                                renewalChoices[plan.id] ??
+                                renewalSupported && (renewalChoices[plan.id] ??
                                 plan.renewalRequested ??
-                                false,
+                                false),
                             });
                           }}
                         >
@@ -371,7 +373,7 @@ export function CustomerCreditStore() {
                           <label className="integration-toggle credit-sales-toggle">
                             <span>
                               <strong>
-                                {preview.renewalRequested
+                                {renewalSupported && (preview.renewalRequested ?? ("planId" in preview.selection && preview.selection.renewalRequested))
                                   ? "Evet"
                                   : "Hay\u0131r"}
                               </strong>
@@ -381,11 +383,11 @@ export function CustomerCreditStore() {
                               role="switch"
                               aria-label="Özette dönem sonunda tekrarla"
                               checked={
-                                preview.renewalRequested ??
-                                preview.selection.renewalRequested
+                                renewalSupported && (preview.renewalRequested ??
+                                preview.selection.renewalRequested)
                               }
                               disabled={
-                                quote.isPending ||
+                                !renewalSupported || quote.isPending ||
                                 create.isPending ||
                                 create.isSuccess
                               }
@@ -409,7 +411,7 @@ export function CustomerCreditStore() {
                           </label>
                           <small>
                             {
-                              "Kart saklama onay\u0131yla otomatik yenilenir; istedi\u011finizde kapatabilirsiniz."
+                              renewalSupported ? "Kart saklama onayıyla yenilenir; Aboneliklerim’den kapatabilirsiniz." : "Akbank ödemelerinde otomatik yenileme yok."
                             }
                           </small>
                         </dd>
@@ -421,7 +423,7 @@ export function CustomerCreditStore() {
                     </div>
                   {preview.startsOn && <div><dt>Yeni dönem</dt><dd>{preview.startsOn.split("-").reverse().join(".")} — {preview.endsOn?.split("-").reverse().join(".")}</dd></div>}
                   </dl>
-                  {preview.currentPackage && <label className="integration-toggle credit-renewal-choice"><span>Mevcut paketin yenilemesini kapatıp yeni paketi dönem sonunda başlatmayı onaylıyorum. Yeni siparişi iptal edersem eski yenileme kendiliğinden açılmaz.</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
+                  {preview.currentPackage && <label className="integration-toggle credit-renewal-choice"><span>{preview.currentPackage.autoRenew ? 'Mevcut otomatik yenilemeyi kapatıp yeni paketi dönem sonunda başlatmayı onaylıyorum. Bu siparişi iptal edersem eski yenileme açılmaz.' : 'Yeni paketin mevcut dönem bittikten sonra başlamasını onaylıyorum.'}</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
                   <p className="credit-store-notice">
                     <Info size={18} /> {data.paymentAvailable ? 'Siparişi oluşturduktan sonra güvenli ödeme sayfasına geçebilirsiniz. Kredi, ödeme doğrulanınca yüklenir.' : 'Online ödeme şu anda kapalı. Sipariş oluşturabilirsiniz; ödeme alınmaz ve kredi yüklenmez.'}
                   </p>

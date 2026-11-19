@@ -54,7 +54,7 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
       {query.data?.data.map(row => <tr key={row.id}>{admin && <td>{row.customer.company || row.customer.name}</td>}<td>{row.name}<small>{periodLabel(row)}</small></td><td>{money(row.amount, row.currency)}</td><td>{count(row.credits)}</td><td>{statuses[row.status as keyof typeof statuses] ?? row.status}</td><td>{date(row.currentEndsOn)}</td><td>{date(row.nextPaymentOn)}</td><td><div className="subscription-actions">
         {!admin && row.status === 'AWAITING_CONSENT' && <button className="button primary" type="button" disabled={save.isPending} onClick={() => { setConsent(false); save.reset(); setTarget({ row, action: 'accept' }); }}>Koşulları Onayla</button>}
         {!admin && ['AWAITING_PAYMENT', 'PAST_DUE'].includes(row.status) && <button className="button primary" type="button" disabled={checkout.isPending} onClick={() => checkout.mutate(row.id)}>Ödemeye Geç</button>}
-        {canStop && row.status !== 'STOPPED' && <button className="button secondary" type="button" disabled={save.isPending} onClick={() => { save.reset(); setTarget({ row, action: 'stop' }); }}>Yenilemeyi Kapat</button>}
+        {canStop && row.autoRenew && row.status !== 'STOPPED' && <button className="button secondary" type="button" disabled={save.isPending} onClick={() => { save.reset(); setTarget({ row, action: 'stop' }); }}>Yenilemeyi Kapat</button>}
         <Link className="button secondary" to={`?view=orders&subscriptionId=${row.id}`}>Siparişler</Link>
       </div></td></tr>)}
       {!query.isPending && !query.isError && !query.data?.data.length && <tr><td colSpan={admin ? 8 : 7}>Henüz abonelik bulunmuyor.</td></tr>}

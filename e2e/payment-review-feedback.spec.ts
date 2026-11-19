@@ -4,6 +4,8 @@ test('payment inquiry shows its result even when payment remains pending', async
   await page.route('**/api/v1/**', async route => {
     const path = new URL(route.request().url()).pathname;
     let data: any = [];
+    if (path.endsWith('/credit-sales')) data = { settings: { currency: 'TRY', unitPrice: '1', enabled: true }, plans: [] };
+    if (path.endsWith('/credit-sales/orders')) return route.fulfill({ json: { success: true, data: [{ id: 'order', number: 3, name: 'Ek kredi', kind: 'TOP_UP', credits: 1, total: '1.00', currency: 'TRY', status: 'PENDING', paymentInProgress: true, createdAt: '2026-01-01T00:00:00Z', customer: { name: 'Customer' } }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } });
     if (path.endsWith('/auth/refresh')) data = { accessToken: 'test', user: { id: 'admin', name: 'Admin', role: 'ADMIN' } };
     if (path.endsWith('/payment-settings')) data = { provider: 'iyzico', enabled: false, recurringEnabled: false, mode: 'sandbox', publicUrl: '', credentialsConfigured: false, testedAt: null, lastError: null };
     if (path.endsWith('/payment-settings/akbank')) data = { mode: 'sandbox', enabled: false, publicUrl: '', credentialsConfigured: false, testedAt: null, lastError: null };
@@ -11,7 +13,8 @@ test('payment inquiry shows its result even when payment remains pending', async
     if (path.endsWith('/pending/attempt/check')) data = { message: 'Banka sorgulandı; ödeme sonucu henüz kesinleşmedi.' };
     await route.fulfill({ json: { success: true, data } });
   });
-  await page.goto('/admin/settings/payments');
+  await page.goto('/admin/credit-sales?view=orders');
+  await page.getByRole('button', { name: 'Ödeme Kontrolü', exact: true }).click();
   await page.getByRole('button', { name: 'Sonucu Sorgula', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Banka sorgulandı; ödeme sonucu henüz kesinleşmedi.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sonucu Sorgula', exact: true })).toBeEnabled();

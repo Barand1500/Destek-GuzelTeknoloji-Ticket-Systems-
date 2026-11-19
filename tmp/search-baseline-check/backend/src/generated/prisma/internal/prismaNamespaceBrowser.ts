@@ -108,6 +108,7 @@ export const ModelName = {
   CreditAlertReceipt: 'CreditAlertReceipt',
   CreditSalesPeriod: 'CreditSalesPeriod',
   CreditSubscription: 'CreditSubscription',
+  AkbankRecurringInstruction: 'AkbankRecurringInstruction',
   CreditPaymentAttempt: 'CreditPaymentAttempt',
   PaymentGatewaySettings: 'PaymentGatewaySettings',
   PaymentCheckoutSession: 'PaymentCheckoutSession',
@@ -992,6 +993,21 @@ export const CreditSubscriptionScalarFieldEnum = {
 export type CreditSubscriptionScalarFieldEnum = (typeof CreditSubscriptionScalarFieldEnum)[keyof typeof CreditSubscriptionScalarFieldEnum]
 
 
+export const AkbankRecurringInstructionScalarFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  checkoutSessionId: 'checkoutSessionId',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  failureCode: 'failureCode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  nextCheckAt: 'nextCheckAt'
+} as const
+
+export type AkbankRecurringInstructionScalarFieldEnum = (typeof AkbankRecurringInstructionScalarFieldEnum)[keyof typeof AkbankRecurringInstructionScalarFieldEnum]
+
+
 export const CreditPaymentAttemptScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
@@ -1765,6 +1781,18 @@ export const CreditSubscriptionOrderByRelevanceFieldEnum = {
 } as const
 
 export type CreditSubscriptionOrderByRelevanceFieldEnum = (typeof CreditSubscriptionOrderByRelevanceFieldEnum)[keyof typeof CreditSubscriptionOrderByRelevanceFieldEnum]
+
+
+export const AkbankRecurringInstructionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  checkoutSessionId: 'checkoutSessionId',
+  state: 'state',
+  contextCiphertext: 'contextCiphertext',
+  failureCode: 'failureCode'
+} as const
+
+export type AkbankRecurringInstructionOrderByRelevanceFieldEnum = (typeof AkbankRecurringInstructionOrderByRelevanceFieldEnum)[keyof typeof AkbankRecurringInstructionOrderByRelevanceFieldEnum]
 
 
 export const CreditPaymentAttemptOrderByRelevanceFieldEnum = {

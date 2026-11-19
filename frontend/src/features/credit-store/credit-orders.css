@@ -119,3 +119,22 @@
 .payment-reversal-row { border-top:1px solid var(--border); padding:16px 0; margin-top:16px; }
 .credit-order-status-partial_refund { background:rgba(181,125,22,.15); color:var(--text); }
 .credit-order-status-refunded { background:rgba(128,128,128,.14); color:var(--muted); }
+
+.payment-reversal-form, .payment-reversal-recovery { display:grid; gap:20px; min-width:0; }
+.payment-reversal-form { margin-top:24px; }
+.payment-reversal-form > p, .payment-reversal-recovery > p { margin:0; line-height:1.6; }
+.payment-reversal-form > .payment-settings-fields { margin:0; }
+.payment-reversal-form > .credit-renewal-choice, .payment-reversal-recovery > .integration-toggle { margin:0; }
+.payment-reversal-form > .button { justify-self:start; }
+.payment-reversal-recovery { margin-top:24px; }
+.payment-reversal-recovery > .payment-settings-actions { margin:0; }
+.credit-orders, .credit-orders-table-wrap, .credit-orders-filters > * { min-width:0; }
+.credit-orders .credit-log-table-wrap { max-width:100%; overflow-x:auto; }
+@media(max-width:640px) {
+  .credit-orders-filters { display:grid; grid-template-columns:minmax(0,1fr); }
+  .credit-orders-search, .credit-orders-filters .styled-dropdown { width:100%; min-width:0; }
+  .credit-orders-table { min-width:760px; }
+  .payment-reversal-panel .credit-store-title { flex-wrap:wrap; }
+  .payment-reversal-panel .payment-settings-actions { gap:12px; }
+  .payment-reversal-panel .payment-settings-actions > .button { white-space:normal; text-align:center; }
+}

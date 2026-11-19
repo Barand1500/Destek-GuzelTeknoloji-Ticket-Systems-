@@ -47,6 +47,13 @@ test('subscription checkout snapshots terms and links one subscription to an ide
     assert.ok((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).nextPaymentOn);
     const nextQuote = await storeQuote(actor, selection);
     assert.ok('startsOn' in nextQuote && nextQuote.currentPackage);
+    if (!('currentPackage' in nextQuote) || !nextQuote.currentPackage) throw new Error('Missing current package');
+    assert.equal(nextQuote.currentPackage.autoRenew, true);
+    await db.creditSubscription.update({ where: { id: sub.id }, data: { autoRenew: false } });
+    const nonRenewingQuote = await storeQuote(actor, selection);
+    assert.equal('currentPackage' in nonRenewingQuote && nonRenewingQuote.currentPackage?.autoRenew, false);
+    assert.notEqual(nonRenewingQuote.quoteKey, nextQuote.quoteKey, 'Renewal-state changes require fresh confirmation');
+    await db.creditSubscription.update({ where: { id: sub.id }, data: { autoRenew: true } });
     if (!('startsOn' in nextQuote)) throw new Error('Missing schedule');
     assert.equal(nextQuote.startsOn, new Date(grant.endsOn.getTime() + 86400000).toISOString().slice(0,10));
     const nextInput = { requestKey: randomUUID(), selection, quoteKey: nextQuote.quoteKey };

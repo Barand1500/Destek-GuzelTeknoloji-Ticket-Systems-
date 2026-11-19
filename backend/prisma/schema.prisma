@@ -834,6 +834,7 @@ model CreditSalesPeriod {
 
 
 model CreditSubscription {
+ akbankInstructions AkbankRecurringInstruction[]
  id String @id @default(uuid())
  customerId String
  customer User @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -863,6 +864,21 @@ model CreditSubscription {
  orders CreditOrder[]
  @@index([customerId, createdAt, id])
  @@index([autoRenew, status, nextPaymentOn])
+}
+
+model AkbankRecurringInstruction {
+ id String @id @default(uuid())
+ subscriptionId String
+ subscription CreditSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+ checkoutSessionId String @unique
+ state String @default("REGISTERING") @db.VarChar(24)
+ contextCiphertext String @db.Text
+ failureCode String? @db.VarChar(80)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ nextCheckAt DateTime?
+ @@index([state, nextCheckAt])
+ @@index([subscriptionId, createdAt])
 }
 
 model CreditPaymentAttempt {

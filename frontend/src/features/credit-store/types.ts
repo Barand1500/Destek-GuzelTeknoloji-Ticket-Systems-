@@ -47,11 +47,13 @@ export type SalesCatalog = {
   plans: SalesPlan[];
   owner?: Owner;
   paymentAvailable?: boolean;
+  provider?: string;
+  recurringAvailable?: boolean;
 };
 export type Quote = {
   quoteKey: string;
   startsOn?: string; endsOn?: string;
-  currentPackage?: { id: string; name: string; endsOn: string; remainingDays: number } | null;
+  currentPackage?: { id: string; name: string; endsOn: string; remainingDays: number; autoRenew?: boolean } | null;
   name: string;
   credits: number;
   total: string;

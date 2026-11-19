@@ -27,7 +27,7 @@ export async function getPaymentSettings(actor: Actor) {
   paymentStaff(actor);
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
   return { provider: 'iyzico', enabled: row?.enabled ?? false, recurringEnabled: row?.recurringEnabled ?? false,
-    mode: row?.mode ?? 'sandbox', publicUrl: row?.publicUrl ?? env.FRONTEND_URL,
+    mode: row?.mode ?? 'production', publicUrl: row?.publicUrl ?? env.FRONTEND_URL,
     credentialsConfigured: Boolean(row?.credentialsCiphertext), testedAt: row?.testedAt ?? null, lastError: row?.lastError ?? null };
 }
 export async function savePaymentSettings(actor: Actor, raw: unknown) {

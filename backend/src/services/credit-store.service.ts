@@ -273,7 +273,7 @@ function quoteSnapshot<
     validityDays: number | null;
     periodName?: string | null;
     renewalRequested?: boolean;
-    startsOn?: string; endsOn?: string; currentPackage?: { id: string } | null;
+    startsOn?: string; endsOn?: string; currentPackage?: { id: string; autoRenew?: boolean } | null;
   },
 >(quote: T) {
   const quoteKey = createHash("sha256")
@@ -287,7 +287,7 @@ function quoteSnapshot<
         quote.currency,
         quote.periodMonths,
         quote.validityDays,
-        ...(quote.startsOn ? [quote.startsOn, quote.endsOn, quote.currentPackage?.id ?? null] : []),
+        ...(quote.startsOn ? [quote.startsOn, quote.endsOn, quote.currentPackage?.id ?? null, quote.currentPackage?.autoRenew ?? false] : []),
         ...(quote.periodName || quote.renewalRequested
           ? [quote.periodName ?? null, quote.renewalRequested ?? false]
           : []),

@@ -37,7 +37,7 @@ paymentRouter.get('/credit-sales/payment-settings/akbank', async (req, res) => r
 paymentRouter.put('/credit-sales/payment-settings/akbank', async (req, res) => res.json({ success: true, data: await saveAkbankSettings(req.actor, req.body) }));
 paymentRouter.post('/credit-sales/payment-settings/akbank/test', async (req, res) => res.json({ success: true, data: await testAkbankConnection(req.actor) }));
 paymentRouter.post('/credit-sales/payment-settings/test', async (req, res) => res.json({ success: true, data: await settings.testPaymentConnection(req.actor) }));
-paymentRouter.get('/credit-sales/payment-settings/pending', async (req, res) => res.json({ success: true, data: await pendingPaymentReviews(req.actor) }));
+paymentRouter.get('/credit-sales/payment-settings/pending', async (req, res) => res.json({ success: true, data: await pendingPaymentReviews(req.actor, req.query.orderId ? idSchema.parse(req.query.orderId) : undefined) }));
 paymentRouter.post('/credit-sales/payment-settings/pending/:id/check', async (req, res) => res.json({ success: true, data: await checkPaymentReview(req.actor, idSchema.parse(req.params.id)) }));
 paymentRouter.post('/credit-sales/payment-settings/pending/:id/no-charge', async (req, res) => res.json({ success: true, data: await closeUnchargedPayment(req.actor, idSchema.parse(req.params.id), req.body) }));
 const checkoutLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, keyGenerator: req => req.actor.id });
@@ -56,6 +56,7 @@ paymentRouter.post('/my/credit-store/orders/:id/pay', checkoutLimit, async (req,
 paymentRouter.post('/my/credit-store/subscriptions/:id/checkout', checkoutLimit, async (req, res) => res.json({ success: true, data: await subscriptionCheckoutOrder(req.actor, idSchema.parse(req.params.id)) }));
 paymentRouter.get('/credit-sales/orders/:id/reversals', async (req, res) => res.json({ success: true, data: await reversalSummary(req.actor, idSchema.parse(req.params.id)) }));
 paymentRouter.get('/my/credit-store/orders/:id/reversals', async (req, res) => res.json({ success: true, data: await reversalSummary(req.actor, idSchema.parse(req.params.id), false) }));
+paymentRouter.post('/my/credit-store/orders/:id/reversals', checkoutLimit, async (req, res) => res.json({ success: true, data: await startPaymentReversal(req.actor, idSchema.parse(req.params.id), req.body, false) }));
 paymentRouter.post('/credit-sales/orders/:id/reversals', checkoutLimit, async (req, res) => res.json({ success: true, data: await startPaymentReversal(req.actor, idSchema.parse(req.params.id), req.body) }));
 paymentRouter.post('/credit-sales/reversals/:id/check', checkoutLimit, async (req, res) => { settings.paymentStaff(req.actor, true); res.json({ success: true, data: await reconcilePaymentReversal(idSchema.parse(req.params.id)) }); });
 paymentRouter.post('/credit-sales/reversals/:id/no-refund', checkoutLimit, async (req, res) => res.json({ success: true, data: await closeUnrefundedReversal(req.actor, idSchema.parse(req.params.id), req.body) }));

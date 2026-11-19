@@ -33,26 +33,7 @@
   margin: 16px 0;
   color: var(--muted);
 }
-.credit-store-tabs {
-  display: flex;
-  gap: 6px;
-  border-bottom: 1px solid var(--border);
-  margin: 20px 0;
-}
-.credit-store-tabs button {
-  font: inherit;
-  font-weight: 600;
-  background: transparent;
-  color: var(--muted);
-  padding: 14px 20px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-}
-.credit-store-tabs button.active {
-  color: var(--text);
-  border-bottom-color: #67c9ed;
-}
+.credit-catalog-tabs { margin:20px 0; }
 .credit-purchase-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -667,4 +648,38 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
 .akbank-card-form .credit-help { display:flex; align-items:flex-start; gap:8px; margin:20px 0; }
 .akbank-card-form .credit-help svg { flex:0 0 auto; margin-top:2px; }
 .payment-reviews { margin-top:24px; }
+.payment-provider-heading > .integration-toggle { width:auto; flex:0 0 auto; padding:0; border:0; background:transparent; }
+.payment-settings-fields .payment-callback-url { grid-column:auto; }
+.payment-provider-heading { gap:16px; }
 @media(max-width:640px) { .payment-settings-fields { grid-template-columns:minmax(0,1fr); } }
+
+.credit-workspace-tabs { margin-bottom:20px; min-width:0; flex-wrap:wrap; }
+.credit-workspace-tabs button > svg { flex-shrink:0; }
+.customer-billing-workspace .integration-tabs-row .integration-subtabs { flex:1; min-width:0; border-bottom:0; }
+.credit-store, .credit-checkout, .credit-sales-sections, .customer-billing-workspace { min-width:0; }
+.credit-sales-card-heading { flex-wrap:wrap; gap:16px; }
+.credit-sales-card input, .credit-sales-card textarea { max-width:100%; min-width:0; }
+.credit-form-actions { flex-wrap:wrap; }
+.credit-checkout > .button { margin-bottom:20px; }
+.credit-store-owner, .credit-store-notice { overflow-wrap:anywhere; }
+.credit-renewal-choice > span { min-width:0; overflow-wrap:anywhere; }
+.credit-renewal-choice > i { flex-shrink:0; }
+
+@media (max-width:720px) {
+  .credit-admin-plans article { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; }
+  .credit-admin-plans article > svg { grid-column:1; grid-row:1; }
+  .credit-admin-plans article > div { grid-column:2 / -1; grid-row:1; }
+  .credit-admin-plans article > .credit-plan-state { grid-column:1 / -1; grid-row:2; justify-self:start; }
+  .credit-admin-plans article > .button { grid-column:1 / 3; grid-row:3; margin-left:0; justify-self:start; }
+  .credit-admin-plans article > .credit-plan-delete { grid-column:3; grid-row:3; }
+  .credit-admin-plans article > div strong { overflow-wrap:break-word; }
+  .credit-sales-card, .credit-plan-editor { padding:16px; }
+  .credit-sales-page .credit-settings-fields, .credit-store .credit-fields { grid-template-columns:minmax(0,1fr); }
+  .credit-workspace-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .credit-workspace-tabs button { min-width:0; text-align:left; padding:12px 8px; overflow-wrap:anywhere; }
+  .credit-quote dl > div { display:grid; grid-template-columns:minmax(0,1fr); }
+  .credit-quote dd { text-align:left; min-width:0; }
+  .credit-catalog-tabs button { padding:12px; }
+  .credit-plan-editor { min-width:0; }
+  .credit-store-title > *, .credit-sales-card-heading > * { min-width:0; }
+}

@@ -15,7 +15,7 @@ import {
   useQueryClient,
   useIsMutating,
 } from "@tanstack/react-query";
-import { Coins, Plus, Pencil, X } from "lucide-react";
+import { Coins, Plus, Pencil, X, ShoppingBag, Repeat } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from "../auth/permissions";
@@ -151,22 +151,18 @@ export function CreditSalesPage() {
       <Heading
         title="Kredi ve Paket Ayarları"
         description="Kredi birim fiyatını ve müşterilerin göreceği abonelikleri yönetin."
-      >
-        <button
-          className="button secondary"
-          type="button"
-          onClick={() => setParams(ordersVisible || subscriptionsVisible ? {} : { view: "orders" })}
-        >
-          {ordersVisible || subscriptionsVisible ? "Kredi Ayarları" : "Siparişler"}
-        </button>
-
-      </Heading>
-      {(ordersVisible || subscriptionsVisible) && <div className="relation-tabs" aria-label="Sipariş ve abonelik yönetimi">
-        <button type="button" className={'relation-tab' + (ordersVisible ? ' active' : '')} aria-pressed={ordersVisible} onClick={() => setParams({ view: 'orders' })}>Siparişler</button>
-        <button type="button" className={'relation-tab' + (subscriptionsVisible ? ' active' : '')} aria-pressed={subscriptionsVisible} onClick={() => setParams({ view: 'subscriptions' })}>Abonelikler</button>
-      </div>}
+      />
+      <div className="integration-tabs credit-workspace-tabs" role="tablist" aria-label="Kredi ve paket sayfaları">
+        <button type="button" role="tab" className={!ordersVisible && !subscriptionsVisible ? 'active' : ''} aria-selected={!ordersVisible && !subscriptionsVisible} onClick={() => setParams({})}><Coins size={17} />Kredi ve Paketler</button>
+        <button type="button" role="tab" className={ordersVisible || subscriptionsVisible ? 'active' : ''} aria-selected={ordersVisible || subscriptionsVisible} onClick={() => setParams({ view: 'orders' })}><ShoppingBag size={17} />Siparişler ve Abonelikler</button>
+      </div>
+      {(ordersVisible || subscriptionsVisible) && <div className="integration-shell customer-billing-workspace"><div className="integration-subtabs" role="tablist" aria-label="Sipariş ve abonelik yönetimi">
+        <button type="button" role="tab" className={ordersVisible ? 'active' : ''} aria-selected={ordersVisible} onClick={() => setParams({ view: 'orders' })}><ShoppingBag size={17} />Siparişler</button>
+        <button type="button" role="tab" className={subscriptionsVisible ? 'active' : ''} aria-selected={subscriptionsVisible} onClick={() => setParams({ view: 'subscriptions' })}><Repeat size={17} />Abonelikler</button>
+      </div>
       {ordersVisible && <CreditOrders admin />}
       {subscriptionsVisible && <CreditSubscriptions admin />}
+      </div>}
       <div className="credit-sales-sections" hidden={ordersVisible || subscriptionsVisible}>
 
         {query.isPending && <p role="status">Ayarlar yükleniyor…</p>}

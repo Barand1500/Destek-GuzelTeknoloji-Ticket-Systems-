@@ -6,9 +6,9 @@ import { paymentStaff } from './payment-settings.service.js';
 import { reconcileIyzicoSession } from './iyzico-payments.service.js';
 import { reconcileAkbankSession } from './akbank-payments.service.js';
 
-export async function pendingPaymentReviews(actor: Actor) {
+export async function pendingPaymentReviews(actor: Actor, orderId?: string) {
   paymentStaff(actor);
-  const where = { provider: { in: ['iyzico', 'akbank'] }, status: 'PENDING', createdAt: { lte: new Date(Date.now() - 15 * 60_000) } };
+  const where = { provider: { in: ['iyzico', 'akbank'] }, status: 'PENDING', ...(orderId ? { orderId } : { createdAt: { lte: new Date(Date.now() - 15 * 60_000) } }) };
   const [total, data] = await Promise.all([db.creditPaymentAttempt.count({ where }), db.creditPaymentAttempt.findMany({ where, take: 50, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: { id: true, createdAt: true, failureCode: true, order: { select: { number: true, name: true, total: true, currency: true } } } })]);
   return { total, data: data.map(v => ({ ...v, order: { ...v.order, total: v.order.total.toFixed(2) } })) };

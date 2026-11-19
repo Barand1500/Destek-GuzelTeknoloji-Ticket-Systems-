@@ -9,8 +9,10 @@ import type { AkbankConfig } from './akbank-client.js';
 import { dispatchAkbankReversal, reconcileAkbankReversal } from './akbank-reversals.js';
 import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
 import { publishChange } from './events.service.js';
+import { creditStoreOwner } from './credit-store.service.js';
 
 const inputSchema = z.object({ requestKey: z.uuid(), kind: z.enum(['REFUND', 'CANCEL']), credits: z.number().int().positive().max(1_000_000), reason: z.string().trim().min(3).max(500) }).strict();
+const customerInputSchema = inputSchema.pick({ requestKey: true, reason: true }).strict();
 const conflict = (message: string) => new AppError(409, 'REFUND_NOT_ALLOWED', message);
 const safeSelect = { id: true, kind: true, status: true, credits: true, amount: true, currency: true, reason: true, failureCode: true, createdAt: true, completedAt: true } as const;
 const serialize = <T extends { amount: Prisma.Decimal }>(row: T) => ({ ...row, amount: row.amount.toFixed(2) });
@@ -37,18 +39,25 @@ export async function reversalSummary(actor: Actor, orderId: string, admin = tru
   if (available) try { amount = refundValue(order.total.toFixed(2), order.credits, totals._sum.credits ?? 0, totals._sum.amount?.toFixed(2) ?? '0', available).toFixed(2); } catch (error) { if (!(error instanceof AppError)) throw error; }
   return { data: data.map(serialize), orderId, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
     refundedCredits: totals._sum.credits ?? 0, refundedAmount: totals._sum.amount?.toFixed(2) ?? '0.00', hasPending: data.some(v => ['PENDING', 'REVIEW'].includes(v.status)), usedCredits: agreement?.usedCredits ?? 0,
+    canSelfRefund: order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
     canCancel: Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
 }
 
-export async function startPaymentReversal(actor: Actor, orderId: string, raw: unknown) {
-  paymentStaff(actor, true);
-  const input = inputSchema.parse(raw);
+export async function startPaymentReversal(actor: Actor, orderId: string, raw: unknown, admin = true) {
+  if (admin) paymentStaff(actor, true);
+  const input = admin ? inputSchema.parse(raw) : { ...customerInputSchema.parse(raw), kind: 'REFUND' as 'REFUND' | 'CANCEL', credits: 0 };
   const prepared = await db.$transaction(async tx => {
     const initial = await tx.creditOrder.findUnique({ where: { id: orderId } });
     if (!initial) throw new AppError(404, 'ORDER_NOT_FOUND', 'Sipariş bulunamadı.');
+    if (!admin && (actor.role !== 'CUSTOMER' || actor.id !== initial.customerId)) throw new AppError(404, 'ORDER_NOT_FOUND', 'Sipariş bulunamadı.');
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${initial.customerId} FOR UPDATE`;
+    if (!admin) await creditStoreOwner(actor, tx);
     const order = await tx.creditOrder.findUniqueOrThrow({ where: { id: orderId }, include: { grantedAgreement: true } });
     const previous = await tx.paymentReversal.findUnique({ where: { orderId_requestKey: { orderId, requestKey: input.requestKey } } });
+    if (!admin) {
+      input.credits = order.credits;
+      input.kind = previous?.kind === 'CANCEL' || previous?.kind === 'REFUND' ? previous.kind : order.paidAt && localDay(order.paidAt) === localDay(new Date()) ? 'CANCEL' : 'REFUND';
+    }
     if (previous) {
       if (previous.kind !== input.kind || previous.credits !== input.credits || previous.reason !== input.reason) throw conflict('Bu işlem anahtarı başka iade için kullanılmış.');
       return { row: previous, dispatch: false as const };
@@ -63,6 +72,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     const oldCredits = sums._sum.credits ?? 0, oldAmount = sums._sum.amount?.toFixed(2) ?? '0';
     await tx.$queryRaw`SELECT id FROM Agreement WHERE id = ${order.grantedAgreementId} FOR UPDATE`;
     const agreement = await tx.agreement.findUniqueOrThrow({ where: { id: order.grantedAgreementId } });
+    if (!admin && (order.status !== 'PAID' || agreement.usedCredits !== 0 || oldCredits !== 0)) throw conflict('Yalnızca hiç kullanılmamış siparişin tamamını iade edebilirsiniz.');
     if (agreement.customerId !== order.customerId) throw conflict('Anlaşmanın sahibi değişmiş. İade öncesi müşteri eşleşmesini kontrol edin.');
     if (input.credits > order.credits - oldCredits || input.credits > agreement.credits - agreement.usedCredits) throw conflict('İade miktarı kullanılmamış krediyi aşamaz.');
     if (input.kind === 'CANCEL' && (agreement.usedCredits > 0 || oldCredits > 0 || input.credits !== order.credits)) throw conflict('Banka iptali yalnızca hiç kullanılmamış ödemenin tamamı için yapılabilir. Diğer işlemler için iade seçin.');
