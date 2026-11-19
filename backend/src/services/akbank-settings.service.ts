@@ -16,6 +16,7 @@ export const akbankSettingsInput = z.object({
   terminalSafeId: z.string().trim().max(128).optional(),
   secretKey: z.string().max(512).optional(),
   enabled: z.boolean().default(false),
+  recurringEnabled: z.boolean().default(false),
   publicUrl: z.url().max(500).optional(),
 }).strict();
 type Credentials = { merchantSafeId: string; terminalSafeId: string; secretKey: string };
@@ -23,7 +24,7 @@ type Credentials = { merchantSafeId: string; terminalSafeId: string; secretKey: 
 export async function getAkbankSettings(actor: Actor) {
   paymentStaff(actor);
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: settingsId } });
-  return { provider: 'akbank', mode: row?.mode ?? 'production', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false,
+  return { provider: 'akbank', mode: row?.mode ?? 'production', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false, recurringEnabled: row?.recurringEnabled ?? false,
     publicUrl: row?.publicUrl || env.FRONTEND_URL, testedAt: row?.testedAt ?? null, lastError: row?.lastError ?? null, paymentAvailable: Boolean(row?.enabled && row.testedAt) };
 }
 
@@ -50,13 +51,20 @@ export async function saveAkbankSettings(actor: Actor, raw: unknown) {
       throw new AppError(400, 'AKBANK_KEYS_REQUIRED', 'Ortam değiştirirken o ortama ait üç bilgiyi yeniden girin.');
     const fingerprint = createHash('sha256').update(JSON.stringify({ ...credentials, mode: input.mode })).digest('hex');
     const changed = fingerprint !== row?.fingerprint;
+    if (changed && row && await tx.akbankRecurringInstruction.count({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } } }))
+      throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bankadaki yenileme talimatları kapatılıp doğrulanmadan Akbank hesabı değiştirilemez.');
     if (changed && row && (await tx.creditPaymentAttempt.count({ where: { provider: 'akbank', status: 'PENDING' } }) || await tx.paymentReversal.count({ where: { status: { in: ['PENDING', 'REVIEW'] }, order: { paymentAttempts: { some: { provider: 'akbank', status: 'PAID' } } } } })))
       throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bekleyen Akbank ödemeleri ve iadeleri sonuçlanmadan hesap değiştirilemez.');
     const testedAt = changed ? null : row?.testedAt;
     if (input.enabled && !testedAt) throw new AppError(400, 'PAYMENT_TEST_REQUIRED', 'Önce kaydedin ve Akbank bağlantısını test edin.');
     const other = input.enabled ? await tx.paymentGatewaySettings.findUnique({ where: { id: 'default' } }) : null;
     if (other?.enabled) throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', 'Önce iyzico online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.');
-    const data = { mode: input.mode, enabled: input.enabled, recurringEnabled: false, testedAt, lastError: changed ? null : row?.lastError,
+    if (row?.recurringEnabled && (!input.enabled || !input.recurringEnabled)) {
+      const instructions = await tx.akbankRecurringInstruction.findMany({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } }, select: { subscriptionId: true } });
+      await tx.akbankRecurringInstruction.updateMany({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } }, data: { state: 'STOP_REQUESTED' } });
+      await tx.creditSubscription.updateMany({ where: { id: { in: instructions.map(row => row.subscriptionId) } }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
+    }
+    const data = { mode: input.mode, enabled: input.enabled, recurringEnabled: input.recurringEnabled, testedAt, lastError: changed ? null : row?.lastError,
       publicUrl: publicUrl.origin, credentialsCiphertext: sealPayment(credentials), fingerprint };
     await tx.paymentGatewaySettings.upsert({ where: { id: settingsId }, create: { id: settingsId, ...data }, update: data });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'payments.akbank_settings_updated', entityType: 'PaymentGatewaySettings', entityId: settingsId,

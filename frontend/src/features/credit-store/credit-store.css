@@ -683,3 +683,4 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
   .credit-plan-editor { min-width:0; }
   .credit-store-title > *, .credit-sales-card-heading > * { min-width:0; }
 }
+.payment-recurring-toggle { margin: 18px 0 8px; }

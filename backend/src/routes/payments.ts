@@ -5,6 +5,7 @@ import { idSchema } from '../validators/index.js';
 import * as settings from '../services/payment-settings.service.js';
 import { getAkbankSettings, saveAkbankSettings, testAkbankConnection } from '../services/akbank-settings.service.js';
 import { akbankCallback, beginAkbankCheckout } from '../services/akbank-payments.service.js';
+import { beginAkbankRecurring, akbankEnrollmentStatus } from '../services/akbank-recurring.service.js';
 import { beginIyzicoCheckout, iyzicoCallback } from '../services/iyzico-payments.service.js';
 import { subscriptionCheckoutOrder } from '../services/credit-subscriptions.service.js';
 import { pendingPaymentReviews, checkPaymentReview, closeUnchargedPayment } from '../services/payment-operations.service.js';
@@ -41,6 +42,11 @@ paymentRouter.get('/credit-sales/payment-settings/pending', async (req, res) => 
 paymentRouter.post('/credit-sales/payment-settings/pending/:id/check', async (req, res) => res.json({ success: true, data: await checkPaymentReview(req.actor, idSchema.parse(req.params.id)) }));
 paymentRouter.post('/credit-sales/payment-settings/pending/:id/no-charge', async (req, res) => res.json({ success: true, data: await closeUnchargedPayment(req.actor, idSchema.parse(req.params.id), req.body) }));
 const checkoutLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, keyGenerator: req => req.actor.id });
+paymentRouter.get('/my/credit-store/orders/akbank-enrollment/:id', async (req, res) => res.json({ success: true, data: await akbankEnrollmentStatus(req.actor, idSchema.parse(req.params.id)) }));
+paymentRouter.post('/my/credit-store/orders/akbank-enrollment/:id', checkoutLimit, async (req, res) => {
+  try { res.json({ success: true, data: await beginAkbankRecurring(req.actor, idSchema.parse(req.params.id), req.body) }); }
+  finally { if (Buffer.isBuffer((req as any).rawBody)) (req as any).rawBody.fill(0); delete (req as any).rawBody; req.body = undefined; }
+});
 paymentRouter.post('/my/credit-store/orders/:id/pay', checkoutLimit, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {

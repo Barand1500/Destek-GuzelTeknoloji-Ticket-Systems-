@@ -9,7 +9,7 @@ test('Akbank setup saves credentials then clears and masks them without enabling
     if (path.endsWith('/auth/refresh')) data = { accessToken: 'test', user: { id: 'admin', name: 'Admin', role: 'ADMIN' } };
     if (path.endsWith('/payment-settings/akbank')) {
       if (route.request().method() === 'PUT') { writes.push(route.request().postDataJSON()); configured = true; }
-      data = { mode: 'sandbox', credentialsConfigured: configured, enabled: false, publicUrl: 'https://portal.test', testedAt: null, paymentAvailable: false };
+      data = { mode: 'sandbox', credentialsConfigured: configured, enabled: false, recurringEnabled: false, publicUrl: 'https://portal.test', testedAt: null, paymentAvailable: false };
     }
     if (path.endsWith('/payment-settings')) data = { enabled: false, recurringEnabled: false, mode: 'sandbox', publicUrl: '', credentialsConfigured: false, testedAt: null };
     if (path.endsWith('/payment-settings/pending')) data = { total: 0, data: [] };
@@ -28,7 +28,7 @@ test('Akbank setup saves credentials then clears and masks them without enabling
   await expect(panel.getByRole('status')).toContainText('Akbank ayarları kaydedildi');
   await expect(panel.getByLabel('Güvenlik anahtarı')).toHaveValue('');
   await expect(panel.getByLabel('Terminal Safe ID')).toHaveValue('');
-  expect(writes).toEqual([{ mode: 'sandbox', enabled: false, publicUrl: 'https://portal.test', merchantSafeId: 'fixture-merchant', terminalSafeId: 'fixture-terminal', secretKey: 'fixture-secret' }]);
+  expect(writes).toEqual([{ mode: 'sandbox', enabled: false, recurringEnabled: false, publicUrl: 'https://portal.test', merchantSafeId: 'fixture-merchant', terminalSafeId: 'fixture-terminal', secretKey: 'fixture-secret' }]);
   await expect(panel.getByRole('switch', { name: 'Akbank online ödeme' })).toBeDisabled();
   await panel.getByRole('button', { name: 'Akbank ortamı' }).click();
   await panel.getByRole('option', { name: 'Canlı ortam', exact: true }).click();

@@ -19,7 +19,7 @@ export function paymentStaff(actor: Actor, edit = false) {
 }
 export async function paymentAvailability() {
   const akbank = await db.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } });
-  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: false };
+  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: Boolean(akbank.recurringEnabled) };
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
   return { provider: 'iyzico', paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: Boolean(row?.enabled && row.testedAt && row.recurringEnabled) };
 }

@@ -13,6 +13,7 @@ test('Akbank credentials remain encrypted, masked, isolated and disabled', async
   const findUnique = async ({ where }: any) => where.id === 'akbank' ? row : null;
   const tx = { $queryRaw: async () => [], creditPaymentAttempt: { count: async () => 0 }, paymentReversal: { count: async () => 0 }, paymentGatewaySettings: { findUnique, upsert: async ({ create, update }: any) => { row = row ? { ...row, ...update } : create; return row; } }, activityLog: { create: async ({ data }: any) => logs.push(data) } };
   const originalTransaction = db.$transaction, originalFind = db.paymentGatewaySettings.findUnique, originalUpdate = db.paymentGatewaySettings.updateMany, originalFetch = globalThis.fetch;
+  (tx as any).akbankRecurringInstruction = { count: async () => 0 };
   t.after(() => { db.$transaction = originalTransaction; db.paymentGatewaySettings.findUnique = originalFind; db.paymentGatewaySettings.updateMany = originalUpdate; globalThis.fetch = originalFetch; });
   db.$transaction = (async (callback: any) => callback(tx)) as any;
   db.paymentGatewaySettings.findUnique = findUnique as any;

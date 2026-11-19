@@ -9,8 +9,10 @@ import { refreshPackageStart } from './credit-package-schedule.js';
 import { openPayment, sealPayment } from './payment-secrets.js';
 import { akbankCardInput, akbankCurrency, akbankForm, akbankInquiry, akbankSaleResult, verifyAkbankCallback, type AkbankConfig } from './akbank-client.js';
 import { settleVerifiedCreditPayment } from './credit-subscriptions.service.js';
+import { akbankRecurringTerms, queryAkbankInstruction } from './akbank-recurring-client.js';
+import { akbankOccurrence, akbankInstructionTerminal } from './akbank-recurring-state.js';
 
-const inputSchema = z.object({ card: akbankCardInput, manualRenewalConsent: z.boolean().default(false) }).strict();
+const inputSchema = z.object({ card: akbankCardInput, manualRenewalConsent: z.boolean().default(false), renewalConsent: z.boolean().default(false) }).strict();
 const declineCodes = new Set(['05', '14', '33', '41', '43', '51', '54', '57', '58', '62', '65']);
 export async function beginAkbankCheckout(actor: Actor, orderId: string, raw: unknown) {
   const input = inputSchema.parse(raw);
@@ -28,22 +30,26 @@ export async function beginAkbankCheckout(actor: Actor, orderId: string, raw: un
     await refreshPackageStart(tx, order);
     if (order.periodStartsOn && order.periodStartsOn > billingToday()) throw new AppError(409, 'PAYMENT_NOT_DUE', 'Ödeme paket başlangıcında yapılabilir.');
     if (order.subscription?.status === 'STOPPED') throw new AppError(409, 'SUBSCRIPTION_STOPPED', 'Abonelik yenilemesi kapalı.');
-    if ((order.subscription?.autoRenew || order.renewalRequested) && !input.manualRenewalConsent)
-      throw new AppError(409, 'MANUAL_RENEWAL_CONSENT_REQUIRED', 'Akbank ödemesi tek çekimdir. Otomatik yenileme olmadan devam etmeyi onaylayın.');
+    const recurringRequested = Boolean(order.subscription && (order.subscription.autoRenew || order.renewalRequested) && !input.manualRenewalConsent);
+    if (recurringRequested && (!input.renewalConsent || !settings.recurringEnabled))
+      throw new AppError(409, 'RENEWAL_CONSENT_REQUIRED', 'Otomatik yenileme bağlantısı açık olmalı ve dönemsel tahsilat onaylanmalı.');
+    if (recurringRequested) akbankRecurringTerms(order.periodMonths, order.validityDays);
+    if (order.kind === 'SUBSCRIPTION' && await tx.akbankRecurringInstruction.count({ where: { subscription: { customerId: owner.id }, subscriptionId: { not: order.subscriptionId ?? '' }, state: { notIn: akbankInstructionTerminal } } }))
+      throw new AppError(409, 'BANK_CANCELLATION_PENDING', 'Önceki paketin bankadaki yenileme iptali bekleniyor. İptal doğrulanınca ödeme yapabilirsiniz.');
     const last = await tx.creditPaymentAttempt.findFirst({ where: { orderId }, orderBy: { attemptNumber: 'desc' } });
     if (last?.status === 'PENDING') throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Önceki ödeme sonucu bekleniyor. Yeni çekim başlatılmadı.');
-    if (order.subscriptionId && input.manualRenewalConsent) await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { autoRenew: false, nextPaymentOn: null, provider: 'akbank', paymentMethodRef: null } });
+    if (order.subscriptionId) await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { autoRenew: false, nextPaymentOn: null, provider: 'akbank', paymentMethodRef: null } });
     const attempt = await tx.creditPaymentAttempt.create({ data: { orderId, provider: 'akbank', attemptNumber: (last?.attemptNumber ?? 0) + 1 } });
     await tx.creditOrder.update({ where: { id: orderId }, data: { status: 'PENDING', ...(input.manualRenewalConsent ? { renewalRequested: false } : {}) } });
     const config: AkbankConfig = { ...openPayment<Omit<AkbankConfig, 'mode'>>(settings.credentialsCiphertext), mode: settings.mode as AkbankConfig['mode'] };
     // Card data never enters the persisted context. Each new attempt is a unique bank order ID.
-    const session = await tx.paymentCheckoutSession.create({ data: { attemptId: attempt.id, orderId, customerId: owner.id, state: 'DISPATCHED', claimedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 60000), contextCiphertext: sealPayment({ config }) } });
+    const session = await tx.paymentCheckoutSession.create({ data: { attemptId: attempt.id, orderId, customerId: owner.id, state: 'DISPATCHED', claimedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 60000), contextCiphertext: sealPayment({ config, ...(recurringRequested ? { recurringRequested: true } : {}) }) } });
     await tx.activityLog.create({ data: { userId: owner.id, action: 'payments.akbank_started', entityType: 'CreditPaymentAttempt', entityId: attempt.id, ipAddress: actor.ipAddress,
       metadata: { orderId, amount: order.total.toFixed(2), currency: order.currency, manualRenewal: input.manualRenewalConsent } } });
-    return { config, attemptId: attempt.id, sessionId: session.id, publicUrl: settings.publicUrl, order };
+    return { config, attemptId: attempt.id, sessionId: session.id, recurringRequested, publicUrl: settings.publicUrl, order };
   }, { isolationLevel: 'ReadCommitted' });
-  return akbankForm(prepared.config, { orderId: prepared.attemptId, amount: prepared.order.total.toFixed(2), currency: prepared.order.currency,
-    callbackUrl: prepared.publicUrl + '/api/v1/payments/akbank/callback/' + prepared.sessionId, email: prepared.order.customer.email || '', phone: prepared.order.customer.phone || '', card: input.card });
+  return { ...akbankForm(prepared.config, { orderId: prepared.attemptId, amount: prepared.order.total.toFixed(2), currency: prepared.order.currency,
+    callbackUrl: prepared.publicUrl + '/api/v1/payments/akbank/callback/' + prepared.sessionId, email: prepared.order.customer.email || '', phone: prepared.order.customer.phone || '', card: input.card }), sessionId: prepared.sessionId, recurringRequested: prepared.recurringRequested };
 }
 
 export async function reconcileAkbankSession(id: string, onInquiry?: (recordCount: number) => void) {
@@ -52,9 +58,16 @@ export async function reconcileAkbankSession(id: string, onInquiry?: (recordCoun
   const attempt = await db.creditPaymentAttempt.findUnique({ where: { id: session.attemptId }, include: { order: true } });
   if (!attempt || attempt.provider !== 'akbank' || attempt.status !== 'PENDING') return null;
   const { config } = openPayment<{ config: AkbankConfig }>(session.contextCiphertext);
-  const rows = await akbankInquiry(config, attempt.id);
+  const occurrence = akbankOccurrence(attempt.providerPaymentId ?? '');
+  const rows = occurrence ? await queryAkbankInstruction(config, occurrence.trackId) : await akbankInquiry(config, attempt.id);
   onInquiry?.(rows.length);
-  const result = akbankSaleResult(rows, { attemptId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency });
+  let result = occurrence ? null : akbankSaleResult(rows, { attemptId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency });
+  if (occurrence) {
+    const matches = rows.filter(row => Number(row.recurringOrder) === occurrence.sequence);
+    const sale = matches.length === 1 ? matches[0] : null;
+    if (sale?.requestStatus === 'S' && sale.requestType === 'R' && String(sale.txnCode) === '1000' && String(sale.currencyCode) === akbankCurrency[attempt.order.currency] && Number(sale.amount) === Number(attempt.order.total) && String(sale.plannedDateTime).slice(0, 10) === attempt.order.periodStartsOn?.toISOString().slice(0, 10))
+      result = { attemptId: attempt.id, provider: 'akbank', paymentId: attempt.providerPaymentId!, outcome: 'PAID', amount: attempt.order.total.toFixed(2), currency: attempt.order.currency };
+  }
   if (result) {
     await settleVerifiedCreditPayment(result);
     await db.paymentCheckoutSession.update({ where: { id }, data: { state: result.outcome } });

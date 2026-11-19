@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { runAkbankRecurringChecks } from './akbank-recurring.service.js';
 import { z } from 'zod';
 import { db } from '../config/db.js';
 import { env } from '../config/env.js';
@@ -198,7 +199,7 @@ export const iyzicoRecurringProvider: RecurringPaymentProvider = {
 };
 export function startIyzicoPayments() {
   let active: Promise<unknown> | undefined;
-  const tick = () => { if (!active) active = (async () => { await runCreditRenewals(iyzicoRecurringProvider); await runAkbankPaymentChecks(); await runPaymentReversalChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
+  const tick = () => { if (!active) active = (async () => { await runCreditRenewals(iyzicoRecurringProvider); await runAkbankPaymentChecks(); await runPaymentReversalChecks(); await runAkbankRecurringChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
   const timer = setInterval(tick, 60_000); timer.unref(); tick();
   return async () => { clearInterval(timer); await active; };
 }

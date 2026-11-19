@@ -116,6 +116,7 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     assert.equal(cancel.status, 'SUCCEEDED');
     assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: full.grant.id } })).credits, 0);
     assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: full.order.id } })).status, 'REFUNDED');
+    assert.ok((await db.agreement.findUniqueOrThrow({ where: { id: full.grant.id } })).cancelledAt, 'A completed full refund must close the granted package');
     await settleVerifiedCreditPayment({ attemptId: full.attempt.id, provider: 'iyzico', paymentId: full.paymentId, amount: '101.01', currency: 'TRY', outcome: 'PAID' });
     assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: full.grant.id } })).credits, 0, 'Late success callback must not regrant refunded credit');
     assert.equal((await reversalSummary(actor, full.order.id)).refundableCredits, 0);

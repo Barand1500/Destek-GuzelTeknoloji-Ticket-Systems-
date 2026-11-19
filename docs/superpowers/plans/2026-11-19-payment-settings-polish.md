@@ -25,3 +25,7 @@ References: https://docs.stripe.com/api/subscriptions/update and https://develop
 - Keep test/live environment selection, credentials, online-payment switches and safe recovery controls; these are functional, not temporary placeholder fields.
 
 Validation completed: 8 focused backend tests and 19 browser tests passed; both production builds passed. Independent read-only review reported no confirmed regressions or financial/security issues. No settings fields were removed, no billing policy was changed, and no live payment recovery or refund was performed.
+
+## Follow-up: Akbank recurring (19 Nov 2026)
+
+The earlier one-time-only note is superseded for Akbank. The adapter now supports a bank-side fixed instruction (1011 registration, 1010 inquiry, 1013 cancellation) behind the admin `Akbank otomatik yenileme` switch. The first 3D sale must settle as PAID; enrollment reuses the same card entry in a separate 3D popup, keeps card fields transient and shows renewal active only after bank verification. Customer stop-renewal and refund paths request bank cancellation and wait for confirmation.

@@ -176,7 +176,7 @@ test('Akbank bank ledger settles once, isolates card data, queries uncertain ref
     assert.equal(diagnosticLogs.filter(log => log.action === 'payments.akbank_callback_review' && log.entityId === form.fields.orderId).length, 1);
     const sub = await db.creditSubscription.create({ data: { customerId: owner.id, name: 'Akbank plan fixture', credits: 100, amount: '100', currency: 'TRY', periodMonths: 1, autoRenew: true, consentedAt: new Date() } });
     const plan = await makeOrder({ subscriptionId: sub.id, kind: 'SUBSCRIPTION', periodNumber: 1, periodMonths: 1, validityDays: null, renewalRequested: true });
-    await assert.rejects(beginAkbankCheckout(actor, plan.id, { card }), { code: 'MANUAL_RENEWAL_CONSENT_REQUIRED' });
+    await assert.rejects(beginAkbankCheckout(actor, plan.id, { card }), { code: 'RENEWAL_CONSENT_REQUIRED' });
     const planForm = await beginAkbankCheckout(actor, plan.id, { card, manualRenewalConsent: true });
     assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).autoRenew, false);
     paid(planForm.fields);

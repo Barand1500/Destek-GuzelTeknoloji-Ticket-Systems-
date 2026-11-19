@@ -366,6 +366,18 @@ test('switching packages shows remaining time and requires end-of-period confirm
   await expect.poll(() => writes.find(value => value.confirmPackageChange === true)).toBeTruthy();
 });
 
+test('Akbank catalog enables renewal when bank recurring is on', async ({ page }) => {
+  const writes = await mockApi(page, 'CUSTOMER');
+  await page.route('**/api/v1/my/credit-store', route => route.fulfill({ json: { success: true, data: { settings, plans: [{ ...plan, renewalRequested: true }], owner, provider: 'akbank', paymentAvailable: true, recurringAvailable: true } } }));
+  await page.goto('/customer/agreements?view=store');
+  await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
+  const toggle = page.getByRole('switch', { name: plan.name + ' dönem sonunda tekrarla' });
+  await expect(toggle).toBeEnabled();
+  await expect(toggle).toBeChecked();
+  await page.getByRole('button', { name: 'Planı İncele' }).click();
+  await expect.poll(() => writes.find(value => value.planId === plan.id)?.renewalRequested).toBe(true);
+});
+
 test('Akbank catalog does not promise automatic renewal', async ({ page }) => {
   const writes = await mockApi(page, 'CUSTOMER');
   await page.route('**/api/v1/my/credit-store', route => route.fulfill({ json: { success: true, data: { settings, plans: [{ ...plan, renewalRequested: true }], owner, provider: 'akbank', paymentAvailable: true, recurringAvailable: false } } }));

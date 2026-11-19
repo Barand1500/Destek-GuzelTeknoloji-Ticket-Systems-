@@ -25,7 +25,7 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
       <h3>{data.name}</h3><p>Sipariş #{data.number} · {count(data.credits)} kredi</p><strong className="credit-price">{money(data.total, data.currency)}</strong>
       {future && <p className="credit-store-notice">Ödeme {data.periodStartsOn!.slice(0, 10).split('-').reverse().join('.')} tarihinde açılacak.</p>}
       {!data.paymentAvailable && <p className="credit-store-notice">Online ödeme şu anda kapalı.</p>}
-      {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} />}
+      {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} recurringAvailable={data.recurringAvailable} />}
       {data.paymentAvailable && !future && data.provider !== 'akbank' && <form onSubmit={e => { e.preventDefault(); pay.mutate(); }}>
         <h3>Fatura ve İletişim Bilgileri</h3>
         <fieldset className="credit-checkout-billing" disabled={pay.isPending}>

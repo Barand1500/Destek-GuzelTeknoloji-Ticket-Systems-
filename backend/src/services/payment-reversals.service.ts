@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { db } from '../config/db.js';
+import { requestAkbankInstructionStop } from './akbank-recurring-state.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { Actor } from '../types/express.js';
 import { AppError } from '../utils/errors.js';
@@ -80,6 +81,8 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     const amount = refundValue(order.total.toFixed(2), order.credits, oldCredits, oldAmount, input.credits);
     // Reserve before the network request. Support resolution uses the same owner lock.
     await tx.agreement.update({ where: { id: agreement.id }, data: { credits: { decrement: input.credits } } });
+    if (order.subscriptionId && (await requestAkbankInstructionStop(tx, order.subscriptionId)).count)
+      await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
     const row = await tx.paymentReversal.create({ data: { orderId, requestKey: input.requestKey, kind: input.kind, credits: input.credits, amount, currency: order.currency, paymentId: attempts[0].providerPaymentId, actorId: actor.id, reason: input.reason, nextCheckAt: new Date(Date.now() + 60_000) } });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'credit_payment.reversal_requested', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId, kind: input.kind, credits: input.credits, amount: amount.toFixed(2), reason: input.reason }, ipAddress: actor.ipAddress } });
     return { row, dispatch: true as const, provider: attempts[0].provider, originalAmount: order.total.toFixed(2), previousRefundAmount: oldAmount,
@@ -127,7 +130,7 @@ async function finishPaymentReversal(id: string, success: boolean, reference: st
         await tx.creditSubscription.update({ where: { id: row.order.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
         await tx.creditOrder.updateMany({ where: { subscriptionId: row.order.subscriptionId, status: { in: ['PENDING', 'FAILED'] }, paymentAttempts: { none: { status: 'PENDING' } } }, data: { status: 'CANCELLED', cancelledAt: new Date() } });
       }
-      await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { renewalRequested: false } });
+      await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { renewalRequested: false, ...(full ? { cancelledAt: new Date() } : {}) } });
       await tx.notification.create({ data: { userId: row.order.customerId, type: 'CREDIT_REFUND_COMPLETED', title: 'İade tamamlandı', message: '#' + row.order.number + ' · ' + row.amount.toFixed(2) + ' ' + row.currency + ' iade edildi. Kartınıza yansıma süresi bankanıza bağlıdır.' } });
     } else {
       await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { credits: { increment: row.credits } } });

@@ -21,6 +21,8 @@ const invalid = () => new AppError(409, 'AKBANK_RECURRING_REVIEW', 'Akbank yenil
 export async function beginAkbankRecurring(actor: Actor, sessionId: string, raw: unknown) {
   const input = z.object({ card: akbankCardInput, consent: z.literal(true) }).strict().parse(raw);
   const prepared = await db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'default' FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'akbank' FOR UPDATE`;
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${actor.id} FOR UPDATE`;
     const owner = await creditStoreOwner(actor, tx);
     const session = await tx.paymentCheckoutSession.findUnique({ where: { id: sessionId } });
@@ -29,7 +31,7 @@ export async function beginAkbankRecurring(actor: Actor, sessionId: string, raw:
     const order = await tx.creditOrder.findUniqueOrThrow({ where: { id: session.orderId }, include: { subscription: true } });
     const sub = order.subscription;
     const attempt = await tx.creditPaymentAttempt.findUniqueOrThrow({ where: { id: session.attemptId } });
-    if (!saved.recurringRequested || attempt.provider !== 'akbank' || attempt.status !== 'PAID' || order.status !== 'PAID' || !sub || sub.stoppedAt || !sub.currentEndsOn || sub.currentEndsOn < billingToday()) throw invalid();
+    if (!saved.recurringRequested || session.expiresAt < new Date() || attempt.provider !== 'akbank' || attempt.status !== 'PAID' || order.status !== 'PAID' || !sub || sub.stoppedAt || !sub.currentEndsOn || sub.currentEndsOn < billingToday()) throw invalid();
     const existing = await tx.akbankRecurringInstruction.findUnique({ where: { checkoutSessionId: sessionId } });
     if (existing) return { instruction: existing, dispatch: false as const };
     const settings = await tx.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } });
@@ -65,6 +67,7 @@ function checkedRows(rows: Record<string, any>[], context: Context) {
   const seen = new Set<number>();
   for (const row of rows) {
     const sequence = Number(row.recurringOrder);
+    if (!Number.isInteger(sequence) || sequence < 1 || sequence > rows.length) throw invalid();
     const expected = day(billingBoundary(new Date(context.firstOn), context.months, context.days, sequence - 1));
     if (!Number.isInteger(sequence) || sequence < 1 || sequence > rows.length || seen.has(sequence) || String(row.txnCode) !== '1000' || row.requestType !== 'R' || !['W', 'P', 'C', 'V', 'F', 'S'].includes(row.requestStatus) || String(row.plannedDateTime ?? '').slice(0, 10) !== expected || String(row.currencyCode) !== akbankCurrency[context.currency] || Number(row.installCount) !== 1 || !new Prisma.Decimal(row.amount ?? -1).eq(context.amount)) throw invalid();
     seen.add(sequence);
@@ -85,7 +88,7 @@ async function importOccurrence(instructionId: string, context: Context, row: Re
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${sub.customerId} FOR UPDATE`;
     const existing = await tx.creditOrder.findUnique({ where: { subscriptionId_periodNumber: { subscriptionId: sub.id, periodNumber: number } } });
     let order = existing;
-    if (existing && (!existing.total.eq(context.amount) || existing.currency !== context.currency || existing.periodStartsOn?.getTime() !== start.getTime() || existing.periodEndsOn?.getTime() !== end.getTime())) throw invalid();
+    if (existing && (existing.credits !== context.credits || !existing.total.eq(context.amount) || existing.currency !== context.currency || existing.periodStartsOn?.getTime() !== start.getTime() || existing.periodEndsOn?.getTime() !== end.getTime())) throw invalid();
     if (existing?.paidAt) return null;
     if (!order) order = await tx.creditOrder.create({ data: { customerId: sub.customerId, requestedById: sub.customerId, subscriptionId: sub.id, periodNumber: number, requestKey: randomUUID(), inputHash: createHash('sha256').update(paymentId).digest('hex'), name: sub.name.slice(0, 100), kind: 'SUBSCRIPTION', credits: context.credits, total: context.amount, currency: context.currency, periodMonths: context.months, validityDays: context.days, renewalRequested: sub.autoRenew, periodStartsOn: start, periodEndsOn: end } });
     let attempt = await tx.creditPaymentAttempt.findFirst({ where: { orderId: order.id }, orderBy: { attemptNumber: 'desc' } });
@@ -133,4 +136,15 @@ export async function runAkbankRecurringChecks() {
     try { await reconcileAkbankRecurring(row.id); }
     catch { await db.akbankRecurringInstruction.updateMany({ where: { id: row.id, state: { notIn: terminal } }, data: { nextCheckAt: new Date(Date.now() + 60000), failureCode: 'BANK_RESULT_UNCERTAIN' } }); }
   }
+}
+
+/** Browser polling reads only the caller's attempt. A browser signal never proves a payment. */
+export async function akbankEnrollmentStatus(actor: Actor, sessionId: string) {
+  const owner = await creditStoreOwner(actor);
+  const session = await db.paymentCheckoutSession.findFirst({ where: { id: sessionId, customerId: owner.id }, select: { attemptId: true } });
+  if (!session) throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Ödeme bulunamadı.');
+  const attempt = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id: session.attemptId }, select: { status: true, provider: true } });
+  if (attempt.provider !== 'akbank') throw invalid();
+  const instruction = await db.akbankRecurringInstruction.findUnique({ where: { checkoutSessionId: sessionId }, select: { state: true } });
+  return { status: attempt.status, recurringState: instruction?.state ?? null };
 }

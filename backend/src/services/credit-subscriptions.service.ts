@@ -1,4 +1,5 @@
 import { refreshPackageStart } from './credit-package-schedule.js';
+import { requestAkbankInstructionStop } from './akbank-recurring-state.js';
 import { randomUUID, createHash } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '../config/db.js';
@@ -27,6 +28,7 @@ const safeFields = {
   credits: true, periodMonths: true, periodDays: true, status: true, autoRenew: true,
   consentedAt: true, currentStartsOn: true, currentEndsOn: true, nextPaymentOn: true, stoppedAt: true,
   customer: { select: { name: true, company: true } }, createdAt: true,
+  akbankInstructions: { select: { state: true, failureCode: true }, orderBy: { createdAt: 'desc' as const }, take: 1 },
 } as const;
 export async function listSubscriptions(actor: Actor, input: z.infer<typeof subscriptionListInput>, admin = false) {
   const owner = admin ? (staff(actor), undefined) : await creditStoreOwner(actor);
@@ -39,7 +41,7 @@ export async function listSubscriptions(actor: Actor, input: z.infer<typeof subs
   return db.$transaction(async tx => {
     const total = await tx.creditSubscription.count({ where });
     const rows = await tx.creditSubscription.findMany({ where, select: safeFields, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: input.limit, skip: (input.page - 1) * input.limit });
-    return { data: rows.map(row => ({ ...row, amount: row.amount.toFixed(2) })),
+    return { data: rows.map(({ akbankInstructions, ...row }) => ({ ...row, amount: row.amount.toFixed(2), recurringState: akbankInstructions[0]?.state ?? null, recurringFailureCode: akbankInstructions[0]?.failureCode ?? null })),
       pagination: { total, page: input.page, limit: input.limit, totalPages: Math.max(1, Math.ceil(total / input.limit)) } };
   }, { isolationLevel: 'RepeatableRead' });
 }
@@ -59,6 +61,7 @@ export async function changeSubscription(actor: Actor, id: string, action: 'acce
       const start = row.nextPaymentOn && row.nextPaymentOn > billingToday() ? row.nextPaymentOn : billingToday();
       await tx.creditSubscription.update({ where: { id }, data: { autoRenew: true, consentedAt: new Date(), status: 'AWAITING_PAYMENT', nextPaymentOn: start, anchorOn: start, anchorPeriod: row.paidPeriods } });
     } else {
+      await requestAkbankInstructionStop(tx, id);
       if (!row.autoRenew && row.status === 'STOPPED') return;
       await tx.creditSubscription.update({ where: { id }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
       // A dispatched payment may still settle. Unsent renewal orders are cancelled.
@@ -155,7 +158,7 @@ export async function settleVerifiedCreditPayment(result: VerifiedPayment, now =
         const anchor = sub.anchorOn ?? start;
         const paidPeriods = order.periodNumber ?? 1;
         const next = billingBoundary(anchor, sub.periodMonths, sub.periodDays, paidPeriods - sub.anchorPeriod);
-        await tx.creditSubscription.update({ where: { id: sub.id }, data: { anchorOn: anchor, paidPeriods, currentStartsOn: start, currentEndsOn: end, nextPaymentOn: sub.autoRenew ? next : null, status: sub.autoRenew ? 'ACTIVE' : 'STOPPED' } });
+        if (paidPeriods >= sub.paidPeriods) await tx.creditSubscription.update({ where: { id: sub.id }, data: { anchorOn: anchor, paidPeriods, currentStartsOn: start, currentEndsOn: end, nextPaymentOn: sub.autoRenew ? next : null, status: sub.autoRenew ? 'ACTIVE' : 'STOPPED' } });
       }
       await tx.notification.create({ data: { userId: order.customerId, type: 'SUBSCRIPTION_PAYMENT_PAID', title: 'Ödeme başarılı', message: order.name + ': ' + order.credits.toLocaleString('tr-TR') + ' kredi tanımlandı.' } });
     }

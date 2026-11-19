@@ -83,7 +83,13 @@ export function CustomerCreditStore() {
     setPreview(null);
   }, [catalog.data?.settings.unitPrice, catalog.data?.settings.currency]);
   const data = catalog.data;
-  const renewalSupported = data?.provider !== 'akbank';
+  const renewalSupported = data?.recurringAvailable ?? (data?.provider !== 'akbank');
+  const renewalHelp = data?.provider === 'akbank'
+    ? 'Kart bilgisi saklanmaz; ilk ödemede bankada dönemsel talimat kurulur.'
+    : 'Yenileme için ödeme adımında kart saklama onayı gerekir.';
+  const renewalOffHelp = data?.provider === 'akbank'
+    ? 'Akbank otomatik yenileme yönetici ayarlarından kapalı.'
+    : 'Otomatik yenileme şu anda kapalı.';
   const priceMinor = Math.round(Number(data?.settings.unitPrice ?? 0) * 100);
   const reset = () => {
     setPreview(null);
@@ -304,7 +310,7 @@ export function CustomerCreditStore() {
                           <i aria-hidden="true" />
                         </label>
                         <p className="credit-help">
-                          {renewalSupported ? 'Yenileme için ödeme adımında kart saklama onayı gerekir.' : 'Akbank ödemelerinde otomatik yenileme yok.'}
+                          {renewalSupported ? renewalHelp : renewalOffHelp}
                         </p>
                         <button
                           className="button primary"
@@ -411,7 +417,7 @@ export function CustomerCreditStore() {
                           </label>
                           <small>
                             {
-                              renewalSupported ? "Kart saklama onayıyla yenilenir; Aboneliklerim’den kapatabilirsiniz." : "Akbank ödemelerinde otomatik yenileme yok."
+                              renewalSupported ? (data.provider === 'akbank' ? "Bankada dönemsel talimat kurulur; Aboneliklerim’den kapatabilirsiniz." : "Kart saklama onayıyla yenilenir; Aboneliklerim’den kapatabilirsiniz.") : renewalOffHelp
                             }
                           </small>
                         </dd>

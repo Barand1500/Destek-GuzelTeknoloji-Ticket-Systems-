@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { requestAkbankInstructionStop } from './akbank-recurring-state.js';
 import { z } from "zod";
 import { db } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -147,6 +148,7 @@ export async function createCreditOrder(
         const previous = await tx.creditSubscription.findMany({ where: { customerId: account.id, id: { not: subscription.id }, status: { not: 'STOPPED' } }, select: { id: true } });
         if (await tx.creditPaymentAttempt.count({ where: { order: { subscriptionId: { in: previous.map(v => v.id) } }, status: 'PENDING' } })) throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Mevcut paketinizin ödeme sonucu bekleniyor. Sonuç netleşince paket değiştirebilirsiniz.');
         await tx.creditSubscription.updateMany({ where: { id: { in: previous.map(v => v.id) } }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
+        for (const old of previous) await requestAkbankInstructionStop(tx, old.id);
       }
       row = await tx.creditOrder.update({ where: { id: row.id }, data: { subscriptionId: subscription.id, periodNumber: 1 }, select: fields });
     }
