@@ -7,12 +7,13 @@ import { money } from './types';
 const empty = { holder: '', number: '', expiry: '', cvc: '' };
 type Stage = 'idle' | 'waiting' | 'enrolling' | 'review' | 'done';
 
-export function AkbankCardForm({ orderId, total, currency, renewalRequested, recurringAvailable }: {
+export function AkbankCardForm({ orderId, total, currency, renewalRequested, recurringAvailable, recurringPayments }: {
   orderId: string;
   total: string;
   currency: string;
   renewalRequested?: boolean;
   recurringAvailable?: boolean;
+  recurringPayments?: number;
 }) {
   const [card, setCard] = useState(empty), [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
@@ -102,11 +103,13 @@ export function AkbankCardForm({ orderId, total, currency, renewalRequested, rec
     setStage('enrolling');
     setBusy(true);
     setError('');
+    let response: any;
     try {
-      const result = (await api.post(`/my/credit-store/orders/akbank-enrollment/${encodeURIComponent(sessionId)}`, {
+      response = await api.post(`/my/credit-store/orders/akbank-enrollment/${encodeURIComponent(sessionId)}`, {
         card: cardPayload(),
         consent: true,
-      })).data.data as { state: string };
+      });
+      const result = response.data.data as { state: string };
       if (!mounted.current) return;
       if (result.state === 'ACTIVE') {
         complete('İlk ödeme alındı ve bankada otomatik yenileme talimatı kuruldu.');
@@ -122,7 +125,10 @@ export function AkbankCardForm({ orderId, total, currency, renewalRequested, rec
       }
       fail('İlk ödeme alındı ancak bankada otomatik yenileme talimatı kurulamadı. Aboneliklerim bölümünden kontrol edin.');
     } catch (failure) {
+      if (failure && typeof failure === 'object' && 'config' in failure) (failure as any).config.data = undefined;
       fail(`İlk ödeme alındı ancak otomatik yenileme kurulamadı: ${failureText(failure)}`);
+    } finally {
+      if (response?.config) response.config.data = undefined;
     }
   }
 
@@ -185,6 +191,7 @@ export function AkbankCardForm({ orderId, total, currency, renewalRequested, rec
       if (recurring) {
         popup = window.open('', `akbank-3d-${orderId}-${Date.now()}`, 'width=520,height=760');
         if (!popup) throw Error('3D doğrulama penceresi açılamadı. Tarayıcı açılır pencereyi engelliyor olabilir.');
+        popup.opener = null;
       }
       response = await api.post(
         `/my/credit-store/orders/${encodeURIComponent(orderId)}/pay`,
@@ -232,7 +239,7 @@ export function AkbankCardForm({ orderId, total, currency, renewalRequested, rec
       <label><span className="field-label">Son kullanma tarihi *</span><input required inputMode="numeric" autoComplete="off" pattern="(0[1-9]|1[0-2]) / [0-9]{2}" maxLength={7} placeholder="AA / YY" value={card.expiry} onChange={e => { const value = digits(e.target.value, 4); setCard(v => ({ ...v, expiry: value.length > 2 ? value.slice(0, 2) + ' / ' + value.slice(2) : value })); }} /></label>
       <label><span className="field-label">CVC *</span><input required type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{3}" maxLength={3} placeholder="•••" value={card.cvc} onChange={e => setCard(v => ({ ...v, cvc: digits(e.target.value, 3) }))} /></label>
     </fieldset>
-    {renewalRequested && recurring && <label className="integration-toggle credit-renewal-choice"><span>İlk ödemeyi şimdi yapmayı ve aynı kartla sonraki dönemler için bankada otomatik tahsilat talimatı kurulmasını onaylıyorum. Kart bilgisi uygulamada saklanmaz.</span><input type="checkbox" role="switch" checked={consent} disabled={locked} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>}
+    {renewalRequested && recurring && <label className="integration-toggle credit-renewal-choice"><span>İlk ödemeyi şimdi yapmayı ve aynı kartla {recurringPayments ? `sonraki ${recurringPayments} dönem için` : 'bankanın izin verdiği sınırlı sayıda dönem için'} otomatik tahsilat talimatı kurulmasını onaylıyorum. Yenilemeyi Aboneliklerim’den kapatabilirim. Kart bilgisi uygulamada saklanmaz.</span><input type="checkbox" role="switch" checked={consent} disabled={locked} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>}
     {renewalRequested && !recurring && <label className="integration-toggle credit-renewal-choice"><span>Bu paketi tek ödemeyle almayı kabul ediyorum. Sonraki dönemde kartımdan otomatik ödeme çekilmeyecek.</span><input type="checkbox" role="switch" checked={consent} disabled={locked} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>}
     {notice && <p role="status" className="credit-help">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}

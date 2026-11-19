@@ -138,3 +138,47 @@
   .payment-reversal-panel .payment-settings-actions { gap:12px; }
   .payment-reversal-panel .payment-settings-actions > .button { white-space:normal; text-align:center; }
 }
+
+/* Shared order and subscription state colours. */
+.credit-order-status { font-weight: 600; }
+.credit-order-status-paid, .credit-order-status-active {
+  color: var(--success-text, #16804a); background: color-mix(in srgb, #22c55e 16%, var(--surface)); border-color: #22a660;
+}
+.credit-order-status-pending, .credit-order-status-awaiting_payment, .credit-order-status-awaiting_consent, .credit-order-status-partial_refund {
+  color: var(--warning-text, #b77908); background: color-mix(in srgb, #eab308 16%, var(--surface)); border-color: #bd8c20;
+}
+.credit-order-status-failed, .credit-order-status-past_due {
+  color: var(--danger, #dc3545); background: color-mix(in srgb, #ef4444 14%, var(--surface)); border-color: #d95252;
+}
+.credit-order-status-refunded, .credit-order-status-stopped, .credit-order-status-cancelled {
+  color: var(--text); background: color-mix(in srgb, #64748b 20%, var(--surface)); border-color: #8393a8;
+}
+.payment-reversal-form { display: grid; gap: 20px; }
+.payment-reversal-form > .button { justify-self: start; }
+
+html[data-theme="dark"] .credit-order-status-paid,
+html[data-theme="dark"] .credit-order-status-active { color: #74e6a2; }
+html[data-theme="dark"] .credit-order-status-pending,
+html[data-theme="dark"] .credit-order-status-awaiting_payment,
+html[data-theme="dark"] .credit-order-status-awaiting_consent,
+html[data-theme="dark"] .credit-order-status-partial_refund { color: #f6d477; }
+html[data-theme="dark"] .credit-order-status-failed,
+html[data-theme="dark"] .credit-order-status-past_due { color: #ffa0a0; }
+
+/* Match the shared dark confirmation dialog's destructive action. */
+html[data-theme="dark"] .credit-order-dialog .credit-order-dialog-actions .button.danger {
+  background: #552f2c;
+  border-color: #85504a;
+  color: #ffd2cd;
+}
+html[data-theme="dark"] .credit-order-dialog .credit-order-dialog-actions .button.danger:hover:not(:disabled) {
+  background: #6a3934;
+  border-color: #ad6961;
+}
+
+.credit-orders .credit-orders-request-filter { flex-direction: row; display: inline-flex; align-items: center; gap: 12px; margin-top: 16px; cursor: pointer; }
+.credit-orders-request-filter input { width: 18px; height: 18px; margin: 0; }
+.payment-cancel-total { display: grid; gap: 8px; padding: 12px 0; }
+.payment-reversal-panel .credit-store-notice { display: grid; gap: 16px; }
+.payment-reversal-panel .credit-store-notice > p { margin: 0; }
+.payment-reversal-panel .credit-store-notice > button { justify-self: start; }

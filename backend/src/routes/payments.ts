@@ -1,3 +1,4 @@
+import { requestCreditRefund, rejectCreditRefundRequest } from '../services/credit-refund-requests.service.js';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
@@ -66,3 +67,6 @@ paymentRouter.post('/my/credit-store/orders/:id/reversals', checkoutLimit, async
 paymentRouter.post('/credit-sales/orders/:id/reversals', checkoutLimit, async (req, res) => res.json({ success: true, data: await startPaymentReversal(req.actor, idSchema.parse(req.params.id), req.body) }));
 paymentRouter.post('/credit-sales/reversals/:id/check', checkoutLimit, async (req, res) => { settings.paymentStaff(req.actor, true); res.json({ success: true, data: await reconcilePaymentReversal(idSchema.parse(req.params.id)) }); });
 paymentRouter.post('/credit-sales/reversals/:id/no-refund', checkoutLimit, async (req, res) => res.json({ success: true, data: await closeUnrefundedReversal(req.actor, idSchema.parse(req.params.id), req.body) }));
+
+paymentRouter.post('/my/credit-store/orders/:id/refund-request', checkoutLimit, async (req, res) => res.json({ success: true, data: await requestCreditRefund(req.actor, idSchema.parse(req.params.id), req.body) }));
+paymentRouter.post('/credit-sales/orders/:id/refund-request/reject', checkoutLimit, async (req, res) => res.json({ success: true, data: await rejectCreditRefundRequest(req.actor, idSchema.parse(req.params.id), req.body) }));

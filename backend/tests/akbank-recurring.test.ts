@@ -90,7 +90,22 @@ test('Akbank single-entry checkout establishes one bank mandate, imports payment
     await changeSubscription(actor, second.sub.id, 'stop');
     const secondInstruction = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { checkoutSessionId: second.sessionId } });
     assert.equal(secondInstruction.state, 'STOP_REQUESTED');
-    await reconcileAkbankRecurring(secondInstruction.id);
+    const secondRows = plans.get(secondInstruction.id)!;
+    secondRows[0].requestStatus = 'S';
+    await db.user.update({ where: { id: owner.id }, data: { isActive: false } });
+    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
+    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).state, 'STOPPED');
+    assert.ok(secondRows.slice(1).every(row => row.requestStatus === 'C'), 'A blocked credit import must not prevent bank cancellation');
+    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).failureCode, 'PAID_PERIOD_REVIEW');
+    await db.user.update({ where: { id: owner.id }, data: { isActive: true } });
+    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
+    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).failureCode, null, 'Paid-period reconciliation can resume after cancellation');
+    secondRows[1].requestStatus = 'W';
+    secondRows[1].plannedDateTime = '1900-01-01T00:00:00Z';
+    await db.akbankRecurringInstruction.update({ where: { id: secondInstruction.id }, data: { state: 'ACTIVE' } });
+    await db.creditSubscription.update({ where: { id: second.sub.id }, data: { autoRenew: true, status: 'ACTIVE', stoppedAt: null } });
+    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
+    assert.equal(secondRows[1].requestStatus, 'C', 'An invalid schedule must be stopped instead of leaving future bank charges active');
     assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).state, 'STOPPED');
     assert.equal(calls.filter(row => row.txnCode === '1011').length, 2);
   } finally {

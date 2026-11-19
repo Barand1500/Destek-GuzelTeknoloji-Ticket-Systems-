@@ -30,7 +30,7 @@ export function refundValue(total: string, originalCredits: number, previousCred
 
 export async function reversalSummary(actor: Actor, orderId: string, admin = true) {
   if (admin) paymentStaff(actor);
-  const order = await db.creditOrder.findUnique({ where: { id: orderId }, include: { grantedAgreement: true } });
+  const order = await db.creditOrder.findUnique({ where: { id: orderId }, include: { grantedAgreement: true, refundRequest: true } });
   if (!order || (!admin && (actor.role !== 'CUSTOMER' || actor.id !== order.customerId))) throw new AppError(404, 'ORDER_NOT_FOUND', 'Sipariş bulunamadı.');
   const data = await db.paymentReversal.findMany({ where: { orderId }, select: safeSelect, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 100 });
   const totals = await db.paymentReversal.aggregate({ where: { orderId, status: { not: 'FAILED' } }, _sum: { amount: true, credits: true } });
@@ -38,7 +38,7 @@ export async function reversalSummary(actor: Actor, orderId: string, admin = tru
   const available = agreement && !agreement.deletedAt ? Math.max(0, Math.min(agreement.credits - agreement.usedCredits, order.credits - (totals._sum.credits ?? 0))) : 0;
   let amount = '0.00';
   if (available) try { amount = refundValue(order.total.toFixed(2), order.credits, totals._sum.credits ?? 0, totals._sum.amount?.toFixed(2) ?? '0', available).toFixed(2); } catch (error) { if (!(error instanceof AppError)) throw error; }
-  return { data: data.map(serialize), orderId, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
+  return { refundRequest: order.refundRequest, data: data.map(serialize), orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
     refundedCredits: totals._sum.credits ?? 0, refundedAmount: totals._sum.amount?.toFixed(2) ?? '0.00', hasPending: data.some(v => ['PENDING', 'REVIEW'].includes(v.status)), usedCredits: agreement?.usedCredits ?? 0,
     canSelfRefund: order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
     canCancel: Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
@@ -123,6 +123,7 @@ async function finishPaymentReversal(id: string, success: boolean, reference: st
     if (manual && row.createdAt.getTime() > Date.now() - 3600000) throw conflict('Dış doğrulama yalnızca bir saattir sonuçlanmamış iadeler için yapılabilir.');
     if (!row.order.grantedAgreementId) throw conflict('İade kredi kaydı bulunamadı.');
     if (success) {
+      await tx.creditRefundRequest.updateMany({ where: { orderId: row.orderId, status: 'OPEN' }, data: { status: 'RESOLVED', reviewedById: row.actorId } });
       const previous = await tx.paymentReversal.aggregate({ where: { orderId: row.orderId, status: 'SUCCEEDED' }, _sum: { credits: true } });
       const full = (previous._sum.credits ?? 0) + row.credits >= row.order.credits;
       await tx.creditOrder.update({ where: { id: row.orderId }, data: { status: full ? 'REFUNDED' : 'PARTIAL_REFUND' } });

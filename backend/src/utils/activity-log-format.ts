@@ -72,6 +72,8 @@ export const actionLabels: Record<string, string> = {
   "conversation.note_added": "Dahili not eklendi",
   "conversation.email_sent": "E-Posta gönderildi",
   "conversation.email_failed": "E-Posta gönderilemedi",
+  "conversation.credit_used": "Talep için kredi kullanıldı",
+  "conversation.credit_returned": "Talep yeniden açıldı, kredi geri verildi",
   "conversation.updated": "Talep bilgileri güncellendi",
   "customer.file_deleted": "Müşteri dosyası silindi",
   "integrations.updated": "Entegrasyon ayarları güncellendi",

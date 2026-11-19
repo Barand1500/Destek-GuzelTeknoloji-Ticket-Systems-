@@ -1,6 +1,6 @@
 import { conversationHistoryPage } from './conversation-history.js';
 import { issueFormLink } from './form-access.service.js';
-import { debitResolution } from './agreements.service.js';
+import { debitResolution, returnResolutionCredit } from './agreements.service.js';
 import { whatsappWindow } from './whatsapp-window.js';
 import { conversationSearch } from "./conversation-search.js";
 import { internationalEmailSearchIds } from './email-search.js';
@@ -531,6 +531,9 @@ export async function updateConversation(
       validateReplyChannels(input.replyChannels, recipient, settings);
     }
     if (input.creditResolution && !['RESOLVED', 'CLOSED'].includes(input.status ?? '')) throw new AppError(400, 'INVALID_CREDIT_STATUS', 'Kredi yalnızca talep çözülürken kullanılabilir.');
+    if (input.status && !['RESOLVED', 'CLOSED'].includes(input.status)) await returnResolutionCredit(tx, actor, conversation);
+    // Repair a legacy reopened ticket's retained debit before applying an explicitly chosen new amount.
+    if (input.creditResolution && !['RESOLVED', 'CLOSED'].includes(conversation.status)) await returnResolutionCredit(tx, actor, conversation);
     if (['RESOLVED', 'CLOSED'].includes(input.status ?? '') && !['RESOLVED', 'CLOSED'].includes(conversation.status)) await debitResolution(tx, actor, conversation, input.creditResolution);
     else if (input.creditResolution) await debitResolution(tx, actor, conversation, input.creditResolution);
     const {tagIds, creditResolution: _creditResolution, assignedAgentIds: _assignedAgentIds, ...changes}=input;

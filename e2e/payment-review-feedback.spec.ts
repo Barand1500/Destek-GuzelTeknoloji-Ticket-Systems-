@@ -18,4 +18,22 @@ test('payment inquiry shows its result even when payment remains pending', async
   await page.getByRole('button', { name: 'Sonucu Sorgula', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Banka sorgulandı; ödeme sonucu henüz kesinleşmedi.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sonucu Sorgula', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Tahsilat Yok Doğrulaması', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Tahsilat yok doğrulaması' });
+  for (const width of [375, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+      const copy = await panel.locator(':scope > p').boundingBox();
+      const input = await panel.getByRole('textbox').boundingBox();
+      expect(input!.y - copy!.y - copy!.height).toBeGreaterThanOrEqual(16);
+      const toggle = await panel.getByRole('switch').locator('..').boundingBox();
+      expect(toggle!.width).toBeLessThan(350);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+      await panel.screenshot({ path: `.local/payment-recovery-${theme}-${width}.png` });
+    }
+  }
+  await panel.getByRole('textbox').fill('Bank support reference fixture');
+  await panel.getByText('Tahsilat yapılmadığını doğruladım', { exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Doğrulamayı Kaydet' })).toBeEnabled();
 });

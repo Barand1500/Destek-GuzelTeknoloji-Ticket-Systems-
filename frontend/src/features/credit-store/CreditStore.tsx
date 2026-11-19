@@ -25,6 +25,8 @@ export function CustomerCreditStore() {
   const navigate = useNavigate();
   const catalog = useQuery({
     queryKey: ["credit-store"],
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
     queryFn: async () =>
       (await api.get("/my/credit-store")).data.data as SalesCatalog,
   });
@@ -132,14 +134,6 @@ export function CustomerCreditStore() {
   return (
     <section className="credit-store" aria-label="Kredi ve abonelik satın alma">
       <div className="credit-store-title">
-        <button
-          className="button secondary"
-          type="button"
-          disabled={create.isPending || quote.isPending || catalog.isFetching}
-          onClick={() => void catalog.refetch()}
-        >
-          Fiyatları Yenile
-        </button>
         <div>
           <h2>Kredi ve Abonelikler</h2>
         </div>

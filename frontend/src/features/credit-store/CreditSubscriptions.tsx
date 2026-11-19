@@ -14,9 +14,16 @@ type Subscription = {
   id: string; name: string; amount: string; currency: string; credits: number;
   periodMonths: number | null; periodDays: number | null; autoRenew: boolean;
   status: string; nextPaymentOn: string | null; currentEndsOn: string | null;
+  recurringState?: string | null; recurringFailureCode?: string | null;
   customer: { name: string; company: string | null };
 };
 const statuses = { AWAITING_CONSENT: 'Onay bekliyor', AWAITING_PAYMENT: 'İlk ödeme bekliyor', ACTIVE: 'Aktif', PAST_DUE: 'Ödeme alınamadı', STOPPED: 'Yenileme kapalı' };
+const recurringStatuses: Record<string, string> = {
+  REGISTERING: 'Otomatik yenileme kuruluyor', REVIEW: 'Banka onayı bekleniyor',
+  STOP_REQUESTED: 'Yenileme iptali doğrulanıyor', FAILED: 'Otomatik yenileme kurulamadı',
+  COMPLETED: 'Otomatik yenileme tamamlandı',
+};
+const renewalLabel = (row: Subscription) => recurringStatuses[row.recurringState ?? ''] ?? (row.recurringState === 'ACTIVE' && row.autoRenew ? 'Otomatik yenileme açık' : statuses[row.status as keyof typeof statuses] ?? row.status);
 const date = (value: string | null) => value ? value.slice(0, 10).split('-').reverse().join('.') : '—';
 export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
   const client = useQueryClient(), { user } = useAuth();
@@ -27,7 +34,7 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
   const [target, setTarget] = useState<{ row: Subscription; action: 'accept' | 'stop' } | null>(null);
   const [consent, setConsent] = useState(false), [notice, setNotice] = useState('');
   useEffect(() => { const timer = setTimeout(() => { setTerm(search.trim()); setPage(1); }, 300); return () => clearTimeout(timer); }, [search]);
-  const query = useQuery({ queryKey: [base, page, term, status], queryFn: async () => (await api.get(base, { params: { page, limit: 20, search: term, ...(status ? { status } : {}) } })).data as { data: Subscription[]; pagination: { total: number; page: number; limit: number; totalPages: number } } });
+  const query = useQuery({ refetchInterval: 15000, queryKey: [base, page, term, status], queryFn: async () => (await api.get(base, { params: { page, limit: 20, search: term, ...(status ? { status } : {}) } })).data as { data: Subscription[]; pagination: { total: number; page: number; limit: number; totalPages: number } } });
   useEffect(() => { if (query.data && page > query.data.pagination.totalPages) setPage(query.data.pagination.totalPages); }, [query.data, page]);
   const save = useMutation({ mutationFn: ({ row, action }: { row: Subscription; action: 'accept' | 'stop' }) => api.post(`${base}/${row.id}/${action}`), onSuccess: async (_, value) => {
     setTarget(null); setNotice(value.action === 'accept' ? 'Yenileme onayınız kaydedildi. Otomatik tahsilat için ödeme adımında kartınızı bağlayın.' : 'Otomatik yenileme kapatıldı. Mevcut ödenmiş döneminiz korunur.');
@@ -35,8 +42,7 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
   } });
   const canStop = !admin || hasPermission(user, 'integrations.update');
   return <section className="credit-orders credit-subscriptions" aria-label={admin ? 'Abonelikler' : 'Aboneliklerim'}>
-    <h2>{admin ? 'Abonelikler' : 'Aboneliklerim'}</h2>
-    <p className="credit-store-notice">Yenileme tarihlerini ve otomatik ödeme tercihlerinizi buradan yönetebilirsiniz. Yeni dönem kredisi, ödeme doğrulandıktan sonra yüklenir.</p>
+    {admin && <><h2>Abonelikler</h2><p className="credit-store-notice">Yenileme tarihlerini ve otomatik ödeme tercihlerinizi buradan yönetebilirsiniz. Yeni dönem kredisi, ödeme doğrulandıktan sonra yüklenir.</p></>}
     <div className="credit-orders-filters">
       <label><span className="field-label">Abonelik Ara</span><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder={admin ? 'Paket veya müşteri ara' : 'Paket veya anlaşma ara'} /></label>
       <DropdownSelect ariaLabel="Abonelik durumu" label="Durum" value={status} onChange={value => { setStatus(value); setPage(1); }} options={[{ value: '', label: 'Tüm durumlar' }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
@@ -51,10 +57,12 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
       <div className="agreement-page-actions"><button type="button" className="button secondary" disabled={save.isPending} onClick={() => setTarget(null)}>Vazgeç</button><button type="button" className="button primary" disabled={save.isPending || (target.action === 'accept' && !consent)} onClick={() => save.mutate(target)}>{target.action === 'accept' ? 'Onayla' : 'Yenilemeyi Kapat'}</button></div>
     </div>}
     <div className="credit-log-table-wrap"><table className="credit-log-table" aria-label="Abonelik Listesi"><thead><tr>{admin && <th>Müşteri</th>}<th>Paket / Anlaşma</th><th>Dönem tutarı</th><th>Kredi</th><th>Durum</th><th>Mevcut dönem bitişi</th><th>Planlanan yenileme</th><th>İşlemler</th></tr></thead><tbody>
-      {query.data?.data.map(row => <tr key={row.id}>{admin && <td>{row.customer.company || row.customer.name}</td>}<td>{row.name}<small>{periodLabel(row)}</small></td><td>{money(row.amount, row.currency)}</td><td>{count(row.credits)}</td><td>{statuses[row.status as keyof typeof statuses] ?? row.status}</td><td>{date(row.currentEndsOn)}</td><td>{date(row.nextPaymentOn)}</td><td><div className="subscription-actions">
+      {query.data?.data.map(row => <tr key={row.id}>{admin && <td>{row.customer.company || row.customer.name}</td>}<td>{row.name}<small>{periodLabel(row)}</small></td><td>{money(row.amount, row.currency)}</td><td>{count(row.credits)}</td><td><span className={`credit-order-status credit-order-status-${row.status.toLowerCase()}`}>{renewalLabel(row)}</span>{row.recurringFailureCode && row.recurringFailureCode !== 'PAID_PERIOD_REVIEW' && <small>Yenileme kontrol kodu: {row.recurringFailureCode}</small>}</td><td>{date(row.currentEndsOn)}</td><td>{date(row.nextPaymentOn)}</td><td><div className="subscription-actions">
         {!admin && row.status === 'AWAITING_CONSENT' && <button className="button primary" type="button" disabled={save.isPending} onClick={() => { setConsent(false); save.reset(); setTarget({ row, action: 'accept' }); }}>Koşulları Onayla</button>}
         {!admin && ['AWAITING_PAYMENT', 'PAST_DUE'].includes(row.status) && <button className="button primary" type="button" disabled={checkout.isPending} onClick={() => checkout.mutate(row.id)}>Ödemeye Geç</button>}
-        {canStop && row.autoRenew && row.status !== 'STOPPED' && <button className="button secondary" type="button" disabled={save.isPending} onClick={() => { save.reset(); setTarget({ row, action: 'stop' }); }}>Yenilemeyi Kapat</button>}
+        {canStop && ((row.autoRenew && row.status !== 'STOPPED') || ['REGISTERING', 'REVIEW', 'ACTIVE'].includes(row.recurringState ?? '')) && <button className="button secondary" type="button" disabled={save.isPending} onClick={() => { save.reset(); setTarget({ row, action: 'stop' }); }}>Yenilemeyi Kapat</button>}
+        {row.recurringState === 'STOP_REQUESTED' && <span role="status">Bankadaki yenileme iptali bekleniyor.</span>}
+        {row.recurringFailureCode === 'PAID_PERIOD_REVIEW' && <span>Gelecek çekimler kapalı; ödenmiş dönem kontrol edilmeli.</span>}
         <Link className="button secondary" to={`?view=orders&subscriptionId=${row.id}`}>Siparişler</Link>
       </div></td></tr>)}
       {!query.isPending && !query.isError && !query.data?.data.length && <tr><td colSpan={admin ? 8 : 7}>Henüz abonelik bulunmuyor.</td></tr>}

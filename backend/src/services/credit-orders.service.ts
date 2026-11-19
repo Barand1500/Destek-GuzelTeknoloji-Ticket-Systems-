@@ -22,6 +22,7 @@ export const creditOrderListInput = paginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).optional(),
   subscriptionId: z.uuid().optional(),
+  refundRequested: z.enum(['true']).optional(),
   status: z.enum(["PENDING", "CANCELLED", "PAID", "FAILED", "PARTIAL_REFUND", "REFUNDED"]).optional(),
   currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
 });
@@ -196,6 +197,7 @@ export async function listCreditOrders(
     ...(customerId ? { customerId } : {}),
     ...(input.status ? { status: input.status } : {}),
     ...(input.subscriptionId ? { subscriptionId: input.subscriptionId } : {}),
+    ...(input.refundRequested ? { refundRequest: { is: { status: 'OPEN' } } } : {}),
     ...(input.currency ? { currency: input.currency } : {}),
     ...(search
       ? {
@@ -217,13 +219,13 @@ export async function listCreditOrders(
       const total = await tx.creditOrder.count({ where });
       const rows = await tx.creditOrder.findMany({
         where,
-        select: { ...fields, paymentAttempts: { where: { status: 'PENDING' }, select: { id: true }, take: 1 } },
+        select: { ...fields, refundRequest: { select: { status: true } }, grantedAgreement: { select: { usedCredits: true } }, paymentAttempts: { where: { status: 'PENDING' }, select: { id: true }, take: 1 } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: input.limit,
         skip: (input.page - 1) * input.limit,
       });
       return {
-        data: rows.map(({ paymentAttempts, ...row }) => ({ ...json(row), paymentInProgress: paymentAttempts.length > 0 })),
+        data: rows.map(({ paymentAttempts, grantedAgreement, ...row }) => ({ ...json(row), usedCredits: grantedAgreement?.usedCredits ?? 0, canBankCancel: !!grantedAgreement && row.status === 'PAID' && !grantedAgreement?.usedCredits && !!row.paidAt && row.paidAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) && !row.reversals.some(v => ['PENDING', 'REVIEW', 'SUCCEEDED'].includes(v.status)), paymentInProgress: paymentAttempts.length > 0 })),
         pagination: {
           page: input.page,
           limit: input.limit,

@@ -273,3 +273,19 @@ export async function debitResolution(tx: Prisma.TransactionClient, actor: Actor
   await tx.activityLog.create({ data: { userId: actor.id, action: 'conversation.credit_used', entityType: 'Conversation', entityId: conversation.id, metadata: { credits: input.credits, agreementId: charge.agreementId }, ipAddress: actor.ipAddress } });
   return charge;
 }
+
+/** CreditCharge holds the current resolution debit; completed cycles remain in the activity ledger. */
+export async function returnResolutionCredit(tx: Prisma.TransactionClient, actor: Actor, conversation: { id: string; customerId: string }) {
+  await tx.conversation.update({ where: { id: conversation.id }, data: { updatedAt: new Date() } });
+  const charge = await tx.creditCharge.findUnique({ where: { conversationId: conversation.id }, include: { agreement: true } });
+  if (!charge) return;
+  if (charge.credits > 0) {
+    if (!charge.agreement) throw invalid('Kredi kesintisinin anlaşması bulunamadı.');
+    // Return to the original grant even if the customer was reparented or the grant expired.
+    await tx.$queryRaw`SELECT id FROM User WHERE id = ${charge.agreement.customerId} FOR UPDATE`;
+    const restored = await tx.agreement.updateMany({ where: { id: charge.agreement.id, usedCredits: { gte: charge.credits } }, data: { usedCredits: { decrement: charge.credits } } });
+    if (restored.count !== 1) throw invalid('Kredi kesintisi doğrulanamadı; talep yeniden açılmadı.');
+  }
+  await tx.activityLog.create({ data: { userId: actor.id, action: 'conversation.credit_returned', entityType: 'Conversation', entityId: conversation.id, metadata: { credits: charge.credits, agreementId: charge.agreementId, chargeId: charge.id, chargedAt: charge.createdAt.toISOString(), chargedById: charge.actorId }, ipAddress: actor.ipAddress } });
+  await tx.creditCharge.delete({ where: { id: charge.id } });
+}

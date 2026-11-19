@@ -1003,7 +1003,7 @@ export function TicketDetail() {
           </div>}
           <div className="ticket-status-priority-row" style={{ display: "grid", gridTemplateColumns: user?.role === "CUSTOMER" ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))", gap: 12, order: 2, gridColumn: "1 / -1" }}>
           {user?.role !== "CUSTOMER" && <div className="property-editor">
-              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status) && !t.creditCharge) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
+              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status)) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
           </div>}
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
@@ -1036,7 +1036,7 @@ export function TicketDetail() {
                 aria-label="Çözüldü Olarak İşaretle"
                 title="Çözüldü Olarak İşaretle"
                 disabled={update.isPending || !hasPermission(user, 'conversations.update')}
-                onClick={() => t.creditCharge ? update.mutate({ status: 'RESOLVED' }) : setResolutionStatus('RESOLVED')}
+                onClick={() => setResolutionStatus('RESOLVED')}
               >
                 <CheckCheck size={16} /> Çözüldü Olarak İşaretle
               </button>

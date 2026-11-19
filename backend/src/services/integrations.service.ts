@@ -1,3 +1,4 @@
+import { returnResolutionCredit } from './agreements.service.js';
 import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import bcrypt from "bcrypt";
 import { canonicalPhone, matchesPhone } from "./inbound-phone-matching.js";
@@ -170,12 +171,13 @@ export async function persistInboundMessage(input: InboundMessage) {
         }
         await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: input.body.slice(0, 10_000), type: "CUSTOMER_MESSAGE", attachments: { create: (input.attachments ?? []).map(file => ({ ...file, uploaderId: customer.id })) } } });
         await tx.externalMessage.create({ data: { provider: input.provider, externalId: input.externalId, channel: input.channel as ConversationChannel, conversationId: target.id, ...(input.receivedAt ? { createdAt: input.receivedAt } : {}) } });
+        const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
+        await returnResolutionCredit(tx, actor, target);
         await tx.conversation.update({ where: { id: target.id }, data: {
           status: "OPEN", closedAt: null, resolvedAt: null,
           ...(input.channel === "WHATSAPP" && target.channel === 'TICKET' && target.replyChannels == null ? { channel: "WHATSAPP" } : {}),
         } });
         await tx.activityLog.create({ data: { userId: customer.id, action: "conversation." + input.channel.toLowerCase() + "_received", entityId: target.id, metadata: { provider: input.provider, externalId: input.externalId, attachmentCount: input.attachments?.length ?? 0, ...(input.attachments?.length === 1 ? { originalName: input.attachments[0].originalName } : {}) } } });
-        const actor = { id: customer.id, name: customer.name, email: customer.email ?? "", role: "CUSTOMER" as const, departmentIds: [], sessionId: input.provider };
         await notifyConversation(tx, actor, { ...target, customer }, "MESSAGE_RECEIVED", "Yeni " + channelNames[input.channel] + " mesajÄ±");
         return { conversationId: target.id, attachmentsStored: true };
       }, { isolationLevel: "Serializable", timeout: 15_000 });
@@ -345,7 +347,7 @@ export async function sendWhatsappTemplate(phone: string, template: { name: stri
   const settings = await db.integrationSettings.findUnique({ where: { id: 'default' } });
   const to = whatsappRecipient(phone);
   if (!settings?.whatsappEnabled || !settings.whatsappPhoneNumberId || !settings.whatsappAccessToken || !/^[1-9]\d{9,14}$/.test(to) || !/^[a-z0-9_]+$/.test(template.name) || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(template.language) || template.parameters.length !== 1) {
-    throw Object.assign(new Error('WhatsApp þablon gönderim ayarlarý geçersiz.'), { code: 'INVALID_WHATSAPP_TEMPLATE' });
+    throw Object.assign(new Error('WhatsApp ï¿½ablon gï¿½nderim ayarlarï¿½ geï¿½ersiz.'), { code: 'INVALID_WHATSAPP_TEMPLATE' });
   }
   const response = await fetch(`${META_GRAPH_API}/${encodeURIComponent(settings.whatsappPhoneNumberId)}/messages`, {
     method: 'POST', headers: { Authorization: `Bearer ${settings.whatsappAccessToken}`, 'Content-Type': 'application/json' },
@@ -353,6 +355,6 @@ export async function sendWhatsappTemplate(phone: string, template: { name: stri
     signal: AbortSignal.timeout(15_000),
   });
   const data = await responseJson<MetaResponse>(response);
-  if (!response.ok || !data.messages?.[0]?.id) throw Object.assign(new Error(providerMessage('WhatsApp þablonu gönderilemedi', response, data)), { statusCode: response.status, providerCode: data.error?.code });
+  if (!response.ok || !data.messages?.[0]?.id) throw Object.assign(new Error(providerMessage('WhatsApp ï¿½ablonu gï¿½nderilemedi', response, data)), { statusCode: response.status, providerCode: data.error?.code });
   return data.messages[0].id;
 }

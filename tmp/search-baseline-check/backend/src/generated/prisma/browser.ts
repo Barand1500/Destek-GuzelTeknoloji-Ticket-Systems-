@@ -332,3 +332,8 @@ export type PaymentStoredMethod = Prisma.PaymentStoredMethodModel
  * 
  */
 export type PaymentReversal = Prisma.PaymentReversalModel
+/**
+ * Model CreditRefundRequest
+ * 
+ */
+export type CreditRefundRequest = Prisma.CreditRefundRequestModel

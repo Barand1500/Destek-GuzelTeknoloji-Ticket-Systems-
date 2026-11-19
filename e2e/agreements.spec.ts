@@ -2,13 +2,13 @@ import { test, expect, type Page } from '@playwright/test';
 const customerId = 'd4bdfe56-9948-4ed2-942e-e44d76354186';
 const ticketId = '64dfea56-9948-4ed2-942e-e44d76354186';
 const agreementId = 'f4bdfe56-9948-4ed2-942e-e44d76354186';
-async function setup(page: Page, role = 'ADMIN') {
+async function setup(page: Page, role = 'ADMIN', legacyCharge = false) {
   const customer = { id: customerId, name: 'Örnek Firma', email: 'customer@example.test', phone: '5301234567', company: 'Örnek', role: 'CUSTOMER', isActive: true, loginEmail: null };
   const agreement = { id: agreementId, customerId, customer, name: 'Yıllık Bakım', type: 'YEARLY', startsOn: '2026-01-01', endsOn: '2027-12-31', fee: '25000', credits: 100, usedCredits: 20, remainingCredits: 80, usable: true, state: 'ACTIVE' };
   const agreements = [agreement];
   let status = 'OPEN';
   const writes: { path: string; body: any }[] = [];
-  const conversation = () => ({ id: ticketId, number: 123, customerId, subject: 'Destek talebi', customer, department: { id: 'dep', name: 'Destek' }, channel: 'TICKET', replyChannels: ['TICKET'], status, priority: 'NORMAL', tags: [], assignees: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  const conversation = () => ({ creditCharge: legacyCharge ? { credits: 10, agreementId } : null, id: ticketId, number: 123, customerId, subject: 'Destek talebi', customer, department: { id: 'dep', name: 'Destek' }, channel: 'TICKET', replyChannels: ['TICKET'], status, priority: 'NORMAL', tags: [], assignees: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
   await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
   await page.route('**/socket.io/**', route => route.abort());
   await page.route('**/api/v1/**', route => {
@@ -123,4 +123,16 @@ test('Customer portal shows balance and history without staff-only controls', as
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: '.local/agreements-customer-mobile.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('a reopened ticket with an old credit badge still asks for a new amount', async ({ page }) => {
+ const writes = await setup(page, 'ADMIN', true);
+ await page.goto('/admin/conversations/' + ticketId);
+ await page.getByRole('button', { name: 'Çözüldü Olarak İşaretle', exact: true }).click();
+ const dialog = page.getByRole('dialog', { name: 'Talebi Çöz' });
+ await expect(dialog.getByRole('spinbutton', { name: 'Kullanılacak Kredi', exact: true })).toBeVisible();
+ await dialog.getByRole('spinbutton', { name: 'Kullanılacak Kredi', exact: true }).fill('3');
+ await dialog.getByRole('button', { name: 'Çözümü Kaydet', exact: true }).click();
+ await expect(dialog).toHaveCount(0);
+ expect(writes.at(-1)?.body).toEqual({ status: 'RESOLVED', creditResolution: { agreementId, credits: 3 } });
 });

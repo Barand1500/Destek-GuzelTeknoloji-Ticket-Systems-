@@ -1,42 +1,46 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { ErrorMessage } from '../management/shared';
-import { DropdownSelect } from '../../components/DropdownSelect';
 import { money, count } from './types';
 
 type Reversal = { id: string; kind: string; status: string; credits: number; amount: string; currency: string; reason: string; failureCode?: string | null; createdAt: string };
-type Summary = { data: Reversal[]; currency: string; refundableCredits: number; refundableAmount: string; originalCredits: number; total: string; refundedCredits: number; refundedAmount: string; hasPending: boolean; usedCredits: number; canCancel: boolean };
+type Summary = { refundRequest?: { status: string; reason: string; reviewNote?: string | null } | null; data: Reversal[]; currency: string; refundableCredits: number; refundableAmount: string; originalCredits: number; total: string; refundedCredits: number; refundedAmount: string; hasPending: boolean; usedCredits: number; canCancel: boolean };
 const states: Record<string, string> = { PENDING: 'İade bekliyor', REVIEW: 'Sonuç kontrol ediliyor', SUCCEEDED: 'İade edildi', FAILED: 'İade başarısız' };
-export function PaymentReversalPanel({ orderId, onClose }: { orderId: string; onClose: () => void }) {
+export function PaymentReversalPanel({ orderId, kind = 'REFUND', onClose }: { orderId: string; kind?: 'REFUND' | 'CANCEL'; onClose: () => void }) {
   const client = useQueryClient();
   const query = useQuery({ queryKey: ['payment-reversals', orderId], queryFn: async () => (await api.get(`/credit-sales/orders/${orderId}/reversals`)).data.data as Summary, refetchInterval: 30000 });
-  const [credits, setCredits] = useState(''), [kind, setKind] = useState('REFUND'), [reason, setReason] = useState(''), [consent, setConsent] = useState(false);
+  const [credits, setCredits] = useState<string | null>(null), [reason, setReason] = useState(''), [consent, setConsent] = useState(false);
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID()), [notice, setNotice] = useState('');
+  const [reviewNote, setReviewNote] = useState('');
   const [manual, setManual] = useState<Reversal | null>(null), [reference, setReference] = useState(''), [confirmed, setConfirmed] = useState(false);
   const refresh = async () => { await Promise.all([client.invalidateQueries({ queryKey: ['payment-reversals', orderId] }), client.invalidateQueries({ queryKey: ['/credit-sales/orders'] }), client.invalidateQueries({ queryKey: ['/my/credit-store/orders'] }), client.invalidateQueries({ queryKey: ['agreements'] })]); };
-  const refund = useMutation({ mutationFn: () => api.post(`/credit-sales/orders/${orderId}/reversals`, { requestKey, kind, credits: Number(credits), reason }), onSuccess: async () => { setNotice('İade talebi kaydedildi. Sonuç aşağıda gösterilir.'); setRequestKey(crypto.randomUUID()); setCredits(''); setKind('REFUND'); setConsent(false); await refresh(); } });
+  const refund = useMutation({ mutationFn: () => api.post(`/credit-sales/orders/${orderId}/reversals`, { requestKey, kind: actionKind, credits: value, reason }), onSuccess: async () => { setNotice('İade talebi kaydedildi. Sonuç aşağıda gösterilir.'); setRequestKey(crypto.randomUUID()); setCredits(null); setConsent(false); await refresh(); } });
   const check = useMutation({ mutationFn: ({ id, close }: { id: string; close: boolean }) => api.post(`/credit-sales/reversals/${id}/${close ? 'no-refund' : 'check'}`, close ? { confirmedNoRefund: confirmed, providerReference: reference } : {}), onSuccess: async () => { setManual(null); await refresh(); } });
-  const data = query.data, value = Number(credits);
+  const reject = useMutation({ mutationFn: () => api.post('/credit-sales/orders/' + encodeURIComponent(orderId) + '/refund-request/reject', { reason: reviewNote }), onSuccess: refresh });
+  const data = query.data, actionKind = kind === 'CANCEL' && data?.canCancel ? 'CANCEL' : 'REFUND', value = Number(credits ?? (actionKind === 'CANCEL' ? data?.originalCredits : data?.refundableCredits) ?? 0);
+  useEffect(() => { setCredits(null); setConsent(false); setRequestKey(crypto.randomUUID()); }, [actionKind]);
+  const validCredits = !!data && Number.isSafeInteger(value) && value > 0 && value <= data.refundableCredits;
   const totalMinor = Math.round(Number(data?.total ?? 0) * 100), oldMinor = Math.round(Number(data?.refundedAmount ?? 0) * 100);
-  const amount = data && Number.isSafeInteger(value) && value > 0 ? Math.max(0, Number(BigInt(totalMinor) * BigInt(data.refundedCredits + value) / BigInt(data.originalCredits) - BigInt(oldMinor))) / 100 : 0;
-  const busy = refund.isPending || check.isPending;
+  const amount = data && validCredits && data.originalCredits > 0 ? Math.max(0, Number(BigInt(totalMinor) * BigInt(data.refundedCredits + value) / BigInt(data.originalCredits) - BigInt(oldMinor))) / 100 : 0;
+  const busy = refund.isPending || check.isPending || reject.isPending;
   const edit = (fn: () => void) => { fn(); setRequestKey(crypto.randomUUID()); setConsent(false); refund.reset(); };
   return <section className="credit-sales-card payment-reversal-panel" aria-label="İade ve banka iptali">
-    <div className="credit-store-title"><h3>İade ve Banka İptali</h3><button className="button secondary" type="button" disabled={busy} onClick={onClose}>Kapat</button></div>
-    <ErrorMessage error={query.error} /><ErrorMessage error={refund.error} /><ErrorMessage error={check.error} />
+    <div className="credit-store-title"><h3>{actionKind === 'CANCEL' ? 'Banka İptali' : 'Sipariş İadesi'}</h3><button className="button secondary" type="button" disabled={busy} onClick={onClose}>Kapat</button></div>
+    <ErrorMessage error={reject.error} /><ErrorMessage error={query.error} /><ErrorMessage error={refund.error} /><ErrorMessage error={check.error} />
     {notice && <p role="status">{notice}</p>}
-    {data && <><p>Kullanılmış: {count(data.usedCredits)} kredi · İade edilebilir: {count(data.refundableCredits)} kredi / {money(data.refundableAmount, data.currency)}</p>
+    {data && <>{data.refundRequest?.status === 'OPEN' && <aside className="credit-store-notice"><strong>Müşterinin iade talebi</strong><p>{data.refundRequest.reason}</p><label><span className="field-label">Ret gerekçesi</span><textarea maxLength={500} value={reviewNote} disabled={busy} onChange={e => setReviewNote(e.target.value)} /></label><button className="button secondary" disabled={busy || data.hasPending || reviewNote.trim().length < 3} onClick={() => reject.mutate()}>Talebi Reddet</button></aside>}<p>Kullanılmış: {count(data.usedCredits)} kredi · İade edilebilir: {count(data.refundableCredits)} kredi / {money(data.refundableAmount, data.currency)}</p>
       <p>İade başarılı olduğunda ilgili krediler kaldırılır ve bu aboneliğin otomatik yenilemesi kapanır. Talep ve kullanım geçmişi korunur. Banka iptali yalnızca hiç kullanılmamış ödemenin tamamı içindir; bankanın işlem günü kuralına bağlıdır.</p>
       {!data.hasPending && data.refundableCredits > 0 && <form className="payment-reversal-form" onSubmit={e => { e.preventDefault(); refund.mutate(); }}>
         <fieldset className="payment-settings-fields" disabled={busy}>
-          <DropdownSelect label="İşlem" ariaLabel="İade işlemi" value={kind} onChange={v => edit(() => { setKind(v); if (v === 'CANCEL') setCredits(String(data.originalCredits)); })} options={[{ value: 'REFUND', label: 'Tam / kısmi iade' }, ...(data.canCancel ? [{ value: 'CANCEL', label: 'Ödemenin tamamını bankadan iptal et' }] : [])]} />
-          <label><span className="field-label">İade edilecek kredi *</span><input inputMode="numeric" required value={credits} onChange={e => edit(() => setCredits(e.target.value.replace(/\D/g, '')))} /></label>
+          {actionKind === 'CANCEL' ? <div className="payment-cancel-total"><span>İptal edilecek ödemenin tamamı</span><strong>{count(data.originalCredits)} kredi / {money(data.total, data.currency)}</strong></div> : <label><span className="field-label">İade edilecek kredi *</span><input type="number" min={1} max={data.refundableCredits} step={1} required value={credits ?? String(data.refundableCredits)} onChange={e => edit(() => setCredits(e.target.value))} /></label>}
           <label className="payment-public-url"><span className="field-label">İade nedeni *</span><input required minLength={3} maxLength={500} value={reason} onChange={e => edit(() => setReason(e.target.value))} /></label>
         </fieldset>
+        {!validCredits && <p role="alert">En fazla {count(data.refundableCredits)} kredi iade edilebilir.</p>}
+        {actionKind === 'CANCEL' && !data.canCancel && <p role="alert">Bu ödeme banka iptaline uygun değil. İade işlemini kullanın.</p>}
         <strong>İade tutarı: {money(amount, data.currency)}</strong>
         <label className="integration-toggle credit-renewal-choice"><span>{count(value || 0)} kredinin kullanıma kapatılmasını ve {money(amount, data.currency)} iade edilmesini onaylıyorum.</span><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>
-        <button className="button primary" disabled={busy || !consent || !Number.isInteger(value) || value < 1 || value > data.refundableCredits || amount <= 0 || reason.trim().length < 3 || (kind === 'CANCEL' && (data.usedCredits > 0 || data.refundedCredits > 0 || value !== data.originalCredits))}>İadeyi Onayla</button>
+        <button className="button primary" disabled={busy || !consent || !Number.isInteger(value) || value < 1 || value > data.refundableCredits || amount <= 0 || reason.trim().length < 3 || (actionKind === 'CANCEL' && (!data.canCancel || data.usedCredits > 0 || data.refundedCredits > 0 || value !== data.originalCredits))}>{actionKind === 'CANCEL' ? 'Banka İptalini Onayla' : 'İadeyi Onayla'}</button>
       </form>}
       {data.hasPending && <p className="credit-store-notice">İade sonucu bekleniyor. İlgili kredi ayrıldı; yeniden iade veya yenileme çekimi başlatılmaz.</p>}
       {data.data.map(row => <article key={row.id} className="payment-reversal-row"><strong>{states[row.status] ?? row.status} · {money(row.amount, row.currency)} · {count(row.credits)} kredi</strong><p>{row.reason}</p>{row.failureCode === 'VPS-1021' && <p>Bankanın gün sonu kapanışı yapılmamış. Uygunsa banka iptalini seçin; değilse gün sonundan sonra iade edin.</p>}{['PENDING', 'REVIEW'].includes(row.status) && <div className="payment-settings-actions"><button className="button secondary" disabled={busy} onClick={() => check.mutate({ id: row.id, close: false })}>İade Sonucunu Sorgula</button><button className="button secondary" disabled={busy || Date.now() - new Date(row.createdAt).getTime() < 3600000} onClick={() => { setManual(row); setReference(''); setConfirmed(false); }}>İade Yapılmadığını Doğrula</button></div>}</article>)}

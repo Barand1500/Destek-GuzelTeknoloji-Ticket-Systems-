@@ -8,7 +8,7 @@ import { count, money } from './types';
 import './credit-store.css';
 import { AkbankCardForm } from './AkbankCardForm';
 
-type CheckoutOrder = { id: string; number: number; name: string; credits: number; total: string; currency: string; status: string; provider?: string; paymentAvailable: boolean; recurringAvailable?: boolean; renewalRequested?: boolean; periodStartsOn?: string | null; customer: { name: string; email?: string | null; phone?: string | null } };
+type CheckoutOrder = { id: string; number: number; name: string; credits: number; total: string; currency: string; status: string; provider?: string; paymentAvailable: boolean; recurringAvailable?: boolean; recurringPayments?: number; renewalRequested?: boolean; periodStartsOn?: string | null; customer: { name: string; email?: string | null; phone?: string | null } };
 export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: () => void }) {
   const order = useQuery({ queryKey: ['credit-checkout', orderId], queryFn: async () => (await api.get(`/my/credit-store/orders/${encodeURIComponent(orderId)}/checkout`)).data.data as CheckoutOrder });
   const [billing, setBilling] = useState({ name: '', surname: '', identityNumber: '', email: '', phone: '', address: '', city: '', country: 'Turkey', renewalConsent: false });
@@ -25,7 +25,7 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
       <h3>{data.name}</h3><p>Sipariş #{data.number} · {count(data.credits)} kredi</p><strong className="credit-price">{money(data.total, data.currency)}</strong>
       {future && <p className="credit-store-notice">Ödeme {data.periodStartsOn!.slice(0, 10).split('-').reverse().join('.')} tarihinde açılacak.</p>}
       {!data.paymentAvailable && <p className="credit-store-notice">Online ödeme şu anda kapalı.</p>}
-      {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} recurringAvailable={data.recurringAvailable} />}
+      {data.paymentAvailable && !future && data.provider === 'akbank' && <AkbankCardForm key={data.id} orderId={data.id} total={data.total} currency={data.currency} renewalRequested={data.renewalRequested} recurringAvailable={data.recurringAvailable} recurringPayments={data.recurringPayments} />}
       {data.paymentAvailable && !future && data.provider !== 'akbank' && <form onSubmit={e => { e.preventDefault(); pay.mutate(); }}>
         <h3>Fatura ve İletişim Bilgileri</h3>
         <fieldset className="credit-checkout-billing" disabled={pay.isPending}>

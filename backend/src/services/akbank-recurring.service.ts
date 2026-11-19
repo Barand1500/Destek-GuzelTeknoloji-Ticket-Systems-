@@ -101,22 +101,51 @@ async function importOccurrence(instructionId: string, context: Context, row: Re
 }
 
 export async function reconcileAkbankRecurring(id: string, now = new Date()) {
-  const instruction = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id }, include: { subscription: true } });
-  if (terminal.includes(instruction.state)) return;
-  const context = openPayment<Context>(instruction.contextCiphertext);
-  let rows = checkedRows(await queryAkbankInstruction(context.config, id), context);
-  // Success racing a cancellation is still a real paid period; never discard it.
-  for (const row of rows.sort((a, b) => Number(a.recurringOrder) - Number(b.recurringOrder))) await importOccurrence(id, context, row, now);
-  let current = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id }, include: { subscription: { include: { customer: true } } } });
-  const inactive = !current.subscription.customer.isActive || !!current.subscription.customer.deletedAt || !!current.subscription.customer.parentCustomerId;
-  if (current.state === 'STOP_REQUESTED' || current.subscription.stoppedAt || inactive || (current.state === 'ACTIVE' && !current.subscription.autoRenew)) {
-    await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOP_REQUESTED' } });
-    await cancelAkbankInstruction(context.config, id);
-    rows = checkedRows(await queryAkbankInstruction(context.config, id), context);
-    for (const row of rows) await importOccurrence(id, context, row, now);
-    if (rows.some(row => ['W', 'P'].includes(row.requestStatus))) throw invalid();
-    await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOPPED', nextCheckAt: null, failureCode: null } });
+  const current = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id }, include: { subscription: { include: { customer: true } } } });
+  const paidReview = current.state === 'STOPPED' && current.failureCode === 'PAID_PERIOD_REVIEW';
+  if (terminal.includes(current.state) && !paidReview) return;
+  const context = openPayment<Context>(current.contextCiphertext);
+  const customer = current.subscription.customer;
+  const inactive = !customer.isActive || !!customer.deletedAt || !!customer.parentCustomerId;
+  const stopping = paidReview || current.state === 'STOP_REQUESTED' || !!current.subscription.stoppedAt || inactive || (current.state === 'ACTIVE' && !current.subscription.autoRenew);
+  if (stopping) {
+    // Stop future money movement first. Local credit/data errors must never block cancellation.
+    if (!paidReview) {
+      await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOP_REQUESTED' } });
+      await cancelAkbankInstruction(context.config, id);
+    }
+    const stopped = await queryAkbankInstruction(context.config, id);
+    const sequences = stopped.map(row => Number(row.recurringOrder));
+    if (stopped.length !== context.terms.numberOfPayments || new Set(sequences).size !== stopped.length || sequences.some(number => !Number.isInteger(number) || number < 1 || number > context.terms.numberOfPayments) || stopped.some(row => !['S', 'C', 'V', 'F'].includes(row.requestStatus))) throw invalid();
+    let review = false;
+    try {
+      const checked = checkedRows(stopped, context);
+      for (const row of checked.sort((a, b) => Number(a.recurringOrder) - Number(b.recurringOrder))) {
+        try { await importOccurrence(id, context, row, now); } catch { review = true; }
+      }
+    } catch { review = true; }
+    await db.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM User WHERE id = ${current.subscription.customerId} FOR UPDATE`;
+      await tx.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOPPED', nextCheckAt: review ? new Date(now.getTime() + 60000) : null, failureCode: review ? 'PAID_PERIOD_REVIEW' : null } });
+      await tx.creditSubscription.update({ where: { id: current.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: current.subscription.stoppedAt ?? now, nextPaymentOn: null } });
+      if (review && current.failureCode !== 'PAID_PERIOD_REVIEW') await tx.activityLog.create({ data: { userId: current.subscription.customerId, action: 'payments.akbank_paid_period_review', entityType: 'AkbankRecurringInstruction', entityId: id, metadata: { bankCancellationConfirmed: true, subscriptionId: current.subscriptionId } } });
+    });
     publishChange(); return;
+  }
+  const reported = await queryAkbankInstruction(context.config, id);
+  // A missing registration result is uncertain, not proof that a schedule was accepted.
+  if (!reported.length) throw invalid();
+  let rows: Record<string, any>[];
+  try { rows = checkedRows(reported, context); }
+  catch {
+    await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOP_REQUESTED', failureCode: 'SCHEDULE_MISMATCH' } });
+    return reconcileAkbankRecurring(id, now);
+  }
+  try {
+    for (const row of rows.sort((a, b) => Number(a.recurringOrder) - Number(b.recurringOrder))) await importOccurrence(id, context, row, now);
+  } catch {
+    await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOP_REQUESTED', failureCode: 'PAID_PERIOD_REVIEW' } });
+    return reconcileAkbankRecurring(id, now);
   }
   await db.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${current.subscription.customerId} FOR UPDATE`;
@@ -131,7 +160,7 @@ export async function reconcileAkbankRecurring(id: string, now = new Date()) {
 
 /** Inquiry/cancellation only: the bank, not this worker, executes recurring charges. */
 export async function runAkbankRecurringChecks() {
-  const rows = await db.akbankRecurringInstruction.findMany({ where: { state: { notIn: terminal }, OR: [{ nextCheckAt: null }, { nextCheckAt: { lte: new Date() } }] }, take: 25, orderBy: [{ nextCheckAt: 'asc' }, { id: 'asc' }], select: { id: true } });
+  const rows = await db.akbankRecurringInstruction.findMany({ where: { AND: [{ OR: [{ state: { notIn: terminal } }, { state: 'STOPPED', failureCode: 'PAID_PERIOD_REVIEW' }] }, { OR: [{ nextCheckAt: null }, { nextCheckAt: { lte: new Date() } }] }] }, take: 25, orderBy: [{ nextCheckAt: 'asc' }, { id: 'asc' }], select: { id: true } });
   for (const row of rows) {
     try { await reconcileAkbankRecurring(row.id); }
     catch { await db.akbankRecurringInstruction.updateMany({ where: { id: row.id, state: { notIn: terminal } }, data: { nextCheckAt: new Date(Date.now() + 60000), failureCode: 'BANK_RESULT_UNCERTAIN' } }); }

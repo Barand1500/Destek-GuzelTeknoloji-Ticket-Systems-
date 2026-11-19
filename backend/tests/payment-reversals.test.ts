@@ -54,9 +54,11 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     await assert.rejects(startPaymentReversal({ ...customer, id: randomUUID() }, unused.order.id, selfRequest, false), { code: 'ORDER_NOT_FOUND' });
     await assert.rejects(startPaymentReversal(customer, unused.order.id, { ...selfRequest, credits: 1 }, false));
     assert.equal((await reversalSummary(customer, unused.order.id, false)).canSelfRefund, true);
+    await db.creditRefundRequest.create({ data: { orderId: unused.order.id, reason: 'Refund request fixture' } });
     const beforeSelf = calls.length;
     const selfResult = await startPaymentReversal(customer, unused.order.id, selfRequest, false);
     assert.equal(selfResult.status, 'SUCCEEDED');
+    assert.equal((await db.creditRefundRequest.findUniqueOrThrow({ where: { orderId: unused.order.id } })).status, 'RESOLVED');
     assert.equal(selfResult.credits, 100);
     assert.equal(selfResult.kind, 'CANCEL');
     assert.equal((await startPaymentReversal(customer, unused.order.id, selfRequest, false)).id, selfResult.id);
@@ -134,6 +136,7 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     await db.paymentReversal.deleteMany({ where: { order: { customerId: owner.id } } });
     await db.paymentCheckoutSession.deleteMany({ where: { customerId: owner.id } });
     await db.creditPaymentAttempt.deleteMany({ where: { order: { customerId: owner.id } } });
+    await db.creditRefundRequest.deleteMany({ where: { order: { customerId: owner.id } } });
     await db.creditOrder.deleteMany({ where: { customerId: owner.id } });
     await db.creditSubscription.deleteMany({ where: { customerId: owner.id } });
     await db.agreement.deleteMany({ where: { customerId: owner.id } });

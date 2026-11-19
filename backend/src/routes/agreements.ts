@@ -33,5 +33,10 @@ agreementsRouter.get('/conversations/:id/credit-options', async (req, res) => {
   const conversation = await getConversation(req.actor, idSchema.parse(req.params.id));
   if (req.actor.role === 'CUSTOMER') throw new AppError(403, 'FORBIDDEN', 'Bu işlem personel içindir.');
   const data = await service.listAgreements(req.actor, conversation.customerId);
-  res.json({ success: true, data: { agreements: data.agreements.filter(a => a.usable), charge: await db.creditCharge.findUnique({ where: { conversationId: conversation.id } }) } });
+  const charge = await db.creditCharge.findUnique({ where: { conversationId: conversation.id } });
+  const reopening = !['RESOLVED', 'CLOSED'].includes(conversation.status);
+  // Legacy reopened tickets may still carry the old debit. Preview its return without mutating a GET.
+  const agreements = data.agreements.map(a => reopening && charge?.agreementId === a.id && data.customer.isActive && ['ACTIVE', 'DEPLETED'].includes(a.state)
+    ? { ...a, remainingCredits: a.remainingCredits + charge.credits, usable: true } : a).filter(a => a.usable);
+  res.json({ success: true, data: { agreements, charge: reopening ? null : charge } });
 });

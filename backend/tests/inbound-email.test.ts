@@ -99,6 +99,7 @@ test('inbound threading validates the sender and preserves unthreaded mail as a 
     return where.id === target.id || where.number === 36 ? target : null;
   });
   const tx = {
+    creditCharge: { findUnique: async () => null },
     conversationAssignee: { findMany: async () => [] },
     conversation: { create: async ({ data }: any) => { newTickets.push(data); return { ...data, id: 'new-ticket' }; }, update: async () => target },
     conversationMessage: { create: async ({ data }: any) => { messages.push(data); return data; } },

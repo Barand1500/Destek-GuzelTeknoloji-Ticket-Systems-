@@ -76,7 +76,7 @@ export function CustomerAgreementsModal({ customer, onClose }: { customer: Perso
 export function CustomerAgreementsPage() {
   const { user } = useAuth(); const [params, setParams] = useSearchParams();
   const shopping = params.get("view") === "store", ordersVisible = params.get("view") === "orders", checkoutVisible = params.get("view") === "checkout", historyVisible = params.get("view") === "history", subscriptionsVisible = params.get("view") === "subscriptions";
-  const changeView = (view: string) => { const next = new URLSearchParams(params); next.set("view", view); setParams(next); };
+  const changeView = (view: string) => { const next = new URLSearchParams(params); next.set("view", view); next.delete("subscriptionId"); next.delete("orderId"); setParams(next); };
   const customerId = params.get('customerId') || user!.id;
   const summary = useQuery({queryKey:['agreements',customerId],queryFn:async()=>(await api.get(`/customers/${customerId}/agreements`)).data.data as Summary});
   const data=summary.data;

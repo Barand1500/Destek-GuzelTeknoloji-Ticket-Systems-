@@ -180,7 +180,18 @@ test('unresolved payments explain and disable cancellation and repeat payment', 
   await setup(page);
   await page.route('**/api/v1/my/credit-store/orders?**', route => route.fulfill({ json: { success: true, data: [{ ...order, paymentInProgress: true }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } }));
   await page.reload();
-  await expect(page.getByText('Ödeme sonucu kontrol ediliyor; sonuçlanınca işlem yapabilirsiniz.')).toBeVisible();
+  await expect(page.getByText('Banka sonucu kontrol ediliyor.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Siparişi İptal Et' })).toBeDisabled();
   await expect(page.getByRole('link', { name: 'Ödemeye Geç' })).toHaveCount(0);
+});
+
+test('customer cancellation confirmation follows the dark theme', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
+  await setup(page);
+  await page.getByRole('button', { name: 'Siparişi İptal Et', exact: true }).first().click();
+  const confirm = page.getByRole('dialog').getByRole('button', { name: 'İptali Onayla' });
+  await expect(confirm).toHaveCSS('background-color', 'rgb(85, 47, 44)');
+  await expect(confirm).toHaveCSS('color', 'rgb(255, 210, 205)');
+  await confirm.hover();
+  await expect(confirm).toHaveCSS('background-color', 'rgb(106, 57, 52)');
 });

@@ -113,7 +113,8 @@ export const ModelName = {
   PaymentGatewaySettings: 'PaymentGatewaySettings',
   PaymentCheckoutSession: 'PaymentCheckoutSession',
   PaymentStoredMethod: 'PaymentStoredMethod',
-  PaymentReversal: 'PaymentReversal'
+  PaymentReversal: 'PaymentReversal',
+  CreditRefundRequest: 'CreditRefundRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1091,6 +1092,19 @@ export const PaymentReversalScalarFieldEnum = {
 export type PaymentReversalScalarFieldEnum = (typeof PaymentReversalScalarFieldEnum)[keyof typeof PaymentReversalScalarFieldEnum]
 
 
+export const CreditRefundRequestScalarFieldEnum = {
+  orderId: 'orderId',
+  reason: 'reason',
+  status: 'status',
+  reviewNote: 'reviewNote',
+  reviewedById: 'reviewedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditRefundRequestScalarFieldEnum = (typeof CreditRefundRequestScalarFieldEnum)[keyof typeof CreditRefundRequestScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1858,4 +1872,15 @@ export const PaymentReversalOrderByRelevanceFieldEnum = {
 } as const
 
 export type PaymentReversalOrderByRelevanceFieldEnum = (typeof PaymentReversalOrderByRelevanceFieldEnum)[keyof typeof PaymentReversalOrderByRelevanceFieldEnum]
+
+
+export const CreditRefundRequestOrderByRelevanceFieldEnum = {
+  orderId: 'orderId',
+  reason: 'reason',
+  status: 'status',
+  reviewNote: 'reviewNote',
+  reviewedById: 'reviewedById'
+} as const
+
+export type CreditRefundRequestOrderByRelevanceFieldEnum = (typeof CreditRefundRequestOrderByRelevanceFieldEnum)[keyof typeof CreditRefundRequestOrderByRelevanceFieldEnum]
 

@@ -17,7 +17,7 @@ for (const theme of ['light', 'dark']) {
         if (path.endsWith('/payment-settings')) data = { provider: 'iyzico', mode: 'sandbox', credentialsConfigured: false, enabled: false, recurringEnabled: false, publicUrl: 'https://portal.test', testedAt: null, lastError: null };
         if (path.endsWith('/my/credit-store')) data = { settings, plans, owner: { id: 'customer', name: 'Test User' }, paymentAvailable: true, provider: 'akbank' };
         if (path.endsWith('/orders')) data = [{ id: 'order', number: 7, name: 'Başlangıç planı', kind: 'SUBSCRIPTION', periodMonths: 1, credits: 100, total: '1.00', currency: 'TRY', status: 'PAID', createdAt: '2026-11-19T08:00:00Z', customer: { name: 'Test User' } }];
-        if (path.endsWith('/subscriptions')) data = [{ id: 'subscription', name: 'Başlangıç planı', amount: '1.00', currency: 'TRY', credits: 100, periodMonths: 1, autoRenew: true, status: 'ACTIVE', nextPaymentOn: '2026-12-19', currentEndsOn: '2026-12-18', customer: { name: 'Test User', company: null } }];
+        if (path.endsWith('/subscriptions')) data = [{ id: 'subscription', name: 'Başlangıç planı', amount: '1.00', currency: 'TRY', credits: 100, periodMonths: 1, autoRenew: admin, status: admin ? 'ACTIVE' : 'STOPPED', recurringState: admin ? 'ACTIVE' : 'REVIEW', nextPaymentOn: '2026-12-19', currentEndsOn: '2026-12-18', customer: { name: 'Test User', company: null } }];
         if (path.endsWith('/checkout')) data = { id: 'order', number: 7, name: 'Başlangıç planı', total: '1.00', currency: 'TRY', credits: 100, status: 'PENDING', provider: 'akbank', paymentAvailable: true, customer: { name: 'Test User' } };
         if (path.endsWith('/reversals')) data = { canSelfRefund: true, usedCredits: 0, total: '1.00', currency: 'TRY', originalCredits: 100, refundableCredits: 100, refundableAmount: '1.00', refundedAmount: '0', refundedCredits: 0, canCancel: true, hasPending: false, data: [] };
         await route.fulfill({ json: { success: true, data, pagination } });
@@ -49,13 +49,18 @@ for (const theme of ['light', 'dark']) {
             expect((await title.boundingBox())!.width).toBeGreaterThan(120);
           }
           if (view === 'orders') {
-            await page.getByRole('button', { name: admin ? 'İade / Banka İptali' : 'İade Et', exact: true }).click();
+            if (!admin) await expect(page.locator('.credit-orders h2, .credit-orders-note')).toHaveCount(0);
+            await page.getByRole('button', { name: 'İade Et', exact: true }).click();
             const form = page.locator('.payment-reversal-form');
             await expect(form).toBeVisible();
             const consent = await form.locator('.credit-renewal-choice').boundingBox();
-            const button = await form.getByRole('button', { name: 'İadeyi Onayla' }).boundingBox();
+            const button = await form.getByRole('button', { name: admin ? 'İadeyi Onayla' : 'Ödeme İptalini Onayla' }).boundingBox();
             expect(button!.y - consent!.y - consent!.height).toBeGreaterThanOrEqual(16);
             await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+          }
+          if (!admin && view === 'subscriptions') {
+            await expect(page.locator('.credit-subscriptions h2, .credit-subscriptions > .credit-store-notice')).toHaveCount(0);
+            await expect(page.getByRole('button', { name: 'Yenilemeyi Kapat', exact: true })).toBeVisible();
           }
           if (width === 375 && (view === 'orders' || (admin && !view) || (!admin && view === 'store'))) {
             await page.screenshot({ path: `.local/credit-layout-${admin ? 'staff' : 'customer'}-${theme}-${view || 'plans'}.png`, fullPage: true });

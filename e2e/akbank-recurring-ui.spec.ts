@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('Akbank renewal registers a bank instruction after the first 3D payment', async ({ page }) => {
   const writes: any[] = [];
-  const order = { id: 'akbank-order', number: 55, name: 'Destek kredisi', credits: 1000, total: '12750.00', currency: 'TRY', status: 'PENDING', paymentAvailable: true, provider: 'akbank', recurringAvailable: true, renewalRequested: true, customer: { id: 'customer', name: 'Test User', email: 'test@example.test', phone: '5550000000' } };
+  const order = { id: 'akbank-order', number: 55, name: 'Destek kredisi', credits: 1000, total: '12750.00', currency: 'TRY', status: 'PENDING', paymentAvailable: true, provider: 'akbank', recurringAvailable: true, recurringPayments: 120, renewalRequested: true, customer: { id: 'customer', name: 'Test User', email: 'test@example.test', phone: '5550000000' } };
   await page.route('**/api/v1/**', async route => {
     const path = new URL(route.request().url()).pathname;
     let data: any = [];
@@ -26,6 +26,7 @@ test('Akbank renewal registers a bank instruction after the first 3D payment', a
   await page.context().route('https://virtualpospaymentgatewaypre.akbank.com/securepay', route => route.fulfill({ contentType: 'text/html', body: '<h1>Bank 3D verification</h1>' }));
   await page.goto('/customer/agreements?view=checkout&orderId=akbank-order');
   const panel = page.getByRole('form', { name: 'Kart ile ödeme' });
+  await expect(panel.getByText(/sonraki 120 dönem/)).toBeVisible();
   await panel.getByLabel('Kart üzerindeki ad soyad').fill('TEST USER');
   await panel.getByLabel('Kart numarası').fill('4111111111111111');
   await panel.getByLabel('Son kullanma tarihi').fill('1230');

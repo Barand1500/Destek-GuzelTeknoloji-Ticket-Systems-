@@ -772,6 +772,7 @@ model CreditSalesPlan {
 }
 
 model CreditOrder {
+ refundRequest CreditRefundRequest?
  reversals PaymentReversal[]
  subscriptionId String?
  subscription CreditSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
@@ -956,4 +957,16 @@ model PaymentReversal {
  completedAt DateTime?
  @@unique([orderId, requestKey])
  @@index([status, nextCheckAt])
+}
+
+model CreditRefundRequest {
+ orderId String @id
+ order CreditOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+ reason String @db.VarChar(500)
+ status String @default("OPEN") @db.VarChar(16)
+ reviewNote String? @db.VarChar(500)
+ reviewedById String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([status, createdAt])
 }

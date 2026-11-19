@@ -1,3 +1,4 @@
+import { returnResolutionCredit } from './agreements.service.js';
 import { assertUniqueCustomerContact } from './customer-contact-uniqueness.js';
 import { canonicalEmail } from '../utils/email.js';
 import crypto from "node:crypto";
@@ -212,11 +213,12 @@ export async function persistInboundEmail(input: {
         },
       });
     }
+    await returnResolutionCredit(tx, customerActor, target);
     const skippedNotice = input.skippedAttachments?.length ? `\n\nAlınamayan e-posta ekleri (desteklenmeyen tür, boyut veya dosya sayısı): ${input.skippedAttachments.slice(0, 10).join(', ')}${input.skippedAttachments.length > 10 ? ` ve ${input.skippedAttachments.length - 10} dosya daha` : ''}` : '';
     const body = input.body || (input.attachments?.length ? 'Ek dosya gönderildi.' : 'E-posta alındı.');
     await tx.conversationMessage.create({ data: { conversationId: target.id, authorId: customer.id, body: body.slice(0, 10_000 - skippedNotice.length) + skippedNotice, type: "CUSTOMER_MESSAGE", attachments: { create: (input.attachments ?? []).map(file => ({ ...file, uploaderId: customer.id })) } } });
     await tx.incomingEmail.create({ data: { mailbox: input.mailbox, uid: input.uid, messageId: input.messageId, conversationId: target.id } });
-    await tx.conversation.update({ where: { id: target.id }, data: { status: "OPEN" } });
+    await tx.conversation.update({ where: { id: target.id }, data: { status: "OPEN", closedAt: null, resolvedAt: null } });
     await tx.activityLog.create({ data: { userId: customer.id, action: "conversation.email_received", entityType: "Conversation", entityId: target.id, metadata: { mailbox: input.mailbox, uid: input.uid, senderEmail: email, subject: target.subject, number: target.number, messageId: input.messageId ?? null, inReplyTo: input.inReplyTo ?? null, attachmentCount: input.attachments?.length ?? 0, skippedAttachments: input.skippedAttachments ?? [] } } });
     await notifyConversation(tx, customerActor, target, "EMAIL_RECEIVED", "Yeni e-posta mesajı");
     return target.id;

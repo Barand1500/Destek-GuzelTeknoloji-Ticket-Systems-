@@ -459,7 +459,8 @@ export const ModelName = {
   PaymentGatewaySettings: 'PaymentGatewaySettings',
   PaymentCheckoutSession: 'PaymentCheckoutSession',
   PaymentStoredMethod: 'PaymentStoredMethod',
-  PaymentReversal: 'PaymentReversal'
+  PaymentReversal: 'PaymentReversal',
+  CreditRefundRequest: 'CreditRefundRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -475,7 +476,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "akbankRecurringInstruction" | "creditPaymentAttempt" | "paymentGatewaySettings" | "paymentCheckoutSession" | "paymentStoredMethod" | "paymentReversal"
+    modelProps: "sharedFile" | "user" | "accessRole" | "skillDefinition" | "userSkill" | "passwordReset" | "session" | "department" | "departmentAgent" | "conversation" | "formSettings" | "formSource" | "formRequest" | "formAccess" | "formLoginChallenge" | "formEmailSession" | "statusOption" | "priorityOption" | "conversationAssignee" | "conversationMessage" | "conversationParticipant" | "conversationMessageMention" | "incomingEmail" | "imapSyncState" | "outboundMessage" | "imapSyncRetry" | "activityLog" | "conversationAttachment" | "customerAttachment" | "tag" | "website" | "projectGuideFile" | "conversationTag" | "notification" | "savedReply" | "turnstileSettings" | "systemSettings" | "responseTimeSettings" | "notificationSettings" | "integrationSettings" | "externalMessage" | "announcement" | "announcementDelivery" | "announcementTemplate" | "survey" | "surveyRecipient" | "surveyResponse" | "agreement" | "creditCharge" | "customerLoginChallenge" | "agreementType" | "creditSalesSettings" | "creditSalesPlan" | "creditOrder" | "creditAlertReceipt" | "creditSalesPeriod" | "creditSubscription" | "akbankRecurringInstruction" | "creditPaymentAttempt" | "paymentGatewaySettings" | "paymentCheckoutSession" | "paymentStoredMethod" | "paymentReversal" | "creditRefundRequest"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4637,6 +4638,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CreditRefundRequest: {
+      payload: Prisma.$CreditRefundRequestPayload<ExtArgs>
+      fields: Prisma.CreditRefundRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditRefundRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditRefundRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditRefundRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditRefundRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        findMany: {
+          args: Prisma.CreditRefundRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>[]
+        }
+        create: {
+          args: Prisma.CreditRefundRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        createMany: {
+          args: Prisma.CreditRefundRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.CreditRefundRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        update: {
+          args: Prisma.CreditRefundRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditRefundRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditRefundRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.CreditRefundRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditRefundRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditRefundRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreditRefundRequest>
+        }
+        groupBy: {
+          args: Prisma.CreditRefundRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditRefundRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditRefundRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditRefundRequestCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5635,6 +5702,19 @@ export const PaymentReversalScalarFieldEnum = {
 export type PaymentReversalScalarFieldEnum = (typeof PaymentReversalScalarFieldEnum)[keyof typeof PaymentReversalScalarFieldEnum]
 
 
+export const CreditRefundRequestScalarFieldEnum = {
+  orderId: 'orderId',
+  reason: 'reason',
+  status: 'status',
+  reviewNote: 'reviewNote',
+  reviewedById: 'reviewedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditRefundRequestScalarFieldEnum = (typeof CreditRefundRequestScalarFieldEnum)[keyof typeof CreditRefundRequestScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -6404,6 +6484,17 @@ export const PaymentReversalOrderByRelevanceFieldEnum = {
 export type PaymentReversalOrderByRelevanceFieldEnum = (typeof PaymentReversalOrderByRelevanceFieldEnum)[keyof typeof PaymentReversalOrderByRelevanceFieldEnum]
 
 
+export const CreditRefundRequestOrderByRelevanceFieldEnum = {
+  orderId: 'orderId',
+  reason: 'reason',
+  status: 'status',
+  reviewNote: 'reviewNote',
+  reviewedById: 'reviewedById'
+} as const
+
+export type CreditRefundRequestOrderByRelevanceFieldEnum = (typeof CreditRefundRequestOrderByRelevanceFieldEnum)[keyof typeof CreditRefundRequestOrderByRelevanceFieldEnum]
+
+
 
 /**
  * Field references
@@ -6700,6 +6791,7 @@ export type GlobalOmitConfig = {
   paymentCheckoutSession?: Prisma.PaymentCheckoutSessionOmit
   paymentStoredMethod?: Prisma.PaymentStoredMethodOmit
   paymentReversal?: Prisma.PaymentReversalOmit
+  creditRefundRequest?: Prisma.CreditRefundRequestOmit
 }
 
 /* Types for Logging */

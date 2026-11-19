@@ -1,4 +1,14 @@
 import { test, expect } from "@playwright/test";
+async function refreshCatalog(page: any) {
+  const response = page.waitForResponse((value: any) => new URL(value.url()).pathname.endsWith('/my/credit-store'));
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    window.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    window.dispatchEvent(new Event('visibilitychange'));
+  });
+  await response;
+}
 const settings = {
   currency: "TRY",
   enabled: true,
@@ -238,7 +248,7 @@ test("price refresh clears stale calculator values before another preview", asyn
       },
     }),
   );
-  await page.getByRole("button", { name: "Fiyatları Yenile" }).click();
+  await refreshCatalog(page);
   await expect(
     page.locator(".credit-purchase-info .credit-price"),
   ).toContainText("3,00");
@@ -293,18 +303,18 @@ test("unchanged catalog refresh keeps credit and plan previews open", async ({
   await page.getByLabel("Satın alınacak kredi sayısı").fill("10");
   await page.getByRole("button", { name: "Özeti Gör" }).click();
   await expect(page.locator(".credit-quote")).toBeVisible();
-  await page.getByRole("button", { name: "Fiyatları Yenile" }).click();
+  await refreshCatalog(page);
   await expect(
     page.getByRole("button", { name: "Fiyatları Yenile" }),
-  ).toBeEnabled();
+  ).toHaveCount(0);
   await expect(page.locator(".credit-quote")).toBeVisible();
   await page.getByRole("button", { name: "Abonelikler", exact: true }).click();
   await page.getByRole("button", { name: "Planı İncele" }).click();
   await expect(page.locator(".credit-quote")).toContainText("Standart Destek");
-  await page.getByRole("button", { name: "Fiyatları Yenile" }).click();
+  await refreshCatalog(page);
   await expect(
     page.getByRole("button", { name: "Fiyatları Yenile" }),
-  ).toBeEnabled();
+  ).toHaveCount(0);
   await expect(page.locator(".credit-quote")).toContainText("Standart Destek");
 });
 
@@ -406,7 +416,8 @@ test('customer billing uses integration tabs for orders and subscriptions', asyn
   await tabs.getByRole('tab').first().click();
   await expect(page).toHaveURL(/view=orders/);
   await expect(tabs.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('.credit-orders h2')).toBeVisible();
+  await expect(page.locator('.credit-orders h2')).toHaveCount(0);
+  await expect(page.locator('.credit-orders-note')).toHaveCount(0);
 });
 
 test('staff billing uses the same styled integration tabs', async ({ page }) => {

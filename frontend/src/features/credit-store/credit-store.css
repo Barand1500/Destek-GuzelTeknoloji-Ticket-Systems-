@@ -684,3 +684,16 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
   .credit-store-title > *, .credit-sales-card-heading > * { min-width:0; }
 }
 .payment-recurring-toggle { margin: 18px 0 8px; }
+.payment-no-charge-panel { display:grid; gap:24px; margin-top:24px; }
+.payment-no-charge-panel > p { margin:0; line-height:1.6; }
+.payment-no-charge-panel > .credit-sales-card-heading, .payment-no-charge-panel > .payment-settings-actions { margin:0; }
+.payment-no-charge-panel .payment-no-charge-toggle { gap:12px; max-width:100%; }
+.payment-no-charge-panel .payment-no-charge-toggle span { min-width:0; text-align:left; }
+.payment-no-charge-panel .payment-no-charge-toggle i { flex-shrink:0; }
+.payment-no-charge-panel > label { min-width:0; }
+.payment-no-charge-panel .payment-settings-actions { gap:12px; }
+@media(max-width:640px) {
+  .payment-no-charge-panel { gap:20px; }
+  .payment-no-charge-panel .payment-no-charge-toggle { font-size:12px; }
+  .payment-no-charge-panel .button { white-space:normal; }
+}
