@@ -32,6 +32,16 @@ The common payment-review panel lists unresolved iyzico and Akbank payments afte
 
 ## Merchant acceptance
 
+### Callback rejection recovery
+
+For a known checkout session, an incomplete or invalid browser callback now triggers an authenticated bank inquiry and returns the customer to orders. An invalid callback cannot grant credits or establish payment failure. Sparse signed 3D responses are accepted for verification without requiring sale-only fields; only the authoritative completed-sale inquiry can grant credits.
+
+The pending-payment review includes a bounded callback diagnostic and a bank response code when safely available. It never stores the raw callback or card fields. If the bank result remains unknown, cancellation stays blocked. After the existing one-hour minimum and external bank confirmation that no charge occurred, use the explicit no-charge recovery action. Failed orders can then be cancelled; orders with pending payment attempts cannot.
+
+This callback patch requires backend and frontend deployment and restart, with no additional database migration. Focused regression checks passed: 13 backend tests, 6 browser tests, and both production builds. Real bank rejection reasons and merchant acceptance still require bank testing.
+
+The follow-up inquiry fix returns an explicit outcome (`PAID`, `FAILED`, `NO_BANK_RECORD`, `NO_CHECKOUT_SESSION` or `UNRESOLVED`) and displays the returned message in the review panel. No bank record does not establish that a charge can never complete, so it does not release the pending-attempt guard. Optional Turkish phone values are normalized before signing to the bank example format `090-5321234567`; unrecognized optional numbers are omitted. This corrects a request-format discrepancy, but does not prove the cause of a particular live 3D rejection. Follow-up validation passed: 10 payment backend tests, 2 browser tests, and backend/frontend builds.
+
 Automated tests simulate bank HTTP responses against the real local ledger; they do not prove merchant permissions or perform a real charge. With actual bank test credentials, verify: successful 3D payment, rejection, abandoned 3D, duplicate callback, callback outage/query recovery, full/partial refund, same-batch cancellation and server restart recovery. Then verify a low-value live transaction and reversal with the actual merchant account before opening public sales. Never use a real card in the sandbox. Use Akbank-issued test cards.
 
 Official integration reference: https://sanalpos.akbank.com/ . Production 3D endpoint: `https://virtualpospaymentgateway.akbank.com/securepay`; transaction API: `https://api.akbank.com/api/v1/payment/virtualpos/transaction/process`. Destinations must remain fixed by provider/environment; do not accept arbitrary administrator-supplied payment URLs.

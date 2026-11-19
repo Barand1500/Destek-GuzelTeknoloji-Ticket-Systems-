@@ -10,15 +10,26 @@ export async function pendingPaymentReviews(actor: Actor) {
   paymentStaff(actor);
   const where = { provider: { in: ['iyzico', 'akbank'] }, status: 'PENDING', createdAt: { lte: new Date(Date.now() - 15 * 60_000) } };
   const [total, data] = await Promise.all([db.creditPaymentAttempt.count({ where }), db.creditPaymentAttempt.findMany({ where, take: 50, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-    select: { id: true, createdAt: true, order: { select: { number: true, name: true, total: true, currency: true } } } })]);
+    select: { id: true, createdAt: true, failureCode: true, order: { select: { number: true, name: true, total: true, currency: true } } } })]);
   return { total, data: data.map(v => ({ ...v, order: { ...v.order, total: v.order.total.toFixed(2) } })) };
 }
 export async function checkPaymentReview(actor: Actor, id: string) {
   paymentStaff(actor, true);
   const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: id } });
   const attempt = await db.creditPaymentAttempt.findUnique({ where: { id } });
-  if (session) { if (attempt?.provider === 'akbank') await reconcileAkbankSession(session.id); else await reconcileIyzicoSession(session.id); }
-  return { message: 'Sağlayıcı sonucu sorgulandı. Belirsiz işlemler yeniden çekilmez.' };
+  if (!attempt) throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Ödeme kaydı bulunamadı.');
+  let recordCount: number | undefined;
+  if (session) { if (attempt.provider === 'akbank') await reconcileAkbankSession(session.id, count => { recordCount = count; }); else await reconcileIyzicoSession(session.id); }
+  const current = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id } });
+  const outcome = current.status !== 'PENDING' ? current.status : recordCount === 0 ? 'NO_BANK_RECORD' : !session ? 'NO_CHECKOUT_SESSION' : 'UNRESOLVED';
+  const messages: Record<string, string> = {
+    PAID: 'Ödeme bankadan doğrulandı; sipariş ve kredi kaydı güncellendi.',
+    FAILED: 'Ödeme başarısız olarak sonuçlandı. Siparişten yeniden ödeme başlatabilirsiniz.',
+    NO_BANK_RECORD: 'Akbank sorgusunda bu ödeme için kayıt bulunamadı. Bu sonuç tek başına tahsilat olmadığını kesinleştirmez; işlem beklemede tutuldu ve yeniden çekilmedi.',
+    NO_CHECKOUT_SESSION: 'Ödemenin banka yönlendirme kaydı bulunamadı. İşlem beklemede tutuldu; yeniden çekim yapılmadı.',
+    UNRESOLVED: 'Banka sonucu henüz kesinleşmedi. İşlem beklemede tutuldu; yeniden çekim yapılmadı.',
+  };
+  return { outcome, status: current.status, failureCode: current.failureCode, message: messages[outcome] ?? 'Ödeme durumu sorgulandı: ' + current.status };
 }
 
 /** Explicit operator recovery for an ambiguous transport/crash, after external merchant confirmation. */

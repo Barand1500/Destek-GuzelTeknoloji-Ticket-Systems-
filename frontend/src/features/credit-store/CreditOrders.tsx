@@ -255,7 +255,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                           <div className="credit-order-actions">
                             {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>İade / Banka İptali</button>}
                             {!admin && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
-                            {order.status === "PENDING" && (
+                            {["PENDING", "FAILED"].includes(order.status) && (
                               <button
                                 type="button"
                                 className="button secondary"

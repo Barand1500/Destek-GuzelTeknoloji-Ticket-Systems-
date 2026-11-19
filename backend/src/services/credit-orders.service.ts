@@ -250,18 +250,18 @@ export async function cancelCreditOrder(
     if (!row || (customerId && row.customerId !== customerId))
       throw new AppError(404, "ORDER_NOT_FOUND", "Sipariş bulunamadı.");
     if (row.status === "CANCELLED") return json(row);
-    if (row.status !== "PENDING")
+    if (!["PENDING", "FAILED"].includes(row.status))
       throw new AppError(
         409,
         "ORDER_NOT_PENDING",
-        "Yalnızca ödeme bekleyen sipariş iptal edilebilir.",
+        "Yalnızca ödeme bekleyen veya başarısız sipariş iptal edilebilir.",
       );
     await tx.$queryRaw(Prisma.sql`SELECT id FROM User WHERE id = ${row.customerId} FOR UPDATE`);
     if (!admin) await creditStoreOwner(actor, tx);
     if (await tx.creditPaymentAttempt.count({ where: { orderId: id, status: 'PENDING' } }))
       throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Ödeme sonucu bekleniyor. Sonuç netleşmeden sipariş iptal edilemez.');
     const claimed = await tx.creditOrder.updateMany({
-      where: { id, status: "PENDING" },
+      where: { id, status: { in: ["PENDING", "FAILED"] } },
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
     if (!claimed.count)

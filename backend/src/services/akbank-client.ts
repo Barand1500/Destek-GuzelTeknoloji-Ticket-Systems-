@@ -20,20 +20,26 @@ export const akbankCardInput = z.object({
   cvc: z.string().regex(/^\d{3}$/),
 }).strict();
 type Card = z.infer<typeof akbankCardInput>;
+/** Akbank's optional telephone field uses country-prefix and national number, e.g. 090-5321234567. */
+function bankPhone(value: string) {
+  const digits = value.replace(/\D/g, '');
+  const national = digits.replace(/^(?:0090|090|90|0)(?=\d{10}$)/, '');
+  return /^\d{10}$/.test(national) ? '090-' + national : '';
+}
 const requestFields = ['paymentModel', 'txnCode', 'merchantSafeId', 'terminalSafeId', 'orderId', 'lang', 'amount', 'ccbRewardAmount', 'pcbRewardAmount', 'xcbRewardAmount', 'currencyCode', 'installCount', 'okUrl', 'failUrl', 'emailAddress', 'mobilePhone', 'homePhone', 'workPhone', 'subMerchantId', 'creditCard', 'expiredDate', 'cvv', 'cardHolderName', 'randomNumber', 'requestDateTime', 'b2bIdentityNumber', 'merchantData', 'merchantBranchNo', 'mobileEci', 'walletProgramData', 'mobileAssignedId', 'mobileDeviceType'];
 export function akbankForm(config: AkbankConfig, input: { orderId: string; amount: string; currency: string; callbackUrl: string; email: string; phone: string; card: Card }) {
   const currencyCode = akbankCurrency[input.currency];
   if (!currencyCode) throw new AppError(400, 'PAYMENT_CURRENCY_UNSUPPORTED', 'Akbank için bu para birimi desteklenmiyor.');
   const fields: Record<string, string> = { paymentModel: '3D_PAY', txnCode: '3000', merchantSafeId: config.merchantSafeId, terminalSafeId: config.terminalSafeId,
     orderId: input.orderId, lang: 'TR', amount: input.amount, ccbRewardAmount: '0.00', pcbRewardAmount: '0.00', xcbRewardAmount: '0.00', currencyCode, installCount: '1',
-    okUrl: input.callbackUrl, failUrl: input.callbackUrl, emailAddress: input.email, mobilePhone: input.phone,
+    okUrl: input.callbackUrl, failUrl: input.callbackUrl, emailAddress: input.email, mobilePhone: bankPhone(input.phone),
     creditCard: input.card.number, expiredDate: input.card.expiry, cvv: input.card.cvc, cardHolderName: input.card.holder,
     randomNumber: randomBytes(64).toString('hex'), requestDateTime: akbankDate() };
   fields.hash = akbankHash(requestFields.map(key => fields[key] ?? '').join(''), config.secretKey);
   return { action: config.mode === 'production' ? 'https://virtualpospaymentgateway.akbank.com/securepay' : 'https://virtualpospaymentgatewaypre.akbank.com/securepay', fields };
 }
 
-/** Verify the bank's dynamic field list AND require all fields used to authorize this sale to be signed. */
+/** Verify the bank's dynamic callback signature and bind it to this merchant and attempt. */
 export function verifyAkbankCallback(config: AkbankConfig, raw: unknown, attemptId: string, amount: string): boolean {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
   const value = raw as Record<string, unknown>;
@@ -41,11 +47,18 @@ export function verifyAkbankCallback(config: AkbankConfig, raw: unknown, attempt
   const v = value as Record<string, string>;
   const keys = v.hashParams?.split('+');
   if (!keys || keys.length > 100 || new Set(keys).size !== keys.length || keys.some(k => !/^[a-zA-Z][a-zA-Z0-9]{0,79}$/.test(k) || !Object.hasOwn(v, k) || ['hash', 'hashParams'].includes(k))) return false;
-  if (['txnCode', 'responseCode', 'hostResponseCode', 'merchantSafeId', 'terminalSafeId', 'orderId', 'amount', 'installCount'].some(k => !keys.includes(k))) return false;
+  if (['responseCode', 'merchantSafeId', 'terminalSafeId', 'orderId'].some(k => !keys.includes(k))) return false;
   const expected = akbankHash(keys.map(key => v[key]).join(''), config.secretKey);
   const actual = v.hash ?? '';
   if (!/^[A-Za-z0-9+/]{86}==$/.test(actual) || actual.length !== expected.length || !timingSafeEqual(Buffer.from(actual), Buffer.from(expected))) return false;
-  try { return v.merchantSafeId === config.merchantSafeId && v.terminalSafeId === config.terminalSafeId && v.orderId === attemptId && v.txnCode === '1000' && Number(v.installCount) === 1 && new Prisma.Decimal(v.amount).eq(amount); } catch { return false; }
+  try {
+    return v.merchantSafeId === config.merchantSafeId &&
+      v.terminalSafeId === config.terminalSafeId &&
+      v.orderId === attemptId &&
+      (!v.txnCode || v.txnCode === '1000' || v.txnCode === '3000') &&
+      (!v.installCount || Number(v.installCount) === 1) &&
+      (!v.amount || new Prisma.Decimal(v.amount).eq(amount));
+  } catch { return false; }
 }
 
 /** Fixed bank endpoint; never log or return raw bank payloads. All callers use non-card query/refund bodies. */

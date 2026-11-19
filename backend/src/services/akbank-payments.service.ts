@@ -46,13 +46,14 @@ export async function beginAkbankCheckout(actor: Actor, orderId: string, raw: un
     callbackUrl: prepared.publicUrl + '/api/v1/payments/akbank/callback/' + prepared.sessionId, email: prepared.order.customer.email || '', phone: prepared.order.customer.phone || '', card: input.card });
 }
 
-export async function reconcileAkbankSession(id: string) {
+export async function reconcileAkbankSession(id: string, onInquiry?: (recordCount: number) => void) {
   const session = await db.paymentCheckoutSession.findUnique({ where: { id } });
   if (!session) return null;
   const attempt = await db.creditPaymentAttempt.findUnique({ where: { id: session.attemptId }, include: { order: true } });
   if (!attempt || attempt.provider !== 'akbank' || attempt.status !== 'PENDING') return null;
   const { config } = openPayment<{ config: AkbankConfig }>(session.contextCiphertext);
   const rows = await akbankInquiry(config, attempt.id);
+  onInquiry?.(rows.length);
   const result = akbankSaleResult(rows, { attemptId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency });
   if (result) {
     await settleVerifiedCreditPayment(result);
@@ -66,8 +67,21 @@ export async function akbankCallback(id: string, raw: unknown) {
   if (!session) throw new AppError(400, 'PAYMENT_CALLBACK_INVALID', 'Akbank bildirimi doğrulanamadı.');
   const attempt = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id: session.attemptId }, include: { order: true } });
   const { config } = openPayment<{ config: AkbankConfig }>(session.contextCiphertext);
-  if (attempt.provider !== 'akbank' || !verifyAkbankCallback(config, raw, attempt.id, attempt.order.total.toFixed(2))) throw new AppError(400, 'PAYMENT_CALLBACK_INVALID', 'Akbank bildirimi doğrulanamadı.');
-  // Query first: a correctly signed 3D approval alone is not proof of a captured sale.
+  if (attempt.provider !== 'akbank') throw new AppError(400, 'PAYMENT_CALLBACK_INVALID', 'Akbank bildirimi doğrulanamadı.');
+  const verified = verifyAkbankCallback(config, raw, attempt.id, attempt.order.total.toFixed(2));
+  const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+  const code = typeof value.responseCode === 'string' && /^VPS-\d{4}$/.test(value.responseCode) ? value.responseCode : null;
+  if (!verified || (code && code !== 'VPS-0000')) {
+    // One bounded diagnostic per attempt; never retain the bank's raw form, signature or card data.
+    await db.$transaction(async tx => {
+      const recorded = await tx.paymentCheckoutSession.updateMany({ where: { id, state: 'DISPATCHED' }, data: { state: 'CALLBACK_REVIEW' } });
+      if (!recorded.count) return;
+      await tx.creditPaymentAttempt.updateMany({ where: { id: attempt.id, status: 'PENDING', failureCode: null }, data: { failureCode: 'AKBANK_CALLBACK_' + (verified ? 'REVIEW' : 'INVALID') + (code ? '_' + code : '') } });
+      await tx.activityLog.create({ data: { userId: attempt.order.customerId, action: 'payments.akbank_callback_review', entityType: 'CreditPaymentAttempt', entityId: attempt.id,
+        metadata: { orderId: attempt.orderId, callbackVerified: verified, bankResponseCode: code } } });
+    });
+  }
+  // Query even if the browser form is incomplete or unverifiable. Only the authenticated bank result can grant credit.
   let result;
   try { result = await reconcileAkbankSession(id); }
   catch (error) {
@@ -75,8 +89,8 @@ export async function akbankCallback(id: string, raw: unknown) {
     // Keep the customer in the portal while the query worker resolves a bank outage.
     return new URL('/customer/agreements?view=orders', env.FRONTEND_URL).toString();
   }
-  const value = raw as Record<string, string>;
-  if (!result && attempt.status === 'PENDING' && value.responseCode !== 'VPS-0000' && declineCodes.has(value.hostResponseCode)) {
+  const signedFields = verified && typeof value.hashParams === 'string' ? new Set(value.hashParams.split('+')) : new Set<string>();
+  if (!result && verified && attempt.status === 'PENDING' && value.txnCode === '1000' && signedFields.has('txnCode') && signedFields.has('hostResponseCode') && value.responseCode !== 'VPS-0000' && typeof value.hostResponseCode === 'string' && declineCodes.has(value.hostResponseCode)) {
     await settleVerifiedCreditPayment({ attemptId: attempt.id, provider: 'akbank', paymentId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency, outcome: 'FAILED', failureCode: 'BANK_DECLINED' });
     const settled = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id: attempt.id } });
     await db.paymentCheckoutSession.update({ where: { id }, data: { state: settled.status } });

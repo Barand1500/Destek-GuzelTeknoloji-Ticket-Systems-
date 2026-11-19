@@ -10,7 +10,8 @@ test('Akbank signs form fields in official order and validates the complete call
   assert.equal(form.action, 'https://virtualpospaymentgatewaypre.akbank.com/securepay');
   assert.equal(form.fields.paymentModel, '3D_PAY');
   assert.equal(form.fields.creditCard, '4111111111111111');
-  assert.equal(form.fields.hash, akbankHash('3D_PAY3000merchantterminalattemptTR12.500.000.000.009491https://portal.test/callbackhttps://portal.test/callbacktest@example.test0532123456741111111111111111230123TEST USER' + form.fields.randomNumber + form.fields.requestDateTime, 'secret'));
+  assert.equal(form.fields.mobilePhone, '090-5321234567');
+  assert.equal(form.fields.hash, akbankHash('3D_PAY3000merchantterminalattemptTR12.500.000.000.009491https://portal.test/callbackhttps://portal.test/callbacktest@example.test090-532123456741111111111111111230123TEST USER' + form.fields.randomNumber + form.fields.requestDateTime, 'secret'));
   const callback: Record<string, string> = { txnCode: '1000', responseCode: 'VPS-0000', hostResponseCode: '00', merchantSafeId: 'merchant', terminalSafeId: 'terminal', orderId: 'attempt', amount: '12.50', installCount: '1' };
   callback.hashParams = Object.keys(callback).join('+');
   callback.hash = akbankHash(callback.hashParams.split('+').map(key => callback[key]).join(''), 'secret');
@@ -18,6 +19,26 @@ test('Akbank signs form fields in official order and validates the complete call
   assert.equal(verifyAkbankCallback(config, { ...callback, amount: '12.51' }, 'attempt', '12.50'), false);
   assert.equal(verifyAkbankCallback(config, callback, 'other', '12.50'), false);
   assert.equal(verifyAkbankCallback(config, { hashParams: 'responseCode', responseCode: 'VPS-0000', hash: akbankHash('VPS-0000', 'secret') }, 'attempt', '12.50'), false);
+});
+test('Akbank accepts a 3D callback without sale-only fields', () => {
+  const callback: Record<string, string> = {
+    txnCode: '3000',
+    responseCode: 'VPS-0000',
+    responseMessage: 'Başarılı',
+    merchantSafeId: 'merchant',
+    terminalSafeId: 'terminal',
+    orderId: 'attempt',
+  };
+  callback.hashParams = Object.keys(callback).join('+');
+  callback.hash = akbankHash(callback.hashParams.split('+').map(key => callback[key]).join(''), 'secret');
+  assert.equal(verifyAkbankCallback(config, callback, 'attempt', '12.50'), true);
+});
+
+test('Akbank normalizes stored Turkish phone formats before signing', () => {
+  for (const phone of ['0532 123 45 67', '+90 (532) 123-45-67', '00905321234567', '090-5321234567', '5321234567']) {
+    const form = akbankForm(config, { orderId: 'attempt', amount: '12.50', currency: 'TRY', callbackUrl: 'https://portal.test/callback', email: '', phone, card: { holder: 'TEST USER', number: '4111111111111111', expiry: '1230', cvc: '123' } });
+    assert.equal(form.fields.mobilePhone, '090-5321234567');
+  }
 });
 test('Akbank JSON transport signs the exact body and does not follow redirects', async () => {
   const result = await akbankRequest(config, '1010', { order: { orderId: 'attempt' } }, (async (url: any, init: any) => {
