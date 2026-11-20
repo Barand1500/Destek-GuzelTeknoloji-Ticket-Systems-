@@ -41,6 +41,8 @@
 .customer-list-table th:first-child { width: 34%; }
 .customer-list-table th:nth-child(2) { width: auto; }
 .customer-list-table th:nth-child(3) { width: 110px; }
+.customer-list-table th:nth-child(4) { width: 110px; }
+.customer-list-table .customer-credit-cell { font-variant-numeric: tabular-nums; }
 .customer-list-table th:last-child { width: 104px; }
 .customer-list-table :is(th, td) { padding-inline: 16px; }
 .customer-list-table .customer-table-heading-actions { gap: 8px; }
@@ -106,4 +108,14 @@ html[data-theme] .customer-management-content label:has(> .field-label) > :is(in
 html[data-theme] .customer-management-content label:has(> .field-label) > .email-field > input,
 html[data-theme] .customer-management-content .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger {
   background: transparent;
+}
+
+.customer-management-content { container: customer-content / inline-size; }
+.customer-details-layout { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.customer-details-layout > .customer-details-form { max-width: none; min-width: 0; }
+.customer-details-layout > .customer-files-workspace { min-width: 0; }
+@container customer-content (min-width: 1100px) {
+  .customer-details-layout { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 32px; align-items: start; }
+  .customer-details-layout > .customer-files-workspace { margin-top: 0; padding-top: 0; padding-left: 28px; border-top: 0; border-left: 1px solid var(--border); }
+  .customer-details-layout .customer-files-workspace > h2 { margin-top: 0; }
 }

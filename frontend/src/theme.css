@@ -231,7 +231,7 @@ html[data-theme="dark"] .guide-shot-tabs button:not(.active) span {
 .searchable-dropdown-input[readonly]{caret-color:transparent;cursor:pointer}
 
 /* Customer workspaces use the same neutral dark surface as integration cards. */
-html[data-theme="dark"] :is(.customer-management-page, .customer-agreements-page) {
+html[data-theme="dark"] :is(.customer-management-page, .customer-agreements-page, .credit-sales-page) {
   --surface: #1c262d;
   --border: #2e3e49;
 }
@@ -248,3 +248,13 @@ html[data-theme] .customer-agreements-page .styled-dropdown:has(> .styled-dropdo
 
 html[data-theme] .customer-agreements-page .credit-fields > label,
 html[data-theme] .customer-agreements-page .credit-fields > label > :is(input, textarea) { background: transparent; }
+
+/* Admin credit settings and order filters share their containing surface. */
+.credit-sales-page { --credit-field-surface: var(--bg); }
+.credit-sales-page .credit-sales-card { --credit-field-surface: var(--surface); }
+html[data-theme] .credit-sales-page :is(label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label)) { background: transparent; }
+html[data-theme] .credit-sales-page :is(.field-label, .styled-dropdown-label),
+html[data-theme] .credit-sales-page .credit-fields > label:not(.credit-check):not(.credit-sales-toggle) > span { background: var(--credit-field-surface); }
+html[data-theme] .credit-sales-page label:has(> .field-label) > :is(input, textarea, select),
+html[data-theme] .credit-sales-page .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger,
+html[data-theme] .credit-sales-page .credit-fields > label > :is(input, textarea) { background: transparent; }

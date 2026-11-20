@@ -186,3 +186,19 @@ html[data-theme="dark"] .credit-order-dialog .credit-order-dialog-actions .butto
 .payment-reversal-panel .credit-store-notice > p { margin: 0; }
 .payment-reversal-panel .credit-store-notice > button { justify-self: start; }
 .refund-reason-field { resize: none; height: 96px; min-height: 96px; max-height: 96px; overflow: auto; }
+
+.reversal-order-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 24px; margin: 0 0 24px; padding: 20px; border: 1px solid var(--border); border-radius: 10px; }
+.reversal-order-summary > div { min-width: 0; }
+.reversal-order-summary dt { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
+.reversal-order-summary dd { margin: 0; color: var(--text); font-size: 17px; font-weight: 650; overflow-wrap: anywhere; }
+.reversal-order-summary dd small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.payment-reversal-panel .reversal-edit-fields { margin: 0; gap: 22px 20px; }
+.reversal-amount-help { padding: 14px 16px; border-left: 3px solid var(--ui-accent); border-radius: 6px; background: var(--brand-primary-light); color: var(--muted); font-size: 13px; line-height: 1.65; }
+.reversal-amount-help > button { display: block; margin-top: 12px; }
+html[data-theme] .payment-reversal-panel label:has(> .field-label),
+html[data-theme] .payment-reversal-panel label:has(> .field-label) > :is(input, textarea) { background: transparent; }
+html[data-theme] .payment-reversal-panel .field-label { background: var(--surface); }
+.payment-reversal-panel > .credit-store-notice { display: grid; gap: 16px; background: transparent; border: 1px solid var(--border); margin-bottom: 24px; }
+.payment-reversal-panel > .credit-store-notice > label { margin-top: 6px; }
+@media (max-width: 800px) { .reversal-order-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .reversal-order-summary { grid-template-columns: minmax(0, 1fr); padding: 16px; } }

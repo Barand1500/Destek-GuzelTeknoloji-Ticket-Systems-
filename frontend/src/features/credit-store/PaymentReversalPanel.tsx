@@ -7,7 +7,7 @@ import { ErrorMessage } from '../management/shared';
 import { money, count } from './types';
 
 type Reversal = { id: string; kind: string; status: string; credits: number; amount: string; currency: string; reason: string; failureCode?: string | null; createdAt: string };
-type Summary = { refundRequest?: { status: string; reason: string; reviewNote?: string | null } | null; data: Reversal[]; currency: string; refundableCredits: number; refundableAmount: string; maxRefundAmount?: string; originalCredits: number; total: string; refundedCredits: number; refundedAmount: string; hasPending: boolean; usedCredits: number; canCancel: boolean };
+type Summary = { orderName?: string; orderNumber?: number | string; refundRequest?: { status: string; reason: string; reviewNote?: string | null } | null; data: Reversal[]; currency: string; refundableCredits: number; refundableAmount: string; maxRefundAmount?: string; originalCredits: number; total: string; refundedCredits: number; refundedAmount: string; hasPending: boolean; usedCredits: number; canCancel: boolean };
 export function PaymentReversalPanel({ orderId, kind = 'REFUND', onClose }: { orderId: string; kind?: 'REFUND' | 'CANCEL'; onClose: () => void }) {
   const client = useQueryClient();
   const query = useQuery({ queryKey: ['payment-reversals', orderId], queryFn: async () => (await api.get(`/credit-sales/orders/${orderId}/reversals`)).data.data as Summary, refetchInterval: 30000 });
@@ -35,18 +35,30 @@ export function PaymentReversalPanel({ orderId, kind = 'REFUND', onClose }: { or
     <div className="credit-store-title"><h3>{actionKind === 'CANCEL' || recordedCancellation ? 'Banka İptali' : 'Sipariş İadesi'}</h3><button className="button secondary" type="button" disabled={busy} onClick={onClose}>Kapat</button></div>
     <ErrorMessage error={reject.error} /><ErrorMessage error={query.error} /><ErrorMessage error={refund.error} /><ErrorMessage error={check.error} />
     {notice && <p role="status">{notice}</p>}
-    {data && <>{data.refundRequest?.status === 'OPEN' && <aside className="credit-store-notice"><strong>Müşterinin iade talebi</strong><p>{data.refundRequest.reason}</p><label><span className="field-label">Ret gerekçesi</span><textarea maxLength={500} rows={3} className="refund-reason-field" value={reviewNote} disabled={busy} onChange={e => setReviewNote(e.target.value)} /></label><button className="button secondary" disabled={busy || data.hasPending || reviewNote.trim().length < 3} onClick={() => reject.mutate()}>Talebi Reddet</button></aside>}<p>Kullanılmış: {count(data.usedCredits)} kredi · İade edilebilir: {count(data.refundableCredits)} kredi / {money(data.refundableAmount, data.currency)}</p>
-      <p>İade başarılı olduğunda ilgili krediler kaldırılır. Talep ve kullanım geçmişi korunur. Banka iptali yalnızca hiç kullanılmamış ödemenin tamamı içindir; bankanın işlem günü kuralına bağlıdır.</p>
+    {data && <>
+      <dl className="reversal-order-summary" aria-label="Ödeme ve kredi özeti">
+        <div className="reversal-summary-package"><dt>Paket / Sipariş</dt><dd>{data.orderName ?? 'Sipariş'}{data.orderNumber != null && <small>#{data.orderNumber}</small>}</dd></div>
+        <div><dt>Ödenen tutar</dt><dd>{money(data.total, data.currency)}</dd></div>
+        <div><dt>Alınan kredi</dt><dd>{count(data.originalCredits)}</dd></div>
+        <div><dt>Kullanılan kredi</dt><dd>{count(data.usedCredits)}</dd></div>
+        <div><dt>Kalan kullanılabilir kredi</dt><dd>{count(data.refundableCredits)}</dd></div>
+        <div><dt>Kalan kredinin karşılığı</dt><dd>{money(data.refundableAmount, data.currency)}</dd></div>
+        {Number(data.refundedAmount) > 0 && <div><dt>Önceki iadeler</dt><dd>{money(data.refundedAmount, data.currency)}</dd></div>}
+      </dl>
+      {data.refundRequest?.status === 'OPEN' && <aside className="credit-store-notice"><strong>Müşterinin iade talebi</strong><p>{data.refundRequest.reason}</p><label><span className="field-label">Ret gerekçesi</span><textarea maxLength={500} rows={3} className="refund-reason-field" value={reviewNote} disabled={busy} onChange={e => setReviewNote(e.target.value)} /></label><button className="button secondary" disabled={busy || data.hasPending || reviewNote.trim().length < 3} onClick={() => reject.mutate()}>Talebi Reddet</button></aside>}
+
       {!data.hasPending && maxAmount > 0 && <form className="payment-reversal-form" onSubmit={e => { e.preventDefault(); refund.mutate(); }}>
-        <fieldset className="payment-settings-fields" disabled={busy}>
+        <fieldset className="payment-settings-fields reversal-edit-fields" disabled={busy}>
           {actionKind === 'CANCEL' ? <div className="payment-cancel-total"><span>İptal edilecek ödemenin tamamı</span><strong>{count(data.originalCredits)} kredi / {money(data.total, data.currency)}</strong></div> : <label><span className="field-label">İade edilecek kredi *</span><input type="number" min={0} disabled={customAmount !== null} max={data.refundableCredits} step={1} required value={customAmount !== null ? String(data.refundableCredits) : credits ?? String(data.refundableCredits)} onChange={e => edit(() => { setCredits(e.target.value); setCustomAmount(null); })} /></label>}
+        {actionKind === 'REFUND' && <label><span className="field-label">İade edilecek tutar *</span><MoneyInput value={customAmount ?? calculatedAmount.toFixed(2)} onChange={next => edit(() => setCustomAmount(next))} ariaLabel="İade edilecek tutar" /></label>}
           <label className="payment-public-url"><span className="field-label">İade nedeni *</span><input required minLength={3} maxLength={500} value={reason} onChange={e => edit(() => setReason(e.target.value))} /></label>
         </fieldset>
-        {actionKind === 'REFUND' && <label><span className="field-label">İade edilecek tutar *</span><MoneyInput value={customAmount ?? calculatedAmount.toFixed(2)} onChange={next => edit(() => setCustomAmount(next))} ariaLabel="İade edilecek tutar" /><small>Varsayılan tutar kullanılmamış kredi içindir. Kullanılmış kısım dahil en fazla {money(maxAmount, data.currency)} iade edebilirsiniz. Tutarı artırırsanız kalan kredinin tamamı kapatılır.</small></label>}
+        {actionKind === 'REFUND' && <aside className="reversal-amount-help" role="note">Varsayılan tutar kalan kredi içindir. Yönetici, kullanılmış kısım dahil en fazla <strong>{money(maxAmount, data.currency)}</strong> iade edebilir. Tutarı değiştirirseniz kalan {count(data.refundableCredits)} kredi kapatılır.{customAmount !== null && <button type="button" className="button secondary" onClick={() => edit(() => { setCustomAmount(null); setCredits(null); })}>Krediye göre hesapla</button>}</aside>}
+
         {!validAmount && (validCredits || customAmount !== null) && <p role="alert">İade tutarı kullanılmamış kredi karşılığından az veya kalan ödeme tutarından fazla olamaz.</p>}
         {!validCredits && customAmount === null && <p role="alert">En fazla {count(data.refundableCredits)} kredi iade edilebilir.</p>}
         {actionKind === 'CANCEL' && !data.canCancel && <p role="alert">Bu ödeme banka iptaline uygun değil. İade işlemini kullanın.</p>}
-        <strong>İade tutarı: {money(amount, data.currency)}</strong>
+
         <label className="integration-toggle credit-confirmation-choice"><span>{count(value || 0)} kredinin kullanıma kapatılmasını ve {money(amount, data.currency)} iade edilmesini onaylıyorum.</span><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /><i aria-hidden="true" /></label>
         <button className="button primary" disabled={busy || !consent || !Number.isInteger(value) || value < 0 || (value === 0 && customAmount === null) || value > data.refundableCredits || !validAmount || reason.trim().length < 3 || (actionKind === 'CANCEL' && (!data.canCancel || data.usedCredits > 0 || data.refundedCredits > 0 || value !== data.originalCredits))}>{actionKind === 'CANCEL' ? 'Banka İptalini Onayla' : 'İadeyi Onayla'}</button>
       </form>}

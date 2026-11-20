@@ -122,6 +122,11 @@ export function AgreementWorkspace({ customerId, modalControl, showAvailableBala
   const [localEditing, setLocalEditing] = useState<Agreement | null>(null);
   const editing = modalControl?.editing ?? localEditing, setEditing = modalControl?.setEditing ?? setLocalEditing;
   const [localAdding, setLocalAdding] = useState(false), [notice, setNotice] = useState('');
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   const localFormId = useId();
   const adding = modalControl?.adding ?? localAdding, setAdding = modalControl?.setAdding ?? setLocalAdding;
   const formId = modalControl?.formId ?? localFormId;
@@ -161,7 +166,7 @@ export function AgreementWorkspace({ customerId, modalControl, showAvailableBala
         {!adding && !editing && !visibleAgreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
         {visibleAgreements.map(a => <details className="agreement-card" key={a.id}><summary><span className="agreement-package-overview"><strong>{a.name}</strong><span className="agreement-package-dates">Başlangıç: <time dateTime={a.startsOn}>{date(a.startsOn)}</time> · Bitiş: <time dateTime={a.endsOn}>{date(a.endsOn)}</time></span><span className="agreement-package-credits">Toplam: <strong>{creditNumber.format(a.credits)}</strong> · Kullanılan: <strong>{creditNumber.format(a.usedCredits)}</strong> · Kalan: <strong>{creditNumber.format(a.remainingCredits)}</strong></span></span><span className="agreement-summary-actions"><span>{a.customer.name} · {states[a.state]}</span>{editable && <button className="agreement-edit-button" type="button" aria-label={a.name + " anlaşmasını düzenle"} title="Anlaşmayı Düzenle" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); setAdding(false); setEditing(a); }}><Pencil size={16} /></button>}{canDelete && <button className="agreement-delete-button" type="button" aria-label={a.name + " anlaşmasını sil"} title="Anlaşmayı Sil" disabled={pending} onClick={event => { event.preventDefault(); event.stopPropagation(); if (!pending) { remove.reset(); setNotice(''); remove.mutate(a); } }}><Trash2 size={16} /></button>}</span></summary><div className="agreement-card-body"><p className="muted">{data.parent || data.children.length ? 'Şirket paketi' : 'Bireysel müşteri paketi'}</p><p>{a.typeLabel ?? types[a.type] ?? 'Özel Anlaşma'} · {date(a.startsOn)} — {date(a.endsOn)}</p><p>Verilen: <strong>{creditNumber.format(a.credits)}</strong> · Kullanılan: <strong>{creditNumber.format(a.usedCredits)}</strong> · Kalan: <strong>{creditNumber.format(a.remainingCredits)}</strong></p>{a.state !== 'ACTIVE' && <p className="muted">Bu anlaşmanın kredileri şu anda kullanılamaz.</p>}{editable && a.customerId === customerId && a.state === 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => reactivate.mutate(a.id)}>Yeniden Etkinleştir</button>}{editable && a.customerId === customerId && a.state !== 'CANCELLED' && <button className="button secondary" type="button" disabled={pending} onClick={() => cancel.mutate(a.id)}>Anlaşmayı İptal Et</button>}</div></details>)}
     </>}
-    {notice && <p role="status">{notice}</p>}
+    {notice && createPortal(<div className="management-toast" role="status">{notice}</div>, document.body)}
   </section>;
 }
 

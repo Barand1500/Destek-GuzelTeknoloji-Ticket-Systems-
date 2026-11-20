@@ -696,3 +696,5 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
   .payment-no-charge-panel .payment-no-charge-toggle { font-size:12px; }
   .payment-no-charge-panel .button { white-space:normal; }
 }
+
+.credit-store .credit-confirmation-choice + .credit-store-notice { margin-top: 18px; }

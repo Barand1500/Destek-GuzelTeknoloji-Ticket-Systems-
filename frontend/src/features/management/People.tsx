@@ -623,6 +623,7 @@ export function CustomersPage() {
                 <tr>
                   <th aria-sort={customerSort === 'asc' ? 'ascending' : customerSort === 'desc' ? 'descending' : 'none'}>{bulkSelectionMode ? 'Seç' : <button className="customer-sort-button" type="button" title={customerSort === 'asc' ? 'Z → A sırala' : customerSort === 'desc' ? 'Varsayılan sıralamaya dön' : 'A → Z sırala'} onClick={() => { setCustomerSort(current => current === null ? 'asc' : current === 'asc' ? 'desc' : null); list.setPage(1); }}>Şirket<span aria-hidden="true">{customerSort === 'asc' ? '↑' : customerSort === 'desc' ? '↓' : '↕'}</span></button>}</th>
                   <th>İletişim</th>
+                  <th>Kredi</th>
                   <th>Durum</th>
                   <th>İşlemler</th>
                 </tr>
@@ -649,6 +650,7 @@ export function CustomersPage() {
                       {customer.parentCustomer && <small>Ana müşteri: {customer.parentCustomer.name}</small>}
                     </td>
                     <td className="customer-contact-cell"><strong>{customer.name}</strong><ContactLine kind="phone" value={formatPhone(customer.phone ?? '') || 'Telefon yok'} extras={customer.extraPhones} /><ContactLine kind="email" value={displayEmail(customer.email) || 'E-Posta yok'} extras={customer.extraEmails} /></td>
+                    <td className="customer-credit-cell"><strong>{(customer.availableCredits ?? 0).toLocaleString('tr-TR')}</strong></td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">

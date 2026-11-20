@@ -70,7 +70,7 @@ export function CustomerManagementPage() {
         {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={active.id === id ? 'active' : ''} aria-current={active.id === id ? 'page' : undefined} disabled={pending} onClick={() => changeSection(id)}><Icon size={18} />{label}</button>)}
       </nav>
       <section className="customer-management-content" aria-label={active.label} key={`${customerId}-${active.id}`}>
-        {active.id === 'details' && <><CustomerDetails customer={customer.data} /><CustomerFiles customer={customer.data} /></>}
+        {active.id === 'details' && <div className="customer-details-layout"><CustomerDetails customer={customer.data} /><CustomerFiles customer={customer.data} /></div>}
         {active.id === 'agreements' && <CustomerAgreements customerId={customerId} />}
         {active.id === 'people' && <CompanyPeoplePanel customer={customer.data} onPendingChange={setPending} />}
         {active.id === 'history' && <CreditHistory customerId={customerId} />}
