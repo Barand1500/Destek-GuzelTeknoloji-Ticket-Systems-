@@ -52,6 +52,11 @@
   color: var(--muted);
   margin-top: 5px;
 }
+.credit-orders-table small.credit-order-status {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+}
 .credit-order-status {
   display: inline-block;
   padding: 5px 9px;
@@ -176,9 +181,8 @@ html[data-theme="dark"] .credit-order-dialog .credit-order-dialog-actions .butto
   border-color: #ad6961;
 }
 
-.credit-orders .credit-orders-request-filter { flex-direction: row; display: inline-flex; align-items: center; gap: 12px; margin-top: 16px; cursor: pointer; }
-.credit-orders-request-filter input { width: 18px; height: 18px; margin: 0; }
 .payment-cancel-total { display: grid; gap: 8px; padding: 12px 0; }
 .payment-reversal-panel .credit-store-notice { display: grid; gap: 16px; }
 .payment-reversal-panel .credit-store-notice > p { margin: 0; }
 .payment-reversal-panel .credit-store-notice > button { justify-self: start; }
+.refund-reason-field { resize: none; height: 96px; min-height: 96px; max-height: 96px; overflow: auto; }

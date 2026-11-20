@@ -42,7 +42,7 @@ export function CustomerRefundPanel({ orderId, onClose }: { orderId: string; onC
         {(data.refundableCredits ?? 0) > 0 ? <><p>Talebiniz destek ekibine iletilir. İade tutarı inceleme anındaki kullanılmamış krediye göre belirlenir. Talep oluşturmak kredinizi değiştirmez.</p>
         {data.refundRequest?.status === 'OPEN' ? <p role="status">İade talebiniz yönetici incelemesini bekliyor.</p> : <form className="payment-reversal-form" onSubmit={event => { event.preventDefault(); request.mutate(); }}>
           {data.refundRequest?.status === 'REJECTED' && <p>Önceki talep yanıtı: {data.refundRequest.reviewNote}</p>}
-          <label><span className="field-label">İade talep nedeni *</span><textarea required minLength={3} maxLength={500} disabled={request.isPending} value={reason} onChange={event => setReason(event.target.value)} /></label>
+          <label><span className="field-label">İade talep nedeni *</span><textarea required minLength={3} maxLength={500} rows={3} className="refund-reason-field" disabled={request.isPending} value={reason} onChange={event => setReason(event.target.value)} /></label>
           <button className="button primary" disabled={request.isPending || reason.trim().length < 3}>İade Talebini Gönder</button>
         </form>}</> : <p>İade edilebilir kredi kalmadı.</p>}
       </div> : data.canSelfRefund && <form className="payment-reversal-form" onSubmit={event => { event.preventDefault(); refund.mutate(); }}>

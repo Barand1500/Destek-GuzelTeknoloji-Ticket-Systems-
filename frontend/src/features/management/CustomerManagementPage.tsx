@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Handshake, MessagesSquare, Plus, Download, Trash2, Eye, X } from 'lucide-react';
+import { ArrowLeft, Building2, Handshake, MessagesSquare, Plus, Download, Trash2, Eye, X, Users, History } from 'lucide-react';
 import { api } from '../../services/api';
 import type { User } from '../../types';
 import { useAuth } from '../auth/Auth';
@@ -17,9 +17,13 @@ import { ErrorMessage } from './shared';
 import './customer-management.css';
 
 type Customer = User & { isActive: boolean; parentCustomerId?: string | null };
-const sections = [
+type Person = { id: string; name: string; company?: string | null };
+type Section = { id: string; label: string; icon: typeof Building2; permission?: string };
+const sections: Section[] = [
   { id: 'details', label: 'Müşteri Bilgileri', icon: Building2 },
-  { id: 'company', label: 'Şirket Yönetimi', icon: Handshake },
+  { id: 'agreements', label: 'Anlaşmalar ve Krediler', icon: Handshake },
+  { id: 'people', label: 'Şirkete Bağlı Kişiler', icon: Users },
+  { id: 'history', label: 'Kredi Hareketleri', icon: History },
   { id: 'conversations', label: 'Görüşmeler', icon: MessagesSquare, permission: 'conversations.view' },
   { id: 'request', label: 'Talep Aç', icon: Plus, permission: 'conversations.create' },
 ];
@@ -30,29 +34,47 @@ export function CustomerManagementPage() {
   const [params, setParams] = useSearchParams();
   const [pending, setPending] = useState(false);
   const customer = useQuery({ queryKey: ['/customers', customerId], queryFn: async () => (await api.get<{ data: Customer }>(`/customers/${customerId}`)).data.data });
-  const tabs = sections.filter(section => !section.permission || hasPermission(user, section.permission));
-  const requestedSection = params.get('section');
-  const active = tabs.find(section => section.id === (['people', 'agreements', 'history'].includes(requestedSection ?? '') ? 'company' : requestedSection)) ?? tabs[0];
-  const companyPages = [{ id: 'agreements', label: 'Anlaşmalar ve Krediler' }, ...(!customer.data?.parentCustomerId ? [{ id: 'people', label: 'Şirkete Bağlı Kişiler' }] : []), { id: 'history', label: 'Kredi Hareketleri' }];
-  const companyPage = companyPages.find(page => page.id === (params.get('companySection') ?? requestedSection)) ?? companyPages[0];
+  const relations = useQuery({
+    queryKey: ['customer-relations', customerId],
+    queryFn: async () => (await api.get<{ data: { customer: Person; children: Person[] } }>(`/customers/${customerId}/relations`)).data.data,
+    enabled: Boolean(customer.data && !customer.data.parentCustomerId),
+  });
+  const tabs = sections.filter(section =>
+    (!section.permission || hasPermission(user, section.permission)) &&
+    (section.id !== 'people' || Boolean(customer.data && !customer.data.parentCustomerId)),
+  );
+  const requested = params.get('section') === 'company'
+    ? params.get('companySection') ?? 'agreements'
+    : params.get('section');
+  const active = tabs.find(section => section.id === requested) ?? tabs[0];
+  const people: Person[] | undefined = customer.data && relations.data
+    ? [
+        { id: customer.data.id, name: customer.data.company || customer.data.name },
+        ...relations.data.children.map(person => ({ id: person.id, name: person.name })),
+      ]
+    : undefined;
+  const changeSection = (id: string) => setParams(current => {
+    const next = new URLSearchParams(current);
+    next.set('section', id);
+    next.delete('companySection');
+    return next;
+  });
+
   return <main className="page customer-management-page" key={customerId}>
     <Link className="customer-management-back" to=".." relative="path"><ArrowLeft size={17} /> Müşterilere Dön</Link>
     {customer.isPending && <p role="status">Müşteri yükleniyor…</p>}
     <ErrorMessage error={customer.error} />
     {customer.data && <>
-      <header className="customer-management-heading"><div><span className="muted">Müşteri / Şirket Yönetimi</span><h1>{customer.data.company || customer.data.name}</h1><p>{customer.data.name}</p></div><span className={`customer-management-status ${customer.data.isActive ? 'active' : ''}`}>{customer.data.isActive ? 'Aktif' : 'Pasif'}</span></header>
-      <nav className="integration-tabs customer-management-tabs" aria-label="Müşteri yönetimi bölümleri">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={active.id === id ? 'active' : ''} aria-current={active.id === id ? 'page' : undefined} disabled={pending} onClick={() => setParams(current => { const next = new URLSearchParams(current); next.set('section', id); return next; })}><Icon size={18} />{label}</button>)}</nav>
-      <section className={`customer-management-content${active.id === 'company' ? ' customer-management-content--company' : ''}`} aria-label={active.label} key={`${customerId}-${active.id}`}>
+      <header className="customer-management-heading"><div><h1>{customer.data.company || customer.data.name}</h1><p>{customer.data.name}</p></div></header>
+      <nav className="integration-tabs customer-management-tabs" aria-label="Müşteri yönetimi bölümleri">
+        {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={active.id === id ? 'active' : ''} aria-current={active.id === id ? 'page' : undefined} disabled={pending} onClick={() => changeSection(id)}><Icon size={18} />{label}</button>)}
+      </nav>
+      <section className="customer-management-content" aria-label={active.label} key={`${customerId}-${active.id}`}>
         {active.id === 'details' && <><CustomerDetails customer={customer.data} /><CustomerFiles customer={customer.data} /></>}
-        {active.id === 'company' && <div className="customer-company-workspace">
-          <nav className="integration-subtabs customer-company-pages" aria-label="Şirket yönetimi sayfaları">{companyPages.map(page => <button key={page.id} type="button" className={companyPage.id === page.id ? 'active' : ''} aria-current={companyPage.id === page.id ? 'page' : undefined} disabled={pending} onClick={() => setParams(current => { const next = new URLSearchParams(current); next.set('section', 'company'); next.set('companySection', page.id); return next; })}>{page.label}</button>)}</nav>
-          <section aria-label={companyPage.label} key={companyPage.id}>
-            {companyPage.id === 'agreements' && <><h2>Anlaşmalar ve Krediler</h2><CustomerAgreements customerId={customerId} /></>}
-            {companyPage.id === 'people' && <CompanyPeoplePanel customer={customer.data} onPendingChange={setPending} />}
-            {companyPage.id === 'history' && <><h2>Kredi Hareketleri</h2><CreditHistory customerId={customerId} /></>}
-          </section>
-        </div>}
-        {active.id === 'conversations' && <CustomerRequests customerId={customerId} name={customer.data.name} expanded />}
+        {active.id === 'agreements' && <CustomerAgreements customerId={customerId} />}
+        {active.id === 'people' && <CompanyPeoplePanel customer={customer.data} onPendingChange={setPending} />}
+        {active.id === 'history' && <CreditHistory customerId={customerId} />}
+        {active.id === 'conversations' && <CustomerRequests customerId={customerId} name={customer.data.name} expanded people={people} />}
         {active.id === 'request' && <PhoneSupportPage key={customerId} fixedCustomerId={customerId} />}
       </section>
     </>}
@@ -68,10 +90,21 @@ function CustomerDetails({ customer }: { customer: Customer }) {
   const { user } = useAuth();
   const editable = hasPermission(user, 'customers.update');
   const client = useQueryClient();
-  const save = useMutation({ mutationFn: (data: FormData) => api.patch(`/customers/${customer.id}`, data), onSuccess: async () => { await client.invalidateQueries({ queryKey: ['/customers'] }); } });
+  const [notice, setNotice] = useState('');
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+  const save = useMutation({
+    mutationFn: (data: FormData) => api.patch(`/customers/${customer.id}`, data),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ['/customers'] });
+      setNotice('Müşteri bilgileri kaydedildi.');
+    },
+  });
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (editable && !save.isPending) save.mutate(new FormData(event.currentTarget)); }
   return <form className="management-form customer-details-form" onSubmit={submit}>
-    <div className="customer-section-heading"><h2>Şirket ve Müşteri Bilgileri</h2><p>Şirketi ve şirketin ana iletişim kişisini buradan yönetin.</p></div>
     <fieldset disabled={!editable || save.isPending} key={customer.id + customer.company + customer.name + customer.phone + customer.email}>
       <label><span className="field-label">Şirket Adı *</span><input name="company" required minLength={2} maxLength={120} defaultValue={customer.company ?? ''} /></label>
       <label><span className="field-label">Ad Soyad *</span><input name="name" required minLength={2} maxLength={100} defaultValue={customer.name} onInput={event => { event.currentTarget.value = event.currentTarget.value.toLocaleUpperCase('tr-TR'); }} /></label>
@@ -79,10 +112,11 @@ function CustomerDetails({ customer }: { customer: Customer }) {
       <label><span className="field-label">E-Posta *</span><EmailInput name="email" required defaultValue={displayEmail(customer.email)} /></label>
       <label><span className="field-label">Ek Telefon</span><input name="extraPhones" maxLength={500} defaultValue={customer.extraPhones ?? ''} /></label>
       <label><span className="field-label">Ek E-Posta</span><EmailInput name="extraEmails" multiple defaultValue={customer.extraEmails ?? ''} /></label>
-      <label className="customer-details-wide"><span className="field-label">Müşteri Notu</span><textarea name="staffNote" maxLength={2000} rows={4} defaultValue={customer.staffNote ?? ''} /></label>
+      <label className="customer-details-wide"><span className="field-label">Müşteri Notu</span><textarea name="staffNote" className="customer-note-field" maxLength={2000} rows={4} defaultValue={customer.staffNote ?? ''} /></label>
     </fieldset>
-    <ErrorMessage error={save.error} />{save.isSuccess && <p role="status">Müşteri bilgileri kaydedildi.</p>}
+    <ErrorMessage error={save.error} />
     {editable && <footer><button className="button primary" disabled={save.isPending}>{save.isPending ? 'Kaydediliyor…' : 'Değişiklikleri Kaydet'}</button></footer>}
+    {notice && <div className="management-toast" role="status">{notice}</div>}
   </form>;
 }
 

@@ -45,8 +45,8 @@ test('customer sees dates, usage and depleted state without expanding package', 
 test('staff create and edit agreements without renewal preferences', async ({ page }) => {
   const writes = await setup(page, 'ADMIN');
   await page.goto('/admin/customers');
-  await page.locator('.customer-list-table tbody tr').first().dblclick();
-  await page.getByRole('button', { name: 'Şirket Yönetimi', exact: true }).click();
+  await page.locator('.customer-list-table tbody tr').first().click();
+  await page.getByRole('button', { name: 'Anlaşmalar ve Krediler', exact: true }).click();
   const dialog = page.locator('.customer-management-page');
   await dialog.getByRole('button', { name: '+ Anlaşma Ekle', exact: true }).click();
   await dialog.getByLabel('Anlaşma Adı', { exact: true }).fill('Yeni paket');
@@ -83,8 +83,7 @@ test('customer credit history opens as a page and survives reload', async ({page
 test('staff customer management keeps credit history inside its company section',async({page})=>{
  await setup(page,'ADMIN');
  await page.goto('/admin/customers');
- await page.locator('.customer-list-table tbody tr').first().dblclick();
- await page.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();
+ await page.locator('.customer-list-table tbody tr').first().click();
  const dialog=page.locator('.customer-management-page');
  await dialog.getByRole('button',{name:'Kredi Hareketleri',exact:true}).click();
  await expect(dialog).toBeVisible();
@@ -145,8 +144,8 @@ test('customer sees package history without recurring enrollment controls', asyn
 test('agreement renewal uses its own price currency and period without a separate offer screen', async ({ page }) => {
   const writes = await setup(page, 'ADMIN');
   await page.goto('/admin/customers');
-  await page.locator('.customer-list-table tbody tr').first().dblclick();
-  await page.getByRole('button', { name: 'Şirket Yönetimi', exact: true }).click();
+  await page.locator('.customer-list-table tbody tr').first().click();
+  await page.getByRole('button', { name: 'Anlaşmalar ve Krediler', exact: true }).click();
   const dialog = page.locator('.customer-management-page');
   await expect(dialog.getByRole('button', { name: 'Dönemsel Ödeme Ayarla', exact: true })).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Destek Paketi anlaşmasını düzenle', exact: true }).click();

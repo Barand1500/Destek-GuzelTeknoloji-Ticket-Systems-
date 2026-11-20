@@ -32,7 +32,7 @@ async function setup(page: Page, role = 'ADMIN', readOnly = false, permissions?:
   return writes;
 }
 
-test('customer list opens an inline management page and preserves its selected section', async ({ page }) => {
+test('customer list opens with a single click and exposes top-level management tabs', async ({ page }) => {
   const writes = await setup(page);
   await page.goto('/admin/customers');
   const row = page.locator('.customer-list-table tbody tr');
@@ -42,30 +42,24 @@ test('customer list opens an inline management page and preserves its selected s
   await expect(page.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true })).toHaveCount(0);
   await expect(page.locator('.customer-list-table thead th').last()).toHaveText('İşlemler');
   await row.click();
-  await expect(page).toHaveURL(/\/admin\/customers$/);
-  await row.dblclick();
   await expect(page).toHaveURL(new RegExp(`/customers/${id}$`));
   await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.customer-management-status')).toHaveCount(0);
+  await expect(page.getByText('Müşteri / Şirket Yönetimi', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Şirket ve Müşteri Bilgileri' })).toHaveCount(0);
+  await expect(page.locator('.customer-management-heading h1')).toHaveText('Güzel Teknoloji');
+  const note = page.getByLabel('Müşteri Notu', { exact: true });
+  await expect(note).toHaveCSS('resize', 'none');
   await page.getByLabel('Şirket Adı *', { exact: true }).fill('Yeni Şirket');
   await page.getByRole('button', { name: 'Değişiklikleri Kaydet' }).click();
   await expect(page.getByRole('heading', { name: 'Yeni Şirket', exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Müşteri bilgileri kaydedildi.' })).toBeVisible();
   expect(writes).toHaveLength(1);
-  await expect(page.getByRole('navigation', { name: 'Müşteri yönetimi bölümleri' }).getByRole('button', { name: 'Dosyalar', exact: true })).toHaveCount(0);
-  for (const label of ['Şirket Yönetimi', 'Görüşmeler', 'Talep Aç', 'Müşteri Bilgileri']) {
-    await page.getByRole('navigation', { name: 'Müşteri yönetimi bölümleri' }).getByRole('button', { name: label, exact: true }).click();
+  const nav = page.getByRole('navigation', { name: 'Müşteri yönetimi bölümleri' });
+  for (const label of ['Anlaşmalar ve Krediler', 'Şirkete Bağlı Kişiler', 'Kredi Hareketleri', 'Görüşmeler', 'Talep Aç', 'Müşteri Bilgileri']) {
+    await nav.getByRole('button', { name: label, exact: true }).click();
     await expect(page.getByRole('region', { name: label, exact: true })).toBeVisible();
-    if (label === 'Şirket Yönetimi') {
-      for (const name of ['Anlaşmalar ve Krediler', 'Şirkete Bağlı Kişiler', 'Kredi Hareketleri']) {
-        await page.getByRole('navigation', { name: 'Şirket yönetimi sayfaları' }).getByRole('button', { name, exact: true }).click();
-        await expect(page.locator('.customer-company-workspace > section')).toHaveCount(1);
-        await expect(page.getByRole('region', { name, exact: true })).toBeVisible();
-        if (name === 'Şirkete Bağlı Kişiler') await expect(page.getByRole('table', { name, exact: true }).locator('thead th').last()).toHaveText('İşlemler');
-      }
-      await page.reload();
-      await expect(page.getByRole('region', { name: 'Şirket Yönetimi', exact: true })).toBeVisible();
-      await expect(page.getByRole('region', { name: 'Kredi Hareketleri', exact: true })).toBeVisible();
-      await expect(page.getByRole('region', { name: 'Anlaşmalar ve Krediler', exact: true })).toHaveCount(0);
-    }
+    await expect(page.getByRole('heading', { name: label, exact: true })).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(0);
   }
   await expect(page.getByText('Sözleşme.pdf', { exact: true })).toBeVisible();
@@ -84,13 +78,20 @@ test('customer list opens an inline management page and preserves its selected s
   await expect(page).toHaveURL(/\/admin\/customers$/);
 });
 
+test('legacy company section links open the matching top-level tab', async ({ page }) => {
+  await setup(page);
+  await page.goto(`/admin/customers/${id}?section=company&companySection=people`);
+  await expect(page.getByRole('region', { name: 'Şirkete Bağlı Kişiler', exact: true })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Şirkete Bağlı Kişiler', exact: true })).toBeVisible();
+});
+
 test('read-only staff can inspect customer pages without edit or request controls', async ({ page }) => {
   await setup(page, 'AGENT', true);
   await page.goto(`/agent/customers/${id}`);
   await expect(page.getByLabel('Şirket Adı *', { exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Değişiklikleri Kaydet' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Talep Aç', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Şirket Yönetimi', exact: true }).click();
+  await page.getByRole('button', { name: 'Şirkete Bağlı Kişiler', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Kişi Ekle', exact: true })).toHaveCount(0);
 });
 
@@ -144,7 +145,7 @@ for (const theme of ['dark', 'light']) test(`customer management fits mobile and
   await setup(page);
   await page.addInitScript(value => localStorage.setItem('helpdesk-theme', value), theme);
   await page.goto(`/admin/customers/${id}`);
-  await expect(page.getByRole('heading', { name: 'Şirket ve Müşteri Bilgileri' })).toBeVisible();
+  await expect(page.locator('.customer-management-heading h1')).toHaveText('Güzel Teknoloji');
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);

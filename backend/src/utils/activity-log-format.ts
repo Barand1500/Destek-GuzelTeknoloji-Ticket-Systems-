@@ -172,7 +172,7 @@ export function richDescriptionFor(log: ActivityLog) {
     metadata?.originalName && `Dosya: ${metadata.originalName}`,
     metadata?.recipient && `Alıcı: ${metadata.recipient}`,
     metadata?.senderEmail && `Gönderen: ${metadata.senderEmail}`,
-    metadata?.reason && `${log.action === 'conversation.email_sent' ? 'İşlem' : 'Hata'}: ${metadata.reason}`,
+    metadata?.reason && `${log.action === 'conversation.email_sent' ? 'İşlem' : log.action === 'credit_payment.refund_requested' ? 'İade talebi nedeni' : log.action === 'credit_payment.refund_request_rejected' ? 'Ret gerekçesi' : log.action.startsWith('credit_payment.') ? 'Neden' : 'Hata'}: ${metadata.reason}`,
     metadata?.attachmentCount && `Ek dosya sayısı: ${metadata.attachmentCount}`,
     metadata?.deletedConversationCount !== undefined && `Silinen talep sayısı: ${metadata.deletedConversationCount}`,
   ].filter(Boolean).join(" · ");

@@ -112,6 +112,13 @@ test("pagination and debounced filters request server pages", async ({
     .poll(() => requests.at(-1)?.searchParams.get("status"))
     .toBe("CANCELLED");
 });
+test("admin filters refund requests from the status dropdown", async ({ page }) => {
+  const { requests } = await setup(page, true);
+  await page.getByRole("button", { name: "Sipariş Durumu" }).click();
+  await page.getByRole("option", { name: "İade talebi bekliyor", exact: true }).click();
+  await expect.poll(() => requests.at(-1)?.searchParams.get("refundRequested")).toBe("true");
+  expect(requests.at(-1)?.searchParams.get("status")).toBeNull();
+});
 test("read-only admin sees customer and cannot cancel", async ({ page }) => {
   await setup(page, true, false);
   await expect(page.getByText(order.number, { exact: true })).toBeVisible();

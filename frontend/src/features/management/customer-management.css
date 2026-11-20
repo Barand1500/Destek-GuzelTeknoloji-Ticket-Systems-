@@ -2,15 +2,10 @@
 .customer-management-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 .customer-management-heading h1 { margin: 6px 0 8px; overflow-wrap: anywhere; }
 .customer-management-heading p { margin: 0; color: var(--ui-text-secondary); }
-.customer-management-status { padding: 7px 14px; border: 1px solid var(--border, #dbe3e8); border-radius: 20px; white-space: nowrap; }
-.customer-management-status.active { color: var(--ui-text-primary); background: var(--surface, #fff); }
-.customer-management-tabs { display: flex; overflow-x: auto; flex-wrap: nowrap; margin-bottom: 24px; }
+.customer-management-tabs { display: flex; flex-wrap: wrap; gap: 0 4px; overflow: visible; margin-bottom: 24px; }
 .customer-management-tabs button { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
 .customer-management-content { min-width: 0; padding: 28px; border: 1px solid var(--border, #dbe3e8); border-radius: 12px; background: var(--surface, #fff); }
 .customer-details-form { display: block; max-width: 1100px; }
-.customer-section-heading { margin-bottom: 28px; }
-.customer-section-heading h2 { margin: 0 0 10px; }
-.customer-section-heading p { color: var(--ui-text-secondary); margin: 0; }
 .customer-details-form fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 0; border: 0; margin: 0 0 24px; min-width: 0; }
 .customer-details-form label { min-width: 0; }
 .customer-details-wide { grid-column: 1 / -1; }
@@ -33,6 +28,15 @@
 .customer-file-viewer iframe { width: 100%; height: 600px; border: 0; }
 .customer-management-content .customer-existing-requests[open] > summary { pointer-events: none; }
 .customer-management-content .customer-existing-requests[open] > summary > svg { display: none; }
+.customer-management-content .customer-existing-requests-expanded { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 24px; }
+.customer-management-content .customer-existing-requests-expanded > .customer-requests-toggle { grid-column: 1; grid-row: 1; }
+.customer-management-content .customer-existing-requests-expanded > .customer-requests-body { display: contents; }
+.customer-management-content .customer-existing-requests-expanded > .customer-requests-body > * { grid-column: 1 / -1; }
+.customer-management-content .customer-existing-requests-expanded > .customer-requests-body > .customer-requests-filters { grid-column: 2; grid-row: 1; margin: 0; padding-top: 4px; }
+@media (max-width: 900px) {
+  .customer-management-content .customer-existing-requests-expanded { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .customer-management-content .customer-existing-requests-expanded > .customer-requests-body > .customer-requests-filters { grid-column: 1; grid-row: 2; justify-content: flex-start; }
+}
 .management-table.customer-list-table { table-layout: fixed; width: 100%; min-width: 640px; }
 .customer-list-table th:first-child { width: 34%; }
 .customer-list-table th:nth-child(2) { width: auto; }
@@ -45,17 +49,46 @@
 .management-table.customer-list-table td > small { white-space: normal; overflow-wrap: anywhere; }
 .customer-list-table .customer-table-actions { min-width: 0; justify-content: flex-end; }
 .customer-list-table td:last-child, .customer-list-table th:last-child { text-align: right; }
-.customer-company-workspace { display: grid; gap: 24px; min-width: 0; }
-.customer-company-pages { overflow-x: auto; min-width: 0; }
-.customer-company-pages button { white-space: nowrap; flex-shrink: 0; }
-.customer-management-page .customer-management-content--company { padding: 0; border: 0; background: transparent; }
-.customer-company-workspace > section { min-width: 0; padding: 28px; border: 1px solid var(--border, #dbe3e8); border-radius: 12px; background: var(--surface, #fff); }
-.customer-company-workspace > section > h2 { margin: 0 0 24px; }
-.customer-company-workspace .company-people-table :is(th, td):last-child { text-align: right; }
-.customer-company-workspace .company-people-table td:last-child .management-actions { justify-content: flex-end; }
 @media (max-width: 700px) {
-  .customer-company-workspace > section { padding: 18px; }
   .customer-management-content { padding: 18px; }
   .customer-details-form fieldset { grid-template-columns: minmax(0, 1fr); }
   .customer-management-heading { align-items: flex-start; gap: 12px; }
 }
+
+.customer-details-form .customer-note-field { height: 132px; min-height: 132px; max-height: 132px; resize: none; overflow: auto; }
+.management-toast { position: fixed; right: 28px; bottom: 28px; z-index: 1200; display: inline-flex; align-items: center; gap: 10px; max-width: min(360px, calc(100vw - 32px)); padding: 12px 18px; border: 1px solid #bfe3ca; border-radius: 10px; background: #eaf7ed; color: #1f5230; font-weight: 600; box-shadow: 0 14px 34px rgba(12, 30, 44, .18); animation: customer-toast-in .18s ease-out; }
+.management-toast::before { content: ""; width: 9px; height: 9px; flex: none; border-radius: 50%; background: #2f8f52; }
+@keyframes customer-toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+html[data-theme="dark"] .management-toast { border-color: #3f7052; background: #1c3527; color: #bfe9cd; }
+html[data-theme="dark"] .management-toast::before { background: #5bc27f; }
+.customer-contact-line { position: relative; }
+.customer-contact-text { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+.customer-contact-line.has-extra .customer-contact-text { text-decoration: underline dotted currentColor; text-underline-offset: 3px; cursor: help; }
+.customer-contact-tip { position: fixed; z-index: 1400; display: grid; gap: 3px; padding: 9px 11px; border: 1px solid var(--border, #dbe3e8); border-radius: 8px; background: var(--surface, #fff); color: var(--ui-text-primary); box-shadow: 0 14px 30px rgba(9, 25, 38, .24); font-size: 12px; font-weight: 500; line-height: 1.45; white-space: nowrap; pointer-events: none; }
+.customer-request-person, .phone-request-person { grid-column: 1 / -1; margin-bottom: 4px; }
+.customer-management-content .company-people-table :is(th, td):last-child { text-align: right; }
+.customer-management-content .company-people-table td:last-child .management-actions { justify-content: flex-end; }
+.phone-support-request-form .phone-request-person { grid-column: 1 / -1; }
+.customer-file-upload { background: var(--surface, #fff); }
+.customer-file-upload label { display: grid; gap: 8px; }
+.customer-file-upload > p { margin: 0 0 12px; overflow-wrap: anywhere; color: var(--ui-text-secondary); font-size: 13px; }
+.customer-file-open:hover { text-decoration: underline; }
+html[data-theme="dark"] .customer-file-upload { border-color: #46637a; background: #172734; }
+html[data-theme="dark"] .customer-management-file { border-color: #2e3e49; }
+html[data-theme="dark"] .customer-management-file-preview { border: 1px solid #415765; background: #101d28; }
+html[data-theme="dark"] .customer-files-workspace { border-color: #2e3e49; }
+html[data-theme="dark"] .customer-files-workspace > h2 { color: #e7eff6; }
+html[data-theme="dark"] .customer-management-file .icon-button { border-color: #415765; background: #222d34; color: #d7dfe5; box-shadow: none; }
+html[data-theme="dark"] .customer-management-file .icon-button:hover:not(:disabled) { border-color: #6c94ae; background: #2b3d49; color: #f2f7fa; }
+html[data-theme="dark"] .customer-management-file .icon-button.danger-icon { border-color: #744b45; background: #382725; color: #ffb5ad; }
+html[data-theme="dark"] .customer-management-file .icon-button.danger-icon:hover:not(:disabled) { border-color: #bd7067; background: #51302b; color: #ffd8d3; }
+html[data-theme="dark"] .customer-file-viewer { border-color: #2e3e49; background: #172734; }
+html[data-theme="dark"] .customer-file-viewer > header .icon-button { border-color: #415765; background: #222d34; color: #d7dfe5; }
+@media (max-width: 700px) {
+  .management-toast { left: 16px; right: 16px; bottom: 16px; }
+  .customer-management-page .customer-management-tabs { flex-wrap: wrap; overflow: visible; }
+  .customer-management-content .company-people-table :is(th, td):last-child { text-align: left; }
+}
+
+.customer-existing-requests-expanded > .customer-requests-toggle { cursor: default; }
+.customer-existing-requests-expanded > .customer-requests-toggle > svg { display: none; }

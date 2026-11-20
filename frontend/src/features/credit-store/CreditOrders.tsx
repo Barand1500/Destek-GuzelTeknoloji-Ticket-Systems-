@@ -64,7 +64,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
     [search, setSearch] = useState(""),
     [term, setTerm] = useState(""),
     [status, setStatus] = useState("");
-  const [refundRequested, setRefundRequested] = useState(false);
+  const refundRequested = status === "refund-request";
   const [target, setTarget] = useState<Order | null>(null),
     [message, setMessage] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
@@ -85,10 +85,10 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
           params: {
             page,
             limit,
-            ...(admin && refundRequested ? { refundRequested: 'true' } : {}),
+            ...(refundRequested ? { refundRequested: 'true' } : {}),
             ...(subscriptionId ? { subscriptionId } : {}),
             ...(term ? { search: term } : {}),
-            ...(status ? { status } : {}),
+            ...(!refundRequested && status ? { status } : {}),
           },
         })
       ).data as OrdersPage,
@@ -117,15 +117,9 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
   }, [orders.data, page]);
   return (
     <section className="credit-orders" aria-label="Siparişler">
-      {admin && <><h2>Kredi ve Paket Siparişleri</h2>
-      <p className="credit-orders-note">
-        Ödeme bekleyen siparişler kredi
-        bakiyesini değiştirmez. Tutarlar sipariş anındaki fiyatları gösterir.
-      </p></>}
       {!admin && refundOrderId && <CustomerRefundPanel key={refundOrderId} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {admin && refundOrderId && <PaymentReversalPanel key={`${refundOrderId}-${reversalKind}`} kind={reversalKind} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
-      {admin && <label className="credit-orders-request-filter"><span>İade talepleri</span><input type="checkbox" checked={refundRequested} onChange={e => { setRefundRequested(e.target.checked); setPage(1); }} /></label>}
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
           Sipariş Ara
@@ -147,6 +141,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
           value={status}
           options={[
             { value: "", label: "Tüm durumlar" },
+            ...(admin ? [{ value: "refund-request", label: "İade talebi bekliyor" }] : []),
             ...Object.entries(statuses).map(([value, label]) => ({
               value,
               label,

@@ -28,6 +28,8 @@ import { useWorkSession } from "../../components/WorkSession";
 import { DeleteModal } from '../../components/DeleteModal';
 import { conversationPath, workspacePath } from "../../router/paths";
 import { TagSelect, FormDropdown, ComposerFiles } from "../tickets/TicketExtras";
+
+
 import {
   ErrorMessage,
   editableRowProps,
@@ -59,6 +61,37 @@ type ManagedUser = User & {
 };
 type AssignmentImpact = { id: string; number: number; subject: string; status: string; priority: string; createdAt: string; departmentId: string; department: { name: string }; customer: { name: string } };
 type AssignmentTransferGroup = { conversationIds: string[]; departmentId: string; assignedAgentId: string | null; departmentName: string; assignedAgentName: string | null };
+function extraContactText(value: string | null | undefined, kind: 'phone' | 'email') {
+  return (value ?? '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => kind === 'phone' ? formatPhone(item) : displayEmail(item))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function ContactLine({ value, extras, kind }: { value: string; extras?: string | null; kind: 'phone' | 'email' }) {
+  const [tip, setTip] = useState<{ left: number; top: number } | null>(null);
+  const extra = extraContactText(extras, kind);
+  const show = (element: HTMLElement) => {
+    if (!extra) return;
+    const rect = element.getBoundingClientRect();
+    setTip({ left: Math.min(rect.right + 12, window.innerWidth - 300), top: Math.max(rect.top - 8, 8) });
+  };
+  return <small className={extra ? 'customer-contact-line has-extra' : 'customer-contact-line'}>
+    <span
+      className="customer-contact-text"
+      tabIndex={extra ? 0 : undefined}
+      onMouseEnter={event => show(event.currentTarget)}
+      onMouseLeave={() => setTip(null)}
+      onFocus={event => show(event.currentTarget)}
+      onBlur={() => setTip(null)}
+    >{value}</span>
+    {tip && extra && <span className="customer-contact-tip" role="tooltip" style={{ left: tip.left, top: tip.top }}>{extra.split('\n').map(line => <span key={line}>{line}</span>)}</span>}
+  </small>;
+}
+
 function usePageScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return;
@@ -597,10 +630,11 @@ export function CustomersPage() {
               <tbody>
                 {list.data.data.map((customer) => (
                   <tr key={customer.id} tabIndex={0} onClick={event => {
-                    if (!bulkSelectionMode || (event.target as HTMLElement).closest('button, a, input, label')) return;
-                    if (!bulkRemove.isPending) setSelectedCustomerIds(current => current.includes(customer.id) ? current.filter(id => id !== customer.id) : [...current, customer.id]);
-                  }} onDoubleClick={event => {
-                    if (bulkSelectionMode || (event.target as HTMLElement).closest('button, a, input, label')) return;
+                    if ((event.target as HTMLElement).closest('button, a, input, label')) return;
+                    if (bulkSelectionMode) {
+                      if (!bulkRemove.isPending) setSelectedCustomerIds(current => current.includes(customer.id) ? current.filter(id => id !== customer.id) : [...current, customer.id]);
+                      return;
+                    }
                     navigate(customer.id);
                   }} onKeyDown={event => {
                     if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -614,7 +648,7 @@ export function CustomersPage() {
                       <strong>{customer.company || customer.name}</strong>
                       {customer.parentCustomer && <small>Ana müşteri: {customer.parentCustomer.name}</small>}
                     </td>
-                    <td className="customer-contact-cell"><strong>{customer.name}</strong><small>{formatPhone(customer.phone ?? '') || 'Telefon yok'}</small><small>{displayEmail(customer.email) || 'E-Posta yok'}</small></td>
+                    <td className="customer-contact-cell"><strong>{customer.name}</strong><ContactLine kind="phone" value={formatPhone(customer.phone ?? '') || 'Telefon yok'} extras={customer.extraPhones} /><ContactLine kind="email" value={displayEmail(customer.email) || 'E-Posta yok'} extras={customer.extraEmails} /></td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
@@ -740,6 +774,19 @@ export function PhoneSupportPage({ fixedCustomerId }: { fixedCustomerId?: string
     staleTime: 15_000,
     refetchOnWindowFocus: false,
   });
+  const [fixedPersonId, setFixedPersonId] = useState("");
+  const fixedRelations = useQuery({
+    queryKey: ["customer-relations", fixedCustomerId],
+    queryFn: async () => (await api.get<{ data: { children: { id: string; name: string }[] } }>(`/customers/${fixedCustomerId}/relations`)).data.data,
+    enabled: Boolean(fixedCustomerId),
+  });
+  const fixedPerson = useQuery({
+    queryKey: ["/customers", fixedPersonId],
+    queryFn: async () => (await api.get<{ data: ManagedUser }>(`/customers/${fixedPersonId}`)).data.data,
+    enabled: Boolean(fixedCustomerId && fixedPersonId),
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+  });
   const customers = useQuery({
     queryKey: ["/customers", "phone-support", phonePage, deferredSearch],
     queryFn: async () =>
@@ -754,7 +801,10 @@ export function PhoneSupportPage({ fixedCustomerId }: { fixedCustomerId?: string
   const results = customers.data?.data ?? [];
   const displayResults = hasSearched && !showCreate ? results.filter(customer=>customer.isActive !== false) : [];
   const candidateCustomer = selected ?? (!hasSearched ? initialCustomer.data : null) ?? displayResults.find(customer => customer.id === customerId) ?? null;
-  const activeCustomer = candidateCustomer?.isActive === false ? null : candidateCustomer;
+  const fixedSelected = fixedCustomerId ? fixedPerson.data ?? initialCustomer.data : undefined;
+  const activeCustomer = fixedCustomerId
+    ? (fixedSelected?.isActive === false ? null : fixedSelected ?? null)
+    : (candidateCustomer?.isActive === false ? null : candidateCustomer);
   const contact: { phone?: string | null; email?: string | null } = showCreate ? newContact : activeCustomer ?? {};
   const availableChannels = contactChannels(contact, communicationChannels.data);
   const channelAvailable = selectedChannels.length > 0 && selectedChannels.every(value => availableChannels.includes(value));
@@ -861,7 +911,8 @@ export function PhoneSupportPage({ fixedCustomerId }: { fixedCustomerId?: string
     {initialCustomer.isPending && <p role="status">Müşteri yükleniyor…</p>}
     {candidateCustomer?.isActive === false && <p role="alert">Bu müşteri pasif. Talep açmak için önce hesabını etkinleştirin.</p>}
     {activeCustomer && <form className="management-form phone-support-request-form" onSubmit={submitConversation}>
-      <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentIds={assignedAgentIds} setAssignedAgentIds={setAssignedAgentIds} channel={selectedChannels} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
+      {(fixedRelations.data?.children.length ?? 0) > 0 && <div className="phone-request-person"><DropdownSelect label="Talep Açılacak Kişi" value={fixedPersonId || fixedCustomerId} onChange={value => { const next = value === fixedCustomerId ? "" : value; setFixedPersonId(next); setCustomerId(value); }} ariaLabel="Talep açılacak kişiyi seçin" options={[{ value: fixedCustomerId, label: `${initialCustomer.data?.company || initialCustomer.data?.name || "Şirket"} (şirket)` }, ...(fixedRelations.data?.children ?? []).map(person => ({ value: person.id, label: person.name }))]} /></div>}
+      <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentIds={assignedAgentIds} setAssignedAgentIds={setAssignedAgentIds} channel={selectedChannels} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={(fixedRelations.data?.children.length ?? 0) > 0 ? null : activeCustomer} />
       <ErrorMessage error={createConversation.error} />
       {channelFormError && <p className="error" role="alert">{channelFormError}</p>}
       <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? 'Oluşturuluyor…' : 'Talebi Oluştur'}</button></div>

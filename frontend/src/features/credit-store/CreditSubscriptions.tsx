@@ -94,15 +94,6 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
       className="credit-orders credit-subscriptions"
       aria-label={admin ? "Abonelikler" : "Aboneliklerim"}
     >
-      {admin && (
-        <>
-          <h2>Abonelikler</h2>
-          <p className="credit-store-notice">
-            Paket aboneliklerini ve ödenmiş dönem kayıtlarını buradan
-            inceleyebilirsiniz.
-          </p>
-        </>
-      )}
       <div className="credit-orders-filters">
         <label>
           <span className="field-label">Abonelik Ara</span>

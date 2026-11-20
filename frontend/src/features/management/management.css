@@ -1,4 +1,4 @@
-.management-grid {
+﻿.management-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;
   gap: 24px;
@@ -5117,9 +5117,9 @@ html[data-theme="dark"] :is(.customer-existing-requests-scroll,.phone-support-re
 .customer-existing-requests-table a{color:var(--ui-text-navigation);text-decoration:none}
 .customer-existing-requests-table a:hover{text-decoration:underline}
 .customer-existing-requests-table a:focus-visible{outline:2px solid var(--ui-tab-indicator);outline-offset:3px}
-.customer-requests-filters{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:14px;margin-bottom:16px}
+.customer-requests-filters{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:end;gap:14px;margin-bottom:16px}
 .customer-requests-filters>div{display:grid;gap:7px;min-width:140px;max-width:100%}
-.customer-requests-filters>div:last-child{margin-left:auto}
+.customer-requests-filters>div:last-child{margin-left:0}
 .customer-requests-filters>div>span{color:var(--ui-text-secondary);font-size:12px}
 .customer-requests-filters .styled-dropdown{min-width:140px}
 @media(max-width:540px){.customer-requests-filters>div{flex:1 1 140px;min-width:0}.customer-requests-filters .styled-dropdown{min-width:0}}
@@ -5150,3 +5150,4 @@ html[data-theme="dark"] .customer-request-status[data-status=PENDING]{background
 
 .customer-merge-filters>label{justify-content:flex-start;padding:8px 12px;box-sizing:border-box}
 .customer-merge-filters>label>input{height:28px;line-height:20px;padding:4px 2px;box-sizing:border-box;margin:0}
+

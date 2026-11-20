@@ -14,6 +14,9 @@ test('old and new log descriptions show readable IDN addresses and successful em
   assert.ok(!changed.includes('xn--'));
   const failed = richDescriptionFor({ ...base, action: 'conversation.email_failed', metadata: { recipient: email, reason: 'SMTP 550' } });
   assert.ok(failed.includes('Hata: SMTP 550'));
+  const refund = richDescriptionFor({ ...base, action: 'credit_payment.refund_requested', metadata: { reason: 'Lütfen iade talep ediyorum' } });
+  assert.ok(refund.includes('İade talebi nedeni: Lütfen iade talep ediyorum'));
+  assert.ok(!refund.includes('Hata:'));
 });
 test('roles, statuses and channels have readable values', () => {
   assert.equal(activityValueLabel('ADMIN'), 'Yönetici');
