@@ -12,7 +12,7 @@ import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
 import { publishChange } from './events.service.js';
 import { creditStoreOwner } from './credit-store.service.js';
 
-const inputSchema = z.object({ requestKey: z.uuid(), kind: z.enum(['REFUND', 'CANCEL']), credits: z.number().int().positive().max(1_000_000), reason: z.string().trim().min(3).max(500) }).strict();
+const inputSchema = z.object({ requestKey: z.uuid(), kind: z.enum(['REFUND', 'CANCEL']), credits: z.number().int().nonnegative().max(1_000_000), amount: z.string().regex(/^\d{1,10}(\.\d{1,2})?$/).optional(), reason: z.string().trim().min(3).max(500) }).strict();
 const customerInputSchema = inputSchema.pick({ requestKey: true, reason: true }).strict();
 const conflict = (message: string) => new AppError(409, 'REFUND_NOT_ALLOWED', message);
 const safeSelect = { id: true, kind: true, status: true, credits: true, amount: true, currency: true, reason: true, failureCode: true, createdAt: true, completedAt: true } as const;
@@ -38,7 +38,7 @@ export async function reversalSummary(actor: Actor, orderId: string, admin = tru
   const available = agreement && !agreement.deletedAt ? Math.max(0, Math.min(agreement.credits - agreement.usedCredits, order.credits - (totals._sum.credits ?? 0))) : 0;
   let amount = '0.00';
   if (available) try { amount = refundValue(order.total.toFixed(2), order.credits, totals._sum.credits ?? 0, totals._sum.amount?.toFixed(2) ?? '0', available).toFixed(2); } catch (error) { if (!(error instanceof AppError)) throw error; }
-  return { refundRequest: order.refundRequest, data: data.map(serialize), orderKind: order.kind, orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
+  return { refundRequest: order.refundRequest, data: data.map(serialize), orderKind: order.kind, orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, maxRefundAmount: Prisma.Decimal.max(0, order.total.sub(totals._sum.amount ?? 0)).toFixed(2), originalCredits: order.credits, total: order.total.toFixed(2),
     refundedCredits: totals._sum.credits ?? 0, refundedAmount: totals._sum.amount?.toFixed(2) ?? '0.00', hasPending: data.some(v => ['PENDING', 'REVIEW'].includes(v.status)), usedCredits: agreement?.usedCredits ?? 0,
     canSelfRefund: (admin || order.kind !== 'TOP_UP') && order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
     canCancel: Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
@@ -61,7 +61,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
       input.kind = previous?.kind === 'CANCEL' || previous?.kind === 'REFUND' ? previous.kind : order.paidAt && localDay(order.paidAt) === localDay(new Date()) ? 'CANCEL' : 'REFUND';
     }
     if (previous) {
-      if (previous.kind !== input.kind || previous.credits !== input.credits || previous.reason !== input.reason) throw conflict('Bu işlem anahtarı başka iade için kullanılmış.');
+      if (previous.kind !== input.kind || previous.credits !== input.credits || previous.reason !== input.reason || ('amount' in input && input.amount !== undefined && !previous.amount.eq(input.amount))) throw conflict('Bu işlem anahtarı başka iade için kullanılmış.');
       return { row: previous, dispatch: false as const };
     }
     if (!['PAID', 'PARTIAL_REFUND'].includes(order.status) || !order.grantedAgreementId || !order.grantedAgreement || order.grantedAgreement.deletedAt) throw conflict('Yalnızca ödenmiş ve kredi kaydı bulunan siparişler iade edilebilir.');
@@ -79,7 +79,17 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     if (input.credits > order.credits - oldCredits || input.credits > agreement.credits - agreement.usedCredits) throw conflict('İade miktarı kullanılmamış krediyi aşamaz.');
     if (input.kind === 'CANCEL' && (agreement.usedCredits > 0 || oldCredits > 0 || input.credits !== order.credits)) throw conflict('Banka iptali yalnızca hiç kullanılmamış ödemenin tamamı için yapılabilir. Diğer işlemler için iade seçin.');
     if (input.kind === 'CANCEL' && (!order.paidAt || localDay(order.paidAt) !== localDay(new Date()))) throw conflict('Banka iptali ödeme gününde yapılabilir. Bu sipariş için iade seçin.');
-    const amount = refundValue(order.total.toFixed(2), order.credits, oldCredits, oldAmount, input.credits);
+    const explicitAmount = 'amount' in input ? input.amount : undefined;
+    if (input.credits === 0 && !explicitAmount) throw conflict('İade edilecek kredi veya tutar seçin.');
+    if (explicitAmount && (!admin || input.kind !== 'REFUND' || input.credits !== agreement.credits - agreement.usedCredits)) throw conflict('Özel tutarlı iade kalan kullanılmamış kredinin tamamını kapatmalıdır.');
+    const amount = explicitAmount ? new Prisma.Decimal(explicitAmount) : refundValue(order.total.toFixed(2), order.credits, oldCredits, oldAmount, input.credits);
+    const remainingAmount = order.total.sub(oldAmount);
+    if (!amount.gt(0) || amount.gt(remainingAmount)) throw conflict('Toplam iade ödenen tutarı aşamaz.');
+    if (explicitAmount && input.credits > 0) {
+      let normal = new Prisma.Decimal(0);
+      try { normal = refundValue(order.total.toFixed(2), order.credits, oldCredits, oldAmount, input.credits); } catch (error) { if (!(error instanceof AppError)) throw error; }
+      if (amount.lt(normal)) throw conflict('Daha düşük iade için kredi miktarını azaltın.');
+    }
     // Reserve before the network request. Support resolution uses the same owner lock.
     await tx.agreement.update({ where: { id: agreement.id }, data: { credits: { decrement: input.credits } } });
     if (order.subscriptionId && (await requestAkbankInstructionStop(tx, order.subscriptionId)).count)
@@ -125,8 +135,8 @@ async function finishPaymentReversal(id: string, success: boolean, reference: st
     if (!row.order.grantedAgreementId) throw conflict('İade kredi kaydı bulunamadı.');
     if (success) {
       await tx.creditRefundRequest.updateMany({ where: { orderId: row.orderId, status: 'OPEN' }, data: { status: 'RESOLVED', reviewedById: row.actorId } });
-      const previous = await tx.paymentReversal.aggregate({ where: { orderId: row.orderId, status: 'SUCCEEDED' }, _sum: { credits: true } });
-      const full = (previous._sum.credits ?? 0) + row.credits >= row.order.credits;
+      const previous = await tx.paymentReversal.aggregate({ where: { orderId: row.orderId, status: 'SUCCEEDED' }, _sum: { amount: true } });
+      const full = (previous._sum.amount ?? new Prisma.Decimal(0)).add(row.amount).gte(row.order.total);
       await tx.creditOrder.update({ where: { id: row.orderId }, data: { status: full ? 'REFUNDED' : 'PARTIAL_REFUND' } });
       if (row.order.subscriptionId) {
         await tx.creditSubscription.update({ where: { id: row.order.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });

@@ -129,3 +129,22 @@ test('customer file list and upload are readable in dark mode', async ({ page })
   await expect(page.locator('.customer-file-upload')).toHaveCSS('background-color', 'rgb(23, 39, 52)');
   await page.screenshot({ path: '.local/customer-files-dark.png', fullPage: true });
 });
+
+for (const theme of ['light', 'dark']) {
+ test('customer details and request fields share card surface in ' + theme, async ({ page }) => {
+  await page.addInitScript(theme => localStorage.setItem('helpdesk-theme', theme), theme);
+  await setup(page);
+  for (const section of ['details', 'request']) {
+   await page.goto('/admin/customers/' + companyId + '?section=' + section);
+   const content = page.locator('.customer-management-content');
+   await expect(content.locator('.field-label').first()).toBeVisible();
+   const result = await content.evaluate(root => {
+    const surface = getComputedStyle(root).backgroundColor;
+    const labels = [...root.querySelectorAll('.field-label, .styled-dropdown-label')];
+    const fields = [...root.querySelectorAll('label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label), label:has(> .field-label) > input, label:has(> .field-label) > textarea, .email-field > input')];
+    return { labelsMatch: labels.every(label => getComputedStyle(label).backgroundColor === surface), transparent: fields.every(field => getComputedStyle(field).backgroundColor === 'rgba(0, 0, 0, 0)') };
+   });
+   expect(result).toEqual({ labelsMatch: true, transparent: true });
+  }
+ });
+}

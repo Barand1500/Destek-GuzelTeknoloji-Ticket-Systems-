@@ -449,3 +449,16 @@ test('admin can delete a sales plan after confirmation', async ({ page }) => {
   await expect(page.locator('.credit-admin-plans article')).toHaveCount(0);
   expect(removed).toBe(true);
 });
+
+test('customer credit screens use neutral cards and transparent shared fields', async ({ page }) => {
+ await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
+ await mockApi(page, 'CUSTOMER');
+ await page.goto('/customer/agreements?view=store');
+ await expect(page.getByRole('heading', { name: 'Kredi ve Abonelikler', exact: true })).toHaveCount(0);
+ await expect(page.locator('.credit-store-owner')).toHaveCount(0);
+ const card = page.locator('.credit-purchase-grid .credit-sales-card').first();
+ await expect(card).toHaveCSS('background-color', 'rgb(28, 38, 45)');
+ await expect(page.getByRole('textbox', { name: 'Satın alınacak kredi sayısı', exact: true })).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+ await page.goto('/customer/agreements');
+ await expect(page.getByRole('heading', { name: 'Anlaşmalar', exact: true })).toHaveCount(0);
+});

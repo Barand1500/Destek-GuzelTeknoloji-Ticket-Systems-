@@ -86,8 +86,8 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
       },
   });
   useEffect(() => {
-    if (query.data && page > query.data.pagination.totalPages)
-      setPage(query.data.pagination.totalPages);
+    if (query.data && page > Math.max(1, query.data.pagination.totalPages))
+      setPage(Math.max(1, query.data.pagination.totalPages));
   }, [query.data, page]);
   return (
     <section
@@ -95,7 +95,7 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
       aria-label={admin ? "Abonelikler" : "Aboneliklerim"}
     >
       <div className="credit-orders-filters">
-        <label>
+        <label className="credit-orders-search">
           <span className="field-label">Abonelik Ara</span>
           <input
             type="search"

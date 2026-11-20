@@ -76,7 +76,10 @@ test('historical Akbank mandates are cancelled and only bank-paid occurrences im
     assert.equal(await db.creditOrder.count({ where: { subscriptionId: first.sub.id } }), 2);
     const refund = await startPaymentReversal({ ...actor, role: 'ADMIN' }, renewed.id, { requestKey: randomUUID(), kind: 'REFUND', credits: 100, reason: 'Historical occurrence refund' });
     assert.equal(refund.status, 'SUCCEEDED');
+    await db.akbankRecurringInstruction.update({ where: { id: instruction.id }, data: { state: 'STOP_REQUESTED' } });
     await reconcileAkbankRecurring(instruction.id, paidOn);
+    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: instruction.id } })).state, 'STOPPED');
+    assert.equal(calls.filter(row => row.txnCode === '1013').length, 1, 'Already bank-cancelled instructions must not require another successful cancellation');
     assert.equal(await db.creditOrder.count({ where: { subscriptionId: first.sub.id } }), 2);
   } finally {
     globalThis.fetch = originalFetch; db.$transaction = originalTx; db.paymentGatewaySettings.findUnique = originalGateway;

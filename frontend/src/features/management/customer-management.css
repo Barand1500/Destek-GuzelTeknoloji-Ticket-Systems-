@@ -92,3 +92,18 @@ html[data-theme="dark"] .customer-file-viewer > header .icon-button { border-col
 
 .customer-existing-requests-expanded > .customer-requests-toggle { cursor: default; }
 .customer-existing-requests-expanded > .customer-requests-toggle > svg { display: none; }
+
+.customer-management-content .agreement-section-title > .customer-credit-balance { margin: 0; }
+
+/* Inline customer forms share the surrounding card surface. */
+html[data-theme] .customer-management-content :is(label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label)) {
+  background: transparent;
+}
+html[data-theme] .customer-management-content :is(.field-label, .styled-dropdown-label) {
+  background: var(--surface, #fff);
+}
+html[data-theme] .customer-management-content label:has(> .field-label) > :is(input, textarea, select),
+html[data-theme] .customer-management-content label:has(> .field-label) > .email-field > input,
+html[data-theme] .customer-management-content .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger {
+  background: transparent;
+}

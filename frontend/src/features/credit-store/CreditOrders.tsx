@@ -122,7 +122,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
-          Sipariş Ara
+          <span className="field-label">Sipariş Ara</span>
           <input
             aria-label="Sipariş Ara"
             maxLength={100}
@@ -251,7 +251,6 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         </span>
                         {order.refundRequest?.status === 'OPEN' && <small className="credit-order-status credit-order-status-pending">İade talebi bekliyor</small>}
                         {order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) && <small>{order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'Ödeme iptali bekleniyor' : 'İade sonucu bekleniyor'}</small>}
-                        {order.paymentInProgress && <small>Banka sonucu kontrol ediliyor.</small>}
                         {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>{bankCancellationConfirmed(order.reversals) ? 'İptal tutarı' : 'İade'}: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
                       </td>
                       {(canCancel || !admin) && (

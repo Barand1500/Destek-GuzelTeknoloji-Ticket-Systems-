@@ -66,12 +66,18 @@ export async function reconcileAkbankRecurring(id: string, now = new Date()) {
   if (terminal.includes(current.state) && !paidReview) return;
   const context = openPayment<Context>(current.contextCiphertext);
   { // Only cancellation and already-paid accounting remain after retirement.
+    // A mandate cancelled in the bank panel may reject another cancellation request.
+    // Read its signed status first so that an already-closed mandate can still be confirmed.
+    let stopped: Record<string, any>[] | null = null;
+    try { stopped = await queryAkbankInstruction(context.config, id); } catch { /* Still attempt cancellation when inquiry is unavailable. */ }
+    const alreadyStopped = stopped?.length === context.terms.numberOfPayments && stopped.every(row => ['S', 'C', 'V', 'F'].includes(row.requestStatus));
     // Stop future money movement first. Local credit/data errors must never block cancellation.
-    if (!paidReview) {
+    if (!paidReview && !alreadyStopped) {
       await db.akbankRecurringInstruction.update({ where: { id }, data: { state: 'STOP_REQUESTED' } });
       await cancelAkbankInstruction(context.config, id);
+      stopped = null;
     }
-    const stopped = await queryAkbankInstruction(context.config, id);
+    stopped ??= await queryAkbankInstruction(context.config, id);
     const sequences = stopped.map(row => Number(row.recurringOrder));
     if (stopped.length !== context.terms.numberOfPayments || new Set(sequences).size !== stopped.length || sequences.some(number => !Number.isInteger(number) || number < 1 || number > context.terms.numberOfPayments) || stopped.some(row => !['S', 'C', 'V', 'F'].includes(row.requestStatus))) throw invalid();
     let review = false;

@@ -93,7 +93,7 @@ export function CustomerAgreementsPage() {
     </div><div className={ordersVisible || subscriptionsVisible ? "integration-shell customer-billing-workspace" : undefined}>{(ordersVisible || subscriptionsVisible) && data && !data.customer.parentCustomerId && <div className="integration-tabs-row"><div className="integration-subtabs" role="tablist" aria-label="Siparişlerim ve Aboneliklerim">
       <button type="button" role="tab" className={ordersVisible ? 'active' : ''} aria-selected={ordersVisible} onClick={() => changeView('orders')}><ShoppingBag size={17} />Siparişlerim</button>
       <button type="button" role="tab" className={subscriptionsVisible ? 'active' : ''} aria-selected={subscriptionsVisible} onClick={() => changeView('subscriptions')}><Repeat size={17} />Aboneliklerim</button>
-    </div></div>}{subscriptionsVisible && data && !data.customer.parentCustomerId ? <CreditSubscriptions /> : historyVisible ? <><h2>Kredi Hareketleri</h2><CreditHistory customerId={customerId} /></> : checkoutVisible && data && !data.customer.parentCustomerId ? <CreditCheckout key={params.get("orderId") || ""} orderId={params.get("orderId") || ""} onBack={() => changeView("orders")} /> : ordersVisible && data && !data.customer.parentCustomerId ? <CreditOrders /> : shopping && data && !data.customer.parentCustomerId ? <CustomerCreditStore /> : <AgreementWorkspace key={customerId} customerId={customerId} />}</div>
+    </div></div>}{subscriptionsVisible && data && !data.customer.parentCustomerId ? <CreditSubscriptions /> : historyVisible ? <CreditHistory customerId={customerId} /> : checkoutVisible && data && !data.customer.parentCustomerId ? <CreditCheckout key={params.get("orderId") || ""} orderId={params.get("orderId") || ""} onBack={() => changeView("orders")} /> : ordersVisible && data && !data.customer.parentCustomerId ? <CreditOrders /> : shopping && data && !data.customer.parentCustomerId ? <CustomerCreditStore /> : <AgreementWorkspace key={customerId} customerId={customerId} hideSectionTitle />}</div>
   </main>;
 }
 export function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
@@ -112,7 +112,7 @@ export function CreditHistory({ customerId, onBack }: { customerId: string; onBa
   </section>;
 }
 type WorkspaceModalControl = { editing: Agreement | null; setEditing: (agreement: Agreement | null) => void; adding: boolean; setAdding: (value: boolean) => void; formId: string; onPendingChange: (pending: boolean) => void; onReadyChange: (ready: boolean) => void };
-export function AgreementWorkspace({ customerId, modalControl }: { customerId: string; modalControl?: WorkspaceModalControl }) {
+export function AgreementWorkspace({ customerId, modalControl, showAvailableBalance = false, hideSectionTitle = false }: { customerId: string; modalControl?: WorkspaceModalControl; showAvailableBalance?: boolean; hideSectionTitle?: boolean }) {
   const { user } = useAuth(); const client = useQueryClient();
   const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as Summary });
   const editable = user?.role !== 'CUSTOMER' && !summary.data?.customer.parentCustomerId && hasPermission(user, 'customers.update');
@@ -145,7 +145,7 @@ export function AgreementWorkspace({ customerId, modalControl }: { customerId: s
   return <section className="agreement-workspace">
     {error && <p className="error" role="alert">{errorText(error)}</p>}
     {data && <>
-        <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
+        <div className="agreement-section-title" hidden={hideSectionTitle && !editable}>{showAvailableBalance ? <p className="customer-credit-balance">Kullanılabilir kredi: <strong>{data.availableCredits.toLocaleString('tr-TR')}</strong></p> : !hideSectionTitle && <h3>Anlaşmalar</h3>}{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
         {editing && <EditAgreementForm key={editing.id} agreement={editing} formId={formId} onPendingChange={setEditPending} inlineActions={!modalControl} onClose={() => setEditing(null)} onSaved={async () => { setEditing(null); setNotice("Anlaşma güncellendi."); await refresh(); }} />}
         {adding && !editing && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {
           event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, fee, currency, credits: Number(values.credits) });

@@ -179,3 +179,20 @@ test('package badges reflect paid dates and refunds instead of retired recurring
     await expect(badge).toHaveClass(new RegExp('credit-order-status-' + item.badge));
   }
 });
+
+test('customer subscription search sends the entered term and resets paging', async ({ page }) => {
+ await setup(page, 'CUSTOMER');
+ const queries: URL[] = [];
+ await page.route('**/api/v1/my/credit-store/subscriptions**', route => {
+  queries.push(new URL(route.request().url()));
+  return route.fulfill({ json: { success: true, data: queries.at(-1)?.searchParams.get('search') ? [{ id: 'search-result', name: 'Bulunan destek paketi', amount: '100', currency: 'TRY', credits: 10, periodMonths: 1, status: 'STOPPED', currentEndsOn: null, customer: { name: 'Customer' } }] : [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } } });
+ });
+ await page.goto('/customer/agreements?view=subscriptions');
+ const search = page.getByRole('searchbox', { name: 'Abonelik Ara', exact: true });
+ await search.fill('Destek paketi');
+ await expect.poll(() => queries.at(-1)?.searchParams.get('search')).toBe('Destek paketi');
+ expect(queries.at(-1)?.searchParams.get('page')).toBe('1');
+ await expect(page.getByRole('cell', { name: /Bulunan destek paketi/ })).toBeVisible();
+ await search.fill('');
+ await expect(page.getByRole('cell', { name: /Bulunan destek paketi/ })).toHaveCount(0);
+});

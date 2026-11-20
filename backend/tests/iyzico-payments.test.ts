@@ -81,7 +81,7 @@ test('one-time checkout stays idempotent without stored cards or renewal dispatc
     await assert.rejects(beginIyzicoCheckout(actor, monthly.id, { ...billing, renewalConsent: true }));
     await beginIyzicoCheckout(actor, monthly.id, billing);
     const monthlySession = await db.paymentCheckoutSession.findFirstOrThrow({ where: { orderId: monthly.id } });
-    await runCreditRenewals(iyzicoRecurringProvider);
+    await runCreditRenewals(iyzicoRecurringProvider, new Date(Date.now() + 6 * 60_000));
     assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: monthly.id } })).status, 'PAID');
     const active = await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } });
     assert.equal(active.paymentMethodRef, null); assert.equal(active.autoRenew, false); assert.equal(active.status, 'STOPPED');

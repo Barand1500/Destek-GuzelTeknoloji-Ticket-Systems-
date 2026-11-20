@@ -82,8 +82,7 @@ export function CustomerManagementPage() {
 }
 
 function CustomerAgreements({ customerId }: { customerId: string }) {
-  const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as { availableCredits: number } });
-  return <>{summary.data && <p className="customer-credit-balance">Kullanılabilir kredi: <strong>{summary.data.availableCredits.toLocaleString('tr-TR')}</strong></p>}<AgreementWorkspace customerId={customerId} /></>;
+  return <AgreementWorkspace customerId={customerId} showAvailableBalance />;
 }
 
 function CustomerDetails({ customer }: { customer: Customer }) {

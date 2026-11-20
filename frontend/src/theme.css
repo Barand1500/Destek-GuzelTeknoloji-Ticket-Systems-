@@ -229,3 +229,22 @@ html[data-theme="dark"] .guide-shot-tabs button:not(.active) span {
 
 /* Read-only selectors display a choice, not a text editing caret. */
 .searchable-dropdown-input[readonly]{caret-color:transparent;cursor:pointer}
+
+/* Customer workspaces use the same neutral dark surface as integration cards. */
+html[data-theme="dark"] :is(.customer-management-page, .customer-agreements-page) {
+  --surface: #1c262d;
+  --border: #2e3e49;
+}
+.customer-agreements-page { --customer-field-surface: var(--bg); }
+.customer-agreements-page :is(.credit-sales-card, .credit-checkout, .payment-reversal-panel) { --customer-field-surface: var(--surface); }
+html[data-theme] .customer-agreements-page :is(label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label)) { background: transparent; }
+html[data-theme] .customer-agreements-page :is(.field-label, .styled-dropdown-label) { background: var(--customer-field-surface); }
+html[data-theme] .customer-agreements-page label:has(> .field-label) > :is(input, textarea, select),
+html[data-theme] .customer-agreements-page .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger { background: transparent; }
+.customer-billing-workspace > .credit-orders { margin-top: 0; }
+.customer-billing-workspace .credit-orders-filters { margin: 8px 0 20px; }
+.customer-agreements-page .credit-orders-search { min-width: 0; }
+.customer-agreements-page .agreement-section-title[hidden] { display: none; }
+
+html[data-theme] .customer-agreements-page .credit-fields > label,
+html[data-theme] .customer-agreements-page .credit-fields > label > :is(input, textarea) { background: transparent; }

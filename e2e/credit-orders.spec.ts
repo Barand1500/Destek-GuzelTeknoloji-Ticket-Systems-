@@ -170,7 +170,7 @@ test('unresolved payments explain and disable cancellation and repeat payment', 
   await setup(page);
   await page.route('**/api/v1/my/credit-store/orders?**', route => route.fulfill({ json: { success: true, data: [{ ...order, paymentInProgress: true }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } }));
   await page.reload();
-  await expect(page.getByText('Banka sonucu kontrol ediliyor.')).toBeVisible();
+  await expect(page.getByText('Banka sonucu kontrol ediliyor.')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Siparişi İptal Et' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ödemeye Geç' })).toHaveCount(0);
 });

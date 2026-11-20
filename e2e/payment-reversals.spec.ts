@@ -69,3 +69,37 @@ test('used credit offers only refund and order requests can be rejected without 
  await expect(page.getByText('İade talebi bekliyor', { exact: true })).toHaveCount(0);
  expect(bankWrites).toBe(0);
 });
+
+test('admin defaults to unused value and can raise refund only to remaining paid amount', async ({ page }) => {
+ const writes: any[] = [];
+ await page.route('**/api/v1/**', async route => {
+  const path = new URL(route.request().url()).pathname;
+  let data: any = [];
+  if (path.endsWith('/auth/refresh')) data = { accessToken: 'test', user: { id: 'admin', name: 'Admin', role: 'ADMIN' } };
+  if (path.endsWith('/credit-sales')) data = { settings: { enabled: true, currency: 'TRY', unitPrice: '1', minCredits: 1, maxCredits: 10000, validityDays: 365 }, plans: [] };
+  if (path.endsWith('/payment-settings/pending')) data = { total: 0, data: [] };
+  if (path.endsWith('/credit-sales/orders')) return route.fulfill({ json: { success: true, data: [{ id: 'used-order', number: 42, name: 'Used package', kind: 'SUBSCRIPTION', status: 'PAID', total: '1000.00', credits: 100, usedCredits: 30, currency: 'TRY', createdAt: new Date().toISOString(), customer: { name: 'Customer' } }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } });
+  if (path.endsWith('/used-order/reversals')) {
+   if (route.request().method() === 'POST') { writes.push(route.request().postDataJSON()); data = { status: 'SUCCEEDED' }; }
+   else data = { data: [], currency: 'TRY', refundableCredits: 70, refundableAmount: '700.00', maxRefundAmount: '1000.00', originalCredits: 100, total: '1000.00', refundedCredits: 0, refundedAmount: '0.00', hasPending: false, usedCredits: 30, canCancel: false };
+  }
+  await route.fulfill({ json: { success: true, data } });
+ });
+ await page.goto('/admin/credit-sales?view=orders');
+ await page.getByRole('button', { name: 'İade Et', exact: true }).click();
+ const panel = page.getByRole('region', { name: 'İade ve banka iptali' });
+ await expect(panel.getByLabel('İade edilecek kredi *')).toHaveValue('70');
+ await expect(panel.getByRole('textbox', { name: 'İade edilecek tutar', exact: true })).toHaveValue('700,00');
+ await panel.getByLabel('İade nedeni *').fill('Manager approved full refund');
+ const amount = panel.getByRole('textbox', { name: 'İade edilecek tutar', exact: true });
+ await amount.click();
+ await amount.fill('1001');
+ await panel.locator('.credit-confirmation-choice span').click();
+ await expect(panel.getByRole('button', { name: 'İadeyi Onayla' })).toBeDisabled();
+ await amount.click();
+ await amount.fill('1000');
+ await panel.locator('.credit-confirmation-choice span').click();
+ await panel.getByRole('button', { name: 'İadeyi Onayla' }).click();
+ await expect.poll(() => writes.length).toBe(1);
+ expect(writes[0]).toMatchObject({ kind: 'REFUND', credits: 70, amount: '1000' });
+});

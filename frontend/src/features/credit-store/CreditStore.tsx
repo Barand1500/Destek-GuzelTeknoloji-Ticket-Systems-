@@ -123,11 +123,6 @@ export function CustomerCreditStore() {
   }
   return (
     <section className="credit-store" aria-label="Kredi ve abonelik satın alma">
-      <div className="credit-store-title">
-        <div>
-          <h2>Kredi ve Abonelikler</h2>
-        </div>
-      </div>
       {catalog.isPending && <p role="status">Paketler yükleniyor…</p>}
       <ErrorMessage error={catalog.error} />
       {create.isSuccess && (
@@ -139,13 +134,6 @@ export function CustomerCreditStore() {
       )}
       {data && (
         <>
-          <div className="credit-store-owner">
-            <Coins size={18} />
-            <span>
-              {data.owner?.isCompany ? "Şirket hesabı" : "Müşteri hesabı"}:{" "}
-              <strong>{data.owner?.company || data.owner?.name}</strong>
-            </span>
-          </div>
           {!data.settings.enabled ? (
             <p className="credit-store-notice" role="status">
               Kredi ve abonelik satışı şu anda kapalı.

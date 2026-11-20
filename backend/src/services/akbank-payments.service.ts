@@ -108,10 +108,12 @@ export async function akbankCallback(id: string, raw: unknown) {
   return new URL('/customer/agreements?view=orders', env.FRONTEND_URL).toString();
 }
 
-export async function runAkbankPaymentChecks() {
-  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: 'akbank', status: 'PENDING', OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }] }, take: 25, orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'asc' }], select: { id: true } });
+export async function runAkbankPaymentChecks(now = new Date()) {
+  // A non-null nextRetryAt marks the single automatic inquiry as claimed, including after a restart.
+  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: 'akbank', status: 'PENDING', nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } }, take: 25, orderBy: [{ createdAt: 'asc' }], select: { id: true } });
   for (const row of pending) {
-    try { const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: row.id } }); if (session) await reconcileAkbankSession(session.id); } catch { /* Uncertain results are retried by inquiry only. */ }
-    await db.creditPaymentAttempt.updateMany({ where: { id: row.id, status: 'PENDING' }, data: { nextRetryAt: new Date(Date.now() + 5 * 60000) } });
+    const claimed = await db.creditPaymentAttempt.updateMany({ where: { id: row.id, status: 'PENDING', nextRetryAt: null }, data: { nextRetryAt: now } });
+    if (!claimed.count) continue;
+    try { const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: row.id } }); if (session) await reconcileAkbankSession(session.id); } catch { /* Leave uncertain payments pending; do not repeat the automatic inquiry. */ }
   }
 }

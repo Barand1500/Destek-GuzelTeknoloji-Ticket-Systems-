@@ -147,9 +147,10 @@ export async function runCreditRenewals(provider?: RecurringPaymentProvider, now
   if (!provider) return { dispatched: 0 };
   let dispatched = 0;
 
-  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: provider.name, status: 'PENDING', OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }] }, orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, orderId: true } });
+  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: provider.name, status: 'PENDING', nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } }, orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, orderId: true } });
   for (const attempt of pending) {
-
+    const claimed = await db.creditPaymentAttempt.updateMany({ where: { id: attempt.id, status: 'PENDING', nextRetryAt: null }, data: { nextRetryAt: now } });
+    if (!claimed.count) continue;
     try {
       const result = await provider.reconcile({ attemptId: attempt.id, orderId: attempt.orderId });
       if (result) {
@@ -158,7 +159,6 @@ export async function runCreditRenewals(provider?: RecurringPaymentProvider, now
       }
       dispatched++;
     } catch { console.error('[CreditRenewal] Bekleyen ödeme doğrulanamadı; yeniden sorgulanacak.', { attemptId: attempt.id }); }
-    await db.creditPaymentAttempt.updateMany({ where: { id: attempt.id, status: 'PENDING' }, data: { nextRetryAt: new Date(now.getTime() + 60_000) } });
   }
   return { dispatched };
 }
