@@ -58,6 +58,8 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     const beforeSelf = calls.length;
     const selfResult = await startPaymentReversal(customer, unused.order.id, selfRequest, false);
     assert.equal(selfResult.status, 'SUCCEEDED');
+    assert.equal(selfResult.kind, 'CANCEL');
+    assert.equal((await db.notification.findFirstOrThrow({ where: { userId: owner.id, type: 'CREDIT_REFUND_COMPLETED' }, orderBy: { createdAt: 'desc' } })).title, 'Ödeme iptal edildi');
     assert.equal((await db.creditRefundRequest.findUniqueOrThrow({ where: { orderId: unused.order.id } })).status, 'RESOLVED');
     assert.equal(selfResult.credits, 100);
     assert.equal(selfResult.kind, 'CANCEL');

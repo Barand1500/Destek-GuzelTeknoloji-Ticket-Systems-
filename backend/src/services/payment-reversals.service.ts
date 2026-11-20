@@ -132,7 +132,7 @@ async function finishPaymentReversal(id: string, success: boolean, reference: st
         await tx.creditOrder.updateMany({ where: { subscriptionId: row.order.subscriptionId, status: { in: ['PENDING', 'FAILED'] }, paymentAttempts: { none: { status: 'PENDING' } } }, data: { status: 'CANCELLED', cancelledAt: new Date() } });
       }
       await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { renewalRequested: false, ...(full ? { cancelledAt: new Date() } : {}) } });
-      await tx.notification.create({ data: { userId: row.order.customerId, type: 'CREDIT_REFUND_COMPLETED', title: 'İade tamamlandı', message: '#' + row.order.number + ' · ' + row.amount.toFixed(2) + ' ' + row.currency + ' iade edildi. Kartınıza yansıma süresi bankanıza bağlıdır.' } });
+      await tx.notification.create({ data: { userId: row.order.customerId, type: 'CREDIT_REFUND_COMPLETED', title: row.kind === 'CANCEL' ? 'Ödeme iptal edildi' : 'İade tamamlandı', message: '#' + row.order.number + ' · ' + row.amount.toFixed(2) + ' ' + row.currency + (row.kind === 'CANCEL' ? ' tutarındaki ödeme iptal edildi. Hesabınıza yansıma süresi kartınızın bankasına bağlıdır.' : ' iade edildi. Kartınıza yansıma süresi bankanıza bağlıdır.') } });
     } else {
       await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { credits: { increment: row.credits } } });
     }

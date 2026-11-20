@@ -1,3 +1,4 @@
+import { bankCancellationConfirmed } from './reversal-labels';
 import { PaymentReversalPanel } from "./PaymentReversalPanel";
 import { CustomerRefundPanel } from './CustomerRefundPanel';
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +29,7 @@ type Order = {
   periodName?: string | null;
   renewalRequested?: boolean;
   status: "PENDING" | "CANCELLED" | "PAID" | "FAILED" | "PARTIAL_REFUND" | "REFUNDED";
-  reversals?: { id: string; status: string; amount: string; credits: number }[];
+  reversals?: { id: string; kind?: string; status: string; amount: string; credits: number }[];
   createdAt: string;
   paidAt?: string | null;
   cancelledAt: string | null;
@@ -258,18 +259,18 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         <span
                           className={`credit-order-status credit-order-status-${order.status.toLowerCase()}`}
                         >
-                          {order.paymentInProgress ? 'Ödeme doğrulanamadı' : statuses[order.status]}
+                          {order.paymentInProgress ? 'Ödeme doğrulanamadı' : order.status === 'REFUNDED' && bankCancellationConfirmed(order.reversals) ? 'Ödeme iptal edildi' : statuses[order.status]}
                         </span>
                         {order.refundRequest?.status === 'OPEN' && <small className="credit-order-status credit-order-status-pending">İade talebi bekliyor</small>}
-                        {order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) && <small>İade sonucu bekleniyor</small>}
+                        {order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) && <small>{order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'Ödeme iptali bekleniyor' : 'İade sonucu bekleniyor'}</small>}
                         {order.paymentInProgress && <small>Banka sonucu kontrol ediliyor.</small>}
-                        {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>İade: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
+                        {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>{bankCancellationConfirmed(order.reversals) ? 'İptal tutarı' : 'İade'}: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
                       </td>
                       {canCancel && (
                         <td>
                           <div className="credit-order-actions">
-                            {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.status === 'REFUNDED' ? 'İade Detayı' : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
-                            {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.status === 'PAID' && !order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.usedCredits ? 'İade Talep Et' : order.paidAt && new Date(order.paidAt).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) ? 'Ödemeyi İptal Et' : 'İade Et') : 'İade Detayı'}</button>}
+                            {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
+                            {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.status === 'PAID' && !order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.usedCredits ? 'İade Talep Et' : order.paidAt && new Date(order.paidAt).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) ? 'Ödemeyi İptal Et' : 'İade Et') : (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı')}</button>}
                             {!admin && !order.paymentInProgress && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
                             {["PENDING", "FAILED"].includes(order.status) && (
                               <button
