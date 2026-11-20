@@ -225,7 +225,7 @@ export async function users(
         await db.user.findMany({
           where,
           select: { ...person, customerFiles: { select: { id: true } } },
-          orderBy: customerListOrder(q.nameSort),
+          orderBy: q.companySort ? [{ company: q.companySort }, { name: q.companySort }, { id: q.companySort }] : customerListOrder(q.nameSort),
           ...paging(q),
         })
       ).map(({ customerFiles, ...customer }) => ({

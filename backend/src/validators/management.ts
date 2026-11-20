@@ -29,6 +29,7 @@ export const directoryQuery = paginationSchema.extend({
   ...sorting,
   rootsOnly: queryBoolean,
   nameSort: z.enum(['asc', 'desc']).optional(),
+  companySort: z.enum(['asc', 'desc']).optional(),
   search,
   id: idSchema.optional(),
   role: role.optional(),
@@ -62,7 +63,7 @@ export const createCustomerSchema = z
     extraEmails: extraEmailsSchema.optional(),
   })
   .strict();
-export const updateCustomerSchema = z
+export const customerUpdateFields = z
   .object({
     name: z.string().trim().min(2).max(100).optional(),
     email: createCustomerSchema.shape.email.optional(),
@@ -76,8 +77,8 @@ export const updateCustomerSchema = z
     extraPhones: z.string().trim().max(500).nullable().optional(),
     extraEmails: extraEmailsSchema.nullable().optional(),
   })
-  .strict()
-  .refine(nonempty);
+  .strict();
+export const updateCustomerSchema = customerUpdateFields.refine(nonempty);
 export const updateUserSchema = registerSchema
   .partial()
   .extend({

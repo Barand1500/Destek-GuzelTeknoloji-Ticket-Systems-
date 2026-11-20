@@ -11,7 +11,7 @@ import { usePageSize } from '../../components/usePageSize';
 import { ChevronDown } from 'lucide-react';
 import { elapsedDuration } from '../../utils/elapsed-duration';
 
-export function CustomerRequests({ customerId, name }: { customerId: string; name: string }) {
+export function CustomerRequests({ customerId, name, expanded = false }: { customerId: string; name: string; expanded?: boolean }) {
   const { user } = useAuth();
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 60_000); return () => window.clearInterval(timer); }, []);
@@ -30,8 +30,8 @@ export function CustomerRequests({ customerId, name }: { customerId: string; nam
   useEffect(() => {
     if (requests.data && !requests.isPlaceholderData && page > Math.max(1, requests.data.pagination.totalPages)) setPage(Math.max(1, requests.data.pagination.totalPages));
   }, [requests.data, requests.isPlaceholderData, page]);
-  return <details className="customer-existing-requests" aria-label="Müşterinin mevcut talepleri">
-    <summary className="customer-requests-toggle"><div><h2>Mevcut Talepler{requests.data ? ` (${requests.data.pagination.total})` : ''}</h2><p>{name} için mevcut bir talebi açabilir veya aşağıdaki formdan yeni talep oluşturabilirsiniz.</p></div><ChevronDown size={20} aria-hidden="true" /></summary>
+  return <details open={expanded || undefined} className="customer-existing-requests" aria-label="Müşterinin mevcut talepleri">
+    <summary className="customer-requests-toggle"><div><h2>Mevcut Talepler{requests.data ? ` (${requests.data.pagination.total})` : ''}</h2><p>{expanded ? `${name} için mevcut görüşmeleri ve talepleri inceleyebilirsiniz.` : `${name} için mevcut bir talebi açabilir veya aşağıdaki formdan yeni talep oluşturabilirsiniz.`}</p></div><ChevronDown size={20} aria-hidden="true" /></summary>
     <div className="customer-requests-body">
     <div className="customer-requests-filters">
       <div><span>Durum</span><DropdownSelect ariaLabel="Mevcut talepler durum filtresi" value={status} options={[{ value: '', label: 'Tüm Durumlar' }, ...Object.entries(statusNames).map(([value, label]) => ({ value, label }))]} onChange={value => { setStatus(value); setPage(1); }} /></div>

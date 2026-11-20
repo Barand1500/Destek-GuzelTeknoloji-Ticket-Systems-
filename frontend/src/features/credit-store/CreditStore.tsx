@@ -18,7 +18,7 @@ import "./credit-store.css";
 type Selection =
   | { amount: string }
   | { credits: number }
-  | { planId: string; renewalRequested: boolean };
+  | { planId: string };
 type Preview = Quote & { selection: Selection; requestKey: string };
 export function CustomerCreditStore() {
   const client = useQueryClient();
@@ -35,9 +35,6 @@ export function CustomerCreditStore() {
     [credits, setCredits] = useState(""),
     [source, setSource] = useState<"amount" | "credits">("credits");
   const [creditsFocused, setCreditsFocused] = useState(false);
-  const [renewalChoices, setRenewalChoices] = useState<Record<string, boolean>>(
-    {},
-  );
   const [confirmPackageChange, setConfirmPackageChange] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -47,7 +44,7 @@ export function CustomerCreditStore() {
       input:
         | { amount: string }
         | { credits: number }
-        | { planId: string; renewalRequested: boolean },
+        | { planId: string },
     ) => (await api.post("/my/credit-store/quote", input)).data.data as Quote,
     onSuccess: (value, selection) => {
       create.reset();
@@ -85,13 +82,6 @@ export function CustomerCreditStore() {
     setPreview(null);
   }, [catalog.data?.settings.unitPrice, catalog.data?.settings.currency]);
   const data = catalog.data;
-  const renewalSupported = data?.recurringAvailable ?? (data?.provider !== 'akbank');
-  const renewalHelp = data?.provider === 'akbank'
-    ? 'Kart bilgisi saklanmaz; ilk ödemede bankada dönemsel talimat kurulur.'
-    : 'Yenileme için ödeme adımında kart saklama onayı gerekir.';
-  const renewalOffHelp = data?.provider === 'akbank'
-    ? 'Akbank otomatik yenileme yönetici ayarlarından kapalı.'
-    : 'Otomatik yenileme şu anda kapalı.';
   const priceMinor = Math.round(Number(data?.settings.unitPrice ?? 0) * 100);
   const reset = () => {
     setPreview(null);
@@ -279,33 +269,6 @@ export function CustomerCreditStore() {
                           <small>/ {periodLabel(plan)}</small>
                         </div>
                         <strong>{count(plan.credits)} kredi / dönem</strong>
-                        <label className="integration-toggle credit-sales-toggle credit-renewal-choice">
-                          <span>
-                            <strong>{"D\u00f6nem sonunda tekrarla"}</strong>
-                          </span>
-                          <input
-                            type="checkbox"
-                            role="switch"
-                            aria-label={plan.name + " dönem sonunda tekrarla"}
-                            checked={
-                              renewalSupported && (renewalChoices[plan.id] ??
-                              plan.renewalRequested ??
-                              false)
-                            }
-                            disabled={!renewalSupported}
-                            onChange={(event) => {
-                              reset();
-                              setRenewalChoices((current) => ({
-                                ...current,
-                                [plan.id]: event.target.checked,
-                              }));
-                            }}
-                          />
-                          <i aria-hidden="true" />
-                        </label>
-                        <p className="credit-help">
-                          {renewalSupported ? renewalHelp : renewalOffHelp}
-                        </p>
                         <button
                           className="button primary"
                           type="button"
@@ -314,10 +277,6 @@ export function CustomerCreditStore() {
                             setPreview(null);
                             quote.mutate({
                               planId: plan.id,
-                              renewalRequested:
-                                renewalSupported && (renewalChoices[plan.id] ??
-                                plan.renewalRequested ??
-                                false),
                             });
                           }}
                         >
@@ -366,64 +325,13 @@ export function CustomerCreditStore() {
                             : periodLabel(preview)}
                       </dd>
                     </div>
-                    {"planId" in preview.selection && (
-                      <div>
-                        <dt>Dönem sonunda tekrarla</dt>
-                        <dd>
-                          <label className="integration-toggle credit-sales-toggle">
-                            <span>
-                              <strong>
-                                {renewalSupported && (preview.renewalRequested ?? ("planId" in preview.selection && preview.selection.renewalRequested))
-                                  ? "Evet"
-                                  : "Hay\u0131r"}
-                              </strong>
-                            </span>
-                            <input
-                              type="checkbox"
-                              role="switch"
-                              aria-label="Özette dönem sonunda tekrarla"
-                              checked={
-                                renewalSupported && (preview.renewalRequested ??
-                                preview.selection.renewalRequested)
-                              }
-                              disabled={
-                                !renewalSupported || quote.isPending ||
-                                create.isPending ||
-                                create.isSuccess
-                              }
-                              onChange={(event) => {
-                                if ("planId" in preview.selection) {
-                                  const selection = {
-                                    ...preview.selection,
-                                    renewalRequested: event.target.checked,
-                                  };
-                                  setRenewalChoices((current) => ({
-                                    ...current,
-                                    [selection.planId]:
-                                      selection.renewalRequested,
-                                  }));
-                                  setPreview(null);
-                                  quote.mutate(selection);
-                                }
-                              }}
-                            />
-                            <i aria-hidden="true" />
-                          </label>
-                          <small>
-                            {
-                              renewalSupported ? (data.provider === 'akbank' ? "Bankada dönemsel talimat kurulur; Aboneliklerim’den kapatabilirsiniz." : "Kart saklama onayıyla yenilenir; Aboneliklerim’den kapatabilirsiniz.") : renewalOffHelp
-                            }
-                          </small>
-                        </dd>
-                      </div>
-                    )}
                     <div>
                       <dt>Toplam</dt>
                       <dd>{money(preview.total, preview.currency)}</dd>
                     </div>
                   {preview.startsOn && <div><dt>Yeni dönem</dt><dd>{preview.startsOn.split("-").reverse().join(".")} — {preview.endsOn?.split("-").reverse().join(".")}</dd></div>}
                   </dl>
-                  {preview.currentPackage && <label className="integration-toggle credit-renewal-choice"><span>{preview.currentPackage.autoRenew ? 'Mevcut otomatik yenilemeyi kapatıp yeni paketi dönem sonunda başlatmayı onaylıyorum. Bu siparişi iptal edersem eski yenileme açılmaz.' : 'Yeni paketin mevcut dönem bittikten sonra başlamasını onaylıyorum.'}</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
+                  {preview.currentPackage && <label className="integration-toggle credit-confirmation-choice"><span>Yeni paketin mevcut dönem bittikten sonra başlamasını onaylıyorum.</span><input type="checkbox" checked={confirmPackageChange} onChange={e => setConfirmPackageChange(e.target.checked)} /><i aria-hidden="true" /></label>}
                   <p className="credit-store-notice">
                     <Info size={18} /> {data.paymentAvailable ? 'Siparişi oluşturduktan sonra güvenli ödeme sayfasına geçebilirsiniz. Kredi, ödeme doğrulanınca yüklenir.' : 'Online ödeme şu anda kapalı. Sipariş oluşturabilirsiniz; ödeme alınmaz ve kredi yüklenmez.'}
                   </p>

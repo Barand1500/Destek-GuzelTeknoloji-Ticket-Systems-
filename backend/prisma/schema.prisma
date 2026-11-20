@@ -848,7 +848,7 @@ model CreditSubscription {
  periodMonths Int?
  periodDays Int?
  status String @default("AWAITING_PAYMENT") @db.VarChar(24)
- autoRenew Boolean @default(true)
+ autoRenew Boolean @default(false)
  consentedAt DateTime?
  consentVersion String @default("renewal-v1") @db.VarChar(32)
  anchorOn DateTime? @db.Date

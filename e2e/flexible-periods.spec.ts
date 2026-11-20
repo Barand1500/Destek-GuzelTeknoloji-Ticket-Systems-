@@ -84,7 +84,7 @@ async function setup(page: Page, role: string) {
   return writes;
 }
 
-test("admin saves named calendar duration and renewal preference on a plan", async ({
+test("admin saves named calendar duration without renewal preference", async ({
   page,
 }) => {
   const writes = await setup(page, "ADMIN");
@@ -133,15 +133,7 @@ test("admin saves named calendar duration and renewal preference on a plan", asy
     page.getByRole("textbox", { name: "Abonelik d\u00f6nemi", exact: true }),
   ).toHaveValue("İki haftalık (14 gün)");
   await page.getByLabel("Dönem fiyatı (TL)").fill("150");
-  await page
-    .locator("label")
-    .filter({
-      has: page.getByRole("switch", {
-        name: "Dönem sonunda tekrarla",
-        exact: true,
-      }),
-    })
-    .click();
+  await expect(page.getByRole("switch", { name: /dönem sonunda tekrarla/i })).toHaveCount(0);
   await page.getByRole("button", { name: "Planı Kaydet" }).click();
   await expect
     .poll(
@@ -151,7 +143,6 @@ test("admin saves named calendar duration and renewal preference on a plan", asy
       periodMonths: null,
       periodDays: 14,
       periodName: "İki haftalık",
-      renewalRequested: true,
     });
   expect(
     writes.find((w) => w.path.endsWith("/credit-sales/periods"))?.body,
@@ -162,24 +153,17 @@ test("admin saves named calendar duration and renewal preference on a plan", asy
   });
 });
 
-test("customer quote and pending order retain the chosen renewal preference", async ({
+test("customer quote and pending order contain only the selected package", async ({
   page,
 }) => {
   const writes = await setup(page, "CUSTOMER");
   await page.goto("/customer/agreements?view=store");
   await page.getByRole("button", { name: "Abonelikler", exact: true }).click();
   await expect(page.getByText("Kısa dönem (15 gün) DESTEK")).toBeVisible();
-  await page
-    .locator("label")
-    .filter({
-      has: page.getByRole("switch", {
-        name: "Esnek Destek dönem sonunda tekrarla",
-      }),
-    })
-    .click();
+  await expect(page.getByRole("switch", { name: /dönem sonunda tekrarla/i })).toHaveCount(0);
   await page.getByRole("button", { name: "Planı İncele" }).click();
   await expect(page.locator(".credit-quote")).toContainText("15 gün");
-  await expect(page.locator(".credit-quote")).toContainText("Evet");
+  await expect(page.locator(".credit-quote")).not.toContainText("Dönem sonunda tekrarla");
   await page.screenshot({
     path: "test-results/flexible-period-preview.png",
     fullPage: true,
@@ -191,10 +175,10 @@ test("customer quote and pending order retain the chosen renewal preference", as
         writes.find((w) => w.path.endsWith("/my/credit-store/orders"))?.body
           .selection,
     )
-    .toEqual({ planId: "plan", renewalRequested: true });
+    .toEqual({ planId: "plan" });
   expect(
     writes.find((w) => w.path.endsWith("/my/credit-store/quote"))?.body,
-  ).toEqual({ planId: "plan", renewalRequested: true });
+  ).toEqual({ planId: "plan" });
 });
 
 test("admin selects built-in calendar months and preserves editor terms", async ({
@@ -217,7 +201,7 @@ test("admin selects built-in calendar months and preserves editor terms", async 
       periodMonths: null,
       periodDays: 15,
       periodName: "Kısa dönem",
-      renewalRequested: false,
+
     });
   await page.getByRole("button", { name: "Plan Ekle", exact: true }).click();
   await page

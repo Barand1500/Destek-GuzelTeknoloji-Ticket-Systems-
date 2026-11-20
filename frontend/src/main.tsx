@@ -1,3 +1,4 @@
+import { CustomerManagementPage } from './features/management/CustomerManagementPage';
 import { CreditSalesPage } from './features/credit-store/CreditSalesPage';
 import { PaymentSettingsPage } from './features/credit-store/PaymentSettingsPage';
 import { FormPortal } from './features/tickets/FormPortal';
@@ -119,6 +120,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<ConversationLog />}
               />
               <Route path="/agent/customers" element={<CustomersPage />} />
+              <Route path="/agent/customers/:customerId" element={<CustomerManagementPage />} />
               <Route path="/agent/credit-sales" element={<CreditSalesPage />} />
               <Route path="/agent/settings/payments" element={<PaymentSettingsPage />} />
               <Route path="/agent/users" element={<UsersPage />} />
@@ -178,6 +180,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 element={<ConversationLog />}
               />
               <Route path="/admin/customers" element={<CustomersPage />} />
+              <Route path="/admin/customers/:customerId" element={<CustomerManagementPage />} />
               <Route
                 path="/admin/phone-support"
                 element={<PhoneSupportPage />}

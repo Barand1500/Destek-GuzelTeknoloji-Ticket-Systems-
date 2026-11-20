@@ -35,7 +35,6 @@ const emptyPlan = {
   periodMonths: 1,
   periodDays: null,
   periodName: null,
-  renewalRequested: false,
   price: "",
   credits: 100,
   active: false,
@@ -133,7 +132,6 @@ export function CreditSalesPage() {
             periodMonths: value.periodDays ? null : (value.periodMonths ?? 1),
             periodDays: value.periodDays ?? null,
             periodName: value.periodName ?? null,
-            renewalRequested: value.renewalRequested ?? false,
           }
         : null,
     );
@@ -409,15 +407,6 @@ export function CreditSalesPage() {
                   />
                 </label>
                 <SalesToggle
-                  label="Dönem sonunda tekrarla"
-                  text="Dönem sonunda tekrarla"
-                  checked={plan.renewalRequested ?? false}
-                  disabled={!editable || planPending}
-                  onChange={(value) =>
-                    setPlan({ ...plan, renewalRequested: value })
-                  }
-                />
-                <SalesToggle
                   label="Müşterilere göster"
                   text="Müşterilere göster"
                   checked={plan.active}
@@ -426,7 +415,7 @@ export function CreditSalesPage() {
                 />
               </fieldset>
               <p className="credit-help">
-                Dönem kredisi devretmez; otomatik yenileme ve tahsilat yapılmaz.
+                Dönem kredisi devretmez.
               </p>
               <ErrorMessage error={savePlan.error} />
               <div className="credit-form-actions">
@@ -479,7 +468,6 @@ export function CreditSalesPage() {
                         periodMonths: item.periodMonths,
                         periodDays: item.periodDays ?? null,
                         periodName: item.periodName ?? null,
-                        renewalRequested: item.renewalRequested ?? false,
                         price: item.price,
                         currency: item.currency,
                         credits: item.credits,

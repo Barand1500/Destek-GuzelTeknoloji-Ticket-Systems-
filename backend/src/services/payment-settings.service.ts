@@ -9,7 +9,7 @@ import { sealPayment, openPayment } from './payment-secrets.js';
 import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
 
 export const paymentSettingsInput = z.object({
-  provider: z.literal('iyzico'), enabled: z.boolean(), recurringEnabled: z.boolean(),
+  provider: z.literal('iyzico'), enabled: z.boolean(), recurringEnabled: z.literal(false).default(false),
   mode: z.enum(['sandbox', 'production']), publicUrl: z.url().max(500),
   apiKey: z.string().trim().max(512).optional(), secretKey: z.string().trim().max(512).optional(),
 }).strict();
@@ -19,14 +19,14 @@ export function paymentStaff(actor: Actor, edit = false) {
 }
 export async function paymentAvailability() {
   const akbank = await db.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } });
-  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: Boolean(akbank.recurringEnabled) };
+  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: false };
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
-  return { provider: 'iyzico', paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: Boolean(row?.enabled && row.testedAt && row.recurringEnabled) };
+  return { provider: 'iyzico', paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: false };
 }
 export async function getPaymentSettings(actor: Actor) {
   paymentStaff(actor);
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
-  return { provider: 'iyzico', enabled: row?.enabled ?? false, recurringEnabled: row?.recurringEnabled ?? false,
+  return { provider: 'iyzico', enabled: row?.enabled ?? false, recurringEnabled: false,
     mode: row?.mode ?? 'production', publicUrl: row?.publicUrl ?? env.FRONTEND_URL,
     credentialsConfigured: Boolean(row?.credentialsCiphertext), testedAt: row?.testedAt ?? null, lastError: row?.lastError ?? null };
 }
@@ -52,11 +52,11 @@ export async function savePaymentSettings(actor: Actor, raw: unknown) {
       throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bekleyen ödemeler sonuçlanmadan ve mevcut yenilemeler kapatılmadan ödeme hesabı değiştirilemez.');
     const testedAt = changed ? null : current?.testedAt;
     if (input.enabled && !testedAt) throw new AppError(400, 'PAYMENT_TEST_REQUIRED', 'Önce kapalı olarak kaydedin ve bağlantıyı test edin.');
-    const data = { enabled: input.enabled, recurringEnabled: input.recurringEnabled, mode: input.mode, publicUrl: url.origin,
+    const data = { enabled: input.enabled, recurringEnabled: false, mode: input.mode, publicUrl: url.origin,
       credentialsCiphertext: sealPayment(config), fingerprint, testedAt, lastError: changed ? null : current?.lastError };
     await tx.paymentGatewaySettings.upsert({ where: { id: 'default' }, create: { id: 'default', ...data }, update: data });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'payments.settings_updated', entityType: 'PaymentGatewaySettings', entityId: 'default', ipAddress: actor.ipAddress,
-      metadata: { provider: 'iyzico', enabled: input.enabled, recurringEnabled: input.recurringEnabled, mode: input.mode, credentialsChanged: changed } } });
+      metadata: { provider: 'iyzico', enabled: input.enabled, recurringEnabled: false, mode: input.mode, credentialsChanged: changed } } });
   });
   return getPaymentSettings(actor);
 }

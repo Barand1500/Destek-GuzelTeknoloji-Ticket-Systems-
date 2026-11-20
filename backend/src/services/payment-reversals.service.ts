@@ -38,9 +38,9 @@ export async function reversalSummary(actor: Actor, orderId: string, admin = tru
   const available = agreement && !agreement.deletedAt ? Math.max(0, Math.min(agreement.credits - agreement.usedCredits, order.credits - (totals._sum.credits ?? 0))) : 0;
   let amount = '0.00';
   if (available) try { amount = refundValue(order.total.toFixed(2), order.credits, totals._sum.credits ?? 0, totals._sum.amount?.toFixed(2) ?? '0', available).toFixed(2); } catch (error) { if (!(error instanceof AppError)) throw error; }
-  return { refundRequest: order.refundRequest, data: data.map(serialize), orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
+  return { refundRequest: order.refundRequest, data: data.map(serialize), orderKind: order.kind, orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, originalCredits: order.credits, total: order.total.toFixed(2),
     refundedCredits: totals._sum.credits ?? 0, refundedAmount: totals._sum.amount?.toFixed(2) ?? '0.00', hasPending: data.some(v => ['PENDING', 'REVIEW'].includes(v.status)), usedCredits: agreement?.usedCredits ?? 0,
-    canSelfRefund: order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
+    canSelfRefund: (admin || order.kind !== 'TOP_UP') && order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
     canCancel: Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
 }
 
@@ -51,6 +51,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     const initial = await tx.creditOrder.findUnique({ where: { id: orderId } });
     if (!initial) throw new AppError(404, 'ORDER_NOT_FOUND', 'Sipariş bulunamadı.');
     if (!admin && (actor.role !== 'CUSTOMER' || actor.id !== initial.customerId)) throw new AppError(404, 'ORDER_NOT_FOUND', 'Sipariş bulunamadı.');
+    if (!admin && initial.kind === 'TOP_UP') throw conflict('Tekli kredi alımlarında yalnızca iade talebi oluşturabilirsiniz.');
     await tx.$queryRaw`SELECT id FROM User WHERE id = ${initial.customerId} FOR UPDATE`;
     if (!admin) await creditStoreOwner(actor, tx);
     const order = await tx.creditOrder.findUniqueOrThrow({ where: { id: orderId }, include: { grantedAgreement: true } });

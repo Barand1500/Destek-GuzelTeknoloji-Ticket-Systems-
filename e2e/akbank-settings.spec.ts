@@ -28,7 +28,7 @@ test('Akbank setup saves credentials then clears and masks them without enabling
   await expect(panel.getByRole('status')).toContainText('Akbank ayarları kaydedildi');
   await expect(panel.getByLabel('Güvenlik anahtarı')).toHaveValue('');
   await expect(panel.getByLabel('Terminal Safe ID')).toHaveValue('');
-  expect(writes).toEqual([{ mode: 'sandbox', enabled: false, recurringEnabled: false, publicUrl: 'https://portal.test', merchantSafeId: 'fixture-merchant', terminalSafeId: 'fixture-terminal', secretKey: 'fixture-secret' }]);
+  expect(writes).toEqual([{ mode: 'sandbox', enabled: false, publicUrl: 'https://portal.test', merchantSafeId: 'fixture-merchant', terminalSafeId: 'fixture-terminal', secretKey: 'fixture-secret' }]);
   await expect(panel.getByRole('switch', { name: 'Akbank online ödeme' })).toBeDisabled();
   await panel.getByRole('button', { name: 'Akbank ortamı' }).click();
   await panel.getByRole('option', { name: 'Canlı ortam', exact: true }).click();

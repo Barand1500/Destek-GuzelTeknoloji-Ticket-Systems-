@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { RotateCcw } from 'lucide-react';
 
 export type TableSort = { sortBy: string; sortDirection: 'asc' | 'desc' } | null;
 export function nextTableSort(current: TableSort, field: string): TableSort {
@@ -20,9 +19,9 @@ export function SortableTableHead({ sorting, columns }: { sorting: SortControl; 
     const labelTitle = typeof column.label === 'string' ? column.label : undefined;
     const active = column.field && sorting.sort?.sortBy === column.field ? sorting.sort.sortDirection : undefined;
     const title = active === 'desc' ? 'Varsayılan sıralamaya dön' : column.date ? active === 'asc' ? 'En yeniden en eskiye sırala' : 'En eskiden en yeniye sırala' : active === 'asc' ? 'Z → A sırala' : 'A → Z sırala';
-    return <th key={column.field ?? index} aria-sort={column.field ? active === 'asc' ? 'ascending' : active === 'desc' ? 'descending' : 'none' : undefined}>
+    const actions = !column.field && typeof column.label === 'string' && /^İşlem(?:ler)?$/.test(column.label);
+    return <th key={column.field ?? index} className={actions ? 'management-actions-heading' : undefined} aria-sort={column.field ? active === 'asc' ? 'ascending' : active === 'desc' ? 'descending' : 'none' : undefined}>
       <div className="management-sort-heading">{column.field ? <button className="management-sort-button" type="button" title={title} onClick={() => sorting.toggleSort(column.field!)}><span className="management-sort-label" title={labelTitle}>{column.label}</span><span aria-hidden="true">{active === 'asc' ? '↑' : active === 'desc' ? '↓' : '↕'}</span></button> : <span title={labelTitle}>{column.label}</span>}
-        {index === columns.length - 1 && <button className="management-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={sorting.resetSort}><RotateCcw size={15}/></button>}
       </div>
     </th>;
   })}</tr></thead>;

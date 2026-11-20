@@ -9,10 +9,9 @@ import { beginIyzicoCheckout, iyzicoCallback, verifiedIyzicoResult, iyzicoRecurr
 import { runCreditRenewals, billingToday, changeSubscription } from '../src/services/credit-subscriptions.service.js';
 import { savePaymentSettings, getPaymentSettings } from '../src/services/payment-settings.service.js';
 import { handleIyzicoWebhook } from '../src/services/iyzico-webhook.js';
-import { closeUnchargedPayment } from '../src/services/payment-operations.service.js';
 
 const config = { apiKey: 'fixture-api', secretKey: 'fixture-secret', mode: 'sandbox' as const };
-const billing = { name: 'Test', surname: 'Customer', identityNumber: '11111111111', email: 'test@example.invalid', phone: '05550000000', address: 'Test billing address', city: 'Istanbul', country: 'Turkey', renewalConsent: true };
+const billing = { name: 'Test', surname: 'Customer', identityNumber: '11111111111', email: 'test@example.invalid', phone: '05550000000', address: 'Test billing address', city: 'Istanbul', country: 'Turkey', renewalConsent: false };
 test('payment transport signs exact request, restricts redirects and encrypts secrets', () => {
   const auth = iyzicoAuthorization(config, '/payment/auth', '{}', 'nonce');
   const signature = createHmac('sha256', config.secretKey).update('nonce/payment/auth{}').digest('hex');
@@ -29,7 +28,7 @@ test('payment transport signs exact request, restricts redirects and encrypts se
   for (const patch of [{ currency: 'EUR' }, { price: 11 }, { paidPrice: 12 }, { basketId: 'other' }, { installment: 2 }]) assert.throws(() => verifiedIyzicoResult({ ...result, ...patch }, expected), { code: 'PAYMENT_MISMATCH' });
 });
 
-test('hosted checkout and recurring payments preserve single grants, consent and uncertain dispatch claims', async () => {
+test('one-time checkout stays idempotent without stored cards or renewal dispatch', async () => {
   const owner = await db.user.create({ data: { name: 'Payment fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
   const other = await db.user.create({ data: { name: 'Payment fixture other ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
   const actor = { id: owner.id, name: owner.name, email: '', role: 'CUSTOMER' as const, departmentIds: [], sessionId: '', ipAddress: '127.0.0.1' };
@@ -39,7 +38,6 @@ test('hosted checkout and recurring payments preserve single grants, consent and
   db.paymentGatewaySettings.findUnique = (async ({ where }: any) => where.id === 'default' ? settings : null) as any;
   db.$transaction = ((callback: any, options: any) => typeof callback === 'function' ? originalTx.call(db, (tx: any) => { tx.paymentGatewaySettings.findUnique = async ({ where }: any) => where.id === 'default' ? settings : null; return callback(tx); }, options) : originalTx.call(db, callback, options)) as typeof originalTx;
   const results = new Map<string, any>(), requests: { path: string; body: any }[] = [];
-  let uncertain = false;
   globalThis.fetch = (async (url: any, init: any) => {
     const path = new URL(String(url)).pathname, body = JSON.parse(init.body);
     requests.push({ path, body });
@@ -51,10 +49,7 @@ test('hosted checkout and recurring payments preserve single grants, consent and
       value = { status: 'success', token, paymentPageUrl: 'https://sandbox-cpp.iyzipay.com?token=' + token };
     } else if (path.includes('/ecom/detail')) value = results.get(body.token) || { status: 'failure', errorCode: 'NOT_FOUND' };
     else if (path === '/payment/auth') {
-      assert.equal(body.installment, 1); assert.deepEqual(body.paymentCard, { cardUserKey: 'stored-user', cardToken: 'stored-card' });
-      if (uncertain) throw new Error('simulated network interruption');
-      value = { status: 'success', paymentId: randomUUID(), basketId: body.basketId, price: body.price, paidPrice: body.paidPrice, currency: body.currency, installment: 1, fraudStatus: 1, paymentStatus: 'SUCCESS' };
-      results.set(body.conversationId, value);
+      assert.fail('Retired renewal must never send payment/auth');
     } else if (path === '/payment/detail') value = results.get(body.paymentConversationId) || { status: 'failure', errorCode: 'NOT_FOUND' };
     else value = { status: 'success' };
     return new Response(JSON.stringify(value), { status: 200 });
@@ -83,34 +78,24 @@ test('hosted checkout and recurring payments preserve single grants, consent and
 
     const sub = await db.creditSubscription.create({ data: { customerId: owner.id, name: 'Monthly payment fixture', amount: '10', currency: 'TRY', credits: 10, periodMonths: 1, autoRenew: true, consentedAt: new Date(), nextPaymentOn: billingToday(), anchorOn: billingToday() } });
     const monthly = await makeOrder({ subscriptionId: sub.id, periodNumber: 1, kind: 'SUBSCRIPTION', periodMonths: 1, validityDays: null, renewalRequested: true });
-    await assert.rejects(beginIyzicoCheckout(actor, monthly.id, { ...billing, renewalConsent: false }), { code: 'RENEWAL_CONSENT_REQUIRED' });
+    await assert.rejects(beginIyzicoCheckout(actor, monthly.id, { ...billing, renewalConsent: true }));
     await beginIyzicoCheckout(actor, monthly.id, billing);
     const monthlySession = await db.paymentCheckoutSession.findFirstOrThrow({ where: { orderId: monthly.id } });
-    await iyzicoCallback(monthlySession.id, monthlySession.token);
-    const active = await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } });
-    assert.ok(active.paymentMethodRef); assert.equal(active.status, 'ACTIVE');
-    await assert.rejects(savePaymentSettings(admin, { provider: 'iyzico', enabled: false, recurringEnabled: true, mode: 'sandbox', publicUrl: settings.publicUrl, apiKey: 'different-key', secretKey: 'different-secret' }), { code: 'PAYMENT_ACCOUNT_IN_USE' });
-    const stale = await db.creditPaymentAttempt.create({ data: { orderId: monthly.id, attemptNumber: 2, provider: 'iyzico', createdAt: new Date(Date.now() - 7200000) } });
-    await assert.rejects(closeUnchargedPayment(admin, stale.id, { confirmedNoCharge: true, providerReference: 'Provider confirmed fixture' }), { code: 'PAYMENT_REVIEW_CHANGED' });
+    await runCreditRenewals(iyzicoRecurringProvider);
     assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: monthly.id } })).status, 'PAID');
-    await db.creditPaymentAttempt.delete({ where: { id: stale.id } });
-    // Move the next cycle to today without manufacturing a future charge date.
-    await db.agreement.updateMany({ where: { customerId: owner.id }, data: { cancelledAt: new Date() } });
-    await db.creditSubscription.update({ where: { id: sub.id }, data: { nextPaymentOn: billingToday(), anchorOn: billingToday(), anchorPeriod: 1 } });
+    const active = await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } });
+    assert.equal(active.paymentMethodRef, null); assert.equal(active.autoRenew, false); assert.equal(active.status, 'STOPPED');
+    assert.equal(await db.paymentStoredMethod.count({ where: { customerId: owner.id } }), 0);
+    await assert.rejects(savePaymentSettings(admin, { provider: 'iyzico', enabled: false, recurringEnabled: true, mode: 'sandbox', publicUrl: settings.publicUrl, apiKey: 'different-key', secretKey: 'different-secret' }));
+    await assert.rejects(iyzicoRecurringProvider.charge({ attemptId: monthlySession.attemptId, orderId: monthly.id, amount: '10', currency: 'TRY', paymentMethodRef: 'legacy-token' }), { code: 'RENEWAL_DISABLED' });
+    const completedRequests = requests.length;
+    await iyzicoCallback(monthlySession.id, monthlySession.token);
+    assert.equal(requests.length, completedRequests);
+    await db.creditSubscription.update({ where: { id: sub.id }, data: { autoRenew: true, nextPaymentOn: billingToday(), paymentMethodRef: 'legacy-token', provider: 'iyzico' } });
     await runCreditRenewals(iyzicoRecurringProvider);
-    assert.equal(requests.filter(v => v.path === '/payment/auth').length, 1);
-    assert.equal(await db.creditOrder.count({ where: { subscriptionId: sub.id, status: 'PAID' } }), 2);
-    await runCreditRenewals(iyzicoRecurringProvider);
-    assert.equal(requests.filter(v => v.path === '/payment/auth').length, 1);
-    await db.agreement.updateMany({ where: { customerId: owner.id }, data: { cancelledAt: new Date() } });
-    await db.creditSubscription.update({ where: { id: sub.id }, data: { nextPaymentOn: billingToday(), anchorOn: billingToday(), anchorPeriod: 2 } });
-    uncertain = true;
-    await runCreditRenewals(iyzicoRecurringProvider);
-    const count = requests.filter(v => v.path === '/payment/auth').length;
-    await runCreditRenewals(iyzicoRecurringProvider);
-    assert.equal(requests.filter(v => v.path === '/payment/auth').length, count, 'An unknown result must never trigger a second charge');
+    assert.equal(requests.filter(v => v.path === '/payment/auth').length, 0);
+    assert.equal(await db.creditOrder.count({ where: { subscriptionId: sub.id } }), 1);
     await changeSubscription(actor, sub.id, 'stop');
-    assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).autoRenew, false);
     const declined = await makeOrder();
     await beginIyzicoCheckout(actor, declined.id, billing);
     const declinedSession = await db.paymentCheckoutSession.findFirstOrThrow({ where: { orderId: declined.id } });

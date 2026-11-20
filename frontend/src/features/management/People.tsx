@@ -1,7 +1,5 @@
 import { displayEmail } from "../../utils/email";
 import { CustomerRequests } from './CustomerRequests';
-import { CustomerAgreementsModal } from '../agreements/Agreements';
-import { Handshake } from 'lucide-react';
 import { SortableTableHead } from "../../components/TableSorting";
 import { contactChannels } from "../../utils/contact-channels";
 import { formatPhone } from "../../utils/phone";
@@ -9,7 +7,7 @@ import { CustomerMergeModal } from "./CustomerMergeModal";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Eye, EyeOff, FileText, Pencil, Plus, UserRoundPlus, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, FileText, Pencil, Plus, UserRoundPlus, Trash2, X } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../auth/Auth";
 import { hasPermission } from '../auth/permissions';
@@ -61,8 +59,6 @@ type ManagedUser = User & {
 };
 type AssignmentImpact = { id: string; number: number; subject: string; status: string; priority: string; createdAt: string; departmentId: string; department: { name: string }; customer: { name: string } };
 type AssignmentTransferGroup = { conversationIds: string[]; departmentId: string; assignedAgentId: string | null; departmentName: string; assignedAgentName: string | null };
-type CustomerFile = { id: string; originalName: string; mimeType: string; size: number; createdAt: string };
-const formatFileSize = (size: number) => size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${Math.ceil(size / 1024)} KB` : `${(size / (1024 * 1024)).toFixed(1)} MB`;
 function usePageScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return;
@@ -77,15 +73,6 @@ function usePageScrollLock(locked: boolean) {
       body.style.overflow = previousBodyOverflow;
     };
   }, [locked]);
-}
-function CustomerFileRow({ customerId, file, onDelete }: { customerId: string; file: CustomerFile; onDelete: () => void }) {
-  const isImage = file.mimeType.startsWith('image/');
-  const preview = useQuery({ queryKey: ['/customers', customerId, 'file-preview', file.id], enabled: isImage, queryFn: async () => (await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' })).data });
-  const [previewUrl, setPreviewUrl] = useState<string>();
-  useEffect(() => { if (!preview.data) return; const url = URL.createObjectURL(preview.data); setPreviewUrl(url); return () => URL.revokeObjectURL(url); }, [preview.data]);
-  const triggerDownload = (blob: Blob) => { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.originalName; link.style.display = 'none'; document.body.appendChild(link); link.click(); window.setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 1000); };
-  const download = () => { if (preview.data) { triggerDownload(preview.data); return; } void (async () => { const response = await api.get(`/customers/${customerId}/files/${file.id}/download`, { responseType: 'blob' }); triggerDownload(response.data); })(); };
-  return <div className="customer-file-row"><div className="customer-file-main">{isImage && previewUrl ? <img className="customer-file-preview" src={previewUrl} alt="" /> : <span className="customer-file-placeholder">{isImage ? 'IMG' : 'FILE'}</span>}<div><button className="customer-file-name" type="button" onClick={download}>{file.originalName}</button><small>{file.mimeType} · {formatFileSize(file.size)}</small><button className="customer-file-delete" type="button" onClick={onDelete}>Dosyayı Sil</button></div></div></div>;
 }
 type ManagedDepartment = Department & { isActive: boolean };
 const phoneDigits = (value: string) => value.replace(/\D/g, "");
@@ -154,6 +141,7 @@ function PhoneRequestFields({ departmentId, setDepartmentId, websiteId, setWebsi
       <div className="phone-request-web"><input type="hidden" name="websiteId" value={websiteId} /><DropdownSelect label="Proje" value={websiteId} onChange={setWebsiteId} ariaLabel="Proje Seçin" options={[{ value: "", label: "Proje Seçin" }, ...(websites.data?.data ?? []).filter((site) => site.isActive).map((site) => ({ value: site.id, label: site.name }))]} /></div>
       <label className="phone-request-subject"><span className="field-label">Konu</span><input name="subject" required pattern={'.*\\S.*'} onInvalid={event => event.currentTarget.setCustomValidity('Konu bo\u015f b\u0131rak\u0131lamaz.')} onInput={event => event.currentTarget.setCustomValidity('')} maxLength={200} autoFocus={Boolean(customer)} value={subject} onChange={event => setSubject(event.target.value)} /></label>
       {canAssignStaff && <SuggestedDescription subject={subject} departmentId={departmentId} assignedAgentId={assignedAgentIds[0] ?? ""} onSelect={person => { setSuggestedAgent(person); setDepartmentId(person.departmentId); setAssignedAgentIds([person.id]); }} />}
+      {!canAssignStaff && <label className="phone-request-message"><span className="field-label">Açıklama</span><textarea name="message" required maxLength={10000} rows={4} /></label>}
       <div className="phone-request-department"><DirectorySelect endpoint="/departments" label="Departman" value={departmentId} current={suggestedAgent?.departmentId === departmentId ? { id: departmentId, name: suggestedAgent.departmentName } : defaultDepartment?.id === departmentId ? defaultDepartment : undefined} onChange={(value) => { setDepartmentId(value); setAssignedAgentIds([]); }} params={{ accessible: "true" }} /></div>
       {canAssignStaff ? <div className="phone-request-assignee"><MultiDropdownSelect label="Atanan Personel" value={assignedAgentIds} selectionLabel={(agents.data?.data ?? []).filter(agent => assignedAgentIds.includes(agent.id)).map(agent => agent.name).join(", ") || suggestedAgent?.name || ""} emptyLabel="Atanmamış" onChange={setAssignedAgentIds} ariaLabel="Atanan Personeli Seçin" options={[...(suggestedAgent?.departmentId === departmentId && !(agents.data?.data ?? []).some(agent => agent.id === suggestedAgent.id) ? [{ value: suggestedAgent.id, label: suggestedAgent.name }] : []), ...(agents.data?.data ?? []).map((agent) => ({ value: agent.id, label: agent.displayName ?? agent.name, presence: agent.presence, openConversationCount: agent.openConversationCount }))]} /></div> : <div className="phone-request-assignee"><span className="field-label">Atama</span><span>Departman kuyruğuna gönderilecek</span></div>}
     </div>
@@ -542,15 +530,14 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
 }
 
 export function CustomersPage() {
+  const navigate = useNavigate();
   const {user} = useAuth();
   const canCreateCustomers = hasPermission(user, 'customers.create');
   const canUpdateCustomers = hasPermission(user, 'customers.update');
   const canDeleteCustomers = hasPermission(user, 'customers.delete');
-  const canViewConversations = hasPermission(user, 'conversations.view');
-  const canCreateConversations = hasPermission(user, 'conversations.create');
   const queryClient = useQueryClient();
   const [customerSort, setCustomerSort] = useState<"asc" | "desc" | null>(null);
-  const list = useList<ManagedUser>("/customers", { rootsOnly: true, ...(customerSort ? { nameSort: customerSort } : {}) });
+  const list = useList<ManagedUser>("/customers", { rootsOnly: true, ...(customerSort ? { companySort: customerSort } : {}) });
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerFiles, setCustomerFiles] = useState<File[]>([]);
@@ -560,10 +547,8 @@ export function CustomersPage() {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
-  const [filesCustomer, setFilesCustomer] = useState<ManagedUser | null>(null);
-  const [agreementsCustomer, setAgreementsCustomer] = useState<ManagedUser | null>(null);
   const customerFormRef = useRef<HTMLElement>(null);
-  usePageScrollLock(customerModalOpen || Boolean(filesCustomer) || mergeModalOpen);
+  usePageScrollLock(customerModalOpen || mergeModalOpen);
   useEffect(() => {
     setCustomerFiles([]);
   }, [customerModalOpen, formVersion]);
@@ -573,8 +558,6 @@ export function CustomersPage() {
     setFormVersion(version => version + 1);
   }, ['/customers']);
   const remove = useDelete('/customers', ['/customers']);
-  const files = useQuery({ queryKey: ['/customers', filesCustomer?.id, 'files'], enabled: Boolean(filesCustomer), queryFn: async () => (await api.get<{ data: CustomerFile[] }>(`/customers/${filesCustomer!.id}/files`)).data.data });
-  const deleteFile = useMutation({ mutationFn: async ({ customerId, fileId }: { customerId: string; fileId: string }) => api.delete(`/customers/${customerId}/files/${fileId}`), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['/customers', filesCustomer?.id, 'files'] }); await queryClient.invalidateQueries({ queryKey: ['/customers'] }); } });
   const bulkRemove = useMutation({
     mutationFn: async (ids: string[]) => Promise.all(ids.map((id) => api.delete(`/customers/${id}`))),
     onSuccess: async () => {
@@ -584,12 +567,6 @@ export function CustomersPage() {
       setBulkDeleteConfirm(false);
     },
   });
-  function edit(customer: ManagedUser) {
-    save.reset();
-    setEditing(customer);
-    setCustomerModalOpen(true);
-    setFormVersion(version => version + 1);
-  }
   useEffect(() => {
     if (editing) customerFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [editing]);
@@ -611,45 +588,36 @@ export function CustomersPage() {
             <table className="management-table customer-list-table">
               <thead>
                 <tr>
-                  <th aria-sort={customerSort === 'asc' ? 'ascending' : customerSort === 'desc' ? 'descending' : 'none'}>{bulkSelectionMode ? 'Seç' : <button className="customer-sort-button" type="button" title={customerSort === 'asc' ? 'Z → A sırala' : customerSort === 'desc' ? 'Varsayılan sıralamaya dön' : 'A → Z sırala'} onClick={() => { setCustomerSort(current => current === null ? 'asc' : current === 'asc' ? 'desc' : null); list.setPage(1); }}>Müşteri<span aria-hidden="true">{customerSort === 'asc' ? '↑' : customerSort === 'desc' ? '↓' : '↕'}</span></button>}</th>
+                  <th aria-sort={customerSort === 'asc' ? 'ascending' : customerSort === 'desc' ? 'descending' : 'none'}>{bulkSelectionMode ? 'Seç' : <button className="customer-sort-button" type="button" title={customerSort === 'asc' ? 'Z → A sırala' : customerSort === 'desc' ? 'Varsayılan sıralamaya dön' : 'A → Z sırala'} onClick={() => { setCustomerSort(current => current === null ? 'asc' : current === 'asc' ? 'desc' : null); list.setPage(1); }}>Şirket<span aria-hidden="true">{customerSort === 'asc' ? '↑' : customerSort === 'desc' ? '↓' : '↕'}</span></button>}</th>
                   <th>İletişim</th>
-                  <th>Hesap Durumu</th>
-                  <th><div className="customer-table-heading-actions"><span>İşlemler</span><button className="customer-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setCustomerSort(null); list.setPage(1); void queryClient.invalidateQueries({ queryKey: ["/customers"] }); }}><RotateCcw size={15}/></button></div></th>
+                  <th>Durum</th>
+                  <th>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
                 {list.data.data.map((customer) => (
-                  <tr key={customer.id} {...editableRowProps(() => {
-                    if (bulkSelectionMode) {
-                      if (bulkRemove.isPending) return;
-                      setSelectedCustomerIds(current => current.includes(customer.id)
-                        ? current.filter(id => id !== customer.id)
-                        : [...current, customer.id]);
-                    } else if (canUpdateCustomers) edit(customer);
-                  })} onKeyDown={event => {
-                    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                  <tr key={customer.id} tabIndex={0} onClick={event => {
+                    if (!bulkSelectionMode || (event.target as HTMLElement).closest('button, a, input, label')) return;
+                    if (!bulkRemove.isPending) setSelectedCustomerIds(current => current.includes(customer.id) ? current.filter(id => id !== customer.id) : [...current, customer.id]);
+                  }} onDoubleClick={event => {
+                    if (bulkSelectionMode || (event.target as HTMLElement).closest('button, a, input, label')) return;
+                    navigate(customer.id);
+                  }} onKeyDown={event => {
+                    if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
+                    if (event.key === ' ' && !bulkSelectionMode) return;
                     event.preventDefault();
-                    event.currentTarget.click();
+                    if (bulkSelectionMode) { event.currentTarget.click(); return; }
+                    navigate(customer.id);
                   }} className={!customer.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
                     <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
                       {(bulkSelectionMode) && <input type="checkbox" disabled={bulkRemove.isPending} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
-                      <strong>{customer.name}</strong>
+                      <strong>{customer.company || customer.name}</strong>
                       {customer.parentCustomer && <small>Ana müşteri: {customer.parentCustomer.name}</small>}
                     </td>
-                    <td className="customer-contact-cell">{customer.phone ?? "Telefon yok"}<small>{displayEmail(customer.email) || "E-Posta yok"}{customer.company ? ` · ${customer.company}` : ""}</small>{customer.staffNote && <small className="customer-staff-note" title={`Personel notu: ${customer.staffNote}`}><span>Personel notu: {customer.staffNote}</span></small>}</td>
+                    <td className="customer-contact-cell"><strong>{customer.name}</strong><small>{formatPhone(customer.phone ?? '') || 'Telefon yok'}</small><small>{displayEmail(customer.email) || 'E-Posta yok'}</small></td>
                     <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
                     <td>
                       <div className="management-actions customer-table-actions">
-                      {hasPermission(user, 'customers.view') && <button className="icon-button" type="button" aria-label={`${customer.name} yönetimi`} title="Müşteri / Şirket Yönetimi" onClick={() => setAgreementsCustomer(customer)}><Handshake size={18} /></button>}
-                      {canViewConversations && <Link
-                        className="button secondary"
-                        to={`${inboxPath(user!.role)}?customerId=${encodeURIComponent(customer.id)}`}
-                      >
-                        Görüşmeleri Aç
-                      </Link>}
-                      {canCreateConversations && customer.isActive && <Link className="button primary" to={`${user!.role === 'ADMIN' ? '/admin' : '/agent'}/phone-support?customerId=${customer.id}`}>Talep Aç</Link>}
-                      {canUpdateCustomers && <button className="icon-button" type="button" aria-label={`${customer.name} düzenle`} title="Düzenle" onClick={() => edit(customer)}><Pencil size={15} aria-hidden="true" /></button>}
-                      <button className={`icon-button ${customer.customerFileCount ? '' : 'is-muted'}`} type="button" aria-label={`${customer.name} dosyaları gör`} title={customer.customerFileCount ? 'Dosyaları Gör' : 'Dosya Yok'} disabled={!customer.customerFileCount} onClick={() => setFilesCustomer(customer)}><FileText size={15} aria-hidden="true" /></button>
                       {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => { remove.reset(); setDeleteTarget(customer); }}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
                     </td>
@@ -666,7 +634,6 @@ export function CustomersPage() {
         />
       </section>
       {mergeModalOpen && <CustomerMergeModal onClose={() => setMergeModalOpen(false)} />}
-      {agreementsCustomer && <CustomerAgreementsModal customer={agreementsCustomer} onClose={() => setAgreementsCustomer(null)} />}
       {deleteTarget && (
         <div className="confirm-backdrop" role="presentation">
           <form className="confirm-modal" role="dialog" aria-modal="true" aria-label="Müşteri Silme Onayı" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}>
@@ -727,12 +694,11 @@ export function CustomersPage() {
         </form>
       </section>
       </div>}
-      {filesCustomer && <div className="confirm-backdrop customer-files-backdrop" role="presentation"><section className="attachment-preview-modal customer-files-modal" role="dialog" aria-modal="true" aria-label={`${filesCustomer.name} dosyaları`} onMouseDown={(event) => event.stopPropagation()}><div className="customer-form-heading"><h2>{filesCustomer.name} - Dosyalar</h2><button className="standard-modal-close" type="button" onClick={() => setFilesCustomer(null)} aria-label="Kapat"><X size={18} /></button></div>{files.isPending ? <p className="muted">Dosyalar yükleniyor...</p> : files.error ? <ErrorMessage error={files.error} /> : files.data?.length ? <div className="customer-files-list">{files.data.map(file => <CustomerFileRow key={file.id} customerId={filesCustomer.id} file={file} onDelete={() => deleteFile.mutate({ customerId: filesCustomer.id, fileId: file.id })} />)}</div> : <p className="muted">Bu müşteriye ait dosya bulunmuyor.</p>}</section></div>}
     </main>
   );
 }
 
-export function PhoneSupportPage() {
+export function PhoneSupportPage({ fixedCustomerId }: { fixedCustomerId?: string } = {}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { completePhoneRequest } = useWorkSession();
@@ -742,7 +708,7 @@ export function PhoneSupportPage() {
     navigate(path);
   }
   const [params] = useSearchParams();
-  const initialCustomerId = params.get("customerId") ?? "";
+  const initialCustomerId = fixedCustomerId ?? params.get("customerId") ?? "";
   const [search, setSearch] = useState("");
   const deferredSearch = useDebouncedValue(search);
   const [hasSearched, setHasSearched] = useState(false);
@@ -890,6 +856,17 @@ export function PhoneSupportPage() {
       { onSuccess: (result) => openCreatedConversation((result as { data: { data: Conversation } }).data.data.id) },
     );
   }
+  if (fixedCustomerId) return <section className="management-panel customer-request-workspace">
+    <ErrorMessage error={initialCustomer.error} />
+    {initialCustomer.isPending && <p role="status">Müşteri yükleniyor…</p>}
+    {candidateCustomer?.isActive === false && <p role="alert">Bu müşteri pasif. Talep açmak için önce hesabını etkinleştirin.</p>}
+    {activeCustomer && <form className="management-form phone-support-request-form" onSubmit={submitConversation}>
+      <PhoneRequestFields defaultDepartment={communicationChannels.data?.defaultDepartment ?? undefined} departmentId={departmentId} setDepartmentId={setDepartmentId} websiteId={websiteId} setWebsiteId={setWebsiteId} assignedAgentIds={assignedAgentIds} setAssignedAgentIds={setAssignedAgentIds} channel={selectedChannels} setChannel={handleChannelChange} availableChannels={availableChannels} channelStatus={channelStatus} customer={activeCustomer} />
+      <ErrorMessage error={createConversation.error} />
+      {channelFormError && <p className="error" role="alert">{channelFormError}</p>}
+      <div className="management-actions"><button className="button primary" disabled={createConversation.isPending || !departmentId || !channelAvailable}>{createConversation.isPending ? 'Oluşturuluyor…' : 'Talebi Oluştur'}</button></div>
+    </form>}
+  </section>;
   return (
     <main className="page">
       <Heading title={activeCustomer ? `${activeCustomer.name} için Telefon desteği aç` : "Telefon Desteği İçin Talep Aç"} description={activeCustomer ? "Bu kişi için talep bilgilerini doldurun ve destek kuyruğuna gönderin." : "Arayan kişiyi bulun, seçin ve görüşmeyi doğrudan destek kuyruğuna gönderin."} />

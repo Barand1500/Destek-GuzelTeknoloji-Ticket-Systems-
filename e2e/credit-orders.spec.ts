@@ -86,31 +86,14 @@ async function setup(page: Page, admin = false, editable = true) {
   );
   return { requests };
 }
-test("customer sees original price and cancels only after confirmation", async ({
-  page,
-}) => {
+test("customer can pay but cannot cancel an order", async ({ page }) => {
   await setup(page);
   await expect(page.getByText(order.number, { exact: true })).toBeVisible();
   await expect(page.getByText("125,50", { exact: false })).toBeVisible();
-  const pay = page.getByRole("link", { name: "Ödemeye Geç", exact: true }).first();
-  const cancelButton = page.getByRole("button", { name: "Siparişi İptal Et", exact: true }).first();
-  const payBox = await pay.boundingBox();
-  const cancelBox = await cancelButton.boundingBox();
-  expect(payBox && cancelBox ? cancelBox.x - (payBox.x + payBox.width) : 0).toBeGreaterThanOrEqual(8);
-  await cancelButton.click();
-  const dialog = page.getByRole("dialog", { name: "Siparişi İptal Et" });
-  await expect(dialog).toContainText("Kredi bakiyeniz değişmez");
-  const viewport = page.viewportSize()!;
-  const dialogBox = await dialog.boundingBox();
-  expect(dialogBox).not.toBeNull();
-  expect(Math.abs(dialogBox!.x + dialogBox!.width / 2 - viewport.width / 2)).toBeLessThan(2);
-  expect(Math.abs(dialogBox!.y + dialogBox!.height / 2 - viewport.height / 2)).toBeLessThan(2);
-  await dialog.getByRole("button", { name: "İptali Onayla" }).click();
-  await expect(page.getByText("İptal edildi", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Siparişi İptal Et", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Ödemeye Geç', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /İptal|İade/ })).toHaveCount(0);
 });
+
 test("pagination and debounced filters request server pages", async ({
   page,
 }) => {
@@ -181,13 +164,13 @@ test('unresolved payments explain and disable cancellation and repeat payment', 
   await page.route('**/api/v1/my/credit-store/orders?**', route => route.fulfill({ json: { success: true, data: [{ ...order, paymentInProgress: true }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } }));
   await page.reload();
   await expect(page.getByText('Banka sonucu kontrol ediliyor.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Siparişi İptal Et' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Siparişi İptal Et' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ödemeye Geç' })).toHaveCount(0);
 });
 
-test('customer cancellation confirmation follows the dark theme', async ({ page }) => {
+test('admin cancellation confirmation follows the dark theme', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
-  await setup(page);
+  await setup(page, true);
   await page.getByRole('button', { name: 'Siparişi İptal Et', exact: true }).first().click();
   const confirm = page.getByRole('dialog').getByRole('button', { name: 'İptali Onayla' });
   await expect(confirm).toHaveCSS('background-color', 'rgb(85, 47, 44)');

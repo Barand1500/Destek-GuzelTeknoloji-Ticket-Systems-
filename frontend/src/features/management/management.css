@@ -279,6 +279,9 @@ html[data-theme="dark"] :is(.management-table-wrap, .activity-log-scroll, .proje
   cursor: pointer;
 }
 .management-sort-button:hover, .management-sort-reset:hover { color: var(--ui-text-primary); }
+.management-actions-heading { text-align: right; }
+.management-actions-heading .management-sort-heading { justify-content: flex-end; }
+.management-table:has(.management-actions-heading) tbody td:last-child > .management-actions { justify-content: flex-end; }
 .management-sort-reset:hover { background: #d5f0fc; }
 html[data-theme="dark"] .management-sort-reset:hover { background: #30404b; }
 .management-sort-button:focus-visible, .management-sort-reset:focus-visible { outline: 2px solid #0d8fc5; outline-offset: 3px; }

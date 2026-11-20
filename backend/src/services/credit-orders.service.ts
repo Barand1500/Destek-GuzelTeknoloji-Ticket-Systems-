@@ -74,6 +74,7 @@ export async function createCreditOrder(
   actor: Actor,
   input: z.infer<typeof createCreditOrderInput>,
 ) {
+  input = createCreditOrderInput.parse(input);
   const result = await db.$transaction(async (tx) => {
     // Serializes idempotent retries and ownership changes for this account.
     await tx.$queryRaw(
@@ -137,20 +138,13 @@ export async function createCreditOrder(
       select: fields,
     });
     if (row.kind === 'SUBSCRIPTION') {
+      // A single-period history record, with no recurring consent or payment setup.
       const subscription = await tx.creditSubscription.create({ data: {
         customerId: account.id, name: row.name, amount: row.total, currency: row.currency,
         credits: row.credits, periodMonths: row.periodMonths, periodDays: row.validityDays,
-        autoRenew: row.renewalRequested, consentedAt: new Date(),
-        status: 'AWAITING_PAYMENT',
-        anchorOn: schedule ? new Date(schedule.startsOn) : null,
-        nextPaymentOn: schedule ? new Date(schedule.startsOn) : null,
+        autoRenew: false, consentedAt: null, nextPaymentOn: null,
+        status: 'AWAITING_PAYMENT', anchorOn: schedule ? new Date(schedule.startsOn) : null,
       } });
-      if (schedule) {
-        const previous = await tx.creditSubscription.findMany({ where: { customerId: account.id, id: { not: subscription.id }, status: { not: 'STOPPED' } }, select: { id: true } });
-        if (await tx.creditPaymentAttempt.count({ where: { order: { subscriptionId: { in: previous.map(v => v.id) } }, status: 'PENDING' } })) throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Mevcut paketinizin ödeme sonucu bekleniyor. Sonuç netleşince paket değiştirebilirsiniz.');
-        await tx.creditSubscription.updateMany({ where: { id: { in: previous.map(v => v.id) } }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
-        for (const old of previous) await requestAkbankInstructionStop(tx, old.id);
-      }
       row = await tx.creditOrder.update({ where: { id: row.id }, data: { subscriptionId: subscription.id, periodNumber: 1 }, select: fields });
     }
     await tx.activityLog.create({
@@ -253,6 +247,7 @@ export async function cancelCreditOrder(
     });
     if (!row || (customerId && row.customerId !== customerId))
       throw new AppError(404, "ORDER_NOT_FOUND", "Sipariş bulunamadı.");
+    if (!admin && row.kind === 'TOP_UP') throw new AppError(409, 'ORDER_CANCEL_NOT_ALLOWED', 'Tekli kredi siparişini yalnızca yönetici iptal edebilir.');
     if (row.status === "CANCELLED") return json(row);
     if (!["PENDING", "FAILED"].includes(row.status))
       throw new AppError(

@@ -1,3 +1,4 @@
+import { renewalPreference } from './credit-store-pricing.js';
 import { syncAgreementRenewal } from './agreement-renewal.js';
 import { publishChange } from './events.service.js';
 import { z } from 'zod';
@@ -15,7 +16,7 @@ export const agreementInput = z.object({
   startsOn: day, endsOn: day,
   fee: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ücret en fazla iki ondalık basamak içermelidir.')).default('0'),
   credits: z.number().int().min(0).max(1_000_000),
-  renewalRequested: z.boolean().optional(),
+  renewalRequested: renewalPreference.optional(),
   currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
 }).strict().refine(v => v.endsOn >= v.startsOn, { path: ['endsOn'], message: 'Bitiş tarihi başlangıçtan önce olamaz.' });
 export const creditResolutionInput = z.object({ agreementId: z.uuid().nullable().optional(), credits: z.number().int().min(0).max(1_000_000) }).strict();
@@ -170,7 +171,7 @@ export async function updateAgreement(actor: Actor, customerId: string, id: stri
       if (!types.length) throw invalid('Bu anlaşma türü artık kullanılamıyor.');
     }
     if ((input.startsOn !== before.startsOn.toISOString().slice(0,10) || input.endsOn !== before.endsOn.toISOString().slice(0,10)) && await tx.creditPaymentAttempt.count({ where: { order: { customerId }, status: 'PENDING' } })) throw new AppError(409, 'PAYMENT_IN_PROGRESS', 'Ödeme sonucu beklenirken dönem tarihleri değiştirilemez.');
-    const renewalRequested = input.renewalRequested ?? before.renewalRequested;
+    const renewalRequested = false;
     const result = await tx.agreement.update({ where: { id }, data: { renewalRequested, fee: typeof raw === "object" && raw !== null && "fee" in raw ? input.fee : before.fee, currency: input.currency ?? before.currency, name: input.name, type: input.type, startsOn: new Date(input.startsOn), endsOn: new Date(input.endsOn), credits: input.credits } });
     await syncAgreementRenewal(tx, result);
     await tx.activityLog.create({ data: { userId: actor.id, action: 'agreement.updated', entityType: 'Agreement', entityId: id, metadata: { customerId, before: { fee: before.fee.toString(), currency: before.currency, name: before.name, type: before.type, startsOn: before.startsOn.toISOString(), endsOn: before.endsOn.toISOString(), credits: before.credits, renewalRequested: before.renewalRequested }, after: { fee: result.fee.toString(), currency: result.currency, name: input.name, type: input.type, startsOn: input.startsOn, endsOn: input.endsOn, credits: input.credits, renewalRequested } }, ipAddress: actor.ipAddress } });

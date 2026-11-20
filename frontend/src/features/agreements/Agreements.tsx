@@ -23,7 +23,7 @@ import { agreementEndDate } from '../../utils/agreement-dates';
 import './agreements.css';
 
 type Person = { id: string; name: string; company?: string | null; isActive?: boolean; parentCustomerId?: string | null; shareCreditsWithChildren?: boolean; personalCredits?: number };
-export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; currency?: string; credits: number; usedCredits: number; remainingCredits: number; renewalRequested?: boolean; usable: boolean; state: string; customer: Person; customerId: string };
+export type Agreement = { id: string; name: string; type: string; typeLabel?: string; startsOn: string; endsOn: string; fee: string; currency?: string; credits: number; usedCredits: number; remainingCredits: number; usable: boolean; state: string; customer: Person; customerId: string };
 type Charge = { id: string; credits: number; createdAt: string; agreement: { name: string } | null; conversation: { id: string; number: number; subject: string; customer: { name: string } } };
 type Summary = { companyName?: string | null; customer: Person; parent: Person | null; children: Person[]; agreements: Agreement[]; charges: Charge[]; availableCredits: number; personalCredits: number; sharedCredits: number; parentCredits: number };
 const types: Record<string, string> = { MONTHLY: 'Aylık', YEARLY: 'Yıllık', ONE_OFF: 'Ek Destek Kredisi', MAINTENANCE: 'Bakım Anlaşması' };
@@ -96,7 +96,7 @@ export function CustomerAgreementsPage() {
     </div></div>}{subscriptionsVisible && data && !data.customer.parentCustomerId ? <CreditSubscriptions /> : historyVisible ? <><h2>Kredi Hareketleri</h2><CreditHistory customerId={customerId} /></> : checkoutVisible && data && !data.customer.parentCustomerId ? <CreditCheckout key={params.get("orderId") || ""} orderId={params.get("orderId") || ""} onBack={() => changeView("orders")} /> : ordersVisible && data && !data.customer.parentCustomerId ? <CreditOrders /> : shopping && data && !data.customer.parentCustomerId ? <CustomerCreditStore /> : <AgreementWorkspace key={customerId} customerId={customerId} />}</div>
   </main>;
 }
-function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
+export function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
   const { user } = useAuth(); const [page, setPage] = useState(1);
   const query = useQuery({ queryKey: ['credit-history', customerId, page], queryFn: async () => (await api.get(`/customers/${customerId}/agreements/credit-history`, { params: { page, limit: 20 } })).data as { data: Charge[]; pagination: { page: number; total: number; totalPages: number } } });
   const charges = query.data?.data ?? [], pages = query.data?.pagination.totalPages ?? 1;
@@ -112,7 +112,7 @@ function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: ()
   </section>;
 }
 type WorkspaceModalControl = { editing: Agreement | null; setEditing: (agreement: Agreement | null) => void; adding: boolean; setAdding: (value: boolean) => void; formId: string; onPendingChange: (pending: boolean) => void; onReadyChange: (ready: boolean) => void };
-function AgreementWorkspace({ customerId, modalControl }: { customerId: string; modalControl?: WorkspaceModalControl }) {
+export function AgreementWorkspace({ customerId, modalControl }: { customerId: string; modalControl?: WorkspaceModalControl }) {
   const { user } = useAuth(); const client = useQueryClient();
   const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as Summary });
   const editable = user?.role !== 'CUSTOMER' && !summary.data?.customer.parentCustomerId && hasPermission(user, 'customers.update');
@@ -127,7 +127,6 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
   const formId = modalControl?.formId ?? localFormId;
   const typeMutations = useIsMutating({ mutationKey: ['agreement-types'] });
   const [agreementType, setAgreementType] = useState('MONTHLY'), [startsOn, setStartsOn] = useState(''), [manualEnd, setManualEnd] = useState('');
-  const [renewalRequested, setRenewalRequested] = useState(false);
   const [fee, setFee] = useState("0"), [currency, setCurrency] = useState<Currency>("TRY");
   const automaticPeriod = ['MONTHLY', 'YEARLY'].includes(agreementType);
   const endsOn = automaticPeriod ? agreementEndDate(startsOn, agreementType) : manualEnd;
@@ -149,7 +148,7 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
         <div className="agreement-section-title"><h3>Anlaşmalar</h3>{editable && !modalControl && !editing && <button className="button primary" type="button" onClick={() => { save.reset(); setAdding(!adding); }}>{adding ? 'Vazgeç' : '+ Anlaşma Ekle'}</button>}</div>
         {editing && <EditAgreementForm key={editing.id} agreement={editing} formId={formId} onPendingChange={setEditPending} inlineActions={!modalControl} onClose={() => setEditing(null)} onSaved={async () => { setEditing(null); setNotice("Anlaşma güncellendi."); await refresh(); }} />}
         {adding && !editing && editable && <form id={formId} className="agreement-form agreement-entry-form" onSubmit={event => {
-          event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, fee, currency, credits: Number(values.credits), renewalRequested });
+          event.preventDefault(); if (pending) return; const values = Object.fromEntries(new FormData(event.currentTarget)); setNotice(''); save.mutate({ ...values, fee, currency, credits: Number(values.credits) });
         }}>
           <label className="agreement-field"><span className="field-label">Anlaşma Adı</span><input name="name" required maxLength={150} /></label>
           <AgreementTypeSelect value={agreementType} onChange={value => { if (automaticPeriod) setManualEnd(endsOn); setAgreementType(value); }} />
@@ -157,7 +156,6 @@ function AgreementWorkspace({ customerId, modalControl }: { customerId: string; 
           <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={startsOn || "1000-01-01"} value={endsOn} readOnly={automaticPeriod} onChange={setManualEnd} />
           <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min="0" max="1000000" step="1" required /></label>
           <label className="agreement-field"><span className="field-label">Dönem tutarı</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma dönem tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} />
-      <AgreementRenewalToggle checked={renewalRequested} onChange={setRenewalRequested} disabled={pending} />
           {!modalControl && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button><button className="button primary" disabled={pending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button></div>}
         </form>}
         {!adding && !editing && !visibleAgreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
@@ -195,9 +193,8 @@ function EditAgreementForm({ agreement, formId, onClose, onSaved, onPendingChang
   const [start, setStart] = useState(agreement.startsOn.slice(0, 10)), [end, setEnd] = useState(agreement.endsOn.slice(0, 10));
   const [credits, setCredits] = useState(String(agreement.credits));
   const [fee, setFee] = useState(agreement.fee || "0"), [currency, setCurrency] = useState<Currency>((agreement.currency || "TRY") as Currency);
-  const [renewalRequested, setRenewalRequested] = useState(agreement.renewalRequested ?? false);
   const catalogPending = useIsMutating({ mutationKey: ['agreement-types'] });
-  const save = useMutation({ mutationFn: () => api.put('/customers/' + agreement.customerId + '/agreements/' + agreement.id, { name, type, startsOn: start, endsOn: end, fee, currency, credits: Number(credits), renewalRequested }), onSuccess: onSaved });
+  const save = useMutation({ mutationFn: () => api.put('/customers/' + agreement.customerId + '/agreements/' + agreement.id, { name, type, startsOn: start, endsOn: end, fee, currency, credits: Number(credits) }), onSuccess: onSaved });
   const pending = save.isPending || catalogPending > 0;
   useEffect(() => { onPendingChange?.(pending); return () => onPendingChange?.(false); }, [pending, onPendingChange]);
   const automatic = ['MONTHLY', 'YEARLY'].includes(type);
@@ -210,13 +207,8 @@ function EditAgreementForm({ agreement, formId, onClose, onSaved, onPendingChang
       <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={start || "1000-01-01"} value={end} readOnly={automatic} disabled={pending} onChange={setEnd} />
       <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min={agreement.usedCredits} max="1000000" step="1" required disabled={pending} value={credits} onChange={e => setCredits(e.target.value)} /></label>
       <label className="agreement-field"><span className="field-label">Dönem tutarı</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma dönem tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} />
-      <AgreementRenewalToggle checked={renewalRequested} onChange={setRenewalRequested} disabled={pending} />
       {agreement.usedCredits > 0 && <p className="muted">Kullanılan: {agreement.usedCredits} kredi</p>}
     </form>
     {inlineActions && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={onClose}>Vazgeç</button><button className="button primary" type="submit" form={formId} disabled={pending}>Değişiklikleri Kaydet</button></div>}
   </section>;
-}
-
-function AgreementRenewalToggle({ checked, onChange, disabled }: { checked: boolean; onChange: (checked: boolean) => void; disabled: boolean }) {
-  return <label className="integration-toggle agreement-renewal-toggle"><input type="checkbox" checked={checked} disabled={disabled} onChange={event => onChange(event.target.checked)} /><i aria-hidden="true" /><span><strong>Dönem sonunda tekrarla</strong><small>Anlaşmanın kendi tutarı ve dönemiyle yenilenir. Tahsilat için müşteri onayı ve ödeme bağlantısı gerekir.</small></span></label>;
 }

@@ -39,7 +39,7 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
     return Response.json({ status: 'success', paymentId: body.paymentId, price: body.price ?? '101.01', currency: body.currency ?? 'TRY', refundHostReference: randomUUID() });
   }) as typeof fetch;
   const paidOrder = async (used = 0) => {
-    const order = await db.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, requestKey: randomUUID(), inputHash: 'a'.repeat(64), kind: 'TOP_UP', name: 'Reversal fixture', credits: 100, total: '101.01', currency: 'TRY', validityDays: 365 } });
+    const order = await db.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, requestKey: randomUUID(), inputHash: 'a'.repeat(64), kind: 'SUBSCRIPTION', name: 'Reversal fixture', credits: 100, total: '101.01', currency: 'TRY', validityDays: 365 } });
     const paymentId = randomUUID();
     const attempt = await db.creditPaymentAttempt.create({ data: { orderId: order.id, attemptNumber: 1, provider: 'iyzico', status: 'PAID', providerPaymentId: paymentId } });
     const grant = await db.agreement.create({ data: { customerId: owner.id, name: 'Reversal fixture grant', type: 'ONE_OFF', credits: 100, usedCredits: used, fee: '101.01', currency: 'TRY', startsOn: new Date('2026-01-01'), endsOn: new Date('2028-01-01') } });

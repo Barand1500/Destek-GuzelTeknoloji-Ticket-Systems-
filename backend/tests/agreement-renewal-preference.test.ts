@@ -13,7 +13,7 @@ test('agreement preference validates booleans without replacing omitted update v
   assert.equal(agreementInput.safeParse({ ...terms, renewalRequested: 'false' }).success, false);
 });
 
-test('agreement preference persists, omission preserves it, and exhausted packages are unavailable', async () => {
+test('agreements reject renewal setup, retire historical preference, and preserve credit availability', async () => {
   const suffix = randomUUID();
   const admin = await db.user.create({ data: { name: `Renewal admin ${suffix}`, role: 'ADMIN', passwordHash: 'fixture' } });
   const customer = await db.user.create({ data: { name: `Renewal customer ${suffix}`, role: 'CUSTOMER', passwordHash: 'fixture' } });
@@ -21,10 +21,11 @@ test('agreement preference persists, omission preserves it, and exhausted packag
   try {
     const defaultAgreement = await createAgreement(actor, customer.id, terms);
     assert.equal(defaultAgreement.renewalRequested, false);
-    const requested = await createAgreement(actor, customer.id, { ...terms, renewalRequested: true });
-    assert.equal(requested.renewalRequested, true);
+    await assert.rejects(createAgreement(actor, customer.id, { ...terms, renewalRequested: true }), { code: 'RENEWAL_DISABLED' });
+    const requested = await db.agreement.create({ data: { ...terms, customerId: customer.id, startsOn: new Date(terms.startsOn), endsOn: new Date(terms.endsOn), renewalRequested: true } });
     const preserved = await updateAgreement(actor, customer.id, requested.id, terms);
-    assert.equal(preserved.renewalRequested, true);
+    assert.equal(preserved.renewalRequested, false);
+    assert.equal(await db.creditSubscription.count({ where: { customerId: customer.id } }), 0);
     const disabled = await updateAgreement(actor, customer.id, requested.id, { ...terms, renewalRequested: false });
     assert.equal(disabled.renewalRequested, false);
     const logs = await db.activityLog.findMany({ where: { entityId: requested.id, action: 'agreement.updated' }, orderBy: { createdAt: 'asc' } });

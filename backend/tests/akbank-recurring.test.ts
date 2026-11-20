@@ -7,11 +7,10 @@ import { sealPayment, openPayment } from '../src/services/payment-secrets.js';
 import { akbankHash } from '../src/services/akbank-client.js';
 import { beginAkbankCheckout, reconcileAkbankSession } from '../src/services/akbank-payments.service.js';
 import { beginAkbankRecurring, reconcileAkbankRecurring } from '../src/services/akbank-recurring.service.js';
-import { changeSubscription } from '../src/services/credit-subscriptions.service.js';
 import { startPaymentReversal } from '../src/services/payment-reversals.service.js';
 import { billingBoundary, billingToday } from '../src/services/credit-billing.js';
 
-test('Akbank single-entry checkout establishes one bank mandate, imports payments once and cancels future charges', async () => {
+test('historical Akbank mandates are cancelled and only bank-paid occurrences import once', async () => {
   const owner = await db.user.create({ data: { name: 'Recurring fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
   const actor = { id: owner.id, name: owner.name, role: 'CUSTOMER' as const, email: '', departmentIds: [], sessionId: '', ipAddress: '127.0.0.1' };
   const config = { merchantSafeId: 'recurring-merchant', terminalSafeId: 'recurring-terminal', secretKey: 'recurring-secret', mode: 'sandbox' as const };
@@ -22,17 +21,11 @@ test('Akbank single-entry checkout establishes one bank mandate, imports payment
   db.paymentGatewaySettings.findUnique = gateway as any;
   db.$transaction = ((callback: any, options: any) => originalTx.call(db, (tx: any) => { tx.paymentGatewaySettings.findUnique = gateway; return callback(tx); }, options)) as typeof originalTx;
   const sales = new Map<string, any[]>(), plans = new Map<string, any[]>(), calls: any[] = [];
-  let loseRegistration = false;
   globalThis.fetch = (async (_url: any, init: any) => {
     const body = JSON.parse(init.body); calls.push(body);
     assert.equal(init.headers['auth-hash'], akbankHash(init.body, config.secretKey));
-    if (body.txnCode === '1011') {
-      assert.equal(body.card.cardNumber, card.number);
-      assert.equal(body.plannedDate.firstPlannedDate.length, 10);
-      const first = new Date(body.plannedDate.firstPlannedDate);
-      plans.set(body.order.orderTrackId, Array.from({ length: body.recurring.numberOfPayments }, (_, i) => ({ txnCode: '1000', orderTrackId: body.order.orderTrackId, recurringOrder: i + 1, plannedDateTime: billingBoundary(first, 1, null, i).toISOString(), amount: body.transaction.amount, currencyCode: 949, installCount: 1, requestStatus: 'W', requestType: 'R', totalRefundAmount: 0 })));
-      if (loseRegistration) throw Error('Registration response lost');
-    } else assert.equal(body.card, undefined);
+    assert.notEqual(body.txnCode, '1011', 'Historical reconciliation must never register a mandate');
+    assert.equal(body.card, undefined);
     const rows = body.order.orderTrackId ? plans.get(body.order.orderTrackId) ?? [] : sales.get(body.order.orderId) ?? [];
     if (body.txnCode === '1013') {
       assert.equal(body.recurring, undefined, 'Stop all future payments, not only one occurrence');
@@ -48,7 +41,7 @@ test('Akbank single-entry checkout establishes one bank mandate, imports payment
     const today = billingToday();
     const sub = await db.creditSubscription.create({ data: { customerId: owner.id, name: 'Monthly recurring fixture', amount: '10.00', currency: 'TRY', credits: 100, periodMonths: 1, autoRenew: true, consentedAt: new Date(), status: 'AWAITING_PAYMENT', anchorOn: today, anchorPeriod: 0 } });
     const order = await db.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, subscriptionId: sub.id, periodNumber: 1, requestKey: randomUUID(), inputHash: 'a'.repeat(64), kind: 'SUBSCRIPTION', name: sub.name, credits: 100, total: '10.00', currency: 'TRY', periodMonths: 1, periodStartsOn: today, periodEndsOn: new Date(billingBoundary(today, 1, null, 1).getTime() - 86400000), renewalRequested: true } });
-    const form = await beginAkbankCheckout(actor, order.id, { card, renewalConsent: true });
+    const form = await beginAkbankCheckout(actor, order.id, { card, renewalConsent: false });
     const sessionId = (form as any).sessionId;
     assert.ok(sessionId, 'The original checkout must bind recurring enrollment to its payment attempt');
     sales.set(form.fields.orderId, [{ orderId: form.fields.orderId, txnCode: '1000', responseCode: 'VPS-0000', hostResponseCode: '00', txnStatus: 'N', amount: '10.00', currencyCode: 949, installCount: 1 }]);
@@ -57,11 +50,11 @@ test('Akbank single-entry checkout establishes one bank mandate, imports payment
   }
   try {
     const first = await paidCheckout();
-    await assert.rejects(beginAkbankRecurring({ ...actor, id: randomUUID() }, first.sessionId, { card, consent: true }));
-    const result = await beginAkbankRecurring(actor, first.sessionId, { card, consent: true });
-    assert.equal(result.state, 'ACTIVE');
-    await beginAkbankRecurring(actor, first.sessionId, { card, consent: true });
-    assert.equal(calls.filter(row => row.txnCode === '1011').length, 1);
+    await assert.rejects(beginAkbankRecurring(actor, first.sessionId, { card, consent: true }), { code: 'RENEWAL_DISABLED' });
+    const firstOn = billingToday(); const id = randomUUID();
+    const terms = { frequencyCycle: 'M', frequencyInterval: 1, numberOfPayments: 120 };
+    await db.akbankRecurringInstruction.create({ data: { id, subscriptionId: first.sub.id, checkoutSessionId: first.sessionId, state: 'ACTIVE', contextCiphertext: sealPayment({ config, firstOn: firstOn.toISOString().slice(0,10), firstPeriod: 2, months: 1, days: null, amount: '10.00', currency: 'TRY', credits: 100, terms }) } });
+    plans.set(id, Array.from({ length: 120 }, (_, i) => ({ txnCode: '1000', orderTrackId: id, recurringOrder: i + 1, plannedDateTime: billingBoundary(firstOn, 1, null, i).toISOString(), amount: '10.00', currencyCode: 949, installCount: 1, requestStatus: 'W', requestType: 'R', totalRefundAmount: 0 })));
     const instruction = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { checkoutSessionId: first.sessionId } });
     const context = openPayment<any>(instruction.contextCiphertext);
     assert.ok(!JSON.stringify(context).includes(card.number));
@@ -76,38 +69,15 @@ test('Akbank single-entry checkout establishes one bank mandate, imports payment
     assert.equal(renewed.status, 'PAID');
     assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: renewed.grantedAgreementId! } })).credits, 100);
     assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: first.sub.id } })).paidPeriods, 2);
-    // Refund of a bank-managed occurrence uses orderTrackId + recurringOrder, never a fake orderId.
-    const refund = await startPaymentReversal({ ...actor, role: 'ADMIN' }, renewed.id, { requestKey: randomUUID(), kind: 'REFUND', credits: 100, reason: 'Recurring refund fixture' });
-    assert.equal(refund.status, 'SUCCEEDED');
-    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: instruction.id } })).state, 'STOP_REQUESTED');
-    await reconcileAkbankRecurring(instruction.id, paidOn);
     assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: instruction.id } })).state, 'STOPPED');
     assert.ok(rows.slice(1).every(row => row.requestStatus === 'C'));
-    await db.agreement.updateMany({ where: { customerId: owner.id }, data: { cancelledAt: new Date() } });
-    loseRegistration = true;
-    const second = await paidCheckout();
-    assert.equal((await beginAkbankRecurring(actor, second.sessionId, { card, consent: true })).state, 'ACTIVE', 'A lost registration response is recovered by inquiry, never registration replay');
-    await changeSubscription(actor, second.sub.id, 'stop');
-    const secondInstruction = await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { checkoutSessionId: second.sessionId } });
-    assert.equal(secondInstruction.state, 'STOP_REQUESTED');
-    const secondRows = plans.get(secondInstruction.id)!;
-    secondRows[0].requestStatus = 'S';
-    await db.user.update({ where: { id: owner.id }, data: { isActive: false } });
-    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
-    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).state, 'STOPPED');
-    assert.ok(secondRows.slice(1).every(row => row.requestStatus === 'C'), 'A blocked credit import must not prevent bank cancellation');
-    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).failureCode, 'PAID_PERIOD_REVIEW');
-    await db.user.update({ where: { id: owner.id }, data: { isActive: true } });
-    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
-    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).failureCode, null, 'Paid-period reconciliation can resume after cancellation');
-    secondRows[1].requestStatus = 'W';
-    secondRows[1].plannedDateTime = '1900-01-01T00:00:00Z';
-    await db.akbankRecurringInstruction.update({ where: { id: secondInstruction.id }, data: { state: 'ACTIVE' } });
-    await db.creditSubscription.update({ where: { id: second.sub.id }, data: { autoRenew: true, status: 'ACTIVE', stoppedAt: null } });
-    await reconcileAkbankRecurring(secondInstruction.id, new Date(secondRows[0].plannedDateTime));
-    assert.equal(secondRows[1].requestStatus, 'C', 'An invalid schedule must be stopped instead of leaving future bank charges active');
-    assert.equal((await db.akbankRecurringInstruction.findUniqueOrThrow({ where: { id: secondInstruction.id } })).state, 'STOPPED');
-    assert.equal(calls.filter(row => row.txnCode === '1011').length, 2);
+    assert.equal(calls.filter(row => row.txnCode === '1011').length, 0);
+    assert.equal(calls.filter(row => row.txnCode === '1013').length, 1);
+    assert.equal(await db.creditOrder.count({ where: { subscriptionId: first.sub.id } }), 2);
+    const refund = await startPaymentReversal({ ...actor, role: 'ADMIN' }, renewed.id, { requestKey: randomUUID(), kind: 'REFUND', credits: 100, reason: 'Historical occurrence refund' });
+    assert.equal(refund.status, 'SUCCEEDED');
+    await reconcileAkbankRecurring(instruction.id, paidOn);
+    assert.equal(await db.creditOrder.count({ where: { subscriptionId: first.sub.id } }), 2);
   } finally {
     globalThis.fetch = originalFetch; db.$transaction = originalTx; db.paymentGatewaySettings.findUnique = originalGateway;
     await db.paymentReversal.deleteMany({ where: { order: { customerId: owner.id } } });

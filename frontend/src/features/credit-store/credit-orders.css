@@ -124,7 +124,7 @@
 .payment-reversal-form { margin-top:24px; }
 .payment-reversal-form > p, .payment-reversal-recovery > p { margin:0; line-height:1.6; }
 .payment-reversal-form > .payment-settings-fields { margin:0; }
-.payment-reversal-form > .credit-renewal-choice, .payment-reversal-recovery > .integration-toggle { margin:0; }
+.payment-reversal-form > .credit-confirmation-choice, .payment-reversal-recovery > .integration-toggle { margin:0; }
 .payment-reversal-form > .button { justify-self:start; }
 .payment-reversal-recovery { margin-top:24px; }
 .payment-reversal-recovery > .payment-settings-actions { margin:0; }

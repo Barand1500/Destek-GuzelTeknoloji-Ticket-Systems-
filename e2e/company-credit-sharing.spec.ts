@@ -14,6 +14,7 @@ async function setup(page:Page,role='ADMIN',permissions?:string[]){
   if(path==='/auth/refresh')return send({accessToken:'test',user:role==='CUSTOMER'?children[0]:{id:'staff',name:'Yönetici',role, ...(permissions?{rolePermissions:permissions}:{})}});
   if(path==='/auth/security')return send({enabled:false});
   if(path==='/customers'){expect(url.searchParams.get('rootsOnly')).toBe('true');return send([company]);}
+  if(path==='/customers/'+companyId)return send(company);
   if(path==='/customers/'+companyId+'/relations'){
    if(method==='POST'){const input=route.request().postDataJSON();writes.push(input);children.push({...input.customer,id:'created',isActive:true,parentCustomerId:companyId});return send(children.at(-1));}
    return send({customer:company,parent:null,children});
@@ -26,15 +27,15 @@ async function setup(page:Page,role='ADMIN',permissions?:string[]){
  });
  return {requests,writes};
 }
-test('one management dialog contains company people, create/edit and preserved legacy agreements',async({page})=>{
+test('one management page contains company people, create/edit and preserved legacy agreements',async({page})=>{
  const {requests,writes}=await setup(page);await page.goto('/admin/customers');
  await expect(page.getByRole('button',{name:'Merkez Şirket bağlı müşterileri',exact:true})).toHaveCount(0);
- await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
- const dialog=page.getByRole('dialog');await expect(dialog.locator('.agreement-header-credit')).toContainText('80');
+ await page.locator('.customer-list-table tbody tr').first().dblclick();
+ const dialog=page.locator('.customer-management-page');await dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();await expect(dialog.getByText('Şirket Paketi',{exact:true})).toBeVisible();
  await expect(dialog.getByRole('switch')).toHaveCount(0);
  await expect(dialog.locator('.company-legacy-agreements')).toHaveCount(0);
  await expect(dialog.getByText('Eski Kişisel Paket',{exact:true})).toHaveCount(0);
- await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+ await dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
  const rows=dialog.getByRole('table',{name:'Şirkete Bağlı Kişiler',exact:true}).locator('tbody tr');
  await expect(rows).toHaveCount(10);await expect(rows.first().locator('td').first()).toHaveText('1');
  await expect(rows.first()).toContainText('baran@güzelteknoloji.com');await expect(rows.first()).not.toContainText('xn--');
@@ -65,9 +66,9 @@ test('one management dialog contains company people, create/edit and preserved l
  await page.screenshot({path:'.local/company-person-form.png',fullPage:true});
  await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();
  await expect.poll(()=>writes.some(w=>w.direction==='CHILD'&&w.customer.name==='Yeni Kişi')).toBe(true);
- await expect(page.getByRole('dialog')).toHaveCount(1);
+ await expect(page.getByRole('dialog')).toHaveCount(0);
  await page.screenshot({path:'.local/company-management-people.png',fullPage:true});
- await dialog.getByRole('button',{name:'Düzenlenen Kişi dosyaları',exact:true}).click();await expect(dialog.getByText('Eski Dosya.pdf',{exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(1);await dialog.getByRole('button',{name:'Kişilere Dön',exact:true}).click();
+ await dialog.getByRole('button',{name:'Düzenlenen Kişi dosyaları',exact:true}).click();await expect(dialog.getByText('Eski Dosya.pdf',{exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0);await dialog.getByRole('button',{name:'Kişilere Dön',exact:true}).click();
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.local/company-management-mobile.png',fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
  expect(requests.some(p=>p.includes('relation-candidates'))).toBe(false);
 });
@@ -77,15 +78,15 @@ test('company contact portal has only company balance without personal packages 
  await expect(page.locator('.customer-agreements-company')).toHaveText('Merkez Şirket');
  await expect(page.locator('.customer-agreements-heading')).not.toContainText('Şirket Yetkilisi');
  await expect(page.locator('.customer-agreements-actions .agreement-header-credit')).toContainText('80');
- const balance=await page.locator('.customer-agreements-actions .agreement-header-credit').boundingBox();const history=await page.getByRole('button',{name:'Kredi Hareketleri',exact:true}).boundingBox();expect(balance!.x+balance!.width).toBeLessThanOrEqual(history!.x);
+ await expect(page.getByRole('tab',{name:'Kredi Hareketleri',exact:true})).toBeVisible();
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
  await expect(page.getByText('Şirket Paketi',{exact:true})).toBeVisible();await expect(page.getByText('Eski Kişisel Paket',{exact:true})).toHaveCount(0);
  await expect(page.getByRole('switch')).toHaveCount(0);await expect(page.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);
  await page.screenshot({path:'.local/company-contact-credit.png',fullPage:true});
 });
 test('read-only staff sees company people without mutation controls',async({page})=>{
- await setup(page,'AGENT',['customers.view']);await page.goto('/agent/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
- const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+ await setup(page,'AGENT',['customers.view']);await page.goto('/agent/customers');await page.locator('.customer-list-table tbody tr').first().dblclick();
+ const dialog=page.locator('.customer-management-page');await expect(dialog.getByRole('button',{name:'+ Anlaşma Ekle',exact:true})).toHaveCount(0);await dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
  await expect(dialog.getByRole('button',{name:'Kişi Ekle',exact:true})).toHaveCount(0);await expect(dialog.getByRole('button',{name:/kişisini (sil|düzenle)/})).toHaveCount(0);
 });
 
@@ -93,13 +94,13 @@ test('company person form keeps input and identifies email and phone conflicts',
  await setup(page);
  let field='e-posta';
  await page.route('**/api/v1/customers/'+companyId+'/relations',route=>route.request().method()==='POST'?route.fulfill({status:409,json:{success:false,error:{code:field==='e-posta'?'CUSTOMER_EMAIL_EXISTS':'CUSTOMER_PHONE_EXISTS',message:'Bu '+field+' başka bir müşteri kaydında kullanılıyor.'}}}):route.fallback());
- await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
- const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
+ await page.goto('/admin/customers');await page.locator('.customer-list-table tbody tr').first().dblclick();
+ const dialog=page.locator('.customer-management-page');await dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
  await dialog.getByLabel('Ad Soyad',{exact:true}).fill('Yeni Kişi');await dialog.locator('input[name=email]').fill('used@example.test');await dialog.getByLabel('Telefon',{exact:true}).fill('5301234567');
  await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('Bu e-posta');
  await expect(dialog.getByLabel('Ad Soyad',{exact:true})).toHaveValue('Yeni Kişi');
  field='telefon';await dialog.getByRole('button',{name:'Kaydet',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('Bu telefon');
- await expect(page.getByRole('dialog')).toHaveCount(1);
+ await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
  test('existing people can be searched and linked inside company management',async({page})=>{
@@ -107,8 +108,8 @@ test('company person form keeps input and identifies email and phone conflicts',
   const existingId='33333333-3333-4333-8333-333333333333';
   await page.route('**/api/v1/customers/'+companyId+'/relation-candidates**',route=>{const url=new URL(route.request().url());candidateSearches.push(url.searchParams.get('search')??'');return route.fulfill({json:{success:true,data:[{id:existingId,name:'Mevcut Kişi',email:'baran@xn--gzelteknoloji-wob.com',company:null}],pagination:{total:1,totalPages:1}}});});
   await page.route('**/api/v1/customers/'+existingId+'/parent',route=>{expect(route.request().method()).toBe('PUT');expect(route.request().postDataJSON()).toEqual({parentCustomerId:companyId});linked=true;return route.fulfill({json:{success:true}});});
-  await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
-  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
+  await page.goto('/admin/customers');await page.locator('.customer-list-table tbody tr').first().dblclick();
+  const dialog=page.locator('.customer-management-page');await dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();await dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true}).click();
   await expect(dialog.getByRole('button',{name:'Mevcut Kişi Ekle',exact:true})).toHaveCount(0);
   await dialog.getByRole('button',{name:'Kişi Ekle',exact:true}).click();
   await expect(dialog.getByRole('button',{name:'Yeni Kişi',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -127,10 +128,10 @@ test('company person form keeps input and identifies email and phone conflicts',
  test('people tab remains available without a company name',async({page})=>{
   await setup(page);let companyName='';
   await page.route('**/api/v1/customers/'+companyId+'/agreements',route=>route.fulfill({json:{success:true,data:{customer:{id:companyId,name:'Merkez Şirket',company:companyName,parentCustomerId:null},parent:null,children:[],agreements:[],charges:[],availableCredits:0,personalCredits:0}}}));
-  await page.goto('/admin/customers');await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();
-  const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true})).toBeVisible();
-  await dialog.getByRole('button',{name:'Kapat',exact:true}).click();companyName='Yeni Şirket';
-  await page.getByRole('button',{name:'Merkez Şirket yönetimi',exact:true}).click();await expect(dialog.getByRole('button',{name:'Şirkete Bağlı Kişiler',exact:true})).toBeVisible();
+  await page.goto('/admin/customers');await page.locator('.customer-list-table tbody tr').first().dblclick();
+  const dialog=page.locator('.customer-management-page');await expect(dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true})).toBeVisible();
+  await page.locator('.customer-management-back').click();companyName='Yeni Şirket';
+  await page.locator('.customer-list-table tbody tr').first().dblclick();await expect(dialog.getByRole('button',{name:'Şirket Yönetimi',exact:true})).toBeVisible();
  });
 
 test('blocked company deletion displays guidance inside the delete dialog',async({page})=>{

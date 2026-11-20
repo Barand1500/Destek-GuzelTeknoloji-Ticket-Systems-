@@ -53,14 +53,14 @@ for (const theme of ['light', 'dark']) {
             await page.getByRole('button', { name: 'İade Et', exact: true }).click();
             const form = page.locator('.payment-reversal-form');
             await expect(form).toBeVisible();
-            const consent = await form.locator('.credit-renewal-choice').boundingBox();
+            const consent = await form.locator('.credit-confirmation-choice').boundingBox();
             const button = await form.getByRole('button', { name: admin ? 'İadeyi Onayla' : 'Ödeme İptalini Onayla' }).boundingBox();
             expect(button!.y - consent!.y - consent!.height).toBeGreaterThanOrEqual(16);
             await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
           }
           if (!admin && view === 'subscriptions') {
             await expect(page.locator('.credit-subscriptions h2, .credit-subscriptions > .credit-store-notice')).toHaveCount(0);
-            await expect(page.getByRole('button', { name: 'Yenilemeyi Kapat', exact: true })).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Yenilemeyi Kapat', exact: true })).toHaveCount(0);
           }
           if (width === 375 && (view === 'orders' || (admin && !view) || (!admin && view === 'store'))) {
             await page.screenshot({ path: `.local/credit-layout-${admin ? 'staff' : 'customer'}-${theme}-${view || 'plans'}.png`, fullPage: true });

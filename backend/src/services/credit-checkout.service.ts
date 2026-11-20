@@ -1,5 +1,4 @@
 import { paymentAvailability } from "./payment-settings.service.js";
-import { akbankRecurringTerms } from './akbank-recurring-client.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { env } from '../config/env.js';
@@ -86,7 +85,5 @@ export async function customerCheckout(actor:Actor,id:string) {
  if(!['PENDING','FAILED'].includes(row.status)) throw new AppError(409,'ORDER_NOT_PENDING','Bu sipariş ödeme beklemiyor.');
  const {subscription,...data}=row;
  const availability = await paymentAvailability();
- const renewalRequested = Boolean(row.renewalRequested || subscription?.autoRenew);
- const recurringPayments = availability.provider === 'akbank' && availability.recurringAvailable && renewalRequested ? akbankRecurringTerms(row.periodMonths, row.validityDays).numberOfPayments : undefined;
- return {...data,renewalRequested,total:row.total.toString(),...availability,recurringPayments};
+ return {...data,renewalRequested:false,total:row.total.toString(),...availability,recurringAvailable:false};
 }

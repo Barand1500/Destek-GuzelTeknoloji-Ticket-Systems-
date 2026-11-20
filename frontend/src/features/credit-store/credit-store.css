@@ -559,7 +559,7 @@ html[data-theme]
   background: #087fa8;
   color: white;
 }
-.credit-renewal-choice {
+.credit-confirmation-choice {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -662,8 +662,8 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
 .credit-form-actions { flex-wrap:wrap; }
 .credit-checkout > .button { margin-bottom:20px; }
 .credit-store-owner, .credit-store-notice { overflow-wrap:anywhere; }
-.credit-renewal-choice > span { min-width:0; overflow-wrap:anywhere; }
-.credit-renewal-choice > i { flex-shrink:0; }
+.credit-confirmation-choice > span { min-width:0; overflow-wrap:anywhere; }
+.credit-confirmation-choice > i { flex-shrink:0; }
 
 @media (max-width:720px) {
   .credit-admin-plans article { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; }
@@ -683,7 +683,6 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
   .credit-plan-editor { min-width:0; }
   .credit-store-title > *, .credit-sales-card-heading > * { min-width:0; }
 }
-.payment-recurring-toggle { margin: 18px 0 8px; }
 .payment-no-charge-panel { display:grid; gap:24px; margin-top:24px; }
 .payment-no-charge-panel > p { margin:0; line-height:1.6; }
 .payment-no-charge-panel > .credit-sales-card-heading, .payment-no-charge-panel > .payment-settings-actions { margin:0; }

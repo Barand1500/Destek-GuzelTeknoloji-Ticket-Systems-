@@ -30,7 +30,6 @@ export type SalesPlan = {
   periodMonths: number | null;
   periodDays?: number | null;
   periodName?: string | null;
-  renewalRequested?: boolean;
   price: string;
   credits: number;
   active: boolean;
@@ -48,12 +47,11 @@ export type SalesCatalog = {
   owner?: Owner;
   paymentAvailable?: boolean;
   provider?: string;
-  recurringAvailable?: boolean;
 };
 export type Quote = {
   quoteKey: string;
   startsOn?: string; endsOn?: string;
-  currentPackage?: { id: string; name: string; endsOn: string; remainingDays: number; autoRenew?: boolean } | null;
+  currentPackage?: { id: string; name: string; endsOn: string; remainingDays: number } | null;
   name: string;
   credits: number;
   total: string;
@@ -63,7 +61,6 @@ export type Quote = {
   periodMonths?: number | null;
   periodDays?: number | null;
   periodName?: string | null;
-  renewalRequested?: boolean;
   expiresAt?: string;
   owner: Owner;
   paymentAvailable?: boolean;

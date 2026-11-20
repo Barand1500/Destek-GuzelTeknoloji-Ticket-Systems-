@@ -23,15 +23,13 @@ test('Akbank card entry stays in portal then posts to bank 3D without billing fi
   const panel = page.getByRole('form', { name: 'Kart ile ödeme' });
   await expect(panel).toBeVisible();
   await expect(page.getByLabel(/Fatura adresi|T.C. Kimlik/)).toHaveCount(0);
-  await expect(panel.getByRole('button', { name: /Öde$/ })).toBeDisabled();
+  await expect(panel.getByRole('switch')).toHaveCount(0);
   await panel.getByLabel('Kart üzerindeki ad soyad').fill('TEST USER');
   await panel.getByLabel('Kart numarası').fill('4111111111111111');
   await expect(panel.getByLabel('Kart numarası')).toHaveValue('4111 1111 1111 1111');
   await panel.getByLabel('Son kullanma tarihi').fill('1230');
   await expect(panel.getByLabel('Son kullanma tarihi')).toHaveValue('12 / 30');
   await panel.getByLabel('CVC').fill('123');
-  await panel.getByText('Bu paketi tek ödemeyle almayı kabul ediyorum. Sonraki dönemde kartımdan otomatik ödeme çekilmeyecek.').click();
-  await expect(panel.getByRole('switch')).toBeChecked();
   await panel.screenshot({ path: 'test-results/akbank-card-light.png' });
   await page.getByRole('button', { name: 'Gece Moduna Geç' }).click();
   await panel.screenshot({ path: 'test-results/akbank-card-dark.png' });
@@ -39,5 +37,5 @@ test('Akbank card entry stays in portal then posts to bank 3D without billing fi
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await panel.getByRole('button', { name: /Öde$/ }).click();
   await expect(page.getByRole('heading', { name: 'Bank 3D verification' })).toBeVisible();
-  expect(writes).toEqual([{ card: { holder: 'TEST USER', number: '4111111111111111', expiry: '1230', cvc: '123' }, manualRenewalConsent: true }]);
+  expect(writes).toEqual([{ card: { holder: 'TEST USER', number: '4111111111111111', expiry: '1230', cvc: '123' } }]);
 });

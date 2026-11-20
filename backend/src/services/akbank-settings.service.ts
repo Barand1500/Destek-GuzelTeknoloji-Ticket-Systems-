@@ -16,7 +16,7 @@ export const akbankSettingsInput = z.object({
   terminalSafeId: z.string().trim().max(128).optional(),
   secretKey: z.string().max(512).optional(),
   enabled: z.boolean().default(false),
-  recurringEnabled: z.boolean().default(false),
+  recurringEnabled: z.literal(false).default(false),
   publicUrl: z.url().max(500).optional(),
 }).strict();
 type Credentials = { merchantSafeId: string; terminalSafeId: string; secretKey: string };
@@ -24,7 +24,7 @@ type Credentials = { merchantSafeId: string; terminalSafeId: string; secretKey: 
 export async function getAkbankSettings(actor: Actor) {
   paymentStaff(actor);
   const row = await db.paymentGatewaySettings.findUnique({ where: { id: settingsId } });
-  return { provider: 'akbank', mode: row?.mode ?? 'production', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false, recurringEnabled: row?.recurringEnabled ?? false,
+  return { provider: 'akbank', mode: row?.mode ?? 'production', credentialsConfigured: Boolean(row?.credentialsCiphertext), enabled: row?.enabled ?? false, recurringEnabled: false,
     publicUrl: row?.publicUrl || env.FRONTEND_URL, testedAt: row?.testedAt ?? null, lastError: row?.lastError ?? null, paymentAvailable: Boolean(row?.enabled && row.testedAt) };
 }
 
@@ -64,7 +64,7 @@ export async function saveAkbankSettings(actor: Actor, raw: unknown) {
       await tx.akbankRecurringInstruction.updateMany({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } }, data: { state: 'STOP_REQUESTED' } });
       await tx.creditSubscription.updateMany({ where: { id: { in: instructions.map(row => row.subscriptionId) } }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
     }
-    const data = { mode: input.mode, enabled: input.enabled, recurringEnabled: input.recurringEnabled, testedAt, lastError: changed ? null : row?.lastError,
+    const data = { mode: input.mode, enabled: input.enabled, recurringEnabled: false, testedAt, lastError: changed ? null : row?.lastError,
       publicUrl: publicUrl.origin, credentialsCiphertext: sealPayment(credentials), fingerprint };
     await tx.paymentGatewaySettings.upsert({ where: { id: settingsId }, create: { id: settingsId, ...data }, update: data });
     await tx.activityLog.create({ data: { userId: actor.id, action: 'payments.akbank_settings_updated', entityType: 'PaymentGatewaySettings', entityId: settingsId,

@@ -10,17 +10,17 @@
 
 Open **Kredi ve Paket Ayarları → Ödeme Ayarları**. Choose test/live, enter the public application origin and the matching iyzico API/secret keys. Save with online payment off, run **Bağlantıyı Test Et**, then enable online payment and save. Blank key fields preserve existing credentials. The browser never receives stored keys.
 
-The connection test is a signed, noncharging BIN query; it verifies credentials, not every merchant capability. It does not expose a BIN-management screen. Confirm supported currencies, merchant card storage and merchant-initiated stored-card NON3D payment permissions with iyzico before enabling automatic renewal. On the hosted page, customers must agree to merchant card storage. If iyzico does not return `cardUserKey`/`cardToken`, the successful first purchase is still credited, automatic renewal is disabled and the customer is notified.
+The connection test is a signed, noncharging BIN query; it verifies credentials, not every merchant capability. Automatic renewal and merchant-initiated stored-card payments have been removed. New card tokens are not saved for future charges.
 
 Register the displayed `/api/v1/payments/iyzico/webhook` URL in the merchant notification settings and enable `X-IYZ-SIGNATURE-V3`. The initialize request supplies its per-session callback automatically. Callbacks and webhooks query iyzico over authenticated server-to-server requests; they never grant credit based only on posted browser fields.
 
-Automatic renewal uses this application's scheduler plus stored-card `/payment/auth`, **not iyzico native subscriptions**. Do not configure a second native subscription for the same purchase. Every period charges one installment. Stop renewal in **Aboneliklerim**. The current paid period remains available. A dispatch authorized before cancellation may still settle.
+Only customer-initiated one-time payments are supported. Existing pending payments continue to reconcile, but no scheduled renewal order or stored-card charge is dispatched. See [automatic-renewal-removal.md](automatic-renewal-removal.md) for deployment and historical bank-instruction cancellation.
 
 Changing merchant credentials or test/live mode is blocked while iyzico payments are unresolved or active subscriptions still use a stored card. Close existing renewals and reconcile pending payments first. Stored cards do not transfer between merchant accounts. Disabling online payment pauses new dispatches; existing payment results continue to reconcile using their encrypted credential snapshot.
 
 ## Customer
 
-The checkout displays the immutable order total and collects required buyer/billing data. Card number, expiry and CVC are entered only on the iyzico hosted page. An automatic-renewal purchase needs explicit stored-card/periodic-charge consent. Future package switches can be paid on their planned start date; no early charge is taken.
+The checkout displays the immutable order total and collects required buyer/billing data. Card number, expiry and CVC are entered only on the iyzico hosted page. Future package switches can be paid on their planned start date; no early charge is taken.
 
 After approval, credit is granted atomically once. Amount, currency, basket, installment, fraud approval and payment identity must match. Fraud review remains pending. A rejected payment grants no credit; the customer can reopen the failed order to pay again. Recurring definitive declines follow the existing bounded retry schedule. Timeout/uncertain outcomes are queried, never blindly recharged.
 
@@ -30,7 +30,7 @@ The settings screen shows payments pending longer than 15 minutes (up to 50 olde
 
 ## Refunds and bank cancellation
 
-In the administrator's **Siparişler** tab, open **İade / Banka İptali** on a paid order. Select unused credit quantity and record a reason. The amount uses the immutable purchase price and cumulative cent rounding, so repeated partial refunds cannot exceed the original payment. Used credit cannot be refunded through this workflow. Successful refunds disable the related subscription's next renewals; a failed refund preserves the renewal preference. The customer sees the refund status and amount in their orders.
+In the administrator's **Siparişler** tab, open **İade / Banka İptali** on a paid order. Select unused credit quantity and record a reason. The amount uses the immutable purchase price and cumulative cent rounding, so repeated partial refunds cannot exceed the original payment. Used credit cannot be refunded through this workflow. Successful refunds remove the corresponding unused credits; payment and package history remain available. The customer sees the refund status and amount in their orders.
 
 The application reserves the selected credit before contacting the bank. Concurrent support usage cannot spend reserved credit. A definitive failure restores it exactly once. An ambiguous result keeps the reservation and is queried through iyzico reporting using the unique refund conversation ID. Neither a timeout nor an absent report triggers another refund request. Agreement editing is blocked during pending refunds; already-refunded credit cannot be manually restored through agreement editing.
 
@@ -38,7 +38,7 @@ Bank cancellation is offered for the complete, wholly unused payment on the paym
 
 For an unresolved reversal, **İade Sonucunu Sorgula** sends no money. After one hour, **İade Yapılmadığını Doğrula** accepts an explicit provider confirmation reference that no refund/cancel happened and no later refund can complete; it restores the reserved credit and records an audit event. Do not use it merely because the provider is slow. Paid order history, used-credit charges, conversations and original price snapshots remain intact. A delayed original-payment callback cannot grant credit again after a refund.
 
-Database migrations do not enable payments. No real provider credentials or money are used by automated tests. Complete a merchant sandbox payment, bank rejection, callback retry, stopped renewal, partial/full refund, cancellation and live low-value verification with the actual account before opening public sales. Cancelling an unpaid application order is not a bank refund. Merchant permissions and refund limits must be enabled on the actual iyzico account.
+Database migrations do not enable payments. No real provider credentials or money are used by automated tests. Complete a merchant sandbox payment, bank rejection, callback retry, partial/full refund, cancellation and live low-value verification with the actual account before opening public sales. Cancelling an unpaid application order is not a bank refund. Merchant permissions and refund limits must be enabled on the actual iyzico account.
 
 ## Provider references
 

@@ -100,10 +100,10 @@ test("orders snapshot current quote, reject stale previews and replay without du
     code: "PURCHASE_OWNER_ONLY",
   });
   linked = false;
-  await cancelCreditOrder(actor, "order");
+  await cancelCreditOrder({ ...actor, role: "ADMIN" }, "order", true);
   assert.equal(row.status, "CANCELLED");
   assert.equal(notifications, 2);
-  await cancelCreditOrder(actor, "order");
+  await cancelCreditOrder({ ...actor, role: "ADMIN" }, "order", true);
   assert.equal(notifications, 2);
 });
 test("customer lists are scoped and paginated in SQL and linked accounts cannot list", async (t) => {

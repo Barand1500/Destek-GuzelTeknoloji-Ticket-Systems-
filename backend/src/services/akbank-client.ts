@@ -62,7 +62,7 @@ export function verifyAkbankCallback(config: AkbankConfig, raw: unknown, attempt
 }
 
 /** Fixed bank endpoint; never log raw bank payloads. Recurring registration may contain transient card fields. */
-export async function akbankRequest(config: AkbankConfig, txnCode: '1010' | '1002' | '1003' | '1011' | '1013', input: Record<string, unknown>, fetcher: typeof fetch = fetch): Promise<Record<string, any>> {
+export async function akbankRequest(config: AkbankConfig, txnCode: '1010' | '1002' | '1003' | '1013', input: Record<string, unknown>, fetcher: typeof fetch = fetch): Promise<Record<string, any>> {
   const body = JSON.stringify({ version: '1.00', txnCode, requestDateTime: akbankDate(), randomNumber: randomBytes(64).toString('hex'), terminal: { merchantSafeId: config.merchantSafeId, terminalSafeId: config.terminalSafeId }, ...input });
   try {
     const response = await fetcher((config.mode === 'production' ? 'https://api.akbank.com' : 'https://apipre.akbank.com') + '/api/v1/payment/virtualpos/transaction/process', {

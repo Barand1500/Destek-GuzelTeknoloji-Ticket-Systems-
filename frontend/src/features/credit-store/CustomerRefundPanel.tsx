@@ -6,7 +6,7 @@ import { ErrorMessage } from '../management/shared';
 import { count, money } from './types';
 
 type Summary = {
-  orderNumber?: number | string; orderName?: string; canCancel?: boolean; refundableCredits?: number; refundableAmount?: string;
+  orderKind?: 'TOP_UP' | 'SUBSCRIPTION'; orderNumber?: number | string; orderName?: string; canCancel?: boolean; refundableCredits?: number; refundableAmount?: string;
   refundRequest?: { status: string; reason: string; reviewNote?: string | null } | null;
   canSelfRefund: boolean; usedCredits: number; total: string; currency: string; originalCredits: number; hasPending: boolean;
   data: { id: string; kind?: string; status: string; amount: string; currency: string }[];
@@ -30,16 +30,16 @@ export function CustomerRefundPanel({ orderId, onClose }: { orderId: string; onC
   const request = useMutation({ mutationFn: () => api.post('/my/credit-store/orders/' + encodeURIComponent(orderId) + '/refund-request', { reason }), onSuccess: async () => { setNotice('İade talebiniz siparişe kaydedildi.'); await Promise.all([client.invalidateQueries({ queryKey: ['customer-refunds', orderId] }), client.invalidateQueries({ queryKey: ['/my/credit-store/orders'] })]); } });
   const data = query.data;
   const recorded = data?.data.find(row => ['PENDING', 'REVIEW', 'SUCCEEDED'].includes(row.status));
-  const cancellation = (recorded?.kind ?? refund.data?.kind) === 'CANCEL' || (!recorded && !refund.data && data?.canCancel);
+  const cancellation = (recorded?.kind ?? refund.data?.kind) === 'CANCEL' || (!recorded && !refund.data && data?.canCancel && data?.orderKind !== 'TOP_UP');
   return <section className="credit-sales-card payment-reversal-panel" aria-label="Sipariş iadesi">
-    <div className="credit-store-title"><h3>{cancellation ? 'Ödeme İptali' : data?.usedCredits ? 'İade Talebi' : 'Sipariş İadesi'}</h3><button className="button secondary" type="button" disabled={refund.isPending || request.isPending} onClick={onClose}>Kapat</button></div>
+    <div className="credit-store-title"><h3>{cancellation ? 'Ödeme İptali' : (data?.usedCredits || data?.orderKind === 'TOP_UP') ? 'İade Talebi' : 'Sipariş İadesi'}</h3><button className="button secondary" type="button" disabled={refund.isPending || request.isPending} onClick={onClose}>Kapat</button></div>
     <ErrorMessage error={request.error} /><ErrorMessage error={query.error} /><ErrorMessage error={refund.error} />
     {query.isPending && <p role="status">İade bilgileri yükleniyor…</p>}
     {notice && <p role="status">{notice}</p>}
     {data && <>
-      {data.hasPending ? <p role="status">{cancellation ? 'Ödeme iptali sonucu bekleniyor.' : 'İade sonucu bekleniyor.'} İlgili krediler kullanıma kapalı.</p> : data.usedCredits > 0 ? <div className="payment-reversal-form">
+      {data.hasPending ? <p role="status">{cancellation ? 'Ödeme iptali sonucu bekleniyor.' : 'İade sonucu bekleniyor.'} İlgili krediler kullanıma kapalı.</p> : (data.usedCredits > 0 || data.orderKind === 'TOP_UP' || (!data.canSelfRefund && (data.refundableCredits ?? 0) > 0)) ? <div className="payment-reversal-form">
         <p>{count(data.usedCredits)} kredi kullanılmış. Kalan {count(data.refundableCredits ?? 0)} kredi için en fazla {money(data.refundableAmount ?? '0', data.currency)} iade talep edebilirsiniz.</p>
-        {(data.refundableCredits ?? 0) > 0 ? <><p>Talebiniz destek ekibine iletilir. İade tutarı inceleme anındaki kullanılmamış krediye göre belirlenir. Talep oluşturmak kredinizi veya otomatik yenilemeyi değiştirmez.</p>
+        {(data.refundableCredits ?? 0) > 0 ? <><p>Talebiniz destek ekibine iletilir. İade tutarı inceleme anındaki kullanılmamış krediye göre belirlenir. Talep oluşturmak kredinizi değiştirmez.</p>
         {data.refundRequest?.status === 'OPEN' ? <p role="status">İade talebiniz yönetici incelemesini bekliyor.</p> : <form className="payment-reversal-form" onSubmit={event => { event.preventDefault(); request.mutate(); }}>
           {data.refundRequest?.status === 'REJECTED' && <p>Önceki talep yanıtı: {data.refundRequest.reviewNote}</p>}
           <label><span className="field-label">İade talep nedeni *</span><textarea required minLength={3} maxLength={500} disabled={request.isPending} value={reason} onChange={event => setReason(event.target.value)} /></label>
@@ -47,9 +47,8 @@ export function CustomerRefundPanel({ orderId, onClose }: { orderId: string; onC
         </form>}</> : <p>İade edilebilir kredi kalmadı.</p>}
       </div> : data.canSelfRefund && <form className="payment-reversal-form" onSubmit={event => { event.preventDefault(); refund.mutate(); }}>
         <p><strong>{money(data.total, data.currency)}</strong> ödediğiniz karta iade edilecek; {count(data.originalCredits)} kredi kaldırılacak.</p>
-        <p>Bu sipariş aboneliğe aitse otomatik yenilemesi kapanır.</p>
         <label><span className="field-label">İade nedeni *</span><input required minLength={3} maxLength={500} disabled={refund.isPending} value={reason} onChange={event => setReason(event.target.value)} /></label>
-        <label className="integration-toggle credit-renewal-choice"><span>İadeyi ve ilgili kredilerin kaldırılmasını onaylıyorum.</span><input type="checkbox" role="switch" checked={confirmed} disabled={refund.isPending} onChange={event => setConfirmed(event.target.checked)} /><i aria-hidden="true" /></label>
+        <label className="integration-toggle credit-confirmation-choice"><span>İadeyi ve ilgili kredilerin kaldırılmasını onaylıyorum.</span><input type="checkbox" role="switch" checked={confirmed} disabled={refund.isPending} onChange={event => setConfirmed(event.target.checked)} /><i aria-hidden="true" /></label>
         <button className="button primary" disabled={refund.isPending || !confirmed || reason.trim().length < 3}>{refund.isPending ? 'İşleniyor…' : data.canCancel ? 'Ödeme İptalini Onayla' : 'İadeyi Onayla'}</button>
       </form>}
       {data.data.map(row => <article className="payment-reversal-row" key={row.id}><strong>{reversalStateLabel(row)} · {money(row.amount, row.currency)}</strong></article>)}

@@ -370,22 +370,21 @@ test('switching packages shows remaining time and requires end-of-period confirm
   await expect(page.getByText('Yeni paketin mevcut dönem bittikten sonra başlamasını onaylıyorum.')).toBeVisible();
   await expect(page.getByText(/Mevcut paketin yenilemesini kapatıp/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeDisabled();
-  await page.locator('.credit-quote .credit-renewal-choice').click();
+  await page.locator('.credit-quote .credit-confirmation-choice').click();
   await expect(page.getByRole('button', { name: 'Sipariş Oluştur' })).toBeEnabled();
   await page.getByRole('button', { name: 'Sipariş Oluştur' }).click();
   await expect.poll(() => writes.find(value => value.confirmPackageChange === true)).toBeTruthy();
 });
 
-test('Akbank catalog enables renewal when bank recurring is on', async ({ page }) => {
+test('Akbank catalog ignores legacy automatic renewal availability', async ({ page }) => {
   const writes = await mockApi(page, 'CUSTOMER');
   await page.route('**/api/v1/my/credit-store', route => route.fulfill({ json: { success: true, data: { settings, plans: [{ ...plan, renewalRequested: true }], owner, provider: 'akbank', paymentAvailable: true, recurringAvailable: true } } }));
   await page.goto('/customer/agreements?view=store');
   await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
   const toggle = page.getByRole('switch', { name: plan.name + ' dönem sonunda tekrarla' });
-  await expect(toggle).toBeEnabled();
-  await expect(toggle).toBeChecked();
+  await expect(toggle).toHaveCount(0);
   await page.getByRole('button', { name: 'Planı İncele' }).click();
-  await expect.poll(() => writes.find(value => value.planId === plan.id)?.renewalRequested).toBe(true);
+  await expect.poll(() => writes.find(value => value.planId === plan.id)).toEqual({ planId: plan.id });
 });
 
 test('Akbank catalog does not promise automatic renewal', async ({ page }) => {
@@ -394,11 +393,10 @@ test('Akbank catalog does not promise automatic renewal', async ({ page }) => {
   await page.goto('/customer/agreements?view=store');
   await page.getByRole('button', { name: 'Abonelikler', exact: true }).click();
   const toggle = page.getByRole('switch', { name: plan.name + ' dönem sonunda tekrarla' });
-  await expect(toggle).toBeDisabled();
-  await expect(toggle).not.toBeChecked();
+  await expect(toggle).toHaveCount(0);
   await page.getByRole('button', { name: 'Planı İncele' }).click();
-  await expect.poll(() => writes.find(value => value.planId === plan.id)?.renewalRequested).toBe(false);
-  await expect(page.getByRole('switch', { name: 'Özette dönem sonunda tekrarla' })).toBeDisabled();
+  await expect.poll(() => writes.find(value => value.planId === plan.id)).toEqual({ planId: plan.id });
+  await expect(page.getByRole('switch', { name: 'Özette dönem sonunda tekrarla' })).toHaveCount(0);
 });
 
 

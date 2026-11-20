@@ -40,7 +40,9 @@ test('notification sorting cycles and resets; long messages and actions stay ins
   await table.getByRole('button', { name: /^Tarih/ }).click();
   await expect(firstTitle).toHaveText('Zulu Bildirim');
   await expect(titleHeader).toHaveAttribute('aria-sort', 'none');
-  await table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true }).click();
+  await expect(table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true })).toHaveCount(0);
+  await table.getByRole('button', { name: /^Tarih/ }).click();
+  await table.getByRole('button', { name: /^Tarih/ }).click();
   await expect(firstTitle).toHaveText('Middle Bildirim');
   for (const width of [1440, 1100, 800]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -71,7 +73,7 @@ test('notification sorting cycles and resets; long messages and actions stay ins
   await page.screenshot({ path: 'output/notification-sorting-layout.png', fullPage: true });
 });
 
-test('all management tables expose three-state sortable columns and a working reset', async ({ page }) => {
+test('management tables sort through headers without a separate reset button', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const user = { id: 'admin', name: 'Test Yönetici', email: 'test@example.test', role: 'ADMIN', departmentIds: [] };
@@ -108,7 +110,9 @@ test('all management tables expose three-state sortable columns and a working re
       await button.click(); await expect(header).toHaveAttribute('aria-sort', 'none');
     }
     await table.getByRole('button', { name: columns[0], exact: true }).click();
-    await table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true }).click();
+    await expect(table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true })).toHaveCount(0);
+    await table.getByRole('button', { name: columns[0], exact: true }).click();
+    await table.getByRole('button', { name: columns[0], exact: true }).click();
     await expect(table.locator('th[aria-sort="ascending"], th[aria-sort="descending"]')).toHaveCount(0);
     if (url === '/admin/users') {
       for (const width of [1440, 1100, 800, 480]) {
@@ -119,7 +123,8 @@ test('all management tables expose three-state sortable columns and a working re
           const cells = Array.from(element.querySelectorAll('tbody td'));
           return { scroll: wrap.scrollWidth, width: wrap.clientWidth, ellipsis: getComputedStyle(text).textOverflow, overlap: cells.some(cell => Array.from(cell.children).some(child => child.getBoundingClientRect().right > cell.getBoundingClientRect().right + 1)) };
         });
-        expect(layout.scroll).toBeLessThanOrEqual(layout.width + 1);
+        if (width >= 1100) expect(layout.scroll).toBeLessThanOrEqual(layout.width + 1);
+        else expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
         expect(layout.ellipsis).toBe('ellipsis');
         expect(layout.overlap).toBe(false);
       }
@@ -133,7 +138,9 @@ test('all management tables expose three-state sortable columns and a working re
     const name = table.getByRole('button', { name: 'Ad', exact: true });
     await name.click();
     await expect(table.locator('th[aria-sort="ascending"]')).toHaveCount(1);
-    await table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true }).click();
+    await expect(table.getByRole('button', { name: 'Varsayılan Sıralamaya Dön', exact: true })).toHaveCount(0);
+    await name.click();
+    await name.click();
   }
   expect(errors).toEqual([]);
 });

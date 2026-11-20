@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { AppError } from "../utils/errors.js";
 import { durationFields, hasOneDuration } from "./credit-periods.js";
+// Accept false from older clients, but never allow new renewal consent.
+export const renewalPreference = z.boolean().transform(value => {
+  if (value) throw new AppError(400, 'RENEWAL_DISABLED', 'Otomatik yenileme kald?r?ld?.');
+  return value;
+});
 const money = z
   .string()
   .trim()
@@ -48,7 +53,7 @@ export const salesPlanInput = z
     description: z.string().trim().max(1000).default(""),
     ...durationFields,
     periodName: z.string().trim().min(1).max(80).nullable().optional(),
-    renewalRequested: z.boolean().default(false),
+    renewalRequested: renewalPreference.default(false),
     price: positiveMoney,
     credits: z.number().int().min(1).max(1000000),
     active: z.boolean(),
@@ -62,7 +67,7 @@ export const quoteInput = z.union([
   z.object({ credits: z.number().int().min(1).max(1000000) }).strict(),
   z.object({ amount: positiveMoney }).strict(),
   z
-    .object({ planId: z.uuid(), renewalRequested: z.boolean().optional() })
+    .object({ planId: z.uuid(), renewalRequested: renewalPreference.optional() })
     .strict(),
 ]);
 export function creditQuote(

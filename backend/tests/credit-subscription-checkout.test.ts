@@ -7,7 +7,7 @@ import { createCreditOrder, cancelCreditOrder } from '../src/services/credit-ord
 import { storeQuote } from '../src/services/credit-store.service.js';
 import { prepareCreditCheckoutPayment, settleVerifiedCreditPayment, runCreditRenewals, billingToday } from '../src/services/credit-subscriptions.service.js';
 
-test('subscription checkout snapshots terms and links one subscription to an idempotent order', async t => {
+test('period package checkout snapshots one-time terms, preserves idempotency and grants paid credit once', async t => {
   const owner = await db.user.create({ data: { name: 'Checkout fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
   const plan = await db.creditSalesPlan.create({ data: { name: 'Checkout monthly', description: '', price: '100', currency: 'TRY', periodMonths: 1, credits: 25, active: true, renewalRequested: true } });
   const originalSettings = db.creditSalesSettings.findUnique;
@@ -20,7 +20,7 @@ test('subscription checkout snapshots terms and links one subscription to an ide
       tx.creditSalesSettings.findUnique = config;
       return work(tx);
     }, options)) as any;
-    const selection = { planId: plan.id, renewalRequested: true };
+    const selection = { planId: plan.id };
     const quote = await storeQuote(actor, selection);
     const input = { requestKey: randomUUID(), selection, quoteKey: quote.quoteKey };
     const created = await createCreditOrder(actor, input);
@@ -30,7 +30,9 @@ test('subscription checkout snapshots terms and links one subscription to an ide
     const order = await db.creditOrder.findUniqueOrThrow({ where: { id: created.id } });
     assert.ok(order.subscriptionId);
     const sub = await db.creditSubscription.findUniqueOrThrow({ where: { id: order.subscriptionId! } });
-    assert.ok(sub.consentedAt); assert.equal(sub.autoRenew, true);
+    assert.equal(sub.autoRenew, false); assert.equal(sub.nextPaymentOn, null);
+    assert.equal(sub.consentedAt, null); assert.equal(sub.paymentMethodRef, null); assert.equal(sub.provider, null);
+    assert.equal(order.renewalRequested, false);
     await db.creditSalesPlan.update({ where: { id: plan.id }, data: { price: '200', credits: 50 } });
     const method = { provider: 'fixture', paymentMethodRef: 'opaque-provider-token' };
     const first = await prepareCreditCheckoutPayment(actor, created.id, method);
@@ -44,42 +46,26 @@ test('subscription checkout snapshots terms and links one subscription to an ide
     const grant = await db.agreement.findFirstOrThrow({ where: { customerId: owner.id } });
     assert.equal(grant.credits, 25); assert.equal(grant.fee.toFixed(2), '100.00');
     assert.equal(await db.agreement.count({ where: { customerId: owner.id } }), 1);
-    assert.ok((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).nextPaymentOn);
+    assert.equal(grant.renewalRequested, false);
+    assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).status, 'STOPPED');
     const nextQuote = await storeQuote(actor, selection);
     assert.ok('startsOn' in nextQuote && nextQuote.currentPackage);
-    if (!('currentPackage' in nextQuote) || !nextQuote.currentPackage) throw new Error('Missing current package');
-    assert.equal(nextQuote.currentPackage.autoRenew, true);
-    await db.creditSubscription.update({ where: { id: sub.id }, data: { autoRenew: false } });
-    const nonRenewingQuote = await storeQuote(actor, selection);
-    assert.equal('currentPackage' in nonRenewingQuote && nonRenewingQuote.currentPackage?.autoRenew, false);
-    assert.notEqual(nonRenewingQuote.quoteKey, nextQuote.quoteKey, 'Renewal-state changes require fresh confirmation');
-    await db.creditSubscription.update({ where: { id: sub.id }, data: { autoRenew: true } });
+    assert.equal('currentPackage' in nextQuote && nextQuote.currentPackage?.autoRenew, false);
     if (!('startsOn' in nextQuote)) throw new Error('Missing schedule');
     assert.equal(nextQuote.startsOn, new Date(grant.endsOn.getTime() + 86400000).toISOString().slice(0,10));
     const nextInput = { requestKey: randomUUID(), selection, quoteKey: nextQuote.quoteKey };
     await assert.rejects(createCreditOrder(actor, nextInput), { code: 'PACKAGE_CHANGE_CONFIRMATION_REQUIRED' });
     const scheduledOrder = await createCreditOrder(actor, { ...nextInput, confirmPackageChange: true });
-    assert.equal((await db.creditSubscription.findUniqueOrThrow({ where: { id: sub.id } })).autoRenew, false);
+    assert.equal(await db.creditSubscription.count({ where: { customerId: owner.id } }), 2);
     assert.equal((await db.agreement.findUniqueOrThrow({ where: { id: grant.id } })).credits, 25);
     await assert.rejects(storeQuote(actor, selection), { code: 'PACKAGE_ORDER_EXISTS' });
-    const scheduled = await prepareCreditCheckoutPayment(actor, scheduledOrder.id, method);
-    assert.equal(scheduled.attemptId, null);
+    await assert.rejects(prepareCreditCheckoutPayment(actor, scheduledOrder.id, method), { code: 'PAYMENT_NOT_DUE' });
     let charged = 0;
-    const provider = { name: 'fixture', reconcile: async () => null, charge: async (value: any) => { charged++; return { ...value, provider: 'fixture', paymentId: value.attemptId, outcome: 'PAID' as const }; } };
-    await runCreditRenewals(provider);
-    assert.equal(charged, 0, 'Future package must not charge early');
-    const extendedEnd = new Date(grant.endsOn.getTime() + 7 * 86400000);
-    await db.agreement.update({ where: { id: grant.id }, data: { endsOn: extendedEnd } });
+    const provider = { name: 'fixture', reconcile: async () => null, charge: async () => { charged++; throw new Error('Automatic charge must remain disabled'); } };
     await runCreditRenewals(provider, new Date(nextQuote.startsOn + 'T09:00:00Z'));
-    assert.equal(charged, 0, 'An extension must postpone a queued package too');
-    const postponed = await db.creditOrder.findUniqueOrThrow({ where: { id: scheduledOrder.id } });
-    assert.equal(postponed.periodStartsOn?.getTime(), extendedEnd.getTime() + 86400000);
-    await runCreditRenewals(provider, new Date(postponed.periodStartsOn!.getTime() + 9 * 3600000));
-    assert.equal(charged, 1);
-    const paidNext = await db.creditOrder.findUniqueOrThrow({ where: { id: scheduledOrder.id } });
-    assert.equal(paidNext.status, 'PAID');
-    const nextGrant = await db.agreement.findUniqueOrThrow({ where: { id: paidNext.grantedAgreementId! } });
-    assert.ok(nextGrant.startsOn > extendedEnd);
+    assert.equal(charged, 0);
+    assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: scheduledOrder.id } })).status, 'PENDING');
+    assert.equal(await db.creditSubscription.count({ where: { customerId: owner.id } }), 2);
     const topup = await storeQuote(actor, { credits: 5 });
     assert.equal(topup.kind, 'TOP_UP');
 

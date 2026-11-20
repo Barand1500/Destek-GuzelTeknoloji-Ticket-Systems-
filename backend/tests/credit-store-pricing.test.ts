@@ -5,6 +5,7 @@ import {
   creditQuote,
   salesSettingsInput,
   salesPlanInput,
+  quoteInput,
 } from "../src/services/credit-store-pricing.js";
 const settings = { unitPrice: "2.50", minCredits: 10, maxCredits: 1000 };
 test("quotes calculate exact money in both directions without losing fractional credits", () => {
@@ -74,4 +75,15 @@ test("fractional credit errors suggest valid nearby totals", () => {
     () => creditQuote(settings, { amount: "26.00" }),
     /25[.,]00.*27[.,]50/,
   );
+});
+
+
+test('legacy renewal setup requests fail explicitly while one-time plans remain valid', () => {
+  const plan = { name: 'Period package', periodMonths: 1, credits: 10, price: '10', active: true };
+  assert.equal(salesPlanInput.parse(plan).renewalRequested, false);
+  assert.equal(salesPlanInput.parse({ ...plan, renewalRequested: false }).renewalRequested, false);
+  assert.throws(() => salesPlanInput.parse({ ...plan, renewalRequested: true }), { code: 'RENEWAL_DISABLED' });
+  const planId = 'b64e9a50-1641-4c37-b628-48dad163cb5a';
+  assert.throws(() => quoteInput.parse({ planId, renewalRequested: true }), { code: 'RENEWAL_DISABLED' });
+  assert.equal(quoteInput.parse({ planId }).planId, planId);
 });

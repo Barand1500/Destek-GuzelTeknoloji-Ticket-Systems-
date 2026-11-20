@@ -116,19 +116,19 @@ test("period catalogs require exact permissions, bound rows, audit and preserve 
     price: "50",
     credits: 100,
     active: true,
-    renewalRequested: true,
+    renewalRequested: false,
   });
   await saveSalesPlan(admin, null, input);
   const first = await storeQuote(customer, { planId: "plan" }, tx);
   assert.equal(first.validityDays, 3);
   assert.equal(first.periodMonths, null);
-  assert.equal(first.renewalRequested, true);
+  assert.equal(first.renewalRequested, false);
   const once = await storeQuote(
     customer,
     { planId: "plan", renewalRequested: false },
     tx,
   );
-  assert.notEqual(once.quoteKey, first.quoteKey);
+  assert.equal(once.quoteKey, first.quoteKey);
   await archiveCreditPeriod(admin, "template");
   assert.equal(
     (await storeQuote(customer, { planId: "plan" }, tx)).quoteKey,

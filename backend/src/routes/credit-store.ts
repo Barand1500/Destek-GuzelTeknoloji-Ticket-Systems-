@@ -120,15 +120,6 @@ creditStoreRouter.post(
       ),
     }),
 );
-creditStoreRouter.post("/my/credit-store/orders/:id/cancel", async (req, res) =>
-  res.json({
-    success: true,
-    data: await orders.cancelCreditOrder(
-      req.actor,
-      idSchema.parse(req.params.id),
-    ),
-  }),
-);
 creditStoreRouter.get("/credit-sales/orders", async (req, res) =>
   res.json({
     success: true,
@@ -155,3 +146,5 @@ creditStoreRouter.post('/my/credit-store/subscriptions/:id/accept', async (req, 
 creditStoreRouter.post('/my/credit-store/subscriptions/:id/stop', async (req, res) => res.json(await subscriptions.changeSubscription(req.actor, idSchema.parse(req.params.id), 'stop')));
 creditStoreRouter.get('/credit-sales/subscriptions', async (req, res) => res.json({ success: true, ...await subscriptions.listSubscriptions(req.actor, subscriptions.subscriptionListInput.parse(req.query), true) }));
 creditStoreRouter.post('/credit-sales/subscriptions/:id/stop', async (req, res) => res.json(await subscriptions.changeSubscription(req.actor, idSchema.parse(req.params.id), 'stop', true)));
+
+creditStoreRouter.post('/my/credit-store/orders/:id/cancel', async (req, res) => res.json({ success: true, data: await orders.cancelCreditOrder(req.actor, idSchema.parse(req.params.id)) }));

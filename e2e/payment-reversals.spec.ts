@@ -36,7 +36,7 @@ test('admin reviews credit-based refund, confirms amount and sees customer-facin
   await panel.getByLabel('İade nedeni *').fill('Müşteri talebiyle kısmi iade');
   await expect(panel.getByText(/İade tutarı:.*25,25/)).toBeVisible();
   await expect(panel.getByRole('button', { name: 'İadeyi Onayla' })).toBeDisabled();
-  await panel.locator('.credit-renewal-choice span').click();
+  await panel.locator('.credit-confirmation-choice span').click();
   await panel.getByRole('button', { name: 'İadeyi Onayla' }).click();
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].credits).toBe(25);

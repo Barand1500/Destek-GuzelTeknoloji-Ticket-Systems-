@@ -89,16 +89,9 @@ test("real database serializes concurrent order replays and preserves original p
         active: true,
       },
     });
-    const planSelection = { planId, renewalRequested: true };
+    await assert.rejects(storeQuote(actor, { planId, renewalRequested: true }, wrap(db)), { code: 'RENEWAL_DISABLED' });
+    const planSelection = { planId };
     const planQuote = await storeQuote(actor, planSelection, wrap(db));
-    await assert.rejects(
-      createCreditOrder(actor, {
-        requestKey: randomUUID(),
-        selection: { planId, renewalRequested: false },
-        quoteKey: planQuote.quoteKey,
-      }),
-      { code: "QUOTE_CHANGED" },
-    );
     const planInput = {
       requestKey: randomUUID(),
       selection: planSelection,
@@ -107,7 +100,8 @@ test("real database serializes concurrent order replays and preserves original p
     const planOrder = await createCreditOrder(actor, planInput);
     assert.equal(planOrder.validityDays, 90);
     assert.equal(planOrder.periodMonths, null);
-    assert.equal(planOrder.renewalRequested, true);
+    assert.equal(planOrder.renewalRequested, false);
+    assert.ok(planOrder.subscriptionId);
     assert.equal(planOrder.periodName, "90-day fixture");
     await db.creditSalesPlan.update({
       where: { id: planId },
@@ -116,7 +110,7 @@ test("real database serializes concurrent order replays and preserves original p
     const planReplay = await createCreditOrder(actor, planInput);
     assert.equal(planReplay.validityDays, 90);
     assert.equal(planReplay.periodMonths, null);
-    assert.equal(planReplay.renewalRequested, true);
+    assert.equal(planReplay.renewalRequested, false);
     assert.equal(await db.agreement.count({ where: { customerId: id } }), 0);
   } finally {
     db.$transaction = original;

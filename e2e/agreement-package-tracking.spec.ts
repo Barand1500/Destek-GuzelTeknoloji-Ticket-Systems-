@@ -11,6 +11,8 @@ async function setup(page: Page, role: 'ADMIN' | 'CUSTOMER') {
     const send = (data: unknown) => route.fulfill({ json: { success: true, data, pagination: { page: 1, total: 1, totalPages: 1, limit: 15 } } });
     if (path === '/auth/refresh') return send({ accessToken: 'test', user: role === 'CUSTOMER' ? customer : { id: 'staff', name: 'Yönetici', role } });
     if (path === '/customers') return send([customer]);
+    if (path === `/customers/${customerId}`) return send(customer);
+    if (path === `/customers/${customerId}/relations`) return send({customer, children: []});
     if (path === `/customers/${customerId}/agreements`) {
       if (route.request().method() === 'POST') writes.push(route.request().postDataJSON());
       return send({ customer, parent: null, children: [], agreements: [agreement], availableCredits: 0, charges: [] });
@@ -40,51 +42,50 @@ test('customer sees dates, usage and depleted state without expanding package', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
-test('staff create and edit persist renewal preference with clear helper', async ({ page }) => {
+test('staff create and edit agreements without renewal preferences', async ({ page }) => {
   const writes = await setup(page, 'ADMIN');
   await page.goto('/admin/customers');
-  await page.getByRole('button', { name: 'Paket Firması yönetimi', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  await page.locator('.customer-list-table tbody tr').first().dblclick();
+  await page.getByRole('button', { name: 'Şirket Yönetimi', exact: true }).click();
+  const dialog = page.locator('.customer-management-page');
   await dialog.getByRole('button', { name: '+ Anlaşma Ekle', exact: true }).click();
   await dialog.getByLabel('Anlaşma Adı', { exact: true }).fill('Yeni paket');
   await dialog.getByLabel('Başlangıç Tarihi', { exact: true }).fill('2026-11-17');
   await dialog.getByLabel('Kredi Miktarı').fill('10');
   await dialog.getByRole('textbox',{name:'Anlaşma dönem tutarı'}).fill('1250,50');
   const toggle = dialog.getByRole('checkbox', { name: /Dönem sonunda tekrarla/ });
-  await expect(toggle).not.toBeChecked();
-  await dialog.locator('.agreement-renewal-toggle').click();
-  await expect(dialog.getByText('Anlaşmanın kendi tutarı ve dönemiyle yenilenir. Tahsilat için müşteri onayı ve ödeme bağlantısı gerekir.', { exact: true })).toBeVisible();
+  await expect(toggle).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Anlaşmayı Kaydet', exact: true }).click();
   await expect.poll(() => writes.length).toBe(1);
-  expect(writes[0].renewalRequested).toBe(true);
+  expect(writes[0].renewalRequested).toBeUndefined();
   await dialog.getByRole('button', { name: 'Destek Paketi anlaşmasını düzenle', exact: true }).click();
-  await expect(toggle).toBeChecked();
-  await dialog.locator('.agreement-renewal-toggle').click();
+  await expect(toggle).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Değişiklikleri Kaydet', exact: true }).click();
   await expect.poll(() => writes.length).toBe(2);
-  expect(writes[1].renewalRequested).toBe(false);
+  expect(writes[1].renewalRequested).toBeUndefined();
 });
 
 test('customer credit history opens as a page and survives reload', async ({page}) => {
  await setup(page,'CUSTOMER');
  await page.goto('/customer/agreements');
- await page.getByRole('button',{name:'Kredi Hareketleri',exact:true}).click();
+ await page.getByRole('tab',{name:'Kredi Hareketleri',exact:true}).click();
  await expect(page).toHaveURL(/view=history/);
  await expect(page.getByRole('table',{name:'Kredi Hareketleri',exact:true})).toBeVisible();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await page.reload();
  await expect(page.getByRole('table',{name:'Kredi Hareketleri',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Anlaşmalara Dön',exact:true}).click();
+ await page.getByRole('tab',{name:'Anlaşmalarım',exact:true}).click();
  await expect(page).toHaveURL(/view=agreements/);
  await expect(page.locator('.agreement-card')).toBeVisible();
  await page.goBack();
  await expect(page.getByRole('table',{name:'Kredi Hareketleri',exact:true})).toBeVisible();
 });
-test('staff customer management keeps credit history inside its modal',async({page})=>{
+test('staff customer management keeps credit history inside its company section',async({page})=>{
  await setup(page,'ADMIN');
  await page.goto('/admin/customers');
- await page.getByRole('button',{name:'Paket Firması yönetimi',exact:true}).click();
- const dialog=page.getByRole('dialog');
+ await page.locator('.customer-list-table tbody tr').first().dblclick();
+ await page.getByRole('button',{name:'Şirket Yönetimi',exact:true}).click();
+ const dialog=page.locator('.customer-management-page');
  await dialog.getByRole('button',{name:'Kredi Hareketleri',exact:true}).click();
  await expect(dialog).toBeVisible();
  await expect(dialog.getByRole('table',{name:'Kredi Hareketleri',exact:true})).toBeVisible();
@@ -117,7 +118,7 @@ test('credit history loads pages beyond the first hundred records', async ({ pag
   expect(requested).toEqual([1, 2, 3, 4, 5, 6, 7]);
 });
 
-test('customer sees subscription terms and must confirm recurring consent before acceptance', async ({ page }) => {
+test('customer sees package history without recurring enrollment controls', async ({ page }) => {
   await setup(page, 'CUSTOMER');
   let status = 'AWAITING_CONSENT';
   const actions: string[] = [];
@@ -131,28 +132,22 @@ test('customer sees subscription terms and must confirm recurring consent before
     return route.fulfill({ json: { success: true, data: [{ id: 'sub', name: 'Üç Aylık Destek', amount: '1250.50', currency: 'TRY', credits: 300, periodMonths: 3, periodDays: null, autoRenew: status === 'AWAITING_PAYMENT', status, nextPaymentOn: '2026-12-01', currentEndsOn: '2026-11-30', customer: { name: 'Paket Firması', company: null } }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } });
   });
   await page.goto('/customer/agreements');
-  await page.getByRole('button', { name: 'Aboneliklerim', exact: true }).click();
+  await page.getByRole('tab', { name: 'Siparişlerim ve Aboneliklerim', exact: true }).click();
+  await page.getByRole('tab', { name: 'Aboneliklerim', exact: true }).click();
   await expect(page).toHaveURL(/view=subscriptions/);
-  await expect(page.getByRole('cell', { name: '01.12.2026', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '01.12.2026', exact: true })).toHaveCount(0);
   await expect(page.getByRole('cell', { name: '₺1.250,50', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Koşulları Onayla', exact: true }).click();
-  const confirm = page.getByRole('region', { name: 'Yenileme onayı' });
-  await expect(confirm.getByRole('button', { name: 'Onayla', exact: true })).toBeDisabled();
-  await confirm.locator('.integration-toggle').click();
-  await expect(confirm.getByRole('checkbox')).toBeChecked();
-  await confirm.getByRole('button', { name: 'Onayla', exact: true }).click();
-  await expect.poll(() => actions).toEqual(['accept']);
-  await expect(page.getByText('İlk ödeme bekliyor', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Yenilemeyi Kapat', exact: true }).click();
-  await confirm.getByRole('button', { name: 'Yenilemeyi Kapat', exact: true }).click();
-  await expect.poll(() => actions).toEqual(['accept', 'stop']);
-  await expect(page.getByRole('cell', { name: 'Yenileme kapalı', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Koşulları Onayla|Yenilemeyi Kapat|Ödemeye Geç/ })).toHaveCount(0);
+  await expect(page.getByRole('columnheader', { name: 'Planlanan yenileme' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Siparişler', exact: true })).toBeVisible();
+  expect(actions).toEqual([]);
 });
 test('agreement renewal uses its own price currency and period without a separate offer screen', async ({ page }) => {
   const writes = await setup(page, 'ADMIN');
   await page.goto('/admin/customers');
-  await page.getByRole('button', { name: 'Paket Firması yönetimi', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  await page.locator('.customer-list-table tbody tr').first().dblclick();
+  await page.getByRole('button', { name: 'Şirket Yönetimi', exact: true }).click();
+  const dialog = page.locator('.customer-management-page');
   await expect(dialog.getByRole('button', { name: 'Dönemsel Ödeme Ayarla', exact: true })).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Destek Paketi anlaşmasını düzenle', exact: true }).click();
   await dialog.getByRole('textbox', { name: 'Anlaşma dönem tutarı' }).fill('1250,50');
@@ -162,4 +157,26 @@ test('agreement renewal uses its own price currency and period without a separat
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].fee).toBe('1250.50');
   expect(writes[0].currency).toBe('EUR');
+});
+
+test('package badges reflect paid dates and refunds instead of retired recurring status', async ({ page }) => {
+  await setup(page, 'CUSTOMER');
+  const cases = [
+    { id: 'active', name: 'Aktif paket', lastOrderStatus: 'PAID', currentEndsOn: '2099-12-31', label: 'Aktif', badge: 'active' },
+    { id: 'refunded', name: 'İade paketi', lastOrderStatus: 'REFUNDED', currentEndsOn: '2099-12-31', label: 'İade edildi', badge: 'refunded' },
+    { id: 'partial', name: 'Kısmi paket', lastOrderStatus: 'PARTIAL_REFUND', currentEndsOn: '2099-12-31', label: 'Kısmi iade', badge: 'partial_refund' },
+    { id: 'cancelled', name: 'İptal paketi', lastOrderStatus: 'CANCELLED', currentEndsOn: null, label: 'İptal edildi', badge: 'cancelled' },
+    { id: 'failed', name: 'Başarısız paket', lastOrderStatus: 'FAILED', currentEndsOn: null, label: 'Ödeme alınamadı', badge: 'failed' },
+  ];
+  await page.route('**/api/v1/my/credit-store/subscriptions**', route => route.fulfill({ json: {
+    success: true, data: cases.map(row => ({ ...row, amount: '100', currency: 'TRY', credits: 100, periodMonths: 1, periodDays: null, status: 'STOPPED', currentStartsOn: '2026-01-01', customer: { name: 'Paket Firması', company: null } })),
+    pagination: { page: 1, limit: 20, total: cases.length, totalPages: 1 },
+  } }));
+  await page.goto('/customer/agreements?view=subscriptions');
+  for (const item of cases) {
+    const row = page.getByRole('row').filter({ has: page.getByRole('cell', { name: new RegExp(item.name) }) });
+    const badge = row.locator('.credit-order-status');
+    await expect(badge).toHaveText(item.label);
+    await expect(badge).toHaveClass(new RegExp('credit-order-status-' + item.badge));
+  }
 });

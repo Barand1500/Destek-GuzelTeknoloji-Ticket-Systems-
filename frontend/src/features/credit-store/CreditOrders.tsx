@@ -1,6 +1,6 @@
+import { CustomerRefundPanel } from './CustomerRefundPanel';
 import { bankCancellationConfirmed } from './reversal-labels';
 import { PaymentReversalPanel } from "./PaymentReversalPanel";
-import { CustomerRefundPanel } from './CustomerRefundPanel';
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,6 @@ type Order = {
   validityDays: number | null;
   periodMonths: number | null;
   periodName?: string | null;
-  renewalRequested?: boolean;
   status: "PENDING" | "CANCELLED" | "PAID" | "FAILED" | "PARTIAL_REFUND" | "REFUNDED";
   reversals?: { id: string; kind?: string; status: string; amount: string; credits: number }[];
   createdAt: string;
@@ -59,7 +58,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
   const [params] = useSearchParams();
   const subscriptionId = params.get("subscriptionId") || undefined;
   const base = admin ? "/credit-sales/orders" : "/my/credit-store/orders";
-  const canCancel = !admin || hasPermission(user, "integrations.update");
+  const canCancel = admin && hasPermission(user, "integrations.update");
   const [page, setPage] = useState(1),
     [limit, setLimit] = useState(20),
     [search, setSearch] = useState(""),
@@ -123,8 +122,8 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
         Ödeme bekleyen siparişler kredi
         bakiyesini değiştirmez. Tutarlar sipariş anındaki fiyatları gösterir.
       </p></>}
-      {admin && refundOrderId && <PaymentReversalPanel key={`${refundOrderId}-${reversalKind}`} kind={reversalKind} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {!admin && refundOrderId && <CustomerRefundPanel key={refundOrderId} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
+      {admin && refundOrderId && <PaymentReversalPanel key={`${refundOrderId}-${reversalKind}`} kind={reversalKind} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
       {admin && <label className="credit-orders-request-filter"><span>İade talepleri</span><input type="checkbox" checked={refundRequested} onChange={e => { setRefundRequested(e.target.checked); setPage(1); }} /></label>}
       <div className="credit-orders-filters">
@@ -202,7 +201,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                     <th>Kredi</th>
                     <th>Tutar</th>
                     <th>Durum</th>
-                    {canCancel && (
+                    {(canCancel || !admin) && (
                       <th>
                         <span className="credit-orders-action-label">
                           İşlem
@@ -243,12 +242,6 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                               ? `${count(order.validityDays)} gün geçerli`
                               : "Ek kredi"}
                         </small>
-                        {order.kind === "SUBSCRIPTION" && (
-                          <small>
-                            Tekrarlama tercihi:{" "}
-                            {order.renewalRequested ? "Evet" : "Hayır"}
-                          </small>
-                        )}
                       </td>
                       <td>{count(order.credits)}</td>
                       <td>
@@ -266,13 +259,13 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         {order.paymentInProgress && <small>Banka sonucu kontrol ediliyor.</small>}
                         {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>{bankCancellationConfirmed(order.reversals) ? 'İptal tutarı' : 'İade'}: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
                       </td>
-                      {canCancel && (
+                      {(canCancel || !admin) && (
                         <td>
                           <div className="credit-order-actions">
                             {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
-                            {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.status === 'PAID' && !order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.usedCredits ? 'İade Talep Et' : order.paidAt && new Date(order.paidAt).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) ? 'Ödemeyi İptal Et' : 'İade Et') : (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı')}</button>}
+                            {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.kind === 'TOP_UP' || order.usedCredits || order.status === 'PARTIAL_REFUND' ? 'İade Talep Et' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
                             {!admin && !order.paymentInProgress && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
-                            {["PENDING", "FAILED"].includes(order.status) && (
+                            {(canCancel || (!admin && order.kind === "SUBSCRIPTION")) && ["PENDING", "FAILED"].includes(order.status) && (
                               <button
                                 type="button"
                                 className="button secondary"

@@ -8,7 +8,7 @@ import './credit-store.css';
 export function PaymentSettingsPage() {
   const { user } = useAuth();
   return <main className="page credit-sales-page">
-    <Heading title="Ödeme Ayarları" description="Ödeme sağlayıcısını, bağlantı bilgilerini ve otomatik tahsilatı yönetin." />
+    <Heading title="Ödeme Ayarları" description="Ödeme sağlayıcısını, bağlantı bilgilerini yönetin." />
     <div className="credit-sales-sections">
       <AkbankSettings editable={hasPermission(user, 'integrations.update')} />
       <PaymentSettings editable={hasPermission(user, 'integrations.update')} />

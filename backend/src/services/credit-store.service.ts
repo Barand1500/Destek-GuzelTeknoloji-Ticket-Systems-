@@ -14,6 +14,7 @@ import {
   type salesSettingsInput,
   type salesPlanInput,
   type quoteInput,
+  renewalPreference,
 } from "./credit-store-pricing.js";
 import type { z } from "zod";
 type StoreClient = Pick<
@@ -141,12 +142,13 @@ export async function saveSalesPlan(
   input: z.infer<typeof salesPlanInput>,
 ) {
   staff(actor, true);
+  renewalPreference.parse(input.renewalRequested ?? false);
   const planData = {
     ...input,
     periodMonths: input.periodMonths ?? null,
     periodDays: input.periodDays ?? null,
     periodName: input.periodName ?? null,
-    renewalRequested: input.renewalRequested ?? false,
+    renewalRequested: false,
   };
   return db.$transaction(async (tx) => {
     if (
@@ -220,6 +222,7 @@ export async function storeQuote(
   input: z.infer<typeof quoteInput>,
   client: StoreClient = db,
 ) {
+  if ('renewalRequested' in input) renewalPreference.parse(input.renewalRequested ?? false);
   const account = await creditStoreOwner(actor, client),
     config = await settings(client);
   if (!config.enabled)
@@ -245,8 +248,7 @@ export async function storeQuote(
       periodMonths: plan.periodMonths,
       validityDays: plan.periodDays ?? null,
       periodName: plan.periodName ?? null,
-      renewalRequested:
-        input.renewalRequested ?? plan.renewalRequested ?? false,
+      renewalRequested: false,
     });
   }
   return quoteSnapshot({

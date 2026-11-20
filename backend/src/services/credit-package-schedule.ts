@@ -13,10 +13,7 @@ export async function packageSchedule(client: ScheduleClient, customerId: string
   const today = billingToday();
   const current = await client.agreement.findFirst({
     where: { ...retainedPackage, customerId, endsOn: { gte: today } },
-    orderBy: [{ endsOn: 'desc' }, { id: 'asc' }], select: { id: true, name: true, endsOn: true,
-      sourceSubscription: { select: { autoRenew: true, status: true } },
-      grantedOrder: { select: { subscription: { select: { autoRenew: true, status: true } } } },
-    },
+    orderBy: [{ endsOn: 'desc' }, { id: 'asc' }], select: { id: true, name: true, endsOn: true },
   });
   const queued = await client.creditOrder.findFirst({
     where: { customerId, kind: 'SUBSCRIPTION', status: { in: ['PENDING', 'FAILED'] } }, select: { id: true, number: true },
@@ -26,7 +23,7 @@ export async function packageSchedule(client: ScheduleClient, customerId: string
   const end = new Date(billingBoundary(start, months, days, 1).getTime() - 86_400_000);
   return {
     startsOn: start.toISOString().slice(0, 10), endsOn: end.toISOString().slice(0, 10),
-    currentPackage: current ? { id: current.id, name: current.name, endsOn: current.endsOn.toISOString().slice(0, 10), remainingDays: Math.ceil((start.getTime() - today.getTime()) / 86_400_000), autoRenew: [current.sourceSubscription, current.grantedOrder?.subscription].some(row => row?.autoRenew && row.status !== 'STOPPED') } : null,
+    currentPackage: current ? { id: current.id, name: current.name, endsOn: current.endsOn.toISOString().slice(0, 10), remainingDays: Math.ceil((start.getTime() - today.getTime()) / 86_400_000), autoRenew: false } : null,
   };
 }
 
@@ -43,5 +40,5 @@ export async function refreshPackageStart(tx: Prisma.TransactionClient, order: {
   await tx.creditOrder.update({ where: { id: order.id }, data: { periodStartsOn: start, periodEndsOn: end } });
   order.periodStartsOn = start;
   order.periodEndsOn = end;
-  if (order.subscriptionId) await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { anchorOn: start, anchorPeriod: (order.periodNumber ?? 1) - 1, nextPaymentOn: start } });
+  if (order.subscriptionId) await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { anchorOn: start, anchorPeriod: (order.periodNumber ?? 1) - 1, nextPaymentOn: null } });
 }
