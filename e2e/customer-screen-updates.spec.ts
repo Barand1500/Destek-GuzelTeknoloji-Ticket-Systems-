@@ -7,7 +7,7 @@ async function setup(page: Page) {
   const company = {
     id: companyId, name: 'YUNUS DURGUN', company: 'Güzel Teknoloji', phone: '5301234567', email: 'yunus@example.test',
     extraPhones: '5321112233, 5334445566', extraEmails: 'ikinci@example.test, ucuncu@example.test',
-    role: 'CUSTOMER', isActive: true, parentCustomerId: null, staffNote: '',
+    role: 'CUSTOMER', isActive: true, parentCustomerId: null, staffNote: '', availableCredits: 140,
   };
   const child = { id: childId, name: 'Baran Kişi', company: 'Güzel Teknoloji', phone: '5359998877', email: 'baran@example.test', role: 'CUSTOMER', isActive: true, parentCustomerId: companyId };
   const conversation = { id: 'conversation-1', number: 825, subject: 'deneme', status: 'OPEN', firstMessage: 'deneme', createdAt: '2026-11-18T06:18:00Z', updatedAt: '2026-11-18T07:18:00Z', assignees: [] };
@@ -148,3 +148,30 @@ for (const theme of ['light', 'dark']) {
   }
  });
 }
+
+test('customer list shows available credit before status and keeps actions last', async ({ page }) => {
+ await setup(page);
+ await page.goto('/admin/customers');
+ const table = page.locator('.customer-list-table');
+ await expect(table.locator('thead th').nth(2)).toHaveText('Kredi');
+ await expect(table.locator('thead th').nth(3)).toHaveText('Durum');
+ await expect(table.locator('thead th').last()).toHaveText('İşlemler');
+ await expect(table.locator('.customer-credit-cell')).toHaveText('140');
+});
+
+test('customer files use free width and stack below details when space narrows', async ({ page }) => {
+ await setup(page);
+ await page.setViewportSize({ width: 1900, height: 1000 });
+ await page.goto('/admin/customers/' + companyId);
+ const form = page.locator('.customer-details-form'), files = page.locator('.customer-files-workspace');
+ await expect(files).toBeVisible();
+ let formBox = await form.boundingBox(), fileBox = await files.boundingBox();
+ expect(fileBox!.x).toBeGreaterThanOrEqual(formBox!.x + formBox!.width);
+ expect(Math.abs(fileBox!.y - formBox!.y)).toBeLessThan(2);
+ await page.setViewportSize({ width: 1000, height: 1000 });
+ formBox = await form.boundingBox(); fileBox = await files.boundingBox();
+ expect(fileBox!.y).toBeGreaterThanOrEqual(formBox!.y + formBox!.height);
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+ await page.setViewportSize({ width: 600, height: 900 });
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

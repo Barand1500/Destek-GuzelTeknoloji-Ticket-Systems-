@@ -32,3 +32,28 @@ test('customer ordering applies before pagination and keeps the search filter',a
   assert.equal((await users(actor,q,true)).pagination.total,3);
  }finally{await db.user.deleteMany({where:{id:{in:ids}}});await db.$disconnect();}
 });
+
+test('customer directory reports only currently usable credit in one batch', async () => {
+ const suffix = randomUUID();
+ const owner = await db.user.create({ data: { name: suffix, role: 'CUSTOMER', passwordHash: 'fixture' } });
+ const actor = { id: randomUUID(), name: 'Admin', email: '', role: 'ADMIN' as const, departmentIds: [], sessionId: '' };
+ let childId: string | undefined;
+ try {
+  const child = await db.user.create({ data: { name: suffix + ' child', role: 'CUSTOMER', parentCustomerId: owner.id, passwordHash: 'fixture' } }); childId = child.id;
+  await db.agreement.createMany({ data: [
+   { customerId: owner.id, name: 'Active', type: 'ONE_OFF', fee: '0', currency: 'TRY', credits: 100, usedCredits: 30, startsOn: new Date('2000-01-01'), endsOn: new Date('2099-01-01') },
+   { customerId: owner.id, name: 'Expired', type: 'ONE_OFF', fee: '0', currency: 'TRY', credits: 100, startsOn: new Date('2000-01-01'), endsOn: new Date('2000-02-01') },
+   { customerId: owner.id, name: 'Future', type: 'ONE_OFF', fee: '0', currency: 'TRY', credits: 100, startsOn: new Date('2099-01-01'), endsOn: new Date('2099-02-01') },
+   { customerId: owner.id, name: 'Cancelled', type: 'ONE_OFF', fee: '0', currency: 'TRY', credits: 100, startsOn: new Date('2000-01-01'), endsOn: new Date('2099-01-01'), cancelledAt: new Date() },
+  ] });
+  const listed = await users(actor, directoryQuery.parse({ search: suffix }), true);
+  assert.equal(listed.data.find(row => row.id === owner.id)?.availableCredits, 70);
+  assert.equal(listed.data.find(row => row.id === child.id)?.availableCredits, 70);
+  await db.user.update({ where: { id: owner.id }, data: { isActive: false } });
+  assert.equal((await users(actor, directoryQuery.parse({ id: owner.id }), true)).data[0].availableCredits, 0);
+ } finally {
+  await db.agreement.deleteMany({ where: { customerId: owner.id } });
+  if (childId) await db.user.delete({ where: { id: childId } });
+  await db.user.delete({ where: { id: owner.id } });
+ }
+});

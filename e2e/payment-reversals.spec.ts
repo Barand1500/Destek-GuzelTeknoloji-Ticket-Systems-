@@ -26,7 +26,7 @@ test('admin reviews credit-based refund, confirms amount and sees customer-facin
   await page.goto('/admin/credit-sales?view=orders');
   await page.getByRole('button', { name: 'İade Talebini İncele', exact: true }).click();
   const panel = page.getByRole('region', { name: 'İade ve banka iptali' });
-  await expect(panel.getByText(/İade edilebilir: 100 kredi/)).toBeVisible();
+  await expect(panel.locator('.reversal-order-summary > div').filter({ hasText: 'Kalan kullanılabilir kredi' })).toContainText('100');
   await expect(page.getByRole('button', { name: 'Banka İptali', exact: true })).toHaveCount(0);
   await expect(panel.getByLabel('İade edilecek kredi *')).toHaveValue('100');
   await panel.getByLabel('İade edilecek kredi *').fill('101');
@@ -34,7 +34,7 @@ test('admin reviews credit-based refund, confirms amount and sees customer-facin
   await expect(panel.getByRole('button', { name: 'İadeyi Onayla' })).toBeDisabled();
   await panel.getByLabel('İade edilecek kredi *').fill('25');
   await panel.getByLabel('İade nedeni *').fill('Müşteri talebiyle kısmi iade');
-  await expect(panel.getByText(/İade tutarı:.*25,25/)).toBeVisible();
+  await expect(panel.getByRole('textbox', { name: 'İade edilecek tutar', exact: true })).toHaveValue('25,25');
   await expect(panel.getByRole('button', { name: 'İadeyi Onayla' })).toBeDisabled();
   await panel.locator('.credit-confirmation-choice span').click();
   await panel.getByRole('button', { name: 'İadeyi Onayla' }).click();
@@ -43,7 +43,7 @@ test('admin reviews credit-based refund, confirms amount and sees customer-facin
   expect(writes[0].kind).toBe('REFUND');
   expect(writes[0].requestKey).toMatch(/^[a-f0-9-]{36}$/);
   await expect(page.getByText('Kısmen iade edildi', { exact: true })).toBeVisible();
-  await expect(panel.getByText(/İade edilebilir: 75 kredi/)).toBeVisible();
+  await expect(panel.locator('.reversal-order-summary > div').filter({ hasText: 'Kalan kullanılabilir kredi' })).toContainText('75');
 });
 
 test('used credit offers only refund and order requests can be rejected without a bank operation', async ({ page }) => {
@@ -81,7 +81,7 @@ test('admin defaults to unused value and can raise refund only to remaining paid
   if (path.endsWith('/credit-sales/orders')) return route.fulfill({ json: { success: true, data: [{ id: 'used-order', number: 42, name: 'Used package', kind: 'SUBSCRIPTION', status: 'PAID', total: '1000.00', credits: 100, usedCredits: 30, currency: 'TRY', createdAt: new Date().toISOString(), customer: { name: 'Customer' } }], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } } });
   if (path.endsWith('/used-order/reversals')) {
    if (route.request().method() === 'POST') { writes.push(route.request().postDataJSON()); data = { status: 'SUCCEEDED' }; }
-   else data = { data: [], currency: 'TRY', refundableCredits: 70, refundableAmount: '700.00', maxRefundAmount: '1000.00', originalCredits: 100, total: '1000.00', refundedCredits: 0, refundedAmount: '0.00', hasPending: false, usedCredits: 30, canCancel: false };
+   else data = { orderName: 'Example package', orderNumber: 42, data: [], currency: 'TRY', refundableCredits: 70, refundableAmount: '700.00', maxRefundAmount: '1000.00', originalCredits: 100, total: '1000.00', refundedCredits: 0, refundedAmount: '0.00', hasPending: false, usedCredits: 30, canCancel: false };
   }
   await route.fulfill({ json: { success: true, data } });
  });
@@ -89,6 +89,10 @@ test('admin defaults to unused value and can raise refund only to remaining paid
  await page.getByRole('button', { name: 'İade Et', exact: true }).click();
  const panel = page.getByRole('region', { name: 'İade ve banka iptali' });
  await expect(panel.getByLabel('İade edilecek kredi *')).toHaveValue('70');
+ await expect(panel.locator('.reversal-order-summary')).toContainText('Example package');
+ await expect(panel.locator('.reversal-edit-fields small')).toHaveCount(0);
+ await expect(panel.getByRole('note')).toBeVisible();
+ await page.screenshot({ path: 'output/refund-panel-layout.png', fullPage: true });
  await expect(panel.getByRole('textbox', { name: 'İade edilecek tutar', exact: true })).toHaveValue('700,00');
  await panel.getByLabel('İade nedeni *').fill('Manager approved full refund');
  const amount = panel.getByRole('textbox', { name: 'İade edilecek tutar', exact: true });

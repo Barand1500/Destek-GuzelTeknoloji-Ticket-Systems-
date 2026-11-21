@@ -246,9 +246,19 @@ export async function users(
     roleDepartments: member => [member.accessRole?.name ?? labels[member.role], member.departments.map(item => item.department.name).join(', ') || 'Departman yok'].join(' '),
   }) : visible;
   const data = !customersOnly && q.sortBy === 'roleDepartments' ? sorted.slice((q.page - 1) * q.limit, q.page * q.limit) : sorted;
+  const creditBalances = new Map<string, number>();
+  if (customersOnly && data.length) {
+    const owners = [...new Set(data.map(customer => customer.parentCustomerId || customer.id))];
+    const today = new Date(new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()));
+    const activeAgreements = await db.agreement.findMany({
+      where: { customerId: { in: owners }, customer: { deletedAt: null, role: 'CUSTOMER' }, deletedAt: null, cancelledAt: null, startsOn: { lte: today }, endsOn: { gte: today } },
+      select: { customerId: true, credits: true, usedCredits: true },
+    });
+    for (const agreement of activeAgreements) creditBalances.set(agreement.customerId, (creditBalances.get(agreement.customerId) ?? 0) + Math.max(0, agreement.credits - agreement.usedCredits));
+  }
   const total = await db.user.count({ where });
   return {
-    data,
+    data: customersOnly ? data.map(customer => ({ ...customer, availableCredits: customer.isActive ? creditBalances.get(customer.parentCustomerId || customer.id) ?? 0 : 0 })) : data,
     pagination: pagination({ page: q.page, limit: q.limit }, total),
   };
 }

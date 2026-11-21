@@ -462,3 +462,26 @@ test('customer credit screens use neutral cards and transparent shared fields', 
  await page.goto('/customer/agreements');
  await expect(page.getByRole('heading', { name: 'Anlaşmalar', exact: true })).toHaveCount(0);
 });
+
+for (const theme of ['light', 'dark']) {
+ test('admin credit fields share their surface in ' + theme, async ({ page }) => {
+  await page.addInitScript(theme => localStorage.setItem('helpdesk-theme', theme), theme);
+  await mockApi(page, 'ADMIN');
+  await page.route(/\/api\/v1\/credit-sales\/(orders|subscriptions)(\?|$)/, route => route.fulfill({ json: { success: true, data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } } }));
+  for (const view of ['', '?view=orders', '?view=subscriptions']) {
+   await page.goto('/admin/credit-sales' + view);
+   const root = page.locator('.credit-sales-page');
+   await expect(root.locator('.field-label:visible, .styled-dropdown-label:visible, .credit-fields > label:not(.credit-sales-toggle) > span:visible').first()).toBeVisible();
+   const result = await root.evaluate(root => {
+    const labels = [...root.querySelectorAll('.field-label, .styled-dropdown-label, .credit-fields > label:not(.credit-check):not(.credit-sales-toggle) > span')].filter(el => el.getClientRects().length);
+    const probe = document.createElement('div'); probe.style.backgroundColor = 'var(--bg)'; root.appendChild(probe);
+    const pageColor = getComputedStyle(probe).backgroundColor; probe.remove();
+    const labelsMatch = labels.length > 0 && labels.every(label => getComputedStyle(label).backgroundColor === (label.closest('.credit-sales-card') ? getComputedStyle(label.closest('.credit-sales-card')!).backgroundColor : pageColor));
+    const fields = [...root.querySelectorAll('label:has(> .field-label) > input, label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label), .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger, .credit-fields > label > input')].filter(el => el.getClientRects().length);
+    if (!labelsMatch) throw new Error(JSON.stringify(labels.map(label => ({ text: label.textContent, actual: getComputedStyle(label).backgroundColor, expected: label.closest('.credit-sales-card') ? getComputedStyle(label.closest('.credit-sales-card')!).backgroundColor : pageColor }))));
+    return { labelsMatch, transparent: fields.every(field => getComputedStyle(field).backgroundColor === 'rgba(0, 0, 0, 0)') };
+   });
+   expect(result).toEqual({ labelsMatch: true, transparent: true });
+  }
+ });
+}
