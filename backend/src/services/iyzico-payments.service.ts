@@ -15,6 +15,7 @@ import { iyzicoRequest, hostedPaymentUrl, type IyzicoConfig } from './iyzico-cli
 import { runCreditRenewals, settleVerifiedCreditPayment, type RecurringPaymentProvider, type VerifiedPayment } from './credit-subscriptions.service.js';
 import { runPaymentReversalChecks } from './payment-reversals.service.js';
 import { runAkbankPaymentChecks } from './akbank-payments.service.js';
+import { runNestpayPaymentChecks } from './nestpay-payments.service.js';
 
 export const paymentBillingInput = z.object({
   name: z.string().trim().min(2).max(80), surname: z.string().trim().min(2).max(80),
@@ -149,7 +150,7 @@ export const iyzicoRecurringProvider: RecurringPaymentProvider = {
 };
 export function startIyzicoPayments() {
   let active: Promise<unknown> | undefined;
-  const tick = () => { if (!active) active = (async () => { await retireAutomaticRenewals(); await runCreditRenewals(iyzicoRecurringProvider); await runAkbankPaymentChecks(); await runPaymentReversalChecks(); await runAkbankRecurringChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
+  const tick = () => { if (!active) active = (async () => { await retireAutomaticRenewals(); await runCreditRenewals(iyzicoRecurringProvider); await runAkbankPaymentChecks(); await runNestpayPaymentChecks(); await runPaymentReversalChecks(); await runAkbankRecurringChecks(); })().catch(() => console.error('[Payments] Ödeme kontrolü tamamlanamadı.')).finally(() => { active = undefined; }); };
   const timer = setInterval(tick, 60_000); timer.unref(); tick();
   return async () => { clearInterval(timer); await active; };
 }

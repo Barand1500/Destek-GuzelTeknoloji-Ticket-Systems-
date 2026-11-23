@@ -7,6 +7,7 @@ import { can } from './permissions.js';
 import { AppError } from '../utils/errors.js';
 import { sealPayment, openPayment } from './payment-secrets.js';
 import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
+import { paymentProviderLabel } from './payment-gateways.catalog.js';
 
 export const paymentSettingsInput = z.object({
   provider: z.literal('iyzico'), enabled: z.boolean(), recurringEnabled: z.literal(false).default(false),
@@ -18,10 +19,12 @@ export function paymentStaff(actor: Actor, edit = false) {
     throw new AppError(403, 'FORBIDDEN', 'Ödeme ayarları için yetkiniz yok.');
 }
 export async function paymentAvailability() {
-  const akbank = await db.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } });
-  if (akbank?.enabled && akbank.testedAt) return { provider: 'akbank', paymentAvailable: true, recurringAvailable: false };
-  const row = await db.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
-  return { provider: 'iyzico', paymentAvailable: Boolean(row?.enabled && row.testedAt), recurringAvailable: false };
+  const active = await db.paymentGatewaySettings.findFirst({ where: { enabled: true, testedAt: { not: null } }, select: { id: true } });
+  if (active) {
+    const provider = active.id === 'default' ? 'iyzico' : active.id;
+    return { provider, paymentAvailable: true, recurringAvailable: false };
+  }
+  return { provider: 'iyzico', paymentAvailable: false, recurringAvailable: false };
 }
 export async function getPaymentSettings(actor: Actor) {
   paymentStaff(actor);
@@ -40,8 +43,10 @@ export async function savePaymentSettings(actor: Actor, raw: unknown) {
     // Serialize configuration changes with checkout creation and dispatch claims.
     await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'default' FOR UPDATE`;
     await tx.$queryRaw`SELECT id FROM PaymentGatewaySettings WHERE id = 'akbank' FOR UPDATE`;
-    if (input.enabled && (await tx.paymentGatewaySettings.findUnique({ where: { id: 'akbank' } }))?.enabled)
-      throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', 'Önce Akbank online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.');
+    if (input.enabled) {
+      const other = await tx.paymentGatewaySettings.findFirst({ where: { id: { not: 'default' }, enabled: true }, select: { id: true } });
+      if (other) throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', `Önce ${paymentProviderLabel(other.id)} online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.`);
+    }
     const current = await tx.paymentGatewaySettings.findUnique({ where: { id: 'default' } });
     const old = current ? openPayment<IyzicoConfig>(current.credentialsCiphertext) : undefined;
     const config: IyzicoConfig = { apiKey: input.apiKey || old?.apiKey || '', secretKey: input.secretKey || old?.secretKey || '', mode: input.mode };

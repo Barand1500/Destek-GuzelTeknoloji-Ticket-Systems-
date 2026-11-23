@@ -7,6 +7,7 @@ import { paymentStaff } from './payment-settings.service.js';
 import { sealPayment, openPayment } from './payment-secrets.js';
 import { env } from '../config/env.js';
 import { akbankRequest, akbankNoTransaction, type AkbankConfig } from './akbank-client.js';
+import { paymentProviderLabel } from './payment-gateways.catalog.js';
 
 // Separate credential snapshot; enabling requires the other gateway to be disabled first.
 const settingsId = 'akbank';
@@ -57,8 +58,8 @@ export async function saveAkbankSettings(actor: Actor, raw: unknown) {
       throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bekleyen Akbank ödemeleri ve iadeleri sonuçlanmadan hesap değiştirilemez.');
     const testedAt = changed ? null : row?.testedAt;
     if (input.enabled && !testedAt) throw new AppError(400, 'PAYMENT_TEST_REQUIRED', 'Önce kaydedin ve Akbank bağlantısını test edin.');
-    const other = input.enabled ? await tx.paymentGatewaySettings.findUnique({ where: { id: 'default' } }) : null;
-    if (other?.enabled) throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', 'Önce iyzico online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.');
+    const other = input.enabled ? await tx.paymentGatewaySettings.findFirst({ where: { id: { not: settingsId }, enabled: true }, select: { id: true } }) : null;
+    if (other) throw new AppError(409, 'PAYMENT_GATEWAY_ACTIVE', `Önce ${paymentProviderLabel(other.id === 'default' ? 'iyzico' : other.id)} online ödemesini kapatın. Aynı anda tek sağlayıcı kullanılabilir.`);
     if (row?.recurringEnabled && (!input.enabled || !input.recurringEnabled)) {
       const instructions = await tx.akbankRecurringInstruction.findMany({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } }, select: { subscriptionId: true } });
       await tx.akbankRecurringInstruction.updateMany({ where: { state: { notIn: ['STOPPED', 'FAILED', 'COMPLETED'] } }, data: { state: 'STOP_REQUESTED' } });

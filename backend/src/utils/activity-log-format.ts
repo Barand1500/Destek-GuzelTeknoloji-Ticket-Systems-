@@ -88,6 +88,7 @@ export const actionLabels: Record<string, string> = {
   "credit_payment.reversal_failed": "İade gerçekleşmedi",
   "credit_payment.bank_response": "Banka iade yanıtı",
   "payments.akbank_started": "Akbank ödemesi başlatıldı",
+  "payments.nestpay_started": "Sanal POS ödemesi başlatıldı",
   "payments.akbank_callback_review": "Akbank ödeme dönüşü incelemeye alındı",
   "payments.akbank_paid_period_review": "Abonelik ödemesi incelemeye alındı",
   "payments.akbank_settings_updated": "Akbank ödeme ayarları güncellendi",
@@ -158,7 +159,10 @@ export function activityActionLabel(action: string, metadata?: ActivityLog["meta
 }
 
 type Detail = Record<string, any>;
-const providerNames: Record<string, string> = { akbank: "Akbank", iyzico: "iyzico" };
+const providerNames: Record<string, string> = {
+  akbank: "Akbank", iyzico: "iyzico", isbank: "İş Bankası", ziraat: "Ziraat Bankası",
+  halkbank: "Halkbank", teb: "TEB", sekerbank: "Şekerbank", ing: "ING", anadolubank: "Anadolubank",
+};
 const modeLabels: Record<string, string> = { sandbox: "Test", production: "Canlı" };
 function money(amount: unknown, currency?: unknown) {
   if (amount === undefined || amount === null || amount === "") return null;
@@ -184,6 +188,8 @@ function financeDescription(log: ActivityLog): string | null {
       return clean([order, "Ödeme bekleyen sipariş iptal edildi"]);
     case "payments.akbank_started":
       return clean(["Akbank ile ödeme başlatıldı", order, total && `Tutar: ${total}`]);
+    case "payments.nestpay_started":
+      return clean([`${provider} ile ödeme başlatıldı`, order, total && `Tutar: ${total}`]);
     case "credit_payment.paid":
       return clean([`${provider} ödemesi doğrulandı`, order, total && `Tutar: ${total}`]);
     case "credit_payment.failed":

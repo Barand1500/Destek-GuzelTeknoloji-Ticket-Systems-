@@ -5,10 +5,12 @@ import { AppError } from '../utils/errors.js';
 import { paymentStaff } from './payment-settings.service.js';
 import { reconcileIyzicoSession } from './iyzico-payments.service.js';
 import { reconcileAkbankSession } from './akbank-payments.service.js';
+import { reconcileNestpaySession } from './nestpay-payments.service.js';
+import { allPaymentProviderIds, isNestpayProvider } from './payment-gateways.catalog.js';
 
 export async function pendingPaymentReviews(actor: Actor, orderId?: string) {
   paymentStaff(actor);
-  const where = { provider: { in: ['iyzico', 'akbank'] }, status: 'PENDING', ...(orderId ? { orderId } : { createdAt: { lte: new Date(Date.now() - 15 * 60_000) } }) };
+  const where = { provider: { in: allPaymentProviderIds }, status: 'PENDING', ...(orderId ? { orderId } : { createdAt: { lte: new Date(Date.now() - 15 * 60_000) } }) };
   const [total, data] = await Promise.all([db.creditPaymentAttempt.count({ where }), db.creditPaymentAttempt.findMany({ where, take: 50, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: { id: true, createdAt: true, failureCode: true, order: { select: { number: true, name: true, total: true, currency: true } } } })]);
   return { total, data: data.map(v => ({ ...v, order: { ...v.order, total: v.order.total.toFixed(2) } })) };
@@ -19,7 +21,11 @@ export async function checkPaymentReview(actor: Actor, id: string) {
   const attempt = await db.creditPaymentAttempt.findUnique({ where: { id } });
   if (!attempt) throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Ödeme kaydı bulunamadı.');
   let recordCount: number | undefined;
-  if (session) { if (attempt.provider === 'akbank') await reconcileAkbankSession(session.id, count => { recordCount = count; }); else await reconcileIyzicoSession(session.id); }
+  if (session) {
+    if (attempt.provider === 'akbank') await reconcileAkbankSession(session.id, count => { recordCount = count; });
+    else if (isNestpayProvider(attempt.provider)) await reconcileNestpaySession(session.id);
+    else await reconcileIyzicoSession(session.id);
+  }
   const current = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id } });
   const outcome = current.status !== 'PENDING' ? current.status : recordCount === 0 ? 'NO_BANK_RECORD' : !session ? 'NO_CHECKOUT_SESSION' : 'UNRESOLVED';
   const messages: Record<string, string> = {
@@ -44,7 +50,7 @@ export async function closeUnchargedPayment(actor: Actor, id: string, raw: unkno
     const row = await tx.creditPaymentAttempt.findUniqueOrThrow({ where: { id } });
     const order = await tx.creditOrder.findUniqueOrThrow({ where: { id: initial.orderId } });
     const latest = await tx.creditPaymentAttempt.findFirst({ where: { orderId: order.id }, orderBy: { attemptNumber: 'desc' } });
-    if (!['iyzico', 'akbank'].includes(row.provider) || row.status !== 'PENDING' || row.createdAt.getTime() > Date.now() - 60 * 60_000)
+    if (!allPaymentProviderIds.includes(row.provider) || row.status !== 'PENDING' || row.createdAt.getTime() > Date.now() - 60 * 60_000)
       throw new AppError(409, 'PAYMENT_REVIEW_CHANGED', 'Yalnızca en az bir saattir belirsiz kalan ödemeler kapatılabilir.');
     if (latest?.id !== id || !['PENDING', 'FAILED'].includes(order.status) || order.grantedAgreementId)
       throw new AppError(409, 'PAYMENT_REVIEW_CHANGED', 'Siparişin ödeme sonucu değişmiş. Ödenmiş veya iptal edilmiş sipariş yeniden açılamaz.');

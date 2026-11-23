@@ -3,7 +3,7 @@ import type { PaymentReversal } from '../generated/prisma/client.js';
 
 type ReversalRef = Pick<PaymentReversal, 'id' | 'orderId' | 'kind' | 'amount' | 'currency' | 'actorId'>;
 type BankResponse = {
-  provider: 'akbank' | 'iyzico';
+  provider: string;
   /** REJECTED: the bank refused the request. PENDING: answered without a final result. NO_RESPONSE: no usable answer. */
   outcome: 'REJECTED' | 'PENDING' | 'NO_RESPONSE';
   code?: unknown;
