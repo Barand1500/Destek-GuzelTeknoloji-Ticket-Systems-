@@ -11,6 +11,8 @@ import { dispatchAkbankReversal, reconcileAkbankReversal } from './akbank-revers
 import { iyzicoRequest, type IyzicoConfig } from './iyzico-client.js';
 import { publishChange } from './events.service.js';
 import { creditStoreOwner } from './credit-store.service.js';
+import { logReversalBankResponse } from './payment-reversal-log.js';
+const iyzicoTerminalCodes = new Set(['10005', '10012', '10051', '10223', '10237', '10245', '10246', '5086', '5087']);
 
 const inputSchema = z.object({ requestKey: z.uuid(), kind: z.enum(['REFUND', 'CANCEL']), credits: z.number().int().nonnegative().max(1_000_000), amount: z.string().regex(/^\d{1,10}(\.\d{1,2})?$/).optional(), reason: z.string().trim().min(3).max(500) }).strict();
 const customerInputSchema = inputSchema.pick({ requestKey: true, reason: true }).strict();
@@ -95,7 +97,7 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
     if (order.subscriptionId && (await requestAkbankInstructionStop(tx, order.subscriptionId)).count)
       await tx.creditSubscription.update({ where: { id: order.subscriptionId }, data: { autoRenew: false, status: 'STOPPED', stoppedAt: new Date(), nextPaymentOn: null } });
     const row = await tx.paymentReversal.create({ data: { orderId, requestKey: input.requestKey, kind: input.kind, credits: input.credits, amount, currency: order.currency, paymentId: attempts[0].providerPaymentId, actorId: actor.id, reason: input.reason, nextCheckAt: new Date(Date.now() + 60_000) } });
-    await tx.activityLog.create({ data: { userId: actor.id, action: 'credit_payment.reversal_requested', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId, kind: input.kind, credits: input.credits, amount: amount.toFixed(2), reason: input.reason }, ipAddress: actor.ipAddress } });
+    await tx.activityLog.create({ data: { userId: actor.id, action: 'credit_payment.reversal_requested', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId, orderNumber: order.number, kind: input.kind, credits: input.credits, amount: amount.toFixed(2), reason: input.reason }, ipAddress: actor.ipAddress } });
     return { row, dispatch: true as const, provider: attempts[0].provider, originalAmount: order.total.toFixed(2), previousRefundAmount: oldAmount,
       config: openPayment<{ config: IyzicoConfig | AkbankConfig }>(session.contextCiphertext).config };
   }, { isolationLevel: 'ReadCommitted' });
@@ -113,13 +115,16 @@ export async function startPaymentReversal(actor: Actor, orderId: string, raw: u
       await finishPaymentReversal(prepared.row.id, true, String(result.refundHostReference ?? result.cancelHostReference ?? result.hostReference ?? prepared.row.id));
     } else {
       // HTTP/API errors and bank timeouts are ambiguous. Only explicit permanent validation/decline is terminal.
-      if (['10005', '10012', '10051', '10223', '10237', '10245', '10246', '5086', '5087'].includes(String(result.errorCode)))
+      const terminal = iyzicoTerminalCodes.has(String(result.errorCode));
+      await logReversalBankResponse(prepared.row, { provider: 'iyzico', outcome: terminal ? 'REJECTED' : 'PENDING', code: result.errorCode, message: result.errorMessage });
+      if (terminal)
         await finishPaymentReversal(prepared.row.id, false, String(result.errorCode));
       else await db.paymentReversal.update({ where: { id: prepared.row.id }, data: { status: 'REVIEW', failureCode: 'PROVIDER_RESULT_PENDING' } });
     }
     }
-  } catch {
+  } catch (error) {
     await db.paymentReversal.updateMany({ where: { id: prepared.row.id, status: 'PENDING' }, data: { status: 'REVIEW', failureCode: 'RESULT_UNCERTAIN' } });
+    await logReversalBankResponse(prepared.row, { provider: prepared.provider === 'akbank' ? 'akbank' : 'iyzico', outcome: 'NO_RESPONSE', code: error instanceof AppError ? error.code : 'RESULT_UNCERTAIN', message: error instanceof AppError ? error.message : undefined });
   }
   publishChange();
   return serialize(await db.paymentReversal.findUniqueOrThrow({ where: { id: prepared.row.id } }));
@@ -148,7 +153,7 @@ async function finishPaymentReversal(id: string, success: boolean, reference: st
       await tx.agreement.update({ where: { id: row.order.grantedAgreementId }, data: { credits: { increment: row.credits } } });
     }
     await tx.paymentReversal.update({ where: { id }, data: { status: success ? 'SUCCEEDED' : 'FAILED', completedAt: new Date(), nextCheckAt: null, providerReference: success ? reference.slice(0, 255) : null, failureCode: success ? null : reference.slice(0, 80) } });
-    await tx.activityLog.create({ data: { userId: manual?.actorId ?? row.actorId, action: success ? 'credit_payment.reversed' : 'credit_payment.reversal_failed', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId: row.orderId, amount: row.amount.toFixed(2), credits: row.credits, reference, ...(manual ? { providerConfirmation: manual.reference } : {}) } } });
+    await tx.activityLog.create({ data: { userId: manual?.actorId ?? row.actorId, action: success ? 'credit_payment.reversed' : 'credit_payment.reversal_failed', entityType: 'PaymentReversal', entityId: row.id, metadata: { orderId: row.orderId, orderNumber: row.order.number, kind: row.kind, currency: row.currency, amount: row.amount.toFixed(2), credits: row.credits, reference, ...(manual ? { providerConfirmation: manual.reference } : {}) } } });
     return true;
   }, { isolationLevel: 'ReadCommitted' });
   publishChange();

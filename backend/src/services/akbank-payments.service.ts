@@ -42,7 +42,7 @@ export async function beginAkbankCheckout(actor: Actor, orderId: string, raw: un
     // Card data never enters the persisted context. Each new attempt is a unique bank order ID.
     const session = await tx.paymentCheckoutSession.create({ data: { attemptId: attempt.id, orderId, customerId: owner.id, state: 'DISPATCHED', claimedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 60000), contextCiphertext: sealPayment({ config }) } });
     await tx.activityLog.create({ data: { userId: owner.id, action: 'payments.akbank_started', entityType: 'CreditPaymentAttempt', entityId: attempt.id, ipAddress: actor.ipAddress,
-      metadata: { orderId, amount: order.total.toFixed(2), currency: order.currency, manualRenewal: input.manualRenewalConsent } } });
+      metadata: { orderId, orderNumber: order.number, amount: order.total.toFixed(2), currency: order.currency, manualRenewal: input.manualRenewalConsent } } });
     return { config, attemptId: attempt.id, sessionId: session.id, recurringRequested, publicUrl: settings.publicUrl, order };
   }, { isolationLevel: 'ReadCommitted' });
   return { ...akbankForm(prepared.config, { orderId: prepared.attemptId, amount: prepared.order.total.toFixed(2), currency: prepared.order.currency,

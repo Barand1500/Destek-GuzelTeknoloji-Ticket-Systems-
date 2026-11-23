@@ -67,3 +67,20 @@ test('WhatsApp logs distinguish provider acceptance from delivery and show deliv
   const delivered = richDescriptionFor({ ...base, action: 'conversation.whatsapp_delivered', metadata: { channel: 'WHATSAPP', providerMessageId: 'wamid.test', number: 12 } });
   assert.match(delivered, /teslim edildi.*wamid.test.*TK-00012/);
 });
+
+test('payment and credit system actions have readable labels and descriptions', () => {
+  assert.equal(activityActionLabel('credit_payment.reversal_requested', { kind: 'REFUND' } as never), 'İade işlemi başlatıldı');
+  assert.equal(activityActionLabel('credit_payment.reversed', { kind: 'CANCEL' } as never), 'Ödeme iptali tamamlandı');
+  assert.equal(activityActionLabel('payments.akbank_started'), 'Akbank ödemesi başlatıldı');
+  assert.equal(activityActionLabel('agreement.created'), 'Anlaşma eklendi');
+  const order = richDescriptionFor({ ...base, action: 'credit_order.created', metadata: { number: 31, total: '1.00', currency: 'TRY', credits: 100 } as never });
+  assert.equal(order, 'Sipariş no: #31 · Tutar: 1,00 TRY · Kredi: 100');
+  assert.ok(!order.includes('TK-'));
+  const reversal = richDescriptionFor({ ...base, action: 'credit_payment.reversal_requested', metadata: { orderNumber: 28, kind: 'REFUND', amount: '0.50', currency: 'TRY', credits: 50, reason: 'yanlış aldım' } as never });
+  assert.equal(reversal, 'İade bankaya iletildi · Sipariş no: #28 · Tutar: 0,50 TRY · Geri alınan kredi: 50 · Neden: yanlış aldım');
+  const bank = richDescriptionFor({ ...base, action: 'credit_payment.bank_response', metadata: { orderNumber: 29, provider: 'akbank', outcome: 'PENDING', amount: '1.00', currency: 'TRY', bankResponseCode: 'VPS-1234', bankMessage: 'Islem reddedildi' } as never });
+  assert.match(bank, /Banka kesin sonuç bildirmedi/);
+  assert.match(bank, /Yanıt kodu: VPS-1234/);
+  assert.match(bank, /Banka mesajı: Islem reddedildi/);
+  assert.equal(richDescriptionFor({ ...base, action: 'subscription.stopped' }), 'Abonelik ve otomatik yenileme durduruldu.');
+});

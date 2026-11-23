@@ -275,7 +275,7 @@ export async function cancelCreditOrder(
         action: "credit_order.cancelled",
         entityType: "CreditOrder",
         entityId: id,
-        metadata: { customerId: row.customerId },
+        metadata: { customerId: row.customerId, orderNumber: row.number },
         ipAddress: actor.ipAddress,
       },
     });

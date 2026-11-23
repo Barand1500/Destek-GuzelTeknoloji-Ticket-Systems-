@@ -77,6 +77,39 @@ export const actionLabels: Record<string, string> = {
   "conversation.updated": "Talep bilgileri güncellendi",
   "customer.file_deleted": "Müşteri dosyası silindi",
   "integrations.updated": "Entegrasyon ayarları güncellendi",
+  "credit_order.created": "Kredi siparişi oluşturuldu",
+  "credit_order.cancelled": "Kredi siparişi iptal edildi",
+  "credit_payment.paid": "Ödeme alındı",
+  "credit_payment.failed": "Ödeme başarısız oldu",
+  "credit_payment.refund_requested": "İade talebi oluşturuldu",
+  "credit_payment.refund_request_rejected": "İade talebi reddedildi",
+  "credit_payment.reversal_requested": "İade işlemi başlatıldı",
+  "credit_payment.reversed": "İade tamamlandı",
+  "credit_payment.reversal_failed": "İade gerçekleşmedi",
+  "credit_payment.bank_response": "Banka iade yanıtı",
+  "payments.akbank_started": "Akbank ödemesi başlatıldı",
+  "payments.akbank_callback_review": "Akbank ödeme dönüşü incelemeye alındı",
+  "payments.akbank_paid_period_review": "Abonelik ödemesi incelemeye alındı",
+  "payments.akbank_settings_updated": "Akbank ödeme ayarları güncellendi",
+  "payments.settings_updated": "Ödeme ayarları güncellendi",
+  "payments.confirmed_no_charge": "Ödeme alınmadığı doğrulandı",
+  "subscription.stopped": "Abonelik durduruldu",
+  "credit_period.created": "Kredi satış dönemi eklendi",
+  "credit_period.archived": "Kredi satış dönemi arşivlendi",
+  "credit_sales.plan_created": "Kredi paketi eklendi",
+  "credit_sales.plan_updated": "Kredi paketi güncellendi",
+  "credit_sales.plan_deleted": "Kredi paketi silindi",
+  "credit_sales.settings_updated": "Kredi satış ayarları güncellendi",
+  "agreement.created": "Anlaşma eklendi",
+  "agreement.updated": "Anlaşma güncellendi",
+  "agreement.cancelled": "Anlaşma iptal edildi",
+  "agreement.reactivated": "Anlaşma yeniden etkinleştirildi",
+  "agreement.deleted": "Anlaşma silindi",
+  "agreement_type.created": "Anlaşma türü eklendi",
+  "agreement_type.archived": "Anlaşma türü arşivlendi",
+  "customer.parent_updated": "Müşterinin şirket bağlantısı güncellendi",
+  "email.staff_sender_skipped": "Personel e-postası talebe dönüştürülmedi",
+  "role.template_updated": "Rol şablonu güncellendi",
   TICKET_CREATED: "Görüşme oluşturuldu",
   TICKET_UPDATED: "Görüşme güncellendi",
   CONVERSATION_CREATED: "Görüşme oluşturuldu",
@@ -117,7 +150,99 @@ export function activityActionLabel(action: string, metadata?: ActivityLog["meta
     if (metadata?.channel === "SMS") return "SMS gönderilemedi";
     if (metadata?.channel === "WHATSAPP") return "WhatsApp mesajı gönderilemedi";
   }
+  const kind = (metadata as Record<string, unknown> | null | undefined)?.kind;
+  if (action === "credit_payment.reversal_requested" && kind === "CANCEL") return "Ödeme iptali başlatıldı";
+  if (action === "credit_payment.reversed" && kind === "CANCEL") return "Ödeme iptali tamamlandı";
+  if (action === "payments.settings_updated" && (metadata as Record<string, unknown> | null | undefined)?.provider === "iyzico") return "iyzico ödeme ayarları güncellendi";
   return actionLabels[action] ?? "Sistem işlemi";
+}
+
+type Detail = Record<string, any>;
+const providerNames: Record<string, string> = { akbank: "Akbank", iyzico: "iyzico" };
+const modeLabels: Record<string, string> = { sandbox: "Test", production: "Canlı" };
+function money(amount: unknown, currency?: unknown) {
+  if (amount === undefined || amount === null || amount === "") return null;
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return null;
+  return `${value.toFixed(2).replace(".", ",")} ${typeof currency === "string" && currency ? currency : "TRY"}`;
+}
+const clean = (parts: unknown[]) => parts.filter(Boolean).join(" · ");
+/** Payment, credit, agreement and similar system actions. Returns null for actions handled elsewhere. */
+function financeDescription(log: ActivityLog): string | null {
+  const m = (log.metadata ?? {}) as Detail;
+  const action = log.action;
+  const order = m.orderNumber !== undefined ? `Sipariş no: #${m.orderNumber}` : null;
+  const total = money(m.amount ?? m.total, m.currency);
+  const credits = m.credits !== undefined && m.credits !== null ? `Kredi: ${m.credits}` : null;
+  const provider = providerNames[String(m.provider)] ?? "Ödeme sağlayıcısı";
+  const cancel = m.kind === "CANCEL";
+  const reasonText = typeof m.reason === "string" && m.reason.trim() ? `Neden: ${m.reason.trim()}` : null;
+  switch (action) {
+    case "credit_order.created":
+      return clean([m.number !== undefined && `Sipariş no: #${m.number}`, money(m.total, m.currency) && `Tutar: ${money(m.total, m.currency)}`, credits]) || "Kredi siparişi oluşturuldu.";
+    case "credit_order.cancelled":
+      return clean([order, "Ödeme bekleyen sipariş iptal edildi"]);
+    case "payments.akbank_started":
+      return clean(["Akbank ile ödeme başlatıldı", order, total && `Tutar: ${total}`]);
+    case "credit_payment.paid":
+      return clean([`${provider} ödemesi doğrulandı`, order, total && `Tutar: ${total}`]);
+    case "credit_payment.failed":
+      return clean([`${provider} ödemesi başarısız oldu`, order, total && `Tutar: ${total}`]);
+    case "credit_payment.reversal_requested":
+      return clean([cancel ? "Ödeme iptali bankaya iletildi" : "İade bankaya iletildi", order, total && `Tutar: ${total}`, m.credits ? `Geri alınan kredi: ${m.credits}` : null, reasonText]);
+    case "credit_payment.reversed":
+      return clean([cancel ? "Ödeme iptali bankada onaylandı" : "İade bankada onaylandı", order, total && `Tutar: ${total}`, m.credits ? `Geri alınan kredi: ${m.credits}` : null, typeof m.reference === "string" && m.reference ? `Banka referansı: ${m.reference}` : null]);
+    case "credit_payment.reversal_failed": {
+      const manual = m.reference === "MANUAL_NO_REFUND";
+      return clean([manual ? "Yönetici bankada iade yapılmadığını doğruladı" : "Banka iadeyi gerçekleştirmedi", "ayrılan krediler geri verildi", order, total && `Tutar: ${total}`, !manual && m.reference ? `Hata kodu: ${m.reference}` : null]);
+    }
+    case "credit_payment.bank_response": {
+      const headline = m.outcome === "REJECTED" ? "Banka iade isteğini reddetti" : m.outcome === "NO_RESPONSE" ? "Bankadan yanıt alınamadı, sonuç sorgulanacak" : "Banka kesin sonuç bildirmedi, sonuç sorgulanacak";
+      return clean([headline, `Sağlayıcı: ${provider}`, order, total && `Tutar: ${total}`, m.bankResponseCode ? `Yanıt kodu: ${m.bankResponseCode}` : null, m.bankMessage ? `Banka mesajı: ${m.bankMessage}` : null]);
+    }
+    case "payments.akbank_callback_review":
+      return clean(["Akbank ödeme dönüşü kontrol edildi", m.callbackVerified === false ? "Banka imzası doğrulanamadı" : null, m.bankResponseCode ? `Banka yanıt kodu: ${m.bankResponseCode}` : null]);
+    case "payments.akbank_paid_period_review":
+      return "Banka iptali doğrulandı, abonelik dönemi yönetici incelemesinde.";
+    case "payments.akbank_settings_updated":
+    case "payments.settings_updated":
+      return clean([`Sağlayıcı: ${provider}`, m.mode ? `Mod: ${modeLabels[m.mode] ?? "Diğer"}` : null, m.enabled !== undefined ? `Durum: ${m.enabled ? "Etkin" : "Devre dışı"}` : null, m.credentialsChanged ? "Bağlantı bilgileri değiştirildi" : null]);
+    case "payments.confirmed_no_charge":
+      return clean(["Bankada çekim olmadığı doğrulandı", typeof m.providerReference === "string" && m.providerReference ? `Banka referansı: ${m.providerReference}` : null]);
+    case "subscription.stopped":
+      return "Abonelik ve otomatik yenileme durduruldu.";
+    case "credit_period.created":
+    case "credit_period.archived":
+    case "credit_sales.plan_created":
+    case "credit_sales.plan_updated":
+    case "credit_sales.plan_deleted":
+      return clean([m.name && `Ad: ${m.name}`, credits, money(m.price, m.currency) && `Fiyat: ${money(m.price, m.currency)}`]) || `${activityActionLabel(action)}.`;
+    case "credit_sales.settings_updated":
+      return "Kredi satış ayarları güncellendi.";
+    case "agreement.created":
+    case "agreement.updated": {
+      const after = (m.after ?? m) as Detail;
+      const before = (m.before ?? {}) as Detail;
+      const changes = m.before ? [before.name !== after.name && `Ad: ${before.name} → ${after.name}`, before.credits !== after.credits && `Kredi: ${before.credits} → ${after.credits}`].filter(Boolean) : [];
+      return clean([after.name && `Anlaşma: ${after.name}`, !m.before && after.credits !== undefined && `Kredi: ${after.credits}`, ...changes]) || `${activityActionLabel(action)}.`;
+    }
+    case "agreement.cancelled":
+    case "agreement.reactivated":
+    case "agreement.deleted":
+      return `${activityActionLabel(action)}.`;
+    case "agreement_type.created":
+      return m.name ? `Tür: ${m.name}` : `${activityActionLabel(action)}.`;
+    case "agreement_type.archived":
+      return `${activityActionLabel(action)}.`;
+    case "customer.parent_updated":
+      return m.createdCustomerId ? "Şirkete yeni bağlı kişi eklendi." : m.parentCustomerId ? "Müşteri bir şirkete bağlandı." : "Müşterinin şirket bağlantısı kaldırıldı.";
+    case "email.staff_sender_skipped":
+      return clean([m.sender && `Gönderen: ${m.sender}`, m.reason && `Neden: ${m.reason}`]) || `${activityActionLabel(action)}.`;
+    case "role.template_updated":
+      return m.name ? `Şablon: ${m.name}` : `${activityActionLabel(action)}.`;
+    default:
+      return null;
+  }
 }
 function fieldLabel(field: string) {
   return fieldLabels[field] ?? "Diğer bilgiler";
@@ -137,6 +262,8 @@ export function activityValueLabel(value: unknown): string {
   return labels[String(value)] ?? String(value);
 }
 export function richDescriptionFor(log: ActivityLog) {
+  const finance = financeDescription(log);
+  if (finance) return finance;
   const metadata = log.metadata;
   if (log.action === "conversation.channel_reply_failed" || log.action === "conversation.whatsapp_failed") {
     const channel = metadata?.channel === "SMS" ? "SMS" : metadata?.channel === "WHATSAPP" ? "WhatsApp" : "Kanal mesajı";

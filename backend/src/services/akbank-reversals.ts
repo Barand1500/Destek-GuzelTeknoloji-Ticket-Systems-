@@ -5,6 +5,7 @@ import { sealPayment, openPayment } from './payment-secrets.js';
 import { akbankCurrency, akbankInquiry, akbankRequest, type AkbankConfig } from './akbank-client.js';
 import { queryAkbankInstruction } from './akbank-recurring-client.js';
 import { akbankOccurrence } from './akbank-recurring-state.js';
+import { logReversalBankResponse } from './payment-reversal-log.js';
 
 type Finish = (id: string, success: boolean, reference: string) => Promise<unknown>;
 type Baseline = { ids: string[]; total: string };
@@ -34,10 +35,12 @@ export async function dispatchAkbankReversal(row: PaymentReversal, config: Akban
   });
   // Signed pre-dispatch validation failures are definitive: restore the reserved credit once.
   if (['VPS-1001', 'VPS-1003', 'VPS-1007', 'VPS-1015', 'VPS-1019', 'VPS-1020', 'VPS-1021', 'VPS-1035', 'VPS-1042', 'VPS-2151'].includes(result.responseCode)) {
+    await logReversalBankResponse(row, { provider: 'akbank', outcome: 'REJECTED', code: result.responseCode, message: result.responseMessage });
     await finish(row.id, false, result.responseCode);
     return;
   }
   if (result.responseCode !== 'VPS-0000' || result.order?.orderId !== row.paymentId) {
+    await logReversalBankResponse(row, { provider: 'akbank', outcome: 'PENDING', code: result.responseCode, message: result.responseCode === 'VPS-0000' ? 'Banka yanıtındaki sipariş numarası eşleşmedi' : result.responseMessage });
     await db.paymentReversal.updateMany({ where: { id: row.id, status: 'PENDING' }, data: { status: 'REVIEW', failureCode: 'BANK_RESULT_PENDING' } });
     return;
   }
@@ -86,8 +89,10 @@ async function dispatchRecurringReversal(row: PaymentReversal, config: AkbankCon
     ...(row.kind === 'REFUND' ? { transaction: { amount: row.amount.toFixed(2), currencyCode: Number(akbankCurrency[row.currency]) } } : {}),
   });
   if (['VPS-1001', 'VPS-1003', 'VPS-1007', 'VPS-1015', 'VPS-1019', 'VPS-1020', 'VPS-1021', 'VPS-1035', 'VPS-1042', 'VPS-2151'].includes(result.responseCode)) {
+    await logReversalBankResponse(row, { provider: 'akbank', outcome: 'REJECTED', code: result.responseCode, message: result.responseMessage });
     await finish(row.id, false, result.responseCode); return;
   }
+  if (result.responseCode !== 'VPS-0000') await logReversalBankResponse(row, { provider: 'akbank', outcome: 'PENDING', code: result.responseCode, message: result.responseMessage });
   // An acknowledgment is not settlement. Recover by the original recurring occurrence only.
   await reconcileRecurringReversal({ ...row, contextCiphertext: sealPayment(baseline) }, config, finish);
 }

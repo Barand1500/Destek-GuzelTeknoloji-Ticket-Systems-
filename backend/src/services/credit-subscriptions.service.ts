@@ -153,7 +153,7 @@ export async function settleVerifiedCreditPayment(result: VerifiedPayment, now =
       }
       await tx.notification.create({ data: { userId: order.customerId, type: 'SUBSCRIPTION_PAYMENT_PAID', title: 'Ödeme başarılı', message: order.name + ': ' + order.credits.toLocaleString('tr-TR') + ' kredi tanımlandı.' } });
     }
-    await tx.activityLog.create({ data: { userId: order.customerId, action: 'credit_payment.' + result.outcome.toLowerCase(), entityType: 'CreditOrder', entityId: order.id, metadata: { attemptId: latest.id, provider: result.provider, paymentId: result.paymentId, amount: order.total.toFixed(2), currency: order.currency } } });
+    await tx.activityLog.create({ data: { userId: order.customerId, action: 'credit_payment.' + result.outcome.toLowerCase(), entityType: 'CreditOrder', entityId: order.id, metadata: { attemptId: latest.id, orderNumber: order.number, provider: result.provider, paymentId: result.paymentId, amount: order.total.toFixed(2), currency: order.currency } } });
   });
   publishChange();
 }
