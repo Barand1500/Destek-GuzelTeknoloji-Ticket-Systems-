@@ -1,6 +1,7 @@
 import { CustomerRefundPanel } from './CustomerRefundPanel';
 import { bankCancellationConfirmed } from './reversal-labels';
 import { PaymentReversalPanel } from "./PaymentReversalPanel";
+import { PaymentReviews } from "./PaymentSettings";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,6 +70,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
     [message, setMessage] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   const [refundOrderId, setRefundOrderId] = useState<string | null>(null);
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
   const [reversalKind, setReversalKind] = useState<'REFUND' | 'CANCEL'>('REFUND');
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,6 +121,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
     <section className="credit-orders" aria-label="Siparişler">
       {!admin && refundOrderId && <CustomerRefundPanel key={refundOrderId} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {admin && refundOrderId && <PaymentReversalPanel key={`${refundOrderId}-${reversalKind}`} kind={reversalKind} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
+      {admin && reviewOrderId && <PaymentReviews key={reviewOrderId} editable={canCancel} orderId={reviewOrderId} onClose={() => setReviewOrderId(null)} />}
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
@@ -259,6 +262,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                             {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
                             {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.kind === 'TOP_UP' || order.usedCredits || order.status === 'PARTIAL_REFUND' ? 'İade Talep Et' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
                             {!admin && !order.paymentInProgress && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
+                            {admin && order.paymentInProgress && <button className="button secondary" type="button" onClick={() => { setRefundOrderId(null); setReviewOrderId(order.id); }}>Ödemeyi İncele</button>}
                             {(canCancel || (!admin && order.kind === "SUBSCRIPTION")) && ["PENDING", "FAILED"].includes(order.status) && (
                               <button
                                 type="button"

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AppError } from "../utils/errors.js";
 import { durationFields, hasOneDuration } from "./credit-periods.js";
+import { supportedCurrencies } from "./tcmb-rates.service.js";
 // Accept false from older clients, but never allow new renewal consent.
 export const renewalPreference = z.boolean().transform(value => {
   if (value) throw new AppError(400, 'RENEWAL_DISABLED', 'Otomatik yenileme kaldırıldı.');
@@ -13,7 +14,7 @@ const money = z
     /^\d{1,8}(\.\d{1,2})?$/,
     "Tutarı en fazla iki ondalık basamakla girin.",
   );
-const currency = z.enum(["TRY", "USD", "EUR", "GBP"]).default("TRY");
+const currency = z.enum(supportedCurrencies).default("TRY");
 const positiveMoney = money.refine(
   (value) => moneyMinor(value) > 0,
   "Fiyat sıfırdan büyük olmalıdır.",

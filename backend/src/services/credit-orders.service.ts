@@ -9,6 +9,7 @@ import { can } from "./permissions.js";
 import { publishChange } from "./events.service.js";
 import { creditStoreOwner, storeQuote } from "./credit-store.service.js";
 import { quoteInput } from "./credit-store-pricing.js";
+import { supportedCurrencies, warmTcmbRates } from "./tcmb-rates.service.js";
 import { paginationSchema } from "../validators/index.js";
 export const createCreditOrderInput = z
   .object({
@@ -24,7 +25,7 @@ export const creditOrderListInput = paginationSchema.extend({
   subscriptionId: z.uuid().optional(),
   refundRequested: z.enum(['true']).optional(),
   status: z.enum(["PENDING", "CANCELLED", "PAID", "FAILED", "PARTIAL_REFUND", "REFUNDED"]).optional(),
-  currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
+  currency: z.enum(supportedCurrencies).optional(),
 });
 const fields = {
   id: true,
@@ -75,6 +76,7 @@ export async function createCreditOrder(
   input: z.infer<typeof createCreditOrderInput>,
 ) {
   input = createCreditOrderInput.parse(input);
+  await warmTcmbRates();
   const result = await db.$transaction(async (tx) => {
     // Serializes idempotent retries and ownership changes for this account.
     await tx.$queryRaw(

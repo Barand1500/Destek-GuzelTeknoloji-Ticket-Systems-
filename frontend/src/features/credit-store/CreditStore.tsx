@@ -315,7 +315,14 @@ export function CustomerCreditStore() {
                     </div>
                     <div>
                       <dt>Toplam</dt>
-                      <dd>{money(preview.total, preview.currency)}</dd>
+                      <dd>
+                        {money(preview.total, preview.currency)}
+                        {preview.originalCurrency && preview.originalTotal && (
+                          <small style={{ display: "block", marginTop: 2 }}>
+                            {money(preview.originalTotal, preview.originalCurrency)} · TCMB satış kuru: {preview.exchangeRate?.replace(".", ",")} TL{preview.rateDate ? ` (${preview.rateDate})` : ""}
+                          </small>
+                        )}
+                      </dd>
                     </div>
                   {preview.startsOn && <div><dt>Yeni dönem</dt><dd>{preview.startsOn.split("-").reverse().join(".")} — {preview.endsOn?.split("-").reverse().join(".")}</dd></div>}
                   </dl>

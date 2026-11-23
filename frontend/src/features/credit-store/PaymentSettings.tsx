@@ -45,17 +45,21 @@ export function PaymentSettings({ editable }: { editable: boolean }) {
 }
 
 type Review = { id: string; createdAt: string; failureCode?: string | null; order: { number: number; name: string; total: string; currency: string } };
-export function PaymentReviews({ editable, orderId }: { editable: boolean; orderId?: string }) {
+export function PaymentReviews({ editable, orderId, onClose }: { editable: boolean; orderId?: string; onClose?: () => void }) {
   const client = useQueryClient();
   const query = useQuery({ queryKey: ['payment-reviews', orderId], queryFn: async () => (await api.get('/credit-sales/payment-settings/pending', { params: orderId ? { orderId } : undefined })).data.data as { total: number; data: Review[] }, refetchInterval: 60000 });
   const [resultMessage, setResultMessage] = useState('');
   const [target, setTarget] = useState<Review | null>(null), [reference, setReference] = useState(''), [confirmed, setConfirmed] = useState(false);
   const action = useMutation({ mutationFn: ({ id, close }: { id: string; close: boolean }) => api.post(`/credit-sales/payment-settings/pending/${id}/${close ? 'no-charge' : 'check'}`, close ? { confirmedNoCharge: confirmed, providerReference: reference } : {}), onMutate: () => setResultMessage(''), onSuccess: async response => { setTarget(null); setResultMessage(response.data.data.message); await Promise.all([client.invalidateQueries({ queryKey: ['payment-reviews'] }), client.invalidateQueries({ queryKey: ['/credit-sales/orders'] })]); } });
-  return <div className="payment-reviews"><ErrorMessage error={query.error} /><ErrorMessage error={action.error} />
+  if (!orderId && !query.data?.total && !query.error && !action.error && !action.isPending && !resultMessage && !target) return null;
+  return <section className="credit-sales-card payment-reviews" aria-label="Banka sonucu beklenen işlemler">
+    {onClose && <div className="credit-store-title"><h3>Ödeme İncelemesi</h3><button className="button secondary" type="button" disabled={action.isPending} onClick={onClose}>Kapat</button></div>}
+    <ErrorMessage error={query.error} /><ErrorMessage error={action.error} />
     {action.isPending && <p role="status">Banka sonucu sorgulanıyor…</p>}
     {resultMessage && <p role="status">{resultMessage}</p>}
-    {!!query.data?.total && <><h3>Banka sonucu beklenen işlemler ({query.data.total})</h3><p>{orderId ? 'Bu sipariş için başlatılmış, sonucu kesinleşmemiş tahsilatlar.' : '15 dakikayı aşan işlemler · En fazla 50 kayıt'}</p>
-      {query.data.data.map(row => <div key={row.id} className="credit-store-title"><span>#{row.order.number} · {row.order.name} · {money(row.order.total, row.order.currency)}{row.failureCode?.startsWith('AKBANK_CALLBACK_') && <small>Banka dönüşü kontrol edilmeli. {row.failureCode.includes('_INVALID') ? 'Dönüş imzası doğrulanamadı. ' : ''}{row.failureCode.match(/VPS-\d{4}$/)?.[0] ? 'Bildirilen kod: ' + row.failureCode.match(/VPS-\d{4}$/)![0] + '. ' : ''}Tahsilat durumu bankadan sorgulanır.</small>}</span>{editable && <div className="payment-settings-actions"><button className="button secondary" disabled={action.isPending} onClick={() => action.mutate({ id: row.id, close: false })}>Sonucu Sorgula</button><button className="button secondary" disabled={action.isPending || Date.now() - new Date(row.createdAt).getTime() < 3600000} onClick={() => { setTarget(row); setReference(''); setConfirmed(false); }}>Tahsilat Yok Doğrulaması</button></div>}</div>)}
+    {orderId && query.data && !query.data.total && <p>Bu sipariş için bekleyen banka işlemi kalmadı.</p>}
+    {!!query.data?.total && <>{!onClose && <h3>Banka sonucu beklenen işlemler ({query.data.total})</h3>}<p>{orderId ? 'Bu sipariş için başlatılmış, sonucu kesinleşmemiş tahsilatlar.' : '15 dakikayı aşan işlemler · En fazla 50 kayıt'}</p>
+      {query.data.data.map(row => <div key={row.id} className="credit-store-title"><div><span>#{row.order.number} · {row.order.name} · {money(row.order.total, row.order.currency)}</span>{row.failureCode?.startsWith('AKBANK_CALLBACK_') && <small style={{ display: 'block', marginTop: 4 }}>Banka dönüşü kontrol edilmeli. {row.failureCode.includes('_INVALID') ? 'Dönüş imzası doğrulanamadı. ' : ''}{row.failureCode.match(/VPS-\d{4}$/)?.[0] ? 'Bildirilen kod: ' + row.failureCode.match(/VPS-\d{4}$/)![0] + '. ' : ''}Tahsilat durumu bankadan sorgulanır.</small>}</div>{editable && <div className="payment-settings-actions"><button className="button secondary" disabled={action.isPending} onClick={() => action.mutate({ id: row.id, close: false })}>Sonucu Sorgula</button><button className="button secondary" disabled={action.isPending || Date.now() - new Date(row.createdAt).getTime() < 3600000} onClick={() => { setTarget(row); setReference(''); setConfirmed(false); }}>Tahsilat Yok Doğrulaması</button></div>}</div>)}
     </>}
     {target && <section className="credit-sales-card payment-no-charge-panel" aria-label="Tahsilat yok doğrulaması">
       <div className="credit-sales-card-heading payment-provider-heading">
@@ -66,5 +70,5 @@ export function PaymentReviews({ editable, orderId }: { editable: boolean; order
       <label><span className="field-label">Sağlayıcı doğrulama referansı / açıklama *</span><input value={reference} disabled={action.isPending} maxLength={500} onChange={e => setReference(e.target.value)} /></label>
       <div className="payment-settings-actions"><button className="button secondary" disabled={action.isPending} onClick={() => setTarget(null)}>Vazgeç</button><button className="button primary" disabled={action.isPending || !confirmed || reference.trim().length < 10} onClick={() => action.mutate({ id: target.id, close: true })}>Doğrulamayı Kaydet</button></div>
     </section>}
-  </div>;
+  </section>;
 }

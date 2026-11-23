@@ -1,4 +1,5 @@
 import { paymentAvailability } from "./payment-settings.service.js";
+import { convertForeignToTry } from "./tcmb-rates.service.js";
 import { packageSchedule } from './credit-package-schedule.js';
 import { createHash } from "node:crypto";
 import { selectedCreditChannels, creditChannelAvailability } from './credit-channel-readiness.js';
@@ -237,25 +238,29 @@ export async function storeQuote(
         "PLAN_NOT_FOUND",
         "Bu abonelik planı satışa açık değil.",
       );
+    const rawTotal = moneyText(moneyMinor(plan.price.toString()));
+    const billed = await convertForeignToTry(rawTotal, plan.currency);
     return quoteSnapshot({
       owner: account,
       ...await packageSchedule(client, account.id, plan.periodMonths, plan.periodDays ?? null),
       kind: "SUBSCRIPTION",
       name: plan.name,
       credits: plan.credits,
-      total: moneyText(moneyMinor(plan.price.toString())),
-      currency: plan.currency,
+      ...billed,
       periodMonths: plan.periodMonths,
       validityDays: plan.periodDays ?? null,
       periodName: plan.periodName ?? null,
       renewalRequested: false,
     });
   }
+  const topUp = creditQuote(config, input);
+  const billed = await convertForeignToTry(topUp.total, topUp.currency);
   return quoteSnapshot({
     owner: account,
     kind: "TOP_UP",
     name: "Ek kredi",
-    ...creditQuote(config, input),
+    ...topUp,
+    ...billed,
     periodMonths: null,
     validityDays: config.validityDays,
     periodName: null,
