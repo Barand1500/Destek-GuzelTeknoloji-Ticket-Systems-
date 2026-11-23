@@ -48,8 +48,8 @@ export async function savePaymentSettings(actor: Actor, raw: unknown) {
     if (!config.apiKey || !config.secretKey) throw new AppError(400, 'PAYMENT_KEYS_REQUIRED', 'API anahtarı ve gizli anahtar girin.');
     const fingerprint = createHash('sha256').update(JSON.stringify(config)).digest('hex');
     const changed = current?.fingerprint !== fingerprint;
-    if (changed && current && (await tx.creditPaymentAttempt.count({ where: { provider: 'iyzico', status: 'PENDING' } }) || await tx.creditSubscription.count({ where: { provider: 'iyzico', paymentMethodRef: { not: null }, autoRenew: true, status: { not: 'STOPPED' } } })))
-      throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bekleyen ödemeler sonuçlanmadan ve mevcut yenilemeler kapatılmadan ödeme hesabı değiştirilemez.');
+    if (changed && current && (await tx.creditPaymentAttempt.count({ where: { provider: 'iyzico', status: 'PENDING' } }) || await tx.paymentReversal.count({ where: { status: { in: ['PENDING', 'REVIEW'] }, order: { paymentAttempts: { some: { provider: 'iyzico', status: 'PAID' } } } } }) || await tx.creditSubscription.count({ where: { provider: 'iyzico', paymentMethodRef: { not: null }, autoRenew: true, status: { not: 'STOPPED' } } })))
+      throw new AppError(409, 'PAYMENT_ACCOUNT_IN_USE', 'Bekleyen ödemeler ve iadeler sonuçlanmadan ödeme hesabı değiştirilemez.');
     const testedAt = changed ? null : current?.testedAt;
     if (input.enabled && !testedAt) throw new AppError(400, 'PAYMENT_TEST_REQUIRED', 'Önce kapalı olarak kaydedin ve bağlantıyı test edin.');
     const data = { enabled: input.enabled, recurringEnabled: false, mode: input.mode, publicUrl: url.origin,

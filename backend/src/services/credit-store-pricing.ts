@@ -3,7 +3,7 @@ import { AppError } from "../utils/errors.js";
 import { durationFields, hasOneDuration } from "./credit-periods.js";
 // Accept false from older clients, but never allow new renewal consent.
 export const renewalPreference = z.boolean().transform(value => {
-  if (value) throw new AppError(400, 'RENEWAL_DISABLED', 'Otomatik yenileme kald?r?ld?.');
+  if (value) throw new AppError(400, 'RENEWAL_DISABLED', 'Otomatik yenileme kaldırıldı.');
   return value;
 });
 const money = z

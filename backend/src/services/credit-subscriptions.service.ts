@@ -158,14 +158,37 @@ export async function settleVerifiedCreditPayment(result: VerifiedPayment, now =
   publishChange();
 }
 
+export function nextPaymentInquiryAt(createdAt: Date, previousNextRetryAt: Date | null, now: Date) {
+  const ageMs = now.getTime() - createdAt.getTime();
+  // Bounded automatic inquiries at ~5m, ~15m, and ~30m; stop permanently after that.
+  if (previousNextRetryAt === null && ageMs < 25 * 60_000) return new Date(now.getTime() + 10 * 60_000);
+  if (ageMs < 25 * 60_000) return new Date(now.getTime() + 15 * 60_000);
+  return new Date(createdAt.getTime() + 2 * 60 * 60_000);
+}
+
 /** Reconcile existing attempts only. Never create an order or dispatch a charge. */
 export async function runCreditRenewals(provider?: RecurringPaymentProvider, now = new Date()) {
   if (!provider) return { dispatched: 0 };
   let dispatched = 0;
 
-  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: provider.name, status: 'PENDING', nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } }, orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, orderId: true } });
+  const pending = await db.creditPaymentAttempt.findMany({
+    where: {
+      provider: provider.name,
+      status: 'PENDING',
+      OR: [
+        { nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } },
+        { nextRetryAt: { lte: now }, createdAt: { gte: new Date(now.getTime() - 60 * 60_000) } },
+      ],
+    },
+    orderBy: [{ nextRetryAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+    take: 50,
+    select: { id: true, orderId: true, createdAt: true, nextRetryAt: true },
+  });
   for (const attempt of pending) {
-    const claimed = await db.creditPaymentAttempt.updateMany({ where: { id: attempt.id, status: 'PENDING', nextRetryAt: null }, data: { nextRetryAt: now } });
+    const claimed = await db.creditPaymentAttempt.updateMany({
+      where: { id: attempt.id, status: 'PENDING', nextRetryAt: attempt.nextRetryAt },
+      data: { nextRetryAt: nextPaymentInquiryAt(attempt.createdAt, attempt.nextRetryAt, now) },
+    });
     if (!claimed.count) continue;
     try {
       const result = await provider.reconcile({ attemptId: attempt.id, orderId: attempt.orderId });

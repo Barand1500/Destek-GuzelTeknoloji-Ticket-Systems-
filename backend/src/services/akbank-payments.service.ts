@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { renewalPreference } from './credit-store-pricing.js';
 import { db } from '../config/db.js';
 import { env } from '../config/env.js';
+import { Prisma } from '../generated/prisma/client.js';
 import type { Actor } from '../types/express.js';
 import { AppError } from '../utils/errors.js';
 import { creditStoreOwner } from './credit-store.service.js';
@@ -9,12 +10,15 @@ import { billingToday } from './credit-billing.js';
 import { refreshPackageStart } from './credit-package-schedule.js';
 import { openPayment, sealPayment } from './payment-secrets.js';
 import { akbankCardInput, akbankCurrency, akbankForm, akbankInquiry, akbankSaleResult, verifyAkbankCallback, type AkbankConfig } from './akbank-client.js';
-import { settleVerifiedCreditPayment } from './credit-subscriptions.service.js';
+import { nextPaymentInquiryAt, settleVerifiedCreditPayment } from './credit-subscriptions.service.js';
 import { queryAkbankInstruction } from './akbank-recurring-client.js';
 import { akbankOccurrence, akbankInstructionTerminal } from './akbank-recurring-state.js';
 
 const inputSchema = z.object({ card: akbankCardInput, manualRenewalConsent: z.boolean().default(false), renewalConsent: renewalPreference.default(false) }).strict();
 const declineCodes = new Set(['05', '14', '33', '41', '43', '51', '54', '57', '58', '62', '65']);
+// Signed Akbank pre-dispatch / validation / terminal rejection codes where no capture occurs.
+const callbackRejectionCodes = new Set(['VPS-1001', 'VPS-1003', 'VPS-1007', 'VPS-1015', 'VPS-1019', 'VPS-1020', 'VPS-1021', 'VPS-1022', 'VPS-1023', 'VPS-1035', 'VPS-1042', 'VPS-1049', 'VPS-2151']);
+const failed3dStatuses = new Set(['0', '5', '6', '7', '8']);
 export async function beginAkbankCheckout(actor: Actor, orderId: string, raw: unknown) {
   const input = inputSchema.parse(raw);
   const prepared = await db.$transaction(async tx => {
@@ -62,7 +66,7 @@ export async function reconcileAkbankSession(id: string, onInquiry?: (recordCoun
   if (occurrence) {
     const matches = rows.filter(row => Number(row.recurringOrder) === occurrence.sequence);
     const sale = matches.length === 1 ? matches[0] : null;
-    if (sale?.requestStatus === 'S' && sale.requestType === 'R' && String(sale.txnCode) === '1000' && String(sale.currencyCode) === akbankCurrency[attempt.order.currency] && Number(sale.amount) === Number(attempt.order.total) && String(sale.plannedDateTime).slice(0, 10) === attempt.order.periodStartsOn?.toISOString().slice(0, 10))
+    if (sale?.requestStatus === 'S' && sale.requestType === 'R' && String(sale.txnCode) === '1000' && String(sale.currencyCode) === akbankCurrency[attempt.order.currency] && new Prisma.Decimal(sale.amount ?? -1).eq(attempt.order.total) && String(sale.plannedDateTime).slice(0, 10) === attempt.order.periodStartsOn?.toISOString().slice(0, 10))
       result = { attemptId: attempt.id, provider: 'akbank', paymentId: attempt.providerPaymentId!, outcome: 'PAID', amount: attempt.order.total.toFixed(2), currency: attempt.order.currency };
   }
   if (result) {
@@ -100,8 +104,12 @@ export async function akbankCallback(id: string, raw: unknown) {
     return new URL('/customer/agreements?view=orders', env.FRONTEND_URL).toString();
   }
   const signedFields = verified && typeof value.hashParams === 'string' ? new Set(value.hashParams.split('+')) : new Set<string>();
-  if (!result && verified && attempt.status === 'PENDING' && value.txnCode === '1000' && signedFields.has('txnCode') && signedFields.has('hostResponseCode') && value.responseCode !== 'VPS-0000' && typeof value.hostResponseCode === 'string' && declineCodes.has(value.hostResponseCode)) {
-    await settleVerifiedCreditPayment({ attemptId: attempt.id, provider: 'akbank', paymentId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency, outcome: 'FAILED', failureCode: 'BANK_DECLINED' });
+  const cardDeclined = value.txnCode === '1000' && signedFields.has('txnCode') && signedFields.has('hostResponseCode') && value.responseCode !== 'VPS-0000' && typeof value.hostResponseCode === 'string' && declineCodes.has(value.hostResponseCode);
+  const preDispatchRejected = Boolean(code && signedFields.has('responseCode') && callbackRejectionCodes.has(code));
+  const threeDsFailed = value.responseCode !== 'VPS-0000' && signedFields.has('mdStatus') && typeof value.mdStatus === 'string' && failed3dStatuses.has(value.mdStatus);
+  if (!result && verified && attempt.status === 'PENDING' && (cardDeclined || preDispatchRejected || threeDsFailed)) {
+    const failureCode = cardDeclined ? 'BANK_DECLINED' : preDispatchRejected ? code! : '3D_AUTH_FAILED';
+    await settleVerifiedCreditPayment({ attemptId: attempt.id, provider: 'akbank', paymentId: attempt.id, amount: attempt.order.total.toFixed(2), currency: attempt.order.currency, outcome: 'FAILED', failureCode });
     const settled = await db.creditPaymentAttempt.findUniqueOrThrow({ where: { id: attempt.id } });
     await db.paymentCheckoutSession.update({ where: { id }, data: { state: settled.status } });
   }
@@ -109,11 +117,25 @@ export async function akbankCallback(id: string, raw: unknown) {
 }
 
 export async function runAkbankPaymentChecks(now = new Date()) {
-  // A non-null nextRetryAt marks the single automatic inquiry as claimed, including after a restart.
-  const pending = await db.creditPaymentAttempt.findMany({ where: { provider: 'akbank', status: 'PENDING', nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } }, take: 25, orderBy: [{ createdAt: 'asc' }], select: { id: true } });
+  const pending = await db.creditPaymentAttempt.findMany({
+    where: {
+      provider: 'akbank',
+      status: 'PENDING',
+      OR: [
+        { nextRetryAt: null, createdAt: { lte: new Date(now.getTime() - 5 * 60_000) } },
+        { nextRetryAt: { lte: now }, createdAt: { gte: new Date(now.getTime() - 60 * 60_000) } },
+      ],
+    },
+    take: 25,
+    orderBy: [{ createdAt: 'asc' }],
+    select: { id: true, createdAt: true, nextRetryAt: true },
+  });
   for (const row of pending) {
-    const claimed = await db.creditPaymentAttempt.updateMany({ where: { id: row.id, status: 'PENDING', nextRetryAt: null }, data: { nextRetryAt: now } });
+    const claimed = await db.creditPaymentAttempt.updateMany({
+      where: { id: row.id, status: 'PENDING', nextRetryAt: row.nextRetryAt },
+      data: { nextRetryAt: nextPaymentInquiryAt(row.createdAt, row.nextRetryAt, now) },
+    });
     if (!claimed.count) continue;
-    try { const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: row.id } }); if (session) await reconcileAkbankSession(session.id); } catch { /* Leave uncertain payments pending; do not repeat the automatic inquiry. */ }
+    try { const session = await db.paymentCheckoutSession.findUnique({ where: { attemptId: row.id } }); if (session) await reconcileAkbankSession(session.id); } catch { /* Bounded retry schedule handles transient failures; never re-charge. */ }
   }
 }

@@ -169,6 +169,13 @@ export async function closeUnrefundedReversal(actor: Actor, id: string, raw: unk
   return serialize(await db.paymentReversal.findUniqueOrThrow({ where: { id } }));
 }
 
+/** Schedule bounded automatic checks: every 5m for 30m, every 30m up to 4h, then stop (manual check remains available). */
+export function nextReversalCheckAt(createdAt: Date, now = new Date()): Date | null {
+  const ageMs = now.getTime() - createdAt.getTime();
+  if (ageMs >= 4 * 60 * 60_000) return null;
+  return new Date(now.getTime() + (ageMs < 30 * 60_000 ? 5 : 30) * 60_000);
+}
+
 /** Query by the unique reversal conversation ID. Never resend a refund after a timeout. */
 export async function reconcilePaymentReversal(id: string) {
   const row = await db.paymentReversal.findUniqueOrThrow({ where: { id } });
@@ -178,24 +185,39 @@ export async function reconcilePaymentReversal(id: string) {
   const { config } = openPayment<{ config: IyzicoConfig | AkbankConfig }>(session.contextCiphertext);
   if (attempt.provider === 'akbank') {
     await reconcileAkbankReversal(row, config as AkbankConfig, finishPaymentReversal);
-    await db.paymentReversal.updateMany({ where: { id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: new Date(Date.now() + 5 * 60_000) } });
+    await db.paymentReversal.updateMany({ where: { id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: nextReversalCheckAt(row.createdAt) } });
     return serialize(await db.paymentReversal.findUniqueOrThrow({ where: { id } }));
   }
   const path = '/v2/reporting/payment/details?locale=tr&paymentId=' + encodeURIComponent(row.paymentId);
   const result = await iyzicoRequest(config as IyzicoConfig, path, {}, fetch, 'GET');
   if (result.status === 'success' && Array.isArray(result.payments)) {
     const payment = result.payments.find((v: any) => String(v.paymentId) === row.paymentId);
-    const list = row.kind === 'CANCEL' ? payment?.cancels : payment?.itemTransactions?.flatMap((v: any) => v.refunds ?? []);
-    const found = list?.find((v: any) => (row.kind === 'CANCEL' ? v.cancelConversationId : v.refundConversationId) === row.id);
-    if (found && Number(found.refundStatus) === 1) {
-      if (!row.amount.eq(found.refundPrice ?? -1) || found.currencyCode !== row.currency) throw new AppError(409, 'PAYMENT_MISMATCH', 'İade raporunun tutarı veya para birimi eşleşmiyor.');
-      await finishPaymentReversal(id, true, String(found.refundTxId ?? found.refundId ?? row.id));
+    if (row.kind === 'CANCEL') {
+      const found = payment?.cancels?.find((v: any) => v.cancelConversationId === row.id);
+      const cancelOk = Boolean(found) && (found.cancelStatus !== undefined
+        ? Number(found.cancelStatus) === 1 || String(found.cancelStatus).toUpperCase() === 'SUCCESS'
+        : found.refundStatus !== undefined
+          ? Number(found.refundStatus) === 1
+          : Number(payment?.paymentStatus) === 1);
+      if (cancelOk) {
+        const price = found.cancelPrice ?? found.price ?? found.refundPrice ?? payment?.paidPrice ?? -1;
+        const curr = found.currencyCode ?? found.currency ?? payment?.currency;
+        if (!row.amount.eq(price) || curr !== row.currency) throw new AppError(409, 'PAYMENT_MISMATCH', 'İptal raporunun tutarı veya para birimi eşleşmiyor.');
+        await finishPaymentReversal(id, true, String(found.cancelId ?? found.refundTxId ?? found.refundId ?? row.id));
+      }
+    } else {
+      const list = payment?.itemTransactions?.flatMap((v: any) => v.refunds ?? []);
+      const found = list?.find((v: any) => v.refundConversationId === row.id);
+      if (found && Number(found.refundStatus) === 1) {
+        if (!row.amount.eq(found.refundPrice ?? -1) || found.currencyCode !== row.currency) throw new AppError(409, 'PAYMENT_MISMATCH', 'İade raporunun tutarı veya para birimi eşleşmiyor.');
+        await finishPaymentReversal(id, true, String(found.refundTxId ?? found.refundId ?? row.id));
+      }
     }
   }
-  await db.paymentReversal.updateMany({ where: { id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: new Date(Date.now() + 5 * 60_000) } });
+  await db.paymentReversal.updateMany({ where: { id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: nextReversalCheckAt(row.createdAt) } });
   return serialize(await db.paymentReversal.findUniqueOrThrow({ where: { id } }));
 }
 export async function runPaymentReversalChecks() {
-  const rows = await db.paymentReversal.findMany({ where: { status: { in: ['PENDING', 'REVIEW'] }, nextCheckAt: { lte: new Date() } }, orderBy: [{ nextCheckAt: 'asc' }, { id: 'asc' }], take: 25, select: { id: true } });
-  for (const row of rows) try { await reconcilePaymentReversal(row.id); } catch { await db.paymentReversal.updateMany({ where: { id: row.id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: new Date(Date.now() + 5 * 60_000), status: 'REVIEW' } }); }
+  const rows = await db.paymentReversal.findMany({ where: { status: { in: ['PENDING', 'REVIEW'] }, nextCheckAt: { lte: new Date() } }, orderBy: [{ nextCheckAt: 'asc' }, { id: 'asc' }], take: 25, select: { id: true, createdAt: true } });
+  for (const row of rows) try { await reconcilePaymentReversal(row.id); } catch { await db.paymentReversal.updateMany({ where: { id: row.id, status: { in: ['PENDING', 'REVIEW'] } }, data: { nextCheckAt: nextReversalCheckAt(row.createdAt), status: 'REVIEW' } }); }
 }
