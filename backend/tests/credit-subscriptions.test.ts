@@ -6,12 +6,15 @@ import { db } from '../src/config/db.js';
 import type { Actor } from '../src/types/express.js';
 import { billingBoundary, runCreditRenewals, settleVerifiedCreditPayment, changeSubscription, listSubscriptions, subscriptionListInput, subscriptionCheckoutOrder, type RecurringPaymentProvider } from '../src/services/credit-subscriptions.service.js';
 
-test('billing dates preserve the original month-end anchor, leap years and custom days', () => {
+test('billing periods use fixed day counts for every plan length', () => {
   const anchor = new Date('2028-01-31');
-  assert.equal(billingBoundary(anchor, 1, null, 1).toISOString().slice(0, 10), '2028-02-29');
+  const day = (months: number | null, days: number | null) => billingBoundary(anchor, months, days, 1).toISOString().slice(0, 10);
+  assert.equal(day(1, null), '2028-03-01');
+  assert.equal(day(3, null), '2028-04-30');
+  assert.equal(day(6, null), '2028-07-29');
+  assert.equal(day(12, null), '2029-01-30');
+  assert.equal(day(null, 90), '2028-04-30');
   assert.equal(billingBoundary(anchor, 1, null, 2).toISOString().slice(0, 10), '2028-03-31');
-  assert.equal(billingBoundary(new Date('2028-02-29'), 12, null, 1).toISOString().slice(0, 10), '2029-02-28');
-  assert.equal(billingBoundary(anchor, null, 90, 1).toISOString().slice(0, 10), '2028-04-30');
   assert.throws(() => billingBoundary(anchor, 1, 30, 1));
 });
 

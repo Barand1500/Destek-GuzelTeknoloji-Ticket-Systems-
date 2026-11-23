@@ -6,7 +6,7 @@ import { db } from '../src/config/db.js';
 import { billingToday } from '../src/services/credit-billing.js';
 import { packageSchedule, refreshPackageStart } from '../src/services/credit-package-schedule.js';
 
-test('fully refunded legacy packages do not delay quotes or checkout; partial refunds retain the paid period', async () => {
+test('any refunded package releases the period so a replacement can start right away', async () => {
   const owner = await db.user.create({ data: { name: 'Package refund fixture ' + randomUUID(), role: 'CUSTOMER', passwordHash: 'fixture' } });
   const today = billingToday(), end = new Date(today.getTime() + 30 * 86400000);
   try {
@@ -24,8 +24,8 @@ test('fully refunded legacy packages do not delay quotes or checkout; partial re
     await db.creditOrder.update({ where: { id: original.id }, data: { status: 'PARTIAL_REFUND' } });
     await db.agreement.update({ where: { id: grant.id }, data: { credits: 20 } });
     const partial = await packageSchedule(db, owner.id, 1, null);
-    assert.equal(partial.currentPackage?.id, grant.id);
-    assert.equal(partial.startsOn, new Date(end.getTime() + 86400000).toISOString().slice(0, 10));
+    assert.equal(partial.currentPackage, null, 'A partially refunded package must not delay the next purchase');
+    assert.equal(partial.startsOn, today.toISOString().slice(0, 10), 'The replacement starts immediately after a refund');
   } finally {
     await db.creditOrder.deleteMany({ where: { customerId: owner.id } });
     await db.agreement.deleteMany({ where: { customerId: owner.id } });

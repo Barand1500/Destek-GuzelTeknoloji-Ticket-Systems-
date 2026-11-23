@@ -6,6 +6,10 @@ import { managementOrder, sortManagementRows } from './management-sorting.js';
 import { activityActionLabel, richDescriptionFor, type ActivityLog } from '../utils/activity-log-format.js';
 import { customerListOrder } from "./customer-sorting.js";
 import { internationalEmailSearchIds, readableEmail } from './email-search.js';
+
+// Day boundaries for date-range filters, resolved in the workspace timezone.
+const istanbulDay = (date: string, endOfDay: 0 | 1) =>
+  new Date(`${date}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}+03:00`);
 import bcrypt from "bcrypt";
 import { randomBytes } from "node:crypto";
 import { unlink } from "node:fs/promises";
@@ -1608,6 +1612,7 @@ export async function activityLogs(
   ];
   const where: Prisma.ActivityLogWhereInput = {
     userId: q.userId,
+    ...(q.from || q.to ? { createdAt: { ...(q.from ? { gte: istanbulDay(q.from, 0) } : {}), ...(q.to ? { lte: istanbulDay(q.to, 1) } : {}) } } : {}),
     ...(q.action ? { action: { contains: q.action } } : {}),
     ...(q.search && !readableSearch
       ? {

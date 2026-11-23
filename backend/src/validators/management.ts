@@ -192,6 +192,8 @@ export const activityQuery = paginationSchema.extend({
   search,
   action: z.string().trim().max(100).optional(),
   userId: idSchema.optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
 });
 export const activityDeleteQuery = z.object({
   period: z.enum(["day", "week", "month", "all"]),

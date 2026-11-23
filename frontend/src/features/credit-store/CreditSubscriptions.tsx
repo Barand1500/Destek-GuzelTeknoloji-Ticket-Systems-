@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../services/api";
+import { DropdownSelect } from "../../components/DropdownSelect";
 import { ErrorMessage, Pagination } from "../management/shared";
 import { money, count, periodLabel } from "./types";
 import "./credit-orders.css";
@@ -54,6 +55,8 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
     ? "/credit-sales/subscriptions"
     : "/my/credit-store/subscriptions";
   const [page, setPage] = useState(1),
+    [limit, setLimit] = useState(20),
+    [status, setStatus] = useState(""),
     [search, setSearch] = useState(""),
     [term, setTerm] = useState("");
   useEffect(() => {
@@ -65,13 +68,14 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
   }, [search]);
   const query = useQuery({
     refetchInterval: 15000,
-    queryKey: [base, page, term],
+    queryKey: [base, page, term, limit, status],
     queryFn: async () =>
       (
         await api.get(base, {
           params: {
             page,
-            limit: 20,
+            limit,
+            ...(status ? { displayStatus: status } : {}),
             search: term,
           },
         })
@@ -106,6 +110,8 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
             }
           />
         </label>
+        <DropdownSelect label="Durum" ariaLabel="Abonelik durum filtresi" value={status} onChange={value => { setStatus(value); setPage(1); }} options={[{ value: "", label: "Tüm durumlar" }, ...Object.keys(statusClasses).map(label => ({ value: statusClasses[label], label }))]} />
+        <DropdownSelect label="Sayfa başına" ariaLabel="Abonelik sayfa başına kayıt sayısı" value={String(limit)} onChange={value => { setLimit(Number(value)); setPage(1); }} options={[10, 20, 50, 100].map(value => ({ value: String(value), label: String(value) }))} />
       </div>
       <ErrorMessage error={query.error} />
       {query.isPending && <p role="status">Abonelikler yükleniyor…</p>}

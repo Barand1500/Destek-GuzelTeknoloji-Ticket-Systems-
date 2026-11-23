@@ -3,11 +3,12 @@ import { billingBoundary, billingToday } from './credit-billing.js';
 import { AppError } from '../utils/errors.js';
 
 type ScheduleClient = Pick<Prisma.TransactionClient, 'agreement' | 'creditOrder'>;
-// Older full refunds may still have an uncancelled grant. The refunded purchase
-// must never reserve a period, while manual agreements and partial refunds do.
+// Older refunds may still have an uncancelled grant. A refunded purchase (full or
+// partial) must never reserve a period; manual agreements still do.
 const retainedPackage: Prisma.AgreementWhereInput = {
   deletedAt: null, cancelledAt: null, type: { not: 'ONE_OFF' },
-  OR: [{ grantedOrder: { is: null } }, { grantedOrder: { is: { status: { not: 'REFUNDED' } } } }],
+  // Any refund (full or partial) releases the period so the customer can switch packages right away.
+  OR: [{ grantedOrder: { is: null } }, { grantedOrder: { is: { status: { notIn: ['REFUNDED', 'PARTIAL_REFUND'] } } } }],
 };
 export async function packageSchedule(client: ScheduleClient, customerId: string, months: number | null, days: number | null) {
   const today = billingToday();
@@ -23,7 +24,7 @@ export async function packageSchedule(client: ScheduleClient, customerId: string
   const end = new Date(billingBoundary(start, months, days, 1).getTime() - 86_400_000);
   return {
     startsOn: start.toISOString().slice(0, 10), endsOn: end.toISOString().slice(0, 10),
-    currentPackage: current ? { id: current.id, name: current.name, endsOn: current.endsOn.toISOString().slice(0, 10), remainingDays: Math.ceil((start.getTime() - today.getTime()) / 86_400_000), autoRenew: false } : null,
+    currentPackage: current ? { id: current.id, name: current.name, endsOn: current.endsOn.toISOString().slice(0, 10), remainingDays: Math.max(0, Math.round((current.endsOn.getTime() - today.getTime()) / 86_400_000)), autoRenew: false } : null,
   };
 }
 

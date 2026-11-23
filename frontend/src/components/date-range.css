@@ -1,0 +1,175 @@
+.date-range-field {
+  position: relative;
+  min-width: 0;
+}
+.date-range-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 226px;
+  height: 42px;
+  padding: 8px 38px 7px 12px;
+  border: 1px solid #b8c6d5;
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: var(--text, #203647);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.date-range-control .field-label {
+  background: var(--surface, #fff);
+}
+.date-range-control:hover,
+.date-range-control[aria-expanded="true"] {
+  border-color: #0d8fc5;
+  box-shadow: 0 0 0 3px #0d8fc517;
+}
+.date-range-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ui-text-secondary);
+  pointer-events: none;
+}
+.date-range-placeholder {
+  color: var(--ui-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.date-range-value {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.date-range-popup {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  box-sizing: border-box;
+  width: 284px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border, #dbe3e8);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #203647);
+  box-shadow: 0 14px 34px rgba(9, 25, 38, .24);
+  overflow: auto;
+  font-size: 12px;
+  scrollbar-width: thin;
+}
+.date-range-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.date-range-heading strong {
+  text-transform: capitalize;
+  font-size: 13px;
+}
+.date-range-popup button {
+  display: grid;
+  place-items: center;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.date-range-heading > button {
+  width: 28px;
+  border: 1px solid var(--border, #dbe3e8);
+}
+.date-range-popup button:hover:not(:disabled) {
+  background: rgba(24, 167, 223, .14);
+}
+.date-range-hint {
+  margin: 0 0 8px;
+  color: var(--ui-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.date-range-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.date-range-weekday {
+  text-align: center;
+  color: var(--ui-text-secondary);
+  font-size: 10px;
+  line-height: 24px;
+}
+.date-range-grid > button.outside-month {
+  opacity: .45;
+}
+.date-range-grid > button.in-range {
+  border-radius: 0;
+  background: rgba(24, 167, 223, .18);
+}
+.date-range-grid > button.range-edge,
+.date-range-grid > button[aria-pressed="true"] {
+  border-radius: 7px;
+  background: #087fa8;
+  color: #fff;
+}
+.date-range-grid > button[aria-current="date"]:not(.range-edge) {
+  box-shadow: inset 0 0 0 1px #18a7df;
+}
+.date-range-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #dbe3e8);
+}
+.date-range-footer > button {
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ui-text-secondary);
+}
+.date-range-footer > button:last-child {
+  color: var(--ui-accent, #0879ad);
+}
+html[data-theme="dark"] .date-range-control {
+  border-color: #3b5365;
+  background: #182630;
+  color: #e7eff6;
+}
+html[data-theme="dark"] .date-range-control .field-label {
+  background: #182630;
+}
+html[data-theme="dark"] .date-range-popup {
+  border-color: #3b5365;
+  background: #182630;
+  color: #e7eff6;
+}
+html[data-theme="dark"] .date-range-grid > button.in-range {
+  background: rgba(88, 196, 237, .22);
+}
+html[data-theme="dark"] .date-range-grid > button.range-edge,
+html[data-theme="dark"] .date-range-grid > button[aria-pressed="true"] {
+  background: #1b7fa6;
+  color: #fff;
+}
+@media (max-width: 700px) {
+  .date-range-field,
+  .date-range-control {
+    width: 100%;
+    min-width: 0;
+  }
+  .date-range-popup {
+    width: min(284px, calc(100vw - 16px));
+    padding: 10px;
+  }
+}

@@ -1,5 +1,6 @@
 import { displayEmail } from "../../utils/email";
 import { SortableTableHead } from "../../components/TableSorting";
+import { DateRangeField } from "../../components/DateRangeField";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Trash2 } from "lucide-react";
@@ -20,7 +21,12 @@ import { activityActionLabel, richDescriptionFor, type ActivityLog } from "./act
 export function ActivityLogsPage() {
   const {user} = useAuth();
   const client = useQueryClient();
-  const list = useList<ActivityLog>("/activity-logs");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const list = useList<ActivityLog>("/activity-logs", {
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+  });
   const [deleteMenuOpen, setDeleteMenuOpen] = useState(false);
   const [deletePeriod, setDeletePeriod] = useState<"day" | "week" | "month" | "all" | null>(null);
   const remove = useMutation({ mutationFn: (period: string) => api.delete("/activity-logs", { params: { period } }), onSuccess: () => void client.invalidateQueries({ queryKey: ["/activity-logs"] }) });
@@ -33,6 +39,7 @@ export function ActivityLogsPage() {
       />
       <section className="management-panel">
         <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem Geçmişinde Ara" placeholder="Kullanıcı, işlem veya açıklamada ara..." />
+        <DateRangeField label="Tarih" from={from} to={to} onChange={(range) => { setFrom(range.from); setTo(range.to); list.setPage(1); }} />
         <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
           <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem Geçmişini sil</span><ChevronDown size={15} /></button>
           {deleteMenuOpen && <div className="notification-delete-menu" role="menu">{Object.entries(deleteLabels).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setDeletePeriod(period as "day" | "week" | "month" | "all"); setDeleteMenuOpen(false); }}>{label}</button>)}</div>}

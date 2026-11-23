@@ -16,6 +16,7 @@ const dayMs = 86_400_000;
 export const subscriptionListInput = paginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).default(''),
+  displayStatus: z.enum(['active', 'stopped', 'pending', 'awaiting_payment', 'failed', 'refunded', 'partial_refund', 'cancelled']).optional(),
   status: z.enum(['AWAITING_CONSENT', 'AWAITING_PAYMENT', 'ACTIVE', 'PAST_DUE', 'STOPPED']).optional(),
 });
 function staff(actor: Actor, edit = false) {
@@ -38,6 +39,21 @@ export async function listSubscriptions(actor: Actor, input: z.infer<typeof subs
     ] : [])] } : {}),
   };
   return db.$transaction(async tx => {
+    if (input.displayStatus) {
+      // Package state differs from the retired renewal state stored on subscriptions.
+      const today = billingToday();
+      const candidates = await tx.creditSubscription.findMany({ where, select: safeFields });
+      where.id = { in: candidates.filter(row => {
+        const orderStatus = row.orders[0]?.status;
+        const state = orderStatus === 'REFUNDED' ? 'refunded' : orderStatus === 'PARTIAL_REFUND' ? 'partial_refund'
+          : !row.currentEndsOn && orderStatus === 'CANCELLED' ? 'cancelled'
+          : !row.currentEndsOn && orderStatus === 'FAILED' ? 'failed'
+          : row.currentStartsOn && row.currentStartsOn > today ? 'pending'
+          : row.currentEndsOn ? (row.currentEndsOn < today ? 'stopped' : 'active')
+          : ({ ACTIVE: 'active', STOPPED: 'stopped', PAST_DUE: 'failed', AWAITING_CONSENT: 'awaiting_payment', AWAITING_PAYMENT: 'awaiting_payment' } as const)[row.status];
+        return state === input.displayStatus;
+      }).map(row => row.id) };
+    }
     const total = await tx.creditSubscription.count({ where });
     const rows = await tx.creditSubscription.findMany({ where, select: safeFields, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: input.limit, skip: (input.page - 1) * input.limit });
     return { data: rows.map(({ orders, ...row }) => ({ ...row, lastOrderStatus: orders[0]?.status ?? null, autoRenew: false, nextPaymentOn: null, amount: row.amount.toFixed(2), recurringState: null, recurringFailureCode: null })),
