@@ -7,6 +7,7 @@ import { conversationPath } from '../../router/paths';
 import { useAuth } from '../auth/Auth';
 import { Pagination, ErrorMessage } from './shared';
 import { DropdownSelect } from '../../components/DropdownSelect';
+import { SearchableDropdown } from '../../components/SearchableDropdown';
 import { usePageSize } from '../../components/usePageSize';
 import { ChevronDown } from 'lucide-react';
 import { elapsedDuration } from '../../utils/elapsed-duration';
@@ -40,7 +41,7 @@ export function CustomerRequests({ customerId, name, expanded = false, people }:
     <Heading className="customer-requests-toggle"><div><h2>Mevcut Talepler{requests.data ? ` (${requests.data.pagination.total})` : ''}</h2><p>{expanded ? 'Mevcut görüşmeler ve talepler.' : `${name} için mevcut talepler.`}</p></div><ChevronDown size={20} aria-hidden="true" /></Heading>
     <div className="customer-requests-body">
     <div className="customer-requests-filters">
-      {peopleOptions && <div><DropdownSelect label="Kişi" ariaLabel="Görüşme kişisi" value={personId || customerId} options={peopleOptions.map(person => ({ value: person.id, label: person.name }))} onChange={value => { setPersonId(value); setPage(1); }} /></div>}
+      {peopleOptions && <div><SearchableDropdown label="Kişi" name="personId" searchable searchPlaceholder="Kişi ara..." value={personId || customerId} options={peopleOptions.map(person => ({ value: person.id, label: person.name }))} onChange={value => { setPersonId(value); setPage(1); }} /></div>}
       <div><DropdownSelect label="Durum" ariaLabel="Mevcut talepler durum filtresi" value={status} options={[{ value: '', label: 'Tüm Durumlar' }, ...Object.entries(statusNames).map(([value, label]) => ({ value, label }))]} onChange={value => { setStatus(value); setPage(1); }} /></div>
       <div><DropdownSelect label="Kayıt sayısı" ariaLabel="Mevcut talepler kayıt sayısı" value={String(limit)} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} onChange={value => { setLimit(Number(value)); setPage(1); }} /></div>
     </div>

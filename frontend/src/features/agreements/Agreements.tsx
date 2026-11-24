@@ -160,7 +160,7 @@ export function AgreementWorkspace({ customerId, modalControl, showAvailableBala
           <AgreementDateField label="Başlangıç Tarihi" name="startsOn" min="1000-01-01" max="9998-12-31" value={startsOn} onChange={setStartsOn} />
           <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={startsOn || "1000-01-01"} value={endsOn} readOnly={automaticPeriod} onChange={setManualEnd} />
           <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min="0" max="1000000" step="1" required /></label>
-          <label className="agreement-field"><span className="field-label">Dönem tutarı</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma dönem tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} />
+          <div className="money-currency-row"><label className="agreement-field"><span className="field-label">Tutar</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} /></div>
           {!modalControl && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={() => setAdding(false)}>Vazgeç</button><button className="button primary" disabled={pending}>{save.isPending ? 'Kaydediliyor…' : 'Anlaşmayı Kaydet'}</button></div>}
         </form>}
         {!adding && !editing && !visibleAgreements.length && <p className="muted">Henüz anlaşma bulunmuyor.</p>}
@@ -179,7 +179,7 @@ export function ResolveWithCreditModal({ conversationId, status, onClose, onReso
   }, [options.data]);
   const save = useMutation({ mutationFn: () => api.patch(`/conversations/${conversationId}`, { status, ...(!options.data?.charge ? { creditResolution: { agreementId: Number(credits) > 0 ? selected : null, credits: Number(credits) } } : {}) }), onSuccess: () => { onResolved(); onClose(); } });
   const agreement = options.data?.agreements.find(a => a.id === selected);
-  return <AgreementDialog title="Talebi Çöz" onClose={onClose} pending={save.isPending} compact footer={options.data && <><button className="button primary" type="submit" form={formId} disabled={save.isPending || Boolean(options.error) || (!options.data.charge && Number(credits) > 0 && !selected)}>{save.isPending ? 'Kaydediliyor…' : 'Çözümü Kaydet'}</button></>}>
+  return <AgreementDialog title="Kaydı Kapat" onClose={onClose} pending={save.isPending} compact footer={options.data && <><button className="button primary" type="submit" form={formId} disabled={save.isPending || Boolean(options.error) || (!options.data.charge && Number(credits) > 0 && !selected)}>{save.isPending ? 'Kaydediliyor…' : 'Kaydı Kapat'}</button></>}>
     {options.isPending && <p role="status">Krediler yükleniyor…</p>}{(options.error || save.error) && <p className="error" role="alert">{errorText(options.error || save.error)}</p>}
     {options.data && <form id={formId} className="agreement-resolution" onSubmit={event => { event.preventDefault(); save.mutate(); }}>
       {options.data.charge ? <p>Daha önce {options.data.charge.credits} kredi kullanıldı. Yeniden düşülmez.</p> : <>
@@ -211,7 +211,7 @@ function EditAgreementForm({ agreement, formId, onClose, onSaved, onPendingChang
       <AgreementDateField label="Başlangıç Tarihi" name="startsOn" min="1000-01-01" max="9998-12-31" value={start} disabled={pending} onChange={value => { setStart(value); if (automatic) setEnd(agreementEndDate(value, type)); }} />
       <AgreementDateField label="Bitiş Tarihi" name="endsOn" min={start || "1000-01-01"} value={end} readOnly={automatic} disabled={pending} onChange={setEnd} />
       <label className="agreement-field"><span className="field-label">Kredi Miktarı</span><input name="credits" type="number" min={agreement.usedCredits} max="1000000" step="1" required disabled={pending} value={credits} onChange={e => setCredits(e.target.value)} /></label>
-      <label className="agreement-field"><span className="field-label">Dönem tutarı</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma dönem tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} />
+      <div className="money-currency-row"><label className="agreement-field"><span className="field-label">Tutar</span><MoneyInput value={fee} onChange={setFee} ariaLabel="Anlaşma tutarı" required /></label><DropdownSelect label="Para birimi" ariaLabel="Anlaşma para birimi" value={currency} onChange={v => setCurrency(v as Currency)} options={currencyOptions} /></div>
       {agreement.usedCredits > 0 && <p className="muted">Kullanılan: {agreement.usedCredits} kredi</p>}
     </form>
     {inlineActions && <div className="agreement-page-actions"><button className="button secondary" type="button" disabled={pending} onClick={onClose}>Vazgeç</button><button className="button primary" type="submit" form={formId} disabled={pending}>Değişiklikleri Kaydet</button></div>}

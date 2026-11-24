@@ -76,6 +76,7 @@ export const actionLabels: Record<string, string> = {
   "conversation.credit_returned": "Talep yeniden açıldı, kredi geri verildi",
   "conversation.updated": "Talep bilgileri güncellendi",
   "customer.file_deleted": "Müşteri dosyası silindi",
+  "customer.file_renamed": "Müşteri dosyası yeniden adlandırıldı",
   "integrations.updated": "Entegrasyon ayarları güncellendi",
   "credit_order.created": "Kredi siparişi oluşturuldu",
   "credit_order.cancelled": "Kredi siparişi iptal edildi",
@@ -87,6 +88,9 @@ export const actionLabels: Record<string, string> = {
   "credit_payment.reversed": "İade tamamlandı",
   "credit_payment.reversal_failed": "İade gerçekleşmedi",
   "credit_payment.bank_response": "Banka iade yanıtı",
+  "credit_payment.bank_transfer_requested": "Havale ödeme bildirimi oluşturuldu",
+  "credit_payment.bank_transfer_approved": "Havale ödemesi onaylandı",
+  "credit_payment.bank_transfer_rejected": "Havale ödemesi reddedildi",
   "payments.akbank_started": "Akbank ödemesi başlatıldı",
   "payments.nestpay_started": "Sanal POS ödemesi başlatıldı",
   "payments.akbank_callback_review": "Akbank ödeme dönüşü incelemeye alındı",
@@ -160,7 +164,7 @@ export function activityActionLabel(action: string, metadata?: ActivityLog["meta
 
 type Detail = Record<string, any>;
 const providerNames: Record<string, string> = {
-  akbank: "Akbank", iyzico: "iyzico", isbank: "İş Bankası", ziraat: "Ziraat Bankası",
+  akbank: "Akbank", iyzico: "iyzico", bank_transfer: "Havale / EFT", isbank: "İş Bankası", ziraat: "Ziraat Bankası",
   halkbank: "Halkbank", teb: "TEB", sekerbank: "Şekerbank", ing: "ING", anadolubank: "Anadolubank",
 };
 const modeLabels: Record<string, string> = { sandbox: "Test", production: "Canlı" };
@@ -202,6 +206,12 @@ function financeDescription(log: ActivityLog): string | null {
       const manual = m.reference === "MANUAL_NO_REFUND";
       return clean([manual ? "Yönetici bankada iade yapılmadığını doğruladı" : "Banka iadeyi gerçekleştirmedi", "ayrılan krediler geri verildi", order, total && `Tutar: ${total}`, !manual && m.reference ? `Hata kodu: ${m.reference}` : null]);
     }
+    case "credit_payment.bank_transfer_requested":
+      return clean(["Havale / EFT ödeme bildirimi gönderildi", order, total && `Tutar: ${total}`, reasonText]);
+    case "credit_payment.bank_transfer_approved":
+      return clean(["Havale / EFT ödemesi yönetici tarafından onaylandı", order, total && `Tutar: ${total}`]);
+    case "credit_payment.bank_transfer_rejected":
+      return clean(["Havale / EFT ödemesi reddedildi", order, total && `Tutar: ${total}`, reasonText]);
     case "credit_payment.bank_response": {
       const headline = m.outcome === "REJECTED" ? "Banka iade isteğini reddetti" : m.outcome === "NO_RESPONSE" ? "Bankadan yanıt alınamadı, sonuç sorgulanacak" : "Banka kesin sonuç bildirmedi, sonuç sorgulanacak";
       return clean([headline, `Sağlayıcı: ${provider}`, order, total && `Tutar: ${total}`, m.bankResponseCode ? `Yanıt kodu: ${m.bankResponseCode}` : null, m.bankMessage ? `Banka mesajı: ${m.bankMessage}` : null]);

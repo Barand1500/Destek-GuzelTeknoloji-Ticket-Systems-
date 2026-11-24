@@ -1,6 +1,7 @@
 import { CustomerManagementPage } from './features/management/CustomerManagementPage';
 import { CreditSalesPage } from './features/credit-store/CreditSalesPage';
 import { PaymentSettingsPage } from './features/credit-store/PaymentSettingsPage';
+import { CurrenciesPage } from './features/credit-store/CurrenciesPage';
 import { FormPortal } from './features/tickets/FormPortal';
 import { CustomerAgreementsPage } from './features/agreements/Agreements';
 import ReactDOM from "react-dom/client";
@@ -123,6 +124,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/agent/customers/:customerId" element={<CustomerManagementPage />} />
               <Route path="/agent/credit-sales" element={<CreditSalesPage />} />
               <Route path="/agent/settings/payments" element={<PaymentSettingsPage />} />
+              <Route path="/agent/settings/currencies" element={<CurrenciesPage />} />
               <Route path="/agent/users" element={<UsersPage />} />
               <Route path="/agent/departments" element={<DepartmentsPage />} />
               <Route path="/agent/websites" element={<WebsitesPage />} />
@@ -187,6 +189,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
               <Route path="/admin/credit-sales" element={<CreditSalesPage />} />
               <Route path="/admin/settings/payments" element={<PaymentSettingsPage />} />
+              <Route path="/admin/settings/currencies" element={<CurrenciesPage />} />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/roles" element={<RolesPage />} />
               <Route path="/admin/skills" element={<Navigate to="/admin/tags/skills" replace />} />

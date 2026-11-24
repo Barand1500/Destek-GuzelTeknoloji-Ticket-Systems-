@@ -487,6 +487,46 @@ export async function customerFile(
   if (!file) throw notFound();
   return file;
 }
+export async function renameCustomerFile(
+  actor: Actor,
+  customerId: string,
+  fileId: string,
+  rawName: string,
+) {
+  await customer(actor, customerId);
+  const file = await db.customerAttachment.findFirst({
+    where: { id: fileId, customerId },
+  });
+  if (!file) throw notFound();
+  const ext = path.extname(file.originalName);
+  const cleaned = rawName
+    .replace(/[\u0000-\u001f\u007f/\\<>:"|?*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const stem = ext && cleaned.toLowerCase().endsWith(ext.toLowerCase())
+    ? cleaned.slice(0, -ext.length).trim()
+    : cleaned;
+  if (!stem) throw new AppError(400, 'INVALID_FILE_NAME', 'Geçerli bir dosya adı girin.');
+  const maxStem = Math.max(1, 180 - ext.length);
+  const nextName = stem.slice(0, maxStem) + ext;
+  if (nextName === file.originalName) return file;
+  const updated = await db.customerAttachment.update({
+    where: { id: file.id },
+    data: { originalName: nextName },
+    select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
+  });
+  await db.activityLog.create({
+    data: {
+      userId: actor.id,
+      action: 'customer.file_renamed',
+      entityType: 'User',
+      entityId: customerId,
+      metadata: { fileId: file.id, originalName: nextName, changes: { name: { from: file.originalName, to: nextName } } },
+      ipAddress: actor.ipAddress,
+    },
+  });
+  return updated;
+}
 export async function deleteCustomerFile(
   actor: Actor,
   customerId: string,

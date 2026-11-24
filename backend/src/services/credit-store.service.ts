@@ -1,5 +1,6 @@
 import { paymentAvailability } from "./payment-settings.service.js";
 import { convertForeignToTry } from "./tcmb-rates.service.js";
+import { getCurrencyOverride } from "./currencies.service.js";
 import { packageSchedule } from './credit-package-schedule.js';
 import { createHash } from "node:crypto";
 import { selectedCreditChannels, creditChannelAvailability } from './credit-channel-readiness.js';
@@ -239,7 +240,7 @@ export async function storeQuote(
         "Bu abonelik planı satışa açık değil.",
       );
     const rawTotal = moneyText(moneyMinor(plan.price.toString()));
-    const billed = await convertForeignToTry(rawTotal, plan.currency);
+    const billed = await convertForeignToTry(rawTotal, plan.currency, fetch, await getCurrencyOverride(plan.currency));
     return quoteSnapshot({
       owner: account,
       ...await packageSchedule(client, account.id, plan.periodMonths, plan.periodDays ?? null),
@@ -254,7 +255,7 @@ export async function storeQuote(
     });
   }
   const topUp = creditQuote(config, input);
-  const billed = await convertForeignToTry(topUp.total, topUp.currency);
+  const billed = await convertForeignToTry(topUp.total, topUp.currency, fetch, await getCurrencyOverride(topUp.currency));
   return quoteSnapshot({
     owner: account,
     kind: "TOP_UP",

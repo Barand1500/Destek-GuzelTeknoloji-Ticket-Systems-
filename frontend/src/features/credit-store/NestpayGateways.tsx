@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { api } from '../../services/api';
 import { ErrorMessage } from '../management/shared';
 import { DropdownSelect } from '../../components/DropdownSelect';
 
-type ConfiguredGateway = {
+export type ConfiguredGateway = {
   provider: string;
   name: string;
   shortName: string;
@@ -18,19 +18,23 @@ type ConfiguredGateway = {
   paymentAvailable: boolean;
 };
 
-type CatalogItem = { id: string; name: string; shortName: string; configured: boolean };
-type GatewaysResponse = { catalog: CatalogItem[]; configured: ConfiguredGateway[] };
+export type CatalogItem = { id: string; name: string; shortName: string; configured: boolean };
+export type GatewaysResponse = { catalog: CatalogItem[]; configured: ConfiguredGateway[] };
 
-function NestpayCard({
+export function NestpayCard({
   item,
   editable,
   isNew,
-  onCancelNew,
+  activeProvider,
+  onClose,
+  onToast,
 }: {
   item: ConfiguredGateway;
   editable: boolean;
   isNew?: boolean;
-  onCancelNew?: () => void;
+  activeProvider?: { id: string; name: string } | null;
+  onClose: () => void;
+  onToast: (text: string) => void;
 }) {
   const client = useQueryClient();
   const [draft, setDraft] = useState<ConfiguredGateway>(item);
@@ -71,7 +75,6 @@ function NestpayCard({
       setApiUser('');
       setApiPassword('');
       setMessage(`${item.shortName} bilgileri kaydedildi.`);
-      onCancelNew?.();
       await refresh();
     },
   });
@@ -85,20 +88,37 @@ function NestpayCard({
     onError: refresh,
   });
 
-  const remove = useMutation({
-    mutationFn: () => api.delete(`/credit-sales/payment-settings/gateways/${encodeURIComponent(item.provider)}`),
-    onSuccess: async () => {
-      await refresh();
-    },
-  });
-
-  const pending = save.isPending || test.isPending || remove.isPending;
+  const pending = save.isPending || test.isPending;
   const changedMode = !isNew && draft.mode !== item.mode;
   const keysRequired = isNew || changedMode || !draft.credentialsConfigured;
+  const hasUnsavedKeys = Boolean(clientId || storeKey || apiUser || apiPassword);
   const change = (patch: Partial<ConfiguredGateway>) => {
     setDraft(v => ({ ...v, ...patch }));
     setDirty(true);
     setMessage('');
+  };
+
+  const handleToggle = (next: boolean) => {
+    if (!editable || pending) return;
+    if (next) {
+      if (activeProvider && activeProvider.id !== item.provider) {
+        onToast(`Önce ${activeProvider.name} online ödemesini kapatın.`);
+        return;
+      }
+      if (!draft.testedAt || changedMode || hasUnsavedKeys || isNew) {
+        onToast('Online ödemeyi açmak için önce bilgileri kaydedip bağlantıyı test edin.');
+        return;
+      }
+    }
+    change({ enabled: next });
+  };
+
+  const handleClose = () => {
+    if (draft.enabled || item.enabled) {
+      onToast(`${item.shortName} kartını kaldırmadan önce online ödeme anahtarını kapatın.`);
+      return;
+    }
+    onClose();
   };
 
   function submit(event: FormEvent) {
@@ -110,17 +130,31 @@ function NestpayCard({
     <section className="credit-sales-card" aria-label={item.name}>
       <div className="credit-sales-card-heading payment-provider-heading">
         <h2>{item.name}</h2>
-        <label className="integration-toggle">
-          <span>{item.shortName} online ödeme</span>
-          <input
-            type="checkbox"
-            role="switch"
-            checked={draft.enabled}
-            disabled={!editable || pending || !draft.testedAt}
-            onChange={e => change({ enabled: e.target.checked })}
-          />
-          <i aria-hidden="true" />
-        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <label className="integration-toggle">
+            <span>{item.shortName} online ödeme</span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={draft.enabled}
+              disabled={!editable || pending}
+              onChange={e => handleToggle(e.target.checked)}
+            />
+            <i aria-hidden="true" />
+          </label>
+          {editable && (
+            <button
+              className="standard-modal-close"
+              type="button"
+              aria-label={`${item.name} kartını kapat`}
+              title="Kartı kaldır"
+              disabled={pending}
+              onClick={handleClose}
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
       </div>
       <form onSubmit={submit} autoComplete="off">
         <fieldset className="payment-settings-fields" disabled={!editable || pending}>
@@ -212,7 +246,6 @@ function NestpayCard({
         {draft.lastError && <p role="alert">{draft.lastError}</p>}
         <ErrorMessage error={save.error} />
         <ErrorMessage error={test.error} />
-        <ErrorMessage error={remove.error} />
         {message && <p role="status">{message}</p>}
         {editable && (
           <div className="payment-settings-actions">
@@ -229,104 +262,9 @@ function NestpayCard({
             <button className="button primary" disabled={pending || !dirty}>
               {save.isPending ? 'Kaydediliyor…' : `${item.shortName} Bilgilerini Kaydet`}
             </button>
-            {isNew ? (
-              <button className="button secondary" type="button" disabled={pending} onClick={onCancelNew}>
-                Vazgeç
-              </button>
-            ) : (
-              !draft.enabled && (
-                <button
-                  className="button secondary"
-                  type="button"
-                  disabled={pending}
-                  onClick={() => remove.mutate()}
-                  title="Banka ayarını listeden kaldır"
-                >
-                  <Trash2 size={15} /> Kaldır
-                </button>
-              )
-            )}
           </div>
         )}
       </form>
     </section>
-  );
-}
-
-export function NestpayGateways({ editable }: { editable: boolean }) {
-  const query = useQuery({
-    queryKey: ['nestpay-gateways'],
-    queryFn: async () => (await api.get('/credit-sales/payment-settings/gateways')).data.data as GatewaysResponse,
-  });
-  const [selectedId, setSelectedId] = useState('');
-  const [draftIds, setDraftIds] = useState<string[]>([]);
-
-  const catalog = query.data?.catalog ?? [];
-  const configured = query.data?.configured ?? [];
-  const configuredSet = new Set(configured.map(item => item.provider));
-  const availableToAdd = catalog.filter(item => !configuredSet.has(item.id) && !draftIds.includes(item.id));
-
-  const addSelected = () => {
-    const id = selectedId || availableToAdd[0]?.id;
-    if (!id || draftIds.includes(id)) return;
-    setDraftIds(prev => [...prev, id]);
-    setSelectedId('');
-  };
-
-  return (
-    <>
-      {editable && availableToAdd.length > 0 && (
-        <section className="credit-sales-card" aria-label="Yeni banka ekle">
-          <div className="credit-sales-card-heading payment-provider-heading">
-            <h2>Diğer Bankalar (Sanal POS Ekle)</h2>
-          </div>
-          <p className="credit-help">
-            İş Bankası, Ziraat Bankası, Halkbank, TEB, Şekerbank, ING ve Anadolubank için NestPay (EST v3) altyapısını buradan ekleyebilirsiniz.
-          </p>
-          <div className="payment-settings-actions" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 260, flex: '1 1 260px', maxWidth: 380 }}>
-              <DropdownSelect
-                label="Banka seçin"
-                ariaLabel="Eklenecek banka"
-                value={selectedId || availableToAdd[0]?.id || ''}
-                onChange={setSelectedId}
-                options={availableToAdd.map(bank => ({ value: bank.id, label: bank.name }))}
-              />
-            </div>
-            <button className="button primary" type="button" onClick={addSelected}>
-              <Plus size={16} /> Banka Ekle
-            </button>
-          </div>
-        </section>
-      )}
-      <ErrorMessage error={query.error} />
-      {draftIds.map(id => {
-        const meta = catalog.find(bank => bank.id === id);
-        if (!meta || configuredSet.has(id)) return null;
-        return (
-          <NestpayCard
-            key={`draft-${id}`}
-            editable={editable}
-            isNew
-            onCancelNew={() => setDraftIds(prev => prev.filter(v => v !== id))}
-            item={{
-              provider: meta.id,
-              name: meta.name,
-              shortName: meta.shortName,
-              mode: 'production',
-              credentialsConfigured: false,
-              enabled: false,
-              publicUrl: window.location.origin,
-              testedAt: null,
-              lastError: null,
-              paymentAvailable: false,
-            }}
-          />
-        );
-      })}
-      {configured.map(item => (
-        <NestpayCard key={item.provider} editable={editable} item={item} />
-      ))}
-    </>
   );
 }

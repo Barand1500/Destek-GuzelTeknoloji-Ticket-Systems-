@@ -47,3 +47,18 @@ test('convertForeignToTry converts foreign currencies to TRY using TCMB rate and
 
   setTcmbRateCacheForTests(null);
 });
+
+test('manual currency override uses admin rate and rejects unsafe private API URLs', async () => {
+  const { assertSafeRateUrl } = await import('../src/services/tcmb-rates.service.js');
+  const manual = await convertForeignToTry('10.00', 'USD', fetch, {
+    autoUpdate: false,
+    rate: '51.0000',
+    rateType: 'ForexSelling',
+    apiUrl: 'https://www.tcmb.gov.tr/kurlar/today.xml',
+  });
+  assert.equal(manual.total, '510.00');
+  assert.equal(manual.exchangeRate, '51.0000');
+  assert.throws(() => assertSafeRateUrl('http://127.0.0.1/rates.xml'), { code: 'INVALID_API_URL' });
+  assert.throws(() => assertSafeRateUrl('https://localhost/rates.xml'), { code: 'INVALID_API_URL' });
+  assert.equal(assertSafeRateUrl('https://www.tcmb.gov.tr/kurlar/today.xml'), 'https://www.tcmb.gov.tr/kurlar/today.xml');
+});

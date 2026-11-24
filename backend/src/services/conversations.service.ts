@@ -530,11 +530,9 @@ export async function updateConversation(
       const settings = await tx.integrationSettings.findUnique({ where: { id: 'default' } });
       validateReplyChannels(input.replyChannels, recipient, settings);
     }
-    if (input.creditResolution && !['RESOLVED', 'CLOSED'].includes(input.status ?? '')) throw new AppError(400, 'INVALID_CREDIT_STATUS', 'Kredi yalnızca talep çözülürken kullanılabilir.');
-    if (input.status && !['RESOLVED', 'CLOSED'].includes(input.status)) await returnResolutionCredit(tx, actor, conversation);
-    // Repair a legacy reopened ticket's retained debit before applying an explicitly chosen new amount.
-    if (input.creditResolution && !['RESOLVED', 'CLOSED'].includes(conversation.status)) await returnResolutionCredit(tx, actor, conversation);
-    if (['RESOLVED', 'CLOSED'].includes(input.status ?? '') && !['RESOLVED', 'CLOSED'].includes(conversation.status)) await debitResolution(tx, actor, conversation, input.creditResolution);
+    if (conversation.status === 'CLOSED' && input.status && input.status !== 'CLOSED') throw new AppError(409, 'TICKET_CLOSED', 'Kapatılmış bir talep yeniden açılamaz.');
+    if (input.creditResolution && input.status !== 'CLOSED') throw new AppError(400, 'INVALID_CREDIT_STATUS', 'Kredi yalnızca talep kapatılırken kullanılabilir.');
+    if (input.status === 'CLOSED' && conversation.status !== 'CLOSED') await debitResolution(tx, actor, conversation, input.creditResolution);
     else if (input.creditResolution) await debitResolution(tx, actor, conversation, input.creditResolution);
     const {tagIds, creditResolution: _creditResolution, assignedAgentIds: _assignedAgentIds, ...changes}=input;
     await setAssignees(tx, id, nextIds);

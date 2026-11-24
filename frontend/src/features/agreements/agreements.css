@@ -98,3 +98,8 @@ html[data-theme="dark"] .company-people-panel .management-actions>.danger-icon:h
 .agreement-package-overview{display:flex;flex:1 1 280px;flex-direction:column;gap:8px;min-width:0}.agreement-package-overview>strong{color:var(--text);font-size:14px;overflow-wrap:anywhere}.agreement-package-dates,.agreement-package-credits{font-size:12px;line-height:1.6;font-variant-numeric:tabular-nums}.agreement-summary-actions{align-self:flex-start;flex-wrap:wrap}
 
 .credit-log-table .credit-log-amount { font-size: 16px; font-weight: 700; }
+
+.money-currency-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: end; min-width: 0; }
+.money-currency-row > * { min-width: 0; }
+.money-currency-row .styled-dropdown-menu { min-width: 220px; right: 0; left: auto; }
+@media (max-width: 520px) { .money-currency-row { grid-template-columns: minmax(0, 1fr) 128px; } }

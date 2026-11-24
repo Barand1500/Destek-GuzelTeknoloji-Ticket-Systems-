@@ -12,6 +12,8 @@ import {
 } from "../services/credit-store-pricing.js";
 import * as service from "../services/credit-store.service.js";
 import * as binSearch from "../services/bin-search.service.js";
+import * as currencies from "../services/currencies.service.js";
+import { z } from "zod";
 export const creditStoreRouter = Router();
 creditStoreRouter.use(
   ["/credit-sales", "/my/credit-store"],
@@ -38,6 +40,19 @@ creditStoreRouter.get("/credit-sales", async (req, res) =>
 );
 creditStoreRouter.get("/credit-sales/bin-search", async (req, res) =>
   res.json({ success: true, ...(await binSearch.searchBinRecords(req.actor, req.query)) }),
+);
+const currencyCodeParam = z.string().regex(/^(ALL|[A-Z]{3})$/);
+creditStoreRouter.get("/credit-sales/currencies", async (req, res) =>
+  res.json({ success: true, data: await currencies.listCurrencies(req.actor) }),
+);
+creditStoreRouter.put("/credit-sales/currencies", async (req, res) =>
+  res.json({ success: true, data: await currencies.saveCurrency(req.actor, req.body) }),
+);
+creditStoreRouter.post("/credit-sales/currencies/:code/refresh", async (req, res) =>
+  res.json({ success: true, data: await currencies.refreshCurrencyRate(req.actor, currencyCodeParam.parse(req.params.code)) }),
+);
+creditStoreRouter.delete("/credit-sales/currencies/:code", async (req, res) =>
+  res.json({ success: true, data: await currencies.deleteCurrency(req.actor, currencyCodeParam.parse(req.params.code)) }),
 );
 creditStoreRouter.put("/credit-sales/settings", async (req, res) =>
   res.json({

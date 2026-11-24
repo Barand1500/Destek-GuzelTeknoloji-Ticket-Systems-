@@ -444,7 +444,6 @@ export function TicketList() {
                   {sortHeader('responseTime', 'YANIT SÜRESİ')}
                   <th>SON GÜNCELLEME</th>
                   <th>KULLANILAN KREDİ</th>
-                  <th className="inbox-sort-reset-cell"><button className="inbox-sort-reset" type="button" aria-label="Varsayılan Sıralamaya Dön" title="Varsayılan Sıralamaya Dön" onClick={() => { setParams(current => { const next = new URLSearchParams(current); next.delete('sortBy'); next.delete('sortDirection'); next.delete('page'); return next; }); void query.refetch(); }}><RotateCcw size={15}/></button></th>
                 </tr>
               </thead>
               <tbody>
@@ -482,7 +481,6 @@ export function TicketList() {
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-response-cell inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
                     <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
                     <td className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong> kredi</Link> : <span className="muted">—</span>}</td>
-                    <td className="inbox-sort-reset-cell" aria-hidden="true" />
                   </tr>
                 ))}
               </tbody>
@@ -1003,7 +1001,7 @@ export function TicketDetail() {
           </div>}
           <div className="ticket-status-priority-row" style={{ display: "grid", gridTemplateColumns: user?.role === "CUSTOMER" ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))", gap: 12, order: 2, gridColumn: "1 / -1" }}>
           {user?.role !== "CUSTOMER" && <div className="property-editor">
-              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update')} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (['RESOLVED', 'CLOSED'].includes(value) && !['RESOLVED', 'CLOSED'].includes(t.status)) setResolutionStatus(value); else update.mutate({ status: value }); }} options={statusOptions} />
+              <SearchableDropdown label="Durum" name="status" disabled={!hasPermission(user, 'conversations.update') || t.status === 'CLOSED'} value={t.status} onEdit={() => user?.role === "ADMIN" && navigate("/admin/tags?section=statuses")} onChange={(value) => { if (!statusOptions.some((option) => option.value === value)) return; if (value === 'CLOSED' && t.status !== 'CLOSED') setResolutionStatus('CLOSED'); else update.mutate({ status: value }); }} options={statusOptions} />
           </div>}
           <div className="property-editor">
             {user?.role === "CUSTOMER" ? (
@@ -1036,9 +1034,21 @@ export function TicketDetail() {
                 aria-label="Çözüldü Olarak İşaretle"
                 title="Çözüldü Olarak İşaretle"
                 disabled={update.isPending || !hasPermission(user, 'conversations.update')}
-                onClick={() => setResolutionStatus('RESOLVED')}
+                onClick={() => update.mutate({ status: 'RESOLVED' })}
               >
                 <CheckCheck size={16} /> Çözüldü Olarak İşaretle
+              </button>
+            )}
+          {user?.role !== "CUSTOMER" &&
+            t.status === "RESOLVED" && (
+              <button
+                className="button primary resolved-action"
+                aria-label="Kaydı Kapat"
+                title="Kaydı Kapat"
+                disabled={update.isPending || !hasPermission(user, 'conversations.update')}
+                onClick={() => setResolutionStatus('CLOSED')}
+              >
+                <CheckCheck size={16} /> Kaydı Kapat
               </button>
             )}
           {user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.delete')&&<button className="icon-button danger-icon" aria-label="Görüşmeyi Sil" title="Görüşmeyi Sil" onClick={()=>{remove.reset();setDeleteConfirm(true);}}><Trash2 size={16}/></button>}

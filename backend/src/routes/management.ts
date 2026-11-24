@@ -51,6 +51,10 @@ managementRouter.delete('/users/:id', staff, async (req, res) => res.json({ succ
 managementRouter.get("/customers", staff, async (req, res) => res.json({ success: true, ...await service.users(req.actor, schema.directoryQuery.parse(req.query), true) }));
 managementRouter.get("/customers/:id", staff, async (req, res) => res.json({ success: true, data: await service.customer(req.actor, idSchema.parse(req.params.id)) }));
 managementRouter.get("/customers/:id/files", staff, async (req, res) => res.json({ success: true, data: await service.customerFiles(req.actor, idSchema.parse(req.params.id)) }));
+managementRouter.patch("/customers/:id/files/:fileId", staff, async (req, res) => {
+  const { name } = z.object({ name: z.string().trim().min(1).max(180) }).strict().parse(req.body);
+  res.json({ success: true, data: await service.renameCustomerFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId), name) });
+});
 managementRouter.delete("/customers/:id/files/:fileId", staff, async (req, res) => { await service.deleteCustomerFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId)); res.json({ success: true, data: null }); });
 managementRouter.get("/customers/:id/files/:fileId/download", staff, async (req, res, next) => {
   const file = await service.customerFile(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.fileId));

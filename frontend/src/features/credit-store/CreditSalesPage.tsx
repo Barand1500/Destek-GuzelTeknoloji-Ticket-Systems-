@@ -181,24 +181,26 @@ export function CreditSalesPage() {
               disabled={!editable || save.isPending}
               className="credit-fields credit-settings-fields"
             >
-              <DropdownSelect
-                label="Para birimi"
-                ariaLabel="Kredi para birimi"
-                value={draft.currency}
-                onChange={(value) => editSetting("currency", value as Currency)}
-                options={currencyOptions}
-              />
-              <label>
-                <span>
-                  1 kredi fiyatı (
-                  {draft.currency === "TRY" ? "TL" : draft.currency}) *
-                </span>
-                <MoneyInput
-                  required
-                  value={draft.unitPrice}
-                  onChange={(value) => editSetting("unitPrice", value)}
+              <div className="money-currency-row">
+                <label>
+                  <span>
+                    1 kredi fiyatı (
+                    {draft.currency === "TRY" ? "TL" : draft.currency}) *
+                  </span>
+                  <MoneyInput
+                    required
+                    value={draft.unitPrice}
+                    onChange={(value) => editSetting("unitPrice", value)}
+                  />
+                </label>
+                <DropdownSelect
+                  label="Para birimi"
+                  ariaLabel="Kredi para birimi"
+                  value={draft.currency}
+                  onChange={(value) => editSetting("currency", value as Currency)}
+                  options={currencyOptions}
                 />
-              </label>
+              </div>
               <label>
                 <span>Minimum kredi *</span>
                 <input
@@ -360,26 +362,28 @@ export function CreditSalesPage() {
                   value={plan}
                   onChange={(terms) => setPlan({ ...plan, ...terms })}
                 />
-                <DropdownSelect
-                  label="Para birimi"
-                  ariaLabel="Plan para birimi"
-                  value={plan.currency}
-                  onChange={(value) =>
-                    setPlan({ ...plan, currency: value as Currency })
-                  }
-                  options={currencyOptions}
-                />
-                <label>
-                  <span>
-                    Dönem fiyatı (
-                    {plan.currency === "TRY" ? "TL" : plan.currency}) *
-                  </span>
-                  <MoneyInput
-                    required
-                    value={plan.price}
-                    onChange={(value) => setPlan({ ...plan, price: value })}
+                <div className="money-currency-row">
+                  <label>
+                    <span>
+                      Dönem fiyatı (
+                      {plan.currency === "TRY" ? "TL" : plan.currency}) *
+                    </span>
+                    <MoneyInput
+                      required
+                      value={plan.price}
+                      onChange={(value) => setPlan({ ...plan, price: value })}
+                    />
+                  </label>
+                  <DropdownSelect
+                    label="Para birimi"
+                    ariaLabel="Plan para birimi"
+                    value={plan.currency}
+                    onChange={(value) =>
+                      setPlan({ ...plan, currency: value as Currency })
+                    }
+                    options={currencyOptions}
                   />
-                </label>
+                </div>
                 <label>
                   <span>Dönem boyunca toplam kredi *</span>
                   <input

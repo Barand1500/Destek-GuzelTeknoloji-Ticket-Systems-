@@ -34,6 +34,8 @@ type Order = {
   paidAt?: string | null;
   cancelledAt: string | null;
   paymentInProgress?: boolean;
+  bankTransferPending?: boolean;
+  bankTransferNote?: string | null;
   customer?: { id: string; name: string; company?: string | null };
 };
 type OrdersPage = {
@@ -105,6 +107,24 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
         client.invalidateQueries({ queryKey: ["agreements"] }),
         client.invalidateQueries({ queryKey: ["notifications"] }),
       ]);
+    },
+  });
+  const approveTransfer = useMutation({
+    mutationFn: (id: string) => api.post(`/credit-sales/orders/${id}/bank-transfer/approve`),
+    onSuccess: async () => {
+      setMessage("Havale ödemesi onaylandı ve krediler müşteriye tanımlandı.");
+      await Promise.all([
+        client.invalidateQueries({ queryKey: [base] }),
+        client.invalidateQueries({ queryKey: ["agreements"] }),
+        client.invalidateQueries({ queryKey: ["notifications"] }),
+      ]);
+    },
+  });
+  const rejectTransfer = useMutation({
+    mutationFn: (id: string) => api.post(`/credit-sales/orders/${id}/bank-transfer/reject`, {}),
+    onSuccess: async () => {
+      setMessage("Havale ödeme bildirimi reddedildi.");
+      await client.invalidateQueries({ queryKey: [base] });
     },
   });
   useEffect(() => {
@@ -250,8 +270,9 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         <span
                           className={`credit-order-status credit-order-status-${order.status.toLowerCase()}`}
                         >
-                          {order.paymentInProgress ? 'Ödeme doğrulanamadı' : order.status === 'REFUNDED' && bankCancellationConfirmed(order.reversals) ? 'Ödeme iptal edildi' : statuses[order.status]}
+                          {order.bankTransferPending ? 'Havale onayı bekliyor' : order.paymentInProgress ? 'Ödeme doğrulanamadı' : order.status === 'REFUNDED' && bankCancellationConfirmed(order.reversals) ? 'Ödeme iptal edildi' : statuses[order.status]}
                         </span>
+                        {order.bankTransferPending && order.bankTransferNote && <small>{order.bankTransferNote}</small>}
                         {order.refundRequest?.status === 'OPEN' && <small className="credit-order-status credit-order-status-pending">İade talebi bekliyor</small>}
                         {order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) && <small>{order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'Ödeme iptali bekleniyor' : 'İade sonucu bekleniyor'}</small>}
                         {!!order.reversals?.some(row => row.status === 'SUCCEEDED') && <small>{bankCancellationConfirmed(order.reversals) ? 'İptal tutarı' : 'İade'}: {money(order.reversals.filter(row => row.status === 'SUCCEEDED').reduce((sum, row) => sum + Number(row.amount), 0), order.currency)}</small>}
@@ -261,9 +282,19 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                           <div className="credit-order-actions">
                             {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
                             {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.kind === 'TOP_UP' || order.usedCredits || order.status === 'PARTIAL_REFUND' ? 'İade Talep Et' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
-                            {!admin && !order.paymentInProgress && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
+                            {admin && canCancel && order.bankTransferPending && (
+                              <>
+                                <button className="button primary" type="button" disabled={approveTransfer.isPending || rejectTransfer.isPending} onClick={() => approveTransfer.mutate(order.id)}>
+                                  {approveTransfer.isPending ? 'Onaylanıyor…' : 'Havaleyi Onayla'}
+                                </button>
+                                <button className="button secondary" type="button" disabled={approveTransfer.isPending || rejectTransfer.isPending} onClick={() => rejectTransfer.mutate(order.id)}>
+                                  Reddet
+                                </button>
+                              </>
+                            )}
+                            {!admin && !order.paymentInProgress && !order.bankTransferPending && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
                             {admin && order.paymentInProgress && <button className="button secondary" type="button" onClick={() => { setRefundOrderId(null); setReviewOrderId(order.id); }}>Ödemeyi İncele</button>}
-                            {(canCancel || (!admin && order.kind === "SUBSCRIPTION")) && ["PENDING", "FAILED"].includes(order.status) && (
+                            {(canCancel || (!admin && order.kind === "SUBSCRIPTION")) && !order.bankTransferPending && ["PENDING", "FAILED"].includes(order.status) && (
                               <button
                                 type="button"
                                 className="button secondary"

@@ -8,6 +8,7 @@ import { getAkbankSettings, saveAkbankSettings, testAkbankConnection } from '../
 import { akbankCallback, beginAkbankCheckout } from '../services/akbank-payments.service.js';
 import { listNestpayGateways, removeNestpayGateway, saveNestpaySettings, testNestpayConnection } from '../services/nestpay-settings.service.js';
 import { beginNestpayCheckout, nestpayCallback } from '../services/nestpay-payments.service.js';
+import { approveBankTransfer, rejectBankTransfer, requestBankTransfer } from '../services/bank-transfer.service.js';
 import { isNestpayProvider } from '../services/payment-gateways.catalog.js';
 import { beginAkbankRecurring, akbankEnrollmentStatus } from '../services/akbank-recurring.service.js';
 import { beginIyzicoCheckout, iyzicoCallback } from '../services/iyzico-payments.service.js';
@@ -88,4 +89,7 @@ paymentRouter.post('/credit-sales/reversals/:id/no-refund', checkoutLimit, async
 paymentRouter.post('/credit-sales/orders/:id/refund-request/reject', checkoutLimit, async (req, res) => res.json({ success: true, data: await rejectCreditRefundRequest(req.actor, idSchema.parse(req.params.id), req.body) }));
 
 paymentRouter.post('/my/credit-store/orders/:id/reversals', checkoutLimit, async (req, res) => res.json({ success: true, data: await startPaymentReversal(req.actor, idSchema.parse(req.params.id), req.body, false) }));
+paymentRouter.post('/my/credit-store/orders/:id/bank-transfer', checkoutLimit, async (req, res) => res.json({ success: true, data: await requestBankTransfer(req.actor, idSchema.parse(req.params.id), req.body) }));
+paymentRouter.post('/credit-sales/orders/:id/bank-transfer/approve', checkoutLimit, async (req, res) => res.json({ success: true, data: await approveBankTransfer(req.actor, idSchema.parse(req.params.id)) }));
+paymentRouter.post('/credit-sales/orders/:id/bank-transfer/reject', checkoutLimit, async (req, res) => res.json({ success: true, data: await rejectBankTransfer(req.actor, idSchema.parse(req.params.id), req.body) }));
 paymentRouter.post('/my/credit-store/orders/:id/refund-request', checkoutLimit, async (req, res) => res.json({ success: true, data: await requestCreditRefund(req.actor, idSchema.parse(req.params.id), req.body) }));

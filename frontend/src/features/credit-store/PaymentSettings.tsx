@@ -1,12 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { api } from '../../services/api';
 import { ErrorMessage } from '../management/shared';
 import { money } from './types';
 import { DropdownSelect } from '../../components/DropdownSelect';
 
 type Settings = { provider: 'iyzico'; enabled: boolean; mode: 'sandbox' | 'production'; publicUrl: string; credentialsConfigured: boolean; testedAt: string | null; lastError: string | null };
-export function PaymentSettings({ editable }: { editable: boolean }) {
+export function PaymentSettings({
+  editable,
+  activeProvider,
+  onClose,
+  onToast,
+}: {
+  editable: boolean;
+  activeProvider?: { id: string; name: string } | null;
+  onClose?: () => void;
+  onToast?: (text: string) => void;
+}) {
   const client = useQueryClient();
   const query = useQuery({ queryKey: ['payment-settings'], queryFn: async () => (await api.get('/credit-sales/payment-settings')).data.data as Settings });
   const [draft, setDraft] = useState<Settings | null>(null), [apiKey, setApiKey] = useState(''), [secretKey, setSecretKey] = useState('');
@@ -19,8 +30,34 @@ export function PaymentSettings({ editable }: { editable: boolean }) {
   const changedMode = Boolean(draft && query.data && draft.mode !== query.data.mode);
   const change = (patch: Partial<Settings>) => { setDraft(v => v ? { ...v, ...patch } : v); setDirty(true); setMessage(''); };
   function submit(event: FormEvent) { event.preventDefault(); save.mutate(); }
+  const handleToggle = (next: boolean) => {
+    if (!editable || pending || !draft) return;
+    if (next) {
+      if (activeProvider && activeProvider.id !== 'iyzico') {
+        onToast?.(`Önce ${activeProvider.name} online ödemesini kapatın.`);
+        return;
+      }
+      if (!draft.testedAt || changedMode || apiKey || secretKey) {
+        onToast?.('Online ödemeyi açmak için önce bilgileri kaydedip bağlantıyı test edin.');
+        return;
+      }
+    }
+    change({ enabled: next });
+  };
+  const handleClose = () => {
+    if (draft?.enabled || query.data?.enabled) {
+      onToast?.('iyzico kartını kaldırmadan önce online ödeme anahtarını kapatın.');
+      return;
+    }
+    onClose?.();
+  };
   return <section className="credit-sales-card" aria-label="Ödeme Ayarları">
-    <div className="credit-sales-card-heading payment-provider-heading"><h2>iyzico</h2>{draft && <label className="integration-toggle"><span>Online ödeme</span><input type="checkbox" role="switch" checked={draft.enabled} disabled={!editable || pending || !draft.testedAt} onChange={e => change({ enabled: e.target.checked })} /><i aria-hidden="true" /></label>}</div>
+    <div className="credit-sales-card-heading payment-provider-heading"><h2>iyzico</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {draft && <label className="integration-toggle"><span>Online ödeme</span><input type="checkbox" role="switch" checked={draft.enabled} disabled={!editable || pending} onChange={e => handleToggle(e.target.checked)} /><i aria-hidden="true" /></label>}
+        {editable && onClose && <button className="standard-modal-close" type="button" aria-label="iyzico kartını kapat" title="Kartı kaldır" disabled={pending} onClick={handleClose}><X size={18} /></button>}
+      </div>
+    </div>
     <ErrorMessage error={query.error} />
     {draft && <form onSubmit={submit} autoComplete="off">
       <fieldset className="payment-settings-fields" disabled={!editable || pending}>

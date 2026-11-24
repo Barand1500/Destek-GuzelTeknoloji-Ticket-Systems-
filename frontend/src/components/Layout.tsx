@@ -280,6 +280,7 @@ function WorkspaceLayout() {
           { label: "Yetenekler", group: "Kategoriler", to: path("tags/skills") },
           { label: "Kredi ve Paketler", group: "Yönetim", to: path("credit-sales") },
           { label: "Ödeme Ayarları", group: "Yönetim", to: path("settings/payments") },
+          { label: "Para Birimleri", group: "Yönetim", to: path("settings/currencies") },
           { label: "Entegrasyonlar", group: "Yönetim", to: path("integrations/channels") },
           { label: "Yanıt Süreleri", group: "Yönetim", to: path("response-time-rules") },
           { label: "Personel Etkinliği", group: "Yönetim", to: path("staff-presence") },
@@ -435,6 +436,7 @@ function WorkspaceLayout() {
                   </NavLink>
                   <NavLink to={path("credit-sales")}><FileText size={16} />Kredi ve Paketler</NavLink>
                   <NavLink to={path("settings/payments")}><Settings size={16} />Ödeme Ayarları</NavLink>
+                  <NavLink to={path("settings/currencies")}><Settings size={16} />Para Birimleri</NavLink>
                   <NavLink to={path("response-time-rules")}>
                     <Timer size={16} />
                     Yanıt Süreleri

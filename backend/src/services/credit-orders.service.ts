@@ -215,13 +215,20 @@ export async function listCreditOrders(
       const total = await tx.creditOrder.count({ where });
       const rows = await tx.creditOrder.findMany({
         where,
-        select: { ...fields, refundRequest: { select: { status: true } }, grantedAgreement: { select: { usedCredits: true } }, paymentAttempts: { where: { status: 'PENDING' }, select: { id: true }, take: 1 } },
+        select: { ...fields, refundRequest: { select: { status: true } }, grantedAgreement: { select: { usedCredits: true } }, paymentAttempts: { where: { status: 'PENDING' }, select: { id: true, provider: true, failureCode: true }, take: 1 } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: input.limit,
         skip: (input.page - 1) * input.limit,
       });
       return {
-        data: rows.map(({ paymentAttempts, grantedAgreement, ...row }) => ({ ...json(row), usedCredits: grantedAgreement?.usedCredits ?? 0, canBankCancel: !!grantedAgreement && row.status === 'PAID' && !grantedAgreement?.usedCredits && !!row.paidAt && row.paidAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) && !row.reversals.some(v => ['PENDING', 'REVIEW', 'SUCCEEDED'].includes(v.status)), paymentInProgress: paymentAttempts.length > 0 })),
+        data: rows.map(({ paymentAttempts, grantedAgreement, ...row }) => ({
+          ...json(row),
+          usedCredits: grantedAgreement?.usedCredits ?? 0,
+          canBankCancel: !!grantedAgreement && row.status === 'PAID' && !grantedAgreement?.usedCredits && !!row.paidAt && row.paidAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) === new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }) && !row.reversals.some(v => ['PENDING', 'REVIEW', 'SUCCEEDED'].includes(v.status)),
+          bankTransferPending: paymentAttempts.some(a => a.provider === 'bank_transfer'),
+          bankTransferNote: paymentAttempts.find(a => a.provider === 'bank_transfer')?.failureCode ?? null,
+          paymentInProgress: paymentAttempts.some(a => a.provider !== 'bank_transfer'),
+        })),
         pagination: {
           page: input.page,
           limit: input.limit,

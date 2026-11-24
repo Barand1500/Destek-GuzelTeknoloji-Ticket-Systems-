@@ -1,12 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { api } from '../../services/api';
 import { ErrorMessage } from '../management/shared';
 import { DropdownSelect } from '../../components/DropdownSelect';
 
 type Settings = { mode: 'sandbox' | 'production'; credentialsConfigured: boolean; enabled: boolean; publicUrl: string; testedAt: string | null; lastError: string | null };
 const emptyKeys = { merchantSafeId: '', terminalSafeId: '', secretKey: '' };
-export function AkbankSettings({ editable }: { editable: boolean }) {
+export function AkbankSettings({
+  editable,
+  activeProvider,
+  onClose,
+  onToast,
+}: {
+  editable: boolean;
+  activeProvider?: { id: string; name: string } | null;
+  onClose?: () => void;
+  onToast?: (text: string) => void;
+}) {
   const client = useQueryClient();
   const query = useQuery({ queryKey: ['akbank-settings'], queryFn: async () => (await api.get('/credit-sales/payment-settings/akbank')).data.data as Settings });
   const [mode, setMode] = useState<Settings['mode']>('production');
@@ -24,9 +35,35 @@ export function AkbankSettings({ editable }: { editable: boolean }) {
   function submit(event: FormEvent) { event.preventDefault(); save.mutate(); }
   const changedMode = Boolean(query.data && query.data.mode !== mode);
   const required = !query.data?.credentialsConfigured || changedMode;
+  const canEnable = Boolean(query.data?.testedAt) && !changedMode && !Object.values(keys).some(Boolean);
+  const handleToggle = (next: boolean) => {
+    if (!editable || busy) return;
+    if (next) {
+      if (activeProvider && activeProvider.id !== 'akbank') {
+        onToast?.(`Önce ${activeProvider.name} online ödemesini kapatın.`);
+        return;
+      }
+      if (!canEnable) {
+        onToast?.('Online ödemeyi açmak için önce bilgileri kaydedip bağlantıyı test edin.');
+        return;
+      }
+    }
+    setEnabled(next);
+    setDirty(true);
+  };
+  const handleClose = () => {
+    if (enabled || query.data?.enabled) {
+      onToast?.('Akbank kartını kaldırmadan önce online ödeme anahtarını kapatın.');
+      return;
+    }
+    onClose?.();
+  };
   return <section className="credit-sales-card" aria-label="Akbank Sanal POS">
     <div className="credit-sales-card-heading payment-provider-heading"><h2>Akbank Sanal POS</h2>
-      <label className="integration-toggle"><span>Akbank online ödeme</span><input type="checkbox" role="switch" checked={enabled} disabled={!editable || busy || !query.data?.testedAt || changedMode || Object.values(keys).some(Boolean)} onChange={event => { setEnabled(event.target.checked); setDirty(true); }} /><i aria-hidden="true" /></label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <label className="integration-toggle"><span>Akbank online ödeme</span><input type="checkbox" role="switch" checked={enabled} disabled={!editable || busy} onChange={event => handleToggle(event.target.checked)} /><i aria-hidden="true" /></label>
+        {editable && onClose && <button className="standard-modal-close" type="button" aria-label="Akbank kartını kapat" title="Kartı kaldır" disabled={busy} onClick={handleClose}><X size={18} /></button>}
+      </div>
     </div>
     <ErrorMessage error={query.error} />
     {query.isPending && <p role="status">Ayarlar yükleniyor…</p>}
