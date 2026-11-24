@@ -18,6 +18,17 @@ export function refreshAccess(){
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.error?.code === "LICENSE_INVALID"
+    ) {
+      window.dispatchEvent(
+        new CustomEvent("license-invalid", {
+          detail: error.response?.data?.error?.details,
+        }),
+      );
+      throw error;
+    }
     const config = error.config;
     if (
       error.response?.status !== 401 ||

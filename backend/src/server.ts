@@ -8,8 +8,14 @@ import { verifySupportEmail, smtpFailureReason } from './services/mailer.service
 import { startAnnouncementQueue } from './services/announcements.service.js';
 import { startOutboundQueue, stopOutboundQueue } from './services/outbound-queue.service.js';
 import { startCreditAlerts } from './services/credit-alerts.service.js';
+import { getLicenseStatus } from './services/license.service.js';
 await db.$connect();
 const stopAnnouncementQueue = await startAnnouncementQueue();
+if (env.LICENSE_ENABLED) {
+  void getLicenseStatus({ forceRefresh: true })
+    .then(status => console.log('Lisans durumu:', status.valid ? `geçerli (${status.companyName ?? env.LICENSE_COMPANY_CODE})` : `geçersiz (${status.reason}: ${status.message})`))
+    .catch(error => console.error('Lisans kontrolü başarısız:', error instanceof Error ? error.message : String(error)));
+}
 void verifySupportEmail().then(result => console.log('SMTP bağlantısı:', result.configured ? 'hazır' : 'yapılandırılmamış')).catch(error => console.error('SMTP bağlantısı kurulamadı:', smtpFailureReason(error)));
 startInboundEmailPolling();
 startOutboundQueue();

@@ -39,7 +39,29 @@ import { rolesRouter } from './roles.js';
 import { enforceRolePermissions } from '../middleware/permissions.js';
 import { publishChange } from '../services/events.service.js';
 import { receiveMetaWebhook, receiveNetgsmMessage, verifyMetaWebhook } from '../services/integrations.service.js';
+import { getLicenseStatus, requireValidLicense } from '../services/license.service.js';
 export const router = Router();
+const licenseRefreshLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skip: () => env.NODE_ENV === "test",
+  message: {
+    success: false,
+    error: {
+      code: "RATE_LIMITED",
+      message: "Çok fazla lisans kontrol isteği. Lütfen biraz bekleyin.",
+    },
+  },
+});
+router.get('/public/license', async (_req, res) => {
+  res.set('Cache-Control', 'no-store').json({ success: true, data: await getLicenseStatus() });
+});
+router.post('/public/license/refresh', licenseRefreshLimiter, async (_req, res) => {
+  res.set('Cache-Control', 'no-store').json({ success: true, data: await getLicenseStatus({ forceRefresh: true }) });
+});
+router.use(requireValidLicense);
 const cookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",

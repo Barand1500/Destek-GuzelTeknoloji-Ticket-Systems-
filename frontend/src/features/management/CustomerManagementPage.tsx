@@ -197,17 +197,23 @@ function CustomerFiles({ customer }: { customer: Customer }) {
         const isEditing = editingId === file.id;
         const { ext } = splitFileName(file.originalName);
         return <div className="customer-management-file" key={file.id}>
-          <FilePreview customerId={customer.id} file={file} />
-          <div className="customer-management-file-info">
-            {isEditing ? <form className="customer-file-rename-form" onSubmit={e => { e.preventDefault(); submitRename(file); }}>
-              <input type="text" autoFocus maxLength={160} disabled={rename.isPending} value={editingName} onChange={e => setEditingName(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); setEditingId(null); } }} aria-label="Yeni dosya adı" />
-              {ext && <span className="customer-file-ext">{ext}</span>}
-              <button className="icon-button" type="submit" disabled={rename.isPending || !editingName.trim()} aria-label="Dosya adını kaydet" title="Kaydet"><Check size={15} /></button>
-              <button className="icon-button" type="button" disabled={rename.isPending} aria-label="Ad değiştirmeden vazgeç" title="Vazgeç" onClick={() => setEditingId(null)}><X size={15} /></button>
-            </form> : <button className="customer-file-open" type="button" title={canEdit ? 'Açmak için tıklayın, yeniden adlandırmak için çift tıklayın' : file.originalName} onClick={() => setOpened(file)} onDoubleClick={e => { e.preventDefault(); startRename(file); }}>{file.originalName}</button>}
-            <small>{Math.ceil(file.size / 1024)} KB</small>
+          <div className="customer-management-file-top">
+            <FilePreview customerId={customer.id} file={file} />
+            <div className="customer-management-file-info">
+              {isEditing ? <form className="customer-file-rename-form" onSubmit={e => { e.preventDefault(); submitRename(file); }}>
+                <div className="customer-file-rename-input">
+                  <input type="text" autoFocus maxLength={160} disabled={rename.isPending} value={editingName} onChange={e => setEditingName(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); setEditingId(null); } }} aria-label="Yeni dosya adı" />
+                  {ext && <span className="customer-file-ext">{ext}</span>}
+                </div>
+                <div className="management-actions">
+                  <button className="icon-button" type="submit" disabled={rename.isPending || !editingName.trim()} aria-label="Dosya adını kaydet" title="Kaydet"><Check size={15} /></button>
+                  <button className="icon-button" type="button" disabled={rename.isPending} aria-label="Ad değiştirmeden vazgeç" title="Vazgeç" onClick={() => setEditingId(null)}><X size={15} /></button>
+                </div>
+              </form> : <button className="customer-file-open" type="button" title={canEdit ? 'Açmak için tıklayın, yeniden adlandırmak için çift tıklayın' : file.originalName} onClick={() => setOpened(file)} onDoubleClick={e => { e.preventDefault(); startRename(file); }}>{file.originalName}</button>}
+              <small>{Math.ceil(file.size / 1024)} KB</small>
+            </div>
           </div>
-          <div className="management-actions">
+          <div className="management-actions customer-management-file-actions">
             {canEdit && !isEditing && <button className="icon-button" type="button" aria-label={`${file.originalName} adını düzenle`} title="Adı düzenle" onClick={() => startRename(file)}><Pencil size={16} /></button>}
             <button className="icon-button" type="button" aria-label={`${file.originalName} aç`} title="Önizle" onClick={() => setOpened(file)}><Eye size={17} /></button>
             <button className="icon-button" type="button" disabled={download.isPending} aria-label={`${file.originalName} indir`} title="İndir" onClick={() => download.mutate(file)}><Download size={17} /></button>

@@ -27,6 +27,7 @@ import { GuideHubPage } from "./pages/GuideHub";
 import { IntegrationsHubPage } from "./pages/IntegrationsHub";
 import { SurveysPage } from "./pages/Surveys";
 import { Realtime } from "./components/Realtime";
+import { LicenseGate } from "./components/LicenseGate";
 import { RequireRole } from "./components/RequireRole";
 import { RolesPage } from './features/management/Roles';
 import { CategoryHubPage } from "./pages/CategoryHub";
@@ -81,9 +82,10 @@ function LegacyRedirect({ suffix }: { suffix?: string }) {
 }
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={client}>
-    <BrowserRouter>
-      <AuthProvider>
-        <Realtime />
+    <LicenseGate>
+      <BrowserRouter>
+        <AuthProvider>
+          <Realtime />
         <Routes>
           <Route path="/" element={<Navigate to="/auth" replace />} />
           <Route path="/form/destek" element={<FormPortal />} /><Route path="/form/talep" element={<FormPortal />} /><Route path="/form/hesap/*" element={<FormPortal />} />
@@ -282,5 +284,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </LicenseGate>
   </QueryClientProvider>,
 );

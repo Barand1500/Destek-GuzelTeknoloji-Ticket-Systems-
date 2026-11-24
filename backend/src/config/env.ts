@@ -41,6 +41,14 @@ export const env = z
     IMAP_MAILBOX: z.string().trim().min(1).default("INBOX"),
     IMAP_POLL_INTERVAL_SECONDS: z.coerce.number().int().min(15).max(3600).default(15),
     IMAP_LOOKBACK_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+    LICENSE_ENABLED: z.enum(["true", "false"]).default("false").transform(value => value === "true"),
+    LICENSE_API_URL: z.url().default("https://lic.guzelteknoloji.com/api/public/license/check"),
+    LICENSE_COMPANY_CODE: z.string().trim().default(""),
+    LICENSE_PACKAGE_CODE: z.string().trim().default(""),
+    LICENSE_EXPECTED_DOMAIN: z.string().trim().default(""),
+    LICENSE_EXPECTED_KEY: z.string().trim().default(""),
+    LICENSE_CACHE_TTL_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    LICENSE_GRACE_HOURS: z.coerce.number().int().min(0).max(168).default(24),
   })
   .refine(value => !value.TURNSTILE_ENABLED || Boolean(value.TURNSTILE_SITE_KEY && value.TURNSTILE_SECRET_KEY), {
     message: 'Turnstile açıkken TURNSTILE_SITE_KEY ve TURNSTILE_SECRET_KEY zorunludur.', path: ['TURNSTILE_ENABLED'],
