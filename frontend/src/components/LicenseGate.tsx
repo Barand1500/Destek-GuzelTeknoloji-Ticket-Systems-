@@ -30,11 +30,9 @@ function formatDate(value: string | null | undefined) {
 
 const reasonLabels: Record<string, string> = {
   NOT_CONFIGURED: 'Lisans Yapılandırılmamış',
-  CUSTOMER_NOT_FOUND: 'Firma Kaydı Bulunamadı',
-  CUSTOMER_INACTIVE: 'Müşteri Hesabı Pasif',
-  PACKAGE_INACTIVE: 'Aktif Paket Bulunamadı',
-  EXPIRED: 'Lisans Süresi Dolmuş',
-  DOMAIN_MISMATCH: 'Alan Adı Uyuşmazlığı',
+  API_KEY_INVALID: 'Servis Anahtarı Geçersiz',
+  SERVICE_DISABLED: 'Lisans Servisi Kapalı',
+  NO_ACTIVE_LICENSE: 'Aktif Lisans Bulunamadı',
   KEY_MISMATCH: 'Lisans Anahtarı Uyuşmazlığı',
   SERVER_UNREACHABLE: 'Lisans Sunucusuna Ulaşılamadı',
   INVALID: 'Lisans Geçersiz',

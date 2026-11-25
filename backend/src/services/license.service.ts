@@ -5,11 +5,9 @@ export type LicenseReason =
   | 'DISABLED'
   | 'OK'
   | 'NOT_CONFIGURED'
-  | 'CUSTOMER_NOT_FOUND'
-  | 'CUSTOMER_INACTIVE'
-  | 'PACKAGE_INACTIVE'
-  | 'EXPIRED'
-  | 'DOMAIN_MISMATCH'
+  | 'API_KEY_INVALID'
+  | 'SERVICE_DISABLED'
+  | 'NO_ACTIVE_LICENSE'
   | 'KEY_MISMATCH'
   | 'INVALID'
   | 'SERVER_UNREACHABLE';
@@ -25,6 +23,7 @@ export type LicenseStatus = {
   domain: string | null;
   startsAt: string | null;
   expiresAt: string | null;
+  unlimited: boolean;
   checkedAt: string;
   graceMode: boolean;
 };
@@ -32,33 +31,40 @@ export type LicenseStatus = {
 export type LicenseConfig = {
   enabled: boolean;
   apiUrl: string;
-  companyCode: string;
-  packageCode: string;
-  expectedDomain: string;
+  apiKey: string;
+  domain: string;
+  email: string;
+  productId?: number;
+  packageId?: number;
+  productName: string;
+  packageName: string;
   expectedKey: string;
   cacheTtlMinutes: number;
   graceHours: number;
 };
 
-type RemoteLicensePayload = {
-  success?: boolean;
-  found?: boolean;
-  gecerli?: boolean;
-  message?: string;
-  durum?: {
-    musteriAktif?: boolean;
-    paketAktif?: boolean;
-    suresiGecmis?: boolean;
-  };
-  data?: {
-    id?: number;
-    domain?: string | null;
-    baslangicTarihi?: string | null;
-    bitisTarihi?: string | null;
-    lisansAnahtari?: string | null;
-    musteri?: { unvan?: string | null; firmaKodu?: string | null } | null;
-    paket?: { adi?: string | null; paketKodu?: string | null } | null;
-    urun?: { adi?: string | null } | null;
+type RemotePaketKontrolPayload = {
+  basarili?: boolean;
+  erisim_var?: boolean;
+  mesaj?: string;
+  veri?: {
+    musteri?: {
+      id?: number;
+      ad?: string | null;
+      eposta?: string | null;
+    } | null;
+    lisans?: {
+      id?: number;
+      lisans_anahtari?: string | null;
+      baslangic_tarihi?: string | null;
+      bitis_tarihi?: string | null;
+      suresiz?: number | boolean | null;
+      durum?: string | null;
+      domain?: string | null;
+      urun_adi?: string | null;
+      paket_adi?: string | null;
+      lisans_tipi_adi?: string | null;
+    } | null;
   } | null;
 };
 
@@ -89,9 +95,13 @@ export function getEnvLicenseConfig(): LicenseConfig {
   return {
     enabled: env.LICENSE_ENABLED,
     apiUrl: env.LICENSE_API_URL,
-    companyCode: env.LICENSE_COMPANY_CODE,
-    packageCode: env.LICENSE_PACKAGE_CODE,
-    expectedDomain: env.LICENSE_EXPECTED_DOMAIN,
+    apiKey: env.LICENSE_API_KEY,
+    domain: env.LICENSE_DOMAIN,
+    email: env.LICENSE_EMAIL,
+    productId: env.LICENSE_PRODUCT_ID,
+    packageId: env.LICENSE_PACKAGE_ID,
+    productName: env.LICENSE_PRODUCT_NAME,
+    packageName: env.LICENSE_PACKAGE_NAME,
     expectedKey: env.LICENSE_EXPECTED_KEY,
     cacheTtlMinutes: env.LICENSE_CACHE_TTL_MINUTES,
     graceHours: env.LICENSE_GRACE_HOURS,
@@ -109,6 +119,7 @@ function makeStatus(
     domain: null,
     startsAt: null,
     expiresAt: null,
+    unlimited: false,
     graceMode: false,
     checkedAt: new Date(nowMs).toISOString(),
     ...partial,
@@ -132,130 +143,113 @@ export async function verifyRemoteLicense(
     );
   }
 
-  if (!config.companyCode.trim() || !config.packageCode.trim()) {
+  const normalizedDomain = normalizeDomain(config.domain);
+  const cleanEmail = config.email.trim();
+  const cleanApiKey = config.apiKey.trim();
+
+  if (!cleanApiKey) {
     return makeStatus(
       {
         enabled: true,
         valid: false,
         reason: 'NOT_CONFIGURED',
-        message: 'Lisans bilgileri (firma kodu ve paket kodu) yapılandırılmamış.',
+        message: 'Lisans servis anahtarı (LICENSE_API_KEY) tanımlı değil.',
       },
       nowMs,
     );
   }
+
+  if (!normalizedDomain && !cleanEmail) {
+    return makeStatus(
+      {
+        enabled: true,
+        valid: false,
+        reason: 'NOT_CONFIGURED',
+        message: 'Lisans doğrulaması için LICENSE_DOMAIN veya LICENSE_EMAIL tanımlanmalıdır.',
+      },
+      nowMs,
+    );
+  }
+
+  const body: Record<string, string | number> = {};
+  if (normalizedDomain) body.domain = normalizedDomain;
+  if (cleanEmail) body.eposta = cleanEmail;
+  if (config.productId) body.urun_id = config.productId;
+  if (config.packageId) body.paket_id = config.packageId;
+  if (config.productName.trim()) body.urun_adi = config.productName.trim();
+  if (config.packageName.trim()) body.paket_adi = config.packageName.trim();
 
   const response = await fetchImpl(config.apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'x-api-key': cleanApiKey,
     },
-    body: JSON.stringify({
-      firmaKodu: config.companyCode.trim(),
-      paketKodu: config.packageCode.trim(),
-    }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
+
+  if (response.status === 401) {
+    return makeStatus(
+      {
+        enabled: true,
+        valid: false,
+        reason: 'API_KEY_INVALID',
+        message: 'Lisans servis anahtarı (LICENSE_API_KEY) geçersiz.',
+      },
+      nowMs,
+    );
+  }
+
+  if (response.status === 503) {
+    return makeStatus(
+      {
+        enabled: true,
+        valid: false,
+        reason: 'SERVICE_DISABLED',
+        message: 'Lisans sunucusunda paket erişim servisi kapalı (PAKET_ERISIM_AKTIF=false).',
+      },
+      nowMs,
+    );
+  }
 
   if (!response.ok) {
     throw new Error(`Lisans sunucusu HTTP ${response.status} döndürdü.`);
   }
 
-  const payload = (await response.json()) as RemoteLicensePayload;
-  if (!payload || payload.success !== true) {
-    throw new Error(payload?.message || 'Lisans sunucusundan geçersiz yanıt alındı.');
+  const payload = (await response.json()) as RemotePaketKontrolPayload;
+  if (!payload || payload.basarili !== true) {
+    throw new Error(payload?.mesaj || 'Lisans sunucusundan geçersiz yanıt alındı.');
   }
 
-  const data = payload.data ?? null;
+  if (!payload.erisim_var || !payload.veri?.lisans) {
+    return makeStatus(
+      {
+        enabled: true,
+        valid: false,
+        reason: 'NO_ACTIVE_LICENSE',
+        message: payload.mesaj || 'Aktif ve geçerli bir lisans bulunamadı.',
+        domain: normalizedDomain || null,
+      },
+      nowMs,
+    );
+  }
+
+  const lisans = payload.veri.lisans;
+  const musteri = payload.veri.musteri;
   const baseDetails = {
-    companyName: data?.musteri?.unvan ? String(data.musteri.unvan).trim() : null,
-    packageName: data?.paket?.adi ? String(data.paket.adi).trim() : null,
-    productName: data?.urun?.adi ? String(data.urun.adi).trim() : null,
-    domain: data?.domain ? String(data.domain).trim() : null,
-    startsAt: data?.baslangicTarihi ? String(data.baslangicTarihi) : null,
-    expiresAt: data?.bitisTarihi ? String(data.bitisTarihi) : null,
+    companyName: musteri?.ad ? String(musteri.ad).trim() : null,
+    packageName: lisans.paket_adi ? String(lisans.paket_adi).trim() : null,
+    productName: lisans.urun_adi ? String(lisans.urun_adi).trim() : null,
+    domain: lisans.domain ? String(lisans.domain).trim() : (normalizedDomain || null),
+    startsAt: lisans.baslangic_tarihi ? String(lisans.baslangic_tarihi) : null,
+    expiresAt: lisans.bitis_tarihi ? String(lisans.bitis_tarihi) : null,
+    unlimited: Boolean(Number(lisans.suresiz)),
   };
 
-  if (!payload.found) {
-    return makeStatus(
-      {
-        enabled: true,
-        valid: false,
-        reason: 'CUSTOMER_NOT_FOUND',
-        message: 'Lisans sunucusunda bu firma koduna ait kayıt bulunamadı.',
-        ...baseDetails,
-      },
-      nowMs,
-    );
-  }
-
-  if (!payload.gecerli) {
-    const durum = payload.durum ?? {};
-    if (durum.musteriAktif === false) {
-      return makeStatus(
-        {
-          enabled: true,
-          valid: false,
-          reason: 'CUSTOMER_INACTIVE',
-          message: 'Müşteri lisans hesabı pasif durumda.',
-          ...baseDetails,
-        },
-        nowMs,
-      );
-    }
-    if (durum.suresiGecmis === true) {
-      return makeStatus(
-        {
-          enabled: true,
-          valid: false,
-          reason: 'EXPIRED',
-          message: 'Destek paneli lisans süresi dolmuş.',
-          ...baseDetails,
-        },
-        nowMs,
-      );
-    }
-    if (durum.paketAktif === false) {
-      return makeStatus(
-        {
-          enabled: true,
-          valid: false,
-          reason: 'PACKAGE_INACTIVE',
-          message: 'Bu ürün için aktif bir lisans paketi bulunamadı.',
-          ...baseDetails,
-        },
-        nowMs,
-      );
-    }
-    return makeStatus(
-      {
-        enabled: true,
-        valid: false,
-        reason: 'INVALID',
-        message: 'Lisans doğrulanamadı.',
-        ...baseDetails,
-      },
-      nowMs,
-    );
-  }
-
-  const expectedDomain = normalizeDomain(config.expectedDomain);
-  const licensedDomain = normalizeDomain(data?.domain);
-  if (expectedDomain && licensedDomain && expectedDomain !== licensedDomain) {
-    return makeStatus(
-      {
-        enabled: true,
-        valid: false,
-        reason: 'DOMAIN_MISMATCH',
-        message: 'Lisans bu alan adı için tanımlanmamış.',
-        ...baseDetails,
-      },
-      nowMs,
-    );
-  }
-
   const expectedKey = config.expectedKey.trim();
-  const licensedKey = String(data?.lisansAnahtari ?? '').trim();
+  const licensedKey = String(lisans.lisans_anahtari ?? '').trim();
   if (expectedKey && expectedKey !== licensedKey) {
     return makeStatus(
       {
@@ -292,9 +286,9 @@ export async function getLicenseStatus(options?: {
   fetchImpl?: typeof fetch;
   nowMs?: number;
 }): Promise<LicenseStatus> {
+  const nowMs = options?.nowMs ?? Date.now();
   const config = options?.config ?? getEnvLicenseConfig();
   const fetchImpl = options?.fetchImpl ?? fetch;
-  const nowMs = options?.nowMs ?? Date.now();
   const forceRefresh = Boolean(options?.forceRefresh);
 
   if (!config.enabled) {

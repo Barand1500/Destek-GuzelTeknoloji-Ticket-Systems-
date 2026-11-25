@@ -57,9 +57,6 @@ export function CreditCheckout({ orderId, onBack }: { orderId: string; onBack?: 
           </div>
         ) : (
           <form onSubmit={e => { e.preventDefault(); bankTransfer.mutate(); }} style={{ display: 'grid', gap: 14 }}>
-            <p className="credit-help" style={{ margin: 0 }}>
-              Havale veya EFT işlemini tamamladıktan sonra aşağıdan ödeme bildirimi gönderebilirsiniz. Yönetici onayladığında kredileriniz otomatik olarak hesabınıza yüklenir.
-            </p>
             <label>
               <span className="field-label">Gönderen Adı / Açıklama (isteğe bağlı)</span>
               <input maxLength={300} value={transferNote} disabled={bankTransfer.isPending} onChange={e => setTransferNote(e.target.value)} placeholder="Örn: Havale yapan kişi veya banka bilgisi" />
