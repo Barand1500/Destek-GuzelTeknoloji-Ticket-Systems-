@@ -2367,7 +2367,7 @@ html[data-theme="dark"] .topbar-profile-link .avatar {
   display: grid;
   place-items: center;
   padding: 0 4px;
-  border: 2px solid #fff;
+  border: 0;
   border-radius: 10px;
   background: #ba3c35;
   color: #fff;
@@ -2473,8 +2473,8 @@ html[data-theme="dark"] .badge.status-RESOLVED {
   color: #9ed8b4;
 }
 html[data-theme="dark"] .badge.status-CLOSED {
-  border: 1px solid #52645a;
-  background: #303c36;
+  border: 1px solid #415765;
+  background: #30414c;
   color: var(--ui-text-secondary);
 }
 html[data-theme="dark"] .profile-security h2 {

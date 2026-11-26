@@ -802,7 +802,7 @@ function GuideContent({ guide }: { guide: SupportGuide }) {
             type="search"
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Sorununuzu arayın"
+            placeholder="Ara"
             autoComplete="off"
           />
           {question && (

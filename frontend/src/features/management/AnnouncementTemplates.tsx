@@ -58,7 +58,6 @@ export function AnnouncementTemplates() {
             onChange={list.setSearch}
             limit={list.limit}
             onLimitChange={list.setLimit}
-            placeholder="Şablon adı veya içerik ara…"
           />
           <ErrorMessage error={remove.error} />
           <ListState

@@ -100,14 +100,12 @@ export function CreditSubscriptions({ admin = false }: { admin?: boolean }) {
     >
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
-          <span className="field-label">Abonelik Ara</span>
+          <span className="field-label">Ara</span>
           <input
             type="search"
+            aria-label="Abonelik Ara"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={
-              admin ? "Paket veya müşteri ara" : "Paket veya anlaşma ara"
-            }
           />
         </label>
         <DropdownSelect label="Durum" ariaLabel="Abonelik durum filtresi" value={status} onChange={value => { setStatus(value); setPage(1); }} options={[{ value: "", label: "Tüm durumlar" }, ...Object.keys(statusClasses).map(label => ({ value: statusClasses[label], label }))]} />

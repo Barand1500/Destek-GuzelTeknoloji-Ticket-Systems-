@@ -21,7 +21,7 @@ export function TurnstileSettingsPanel() {
       await Promise.all([client.invalidateQueries({ queryKey: ['auth-security'] }), client.invalidateQueries({ queryKey: ['public-form'] })]);
     } });
   return <div className="form-settings-panel"><section className="integration-card" aria-label="Cloudflare Ayarları" onKeyDown={event => { if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault(); }}>
-    <div className="integration-heading"><h2 className="turnstile-title"><ShieldCheck size={18} /> Cloudflare Turnstile</h2><label className="management-check"><input type="checkbox" checked={enabled} disabled={!editable || save.isPending} onChange={event => { setEnabled(event.target.checked); save.reset(); }} />Doğrulamayı Etkinleştir</label></div>
+    <div className="integration-heading"><h2 className="turnstile-title"><ShieldCheck size={18} /> Cloudflare Turnstile</h2><div className="status-toggle"><label className="switch"><input id="turnstile-enabled" type="checkbox" role="switch" aria-label="Doğrulamayı Etkinleştir" checked={enabled} disabled={!editable || save.isPending || !settings.data} onChange={event => { setEnabled(event.target.checked); save.reset(); }} /><span aria-hidden="true" /></label><label htmlFor="turnstile-enabled">Doğrulamayı Etkinleştir</label></div></div>
     <p>Giriş, kayıt, şifre sıfırlama ve Form ekranlarını otomatik isteklere karşı korur.</p>
     {settings.isPending && <p role="status">Ayarlar yükleniyor…</p>}
     {settings.isError && <p className="error" role="alert">{errorText(settings.error)}</p>}

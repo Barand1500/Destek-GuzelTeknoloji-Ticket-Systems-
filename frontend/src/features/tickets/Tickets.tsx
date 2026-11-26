@@ -1,3 +1,5 @@
+import { Search as SearchField } from '../management/shared';
+import { responseColor } from '../../utils/semantic-colors';
 import { displayEmail } from "../../utils/email";
 import { ResolveWithCreditModal } from '../agreements/Agreements';
 import { useComposerFocus } from '../../components/useComposerFocus';
@@ -27,7 +29,6 @@ import {
   ChevronRight,
   Inbox,
   Plus,
-  Search,
   Send,
   LockKeyhole,
   History,
@@ -73,12 +74,12 @@ const durationBetween = (from: string, to: string) => {
   return hours < 24 ? `${hours} sa${remainder ? ` ${remainder} dk` : ""}` : `${Math.floor(hours / 24)} gün`;
 };
 const responseTime = (startAt: string | null | undefined, responseAt: string | null | undefined, rules?: { responseFastFromMinutes: number; responseFastToMinutes: number; responseNormalFromMinutes: number; responseNormalToMinutes: number; responseLateFromMinutes: number; responseLateToMinutes: number; responseFastColor: string; responseNormalColor: string; responseLateColor: string }) => {
-  if (!startAt || !responseAt) return { label: "Yanıt Bekliyor", state: "waiting", color: rules?.responseLateColor ?? "var(--ticket-response-late, #c2413c)" };
+  if (!startAt || !responseAt) return { label: "Yanıt Bekliyor", state: "waiting", color: responseColor('late', rules?.responseLateColor) };
   const minutes = Math.max(0, Math.floor((new Date(responseAt).getTime() - new Date(startAt).getTime()) / 60000));
   const label = minutes < 1 ? "1 dk'dan kısa" : minutes < 60 ? `${minutes} dk` : (() => { const hours = Math.floor(minutes / 60); return hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`; })();
   const fast = !rules || (minutes >= rules.responseFastFromMinutes && minutes <= rules.responseFastToMinutes);
   const normal = rules && minutes >= rules.responseNormalFromMinutes && minutes <= rules.responseNormalToMinutes;
-  return fast ? { label, state: "fast", color: rules?.responseFastColor ?? "var(--ticket-response-fast, #16715d)" } : normal ? { label, state: "normal", color: rules.responseNormalColor } : { label, state: "late", color: rules?.responseLateColor ?? "var(--ticket-response-late, #c2413c)" };
+  return fast ? { label, state: "fast", color: responseColor('fast', rules?.responseFastColor) } : normal ? { label, state: "normal", color: responseColor('normal', rules.responseNormalColor) } : { label, state: "late", color: responseColor('late', rules?.responseLateColor) };
 };
 export function Badge({ status }: { status: Conversation["status"] }) {
   return (
@@ -363,21 +364,7 @@ export function TicketList() {
           )}
         </div>
         <div className="filters">
-          <form
-            className="search-box"
-            onSubmit={(e) => {
-              e.preventDefault();
-              filter("search", search);
-            }}
-          >
-            <Search size={18} />
-            <input
-              aria-label="Taleplerde Ara"
-              placeholder="Talep no, konu, müşteri veya personel ara…"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); filter("search", e.target.value); }}
-            />
-          </form>
+          <SearchField label="Taleplerde Ara" value={search} onChange={value => { setSearch(value); filter("search", value); }} />
           <div className="notification-limit inbox-limit">
             <span>Kayıt sayısı</span>
             <DropdownSelect
@@ -480,7 +467,7 @@ export function TicketList() {
                     <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
                     <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-response-cell inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
                     <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
-                    <td className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong> kredi</Link> : <span className="muted">—</span>}</td>
+                    <td className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong></Link> : <span className="muted">—</span>}</td>
                   </tr>
                 ))}
               </tbody>

@@ -16,10 +16,10 @@ export function StaffCreditReport({days,agentId,departmentId,onPersonSelect}:{da
  const query=useQuery({queryKey:['/reports','credit-usage',days,agentId,departmentId,page,search,creditType,limit],staleTime:30_000,queryFn:async({signal})=>(await api.get<CreditReport>('/reports/credit-usage',{signal,params:{days,agentId,departmentId,page,limit,search:search||undefined,creditType}})).data});
  const data=query.data;
  return <section className="report-panel report-credit-usage">
-  <div className="report-panel-heading"><h2>Personel Kredi Kullanımları</h2>{data&&<div className="report-credit-totals" aria-label="Kredi ve Talep Toplamları"><strong className="report-credit-total">{number(data.totalCredits)} kredi</strong><strong className="report-credit-count">{number(data.pagination.total)} talep</strong></div>}</div>
+  <div className="report-panel-heading"><h2>Personel Kredi Kullanımları</h2>{data&&<div className="report-credit-totals" aria-label="Kredi ve Talep Toplamları"><strong className="report-credit-total"><span className="credit-value">{number(data.totalCredits)}</span> kredi</strong><strong className="report-credit-count">{number(data.pagination.total)} talep</strong></div>}</div>
   <p className="report-note">Son {days} gün içindeki kredi kullanımları. Personel bilgisi krediyi kullanan kişiyi gösterir.</p>
   <form className="report-credit-filters" onSubmit={event=>event.preventDefault()}>
-   <label className="report-credit-search"><span>Personel, Talep veya Müşteri Ara</span><input value={searchInput} maxLength={100} onChange={event=>setSearchInput(event.target.value)} placeholder="Ad, talep numarası, konu veya anlaşma" /></label>
+   <label className="report-credit-search"><span className="field-label">Ara</span><input aria-label="Personel, Talep veya Müşteri Ara" value={searchInput} maxLength={100} onChange={event=>setSearchInput(event.target.value)} /></label>
    
    <DropdownSelect label="Kredi Kullanımı" ariaLabel="Kredi Kullanımı Filtresi" value={creditType} options={[{value:'all',label:'Tüm Kullanımlar'},{value:'paid',label:'Kredi Harcananlar'},{value:'free',label:'Ücretsiz Destekler'}]} onChange={value=>{setCreditType(value);setPage(1);}} />
    <DropdownSelect label="Sayfa Başına" ariaLabel="Kredi Kayıt Sayısı" value={String(limit)} options={[10,20,50].map(value=>({value:String(value),label:String(value)+' kayıt'}))} onChange={value=>{setLimit(Number(value));setPage(1);}} />

@@ -143,16 +143,11 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
       <div className="credit-orders-filters">
         <label className="credit-orders-search">
-          <span className="field-label">Sipariş Ara</span>
+          <span className="field-label">Ara</span>
           <input
             aria-label="Sipariş Ara"
             maxLength={100}
             value={search}
-            placeholder={
-              admin
-                ? "Sipariş, paket veya müşteri ara"
-                : "Sipariş veya paket ara"
-            }
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>

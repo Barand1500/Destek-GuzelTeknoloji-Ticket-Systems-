@@ -76,22 +76,52 @@ test("calendar fills the viewport without scrolling and keeps its size across mo
   await page.screenshot({ path: ".local/calendar-mobile.png", fullPage: true });
 });
 
-test("monthly calendar shows adjacent dates across the year boundary", async ({ page }) => {
+test("monthly calendar hides adjacent dates without changing grid size", async ({ page }) => {
   await page.clock.install({ time: new Date("2027-01-01T12:00:00+03:00") });
   await workspace(page);
   await page.goto("/admin/calendar");
   const calendar = page.locator(".calendar-modal");
-  await expect(calendar.locator(".calendar-cell")).toHaveCount(42);
-  await expect(calendar.locator(".calendar-cell > span").first()).toHaveText("28");
-  await expect(calendar.locator(".calendar-cell > span").last()).toHaveText("7");
+  const fitsViewport = async () => {
+    for (const [width, height] of [[2560, 1440], [1440, 900], [1366, 768], [390, 844]]) {
+      await page.setViewportSize({ width, height });
+      const bounds = await calendar.boundingBox();
+      expect(bounds!.width).toBeGreaterThan(width < 600 ? width - 60 : width - 340);
+      expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(height);
+      expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1)).toBe(true);
+      const lastDay = calendar.locator('.calendar-day-number').last();
+      await expect(lastDay).toBeInViewport();
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+  };
+  await fitsViewport();
+  await expect(calendar.locator(".calendar-cell")).toHaveCount(35);
+  await expect(calendar.locator(".calendar-day-number")).toHaveCount(31);
+  await expect(calendar.locator(".calendar-day-number").first()).toHaveText("1");
+  await expect(calendar.locator(".calendar-day-number").last()).toHaveText("31");
+  await expect(calendar.locator('.calendar-cell-empty')).toHaveCount(4);
+  await expect(calendar.locator('.calendar-cell-empty[role], .calendar-cell-empty[tabindex]')).toHaveCount(0);
   const height = (await calendar.boundingBox())!.height;
   await expect(calendar.locator(".calendar-cell.today > span")).toHaveText("1");
-  await page.getByRole("button", { name: "Önceki ay", exact: true }).click();
-  await expect(calendar.locator("h1")).toHaveText("Aralık 2026");
+  await page.getByRole("button", { name: "Önceki Ay", exact: true }).click();
+  await expect(calendar.locator("h2")).toHaveText("Aralık 2026");
   await page.getByRole("button", { name: "Bugün", exact: true }).click();
   expect(Math.abs((await calendar.boundingBox())!.height - height)).toBeLessThan(1);
-  await expect(calendar.locator(".calendar-cell")).toHaveCount(42);
-  await expect(calendar.locator("h1")).toHaveText("Ocak 2027");
+  await expect(calendar.locator(".calendar-cell")).toHaveCount(35);
+  await expect(calendar.locator("h2")).toHaveText("Ocak 2027");
+  await page.getByRole('button', { name: 'Sonraki Ay', exact: true }).click();
+  await expect(calendar.locator('.calendar-day-number')).toHaveCount(28);
+  await expect(calendar.locator('.calendar-cell')).toHaveCount(28);
+  expect(Math.abs((await calendar.boundingBox())!.height - height)).toBeLessThan(1);
+  await fitsViewport();
+  await page.getByRole('button', { name: 'Gece Moduna Geç', exact: true }).click();
+  for (let month = 0; month < 3; month++) await page.getByRole('button', { name: 'Sonraki Ay', exact: true }).click();
+  await expect(calendar.locator('.calendar-cell')).toHaveCount(42);
+  await fitsViewport();
+  expect(Math.abs((await calendar.boundingBox())!.height - height)).toBeLessThan(1);
+  for (let month = 0; month < 3; month++) await page.getByRole('button', { name: 'Önceki Ay', exact: true }).click();
+  await page.screenshot({ path: 'test-results/calendar-current-month.png', fullPage: true });
+  await calendar.getByRole('button', { name: /^1 Şubat 2027/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Günün Detayları' })).toBeVisible();
 });
 
 for (const role of ["SUPERVISOR", "AGENT"]) {

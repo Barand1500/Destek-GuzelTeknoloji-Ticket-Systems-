@@ -38,7 +38,7 @@ export function ActivityLogsPage() {
         description="Sistemdeki değişiklikleri ve işlemi yapan kullanıcıları inceleyin."
       />
       <section className="management-panel">
-        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem Geçmişinde Ara" placeholder="Kullanıcı, işlem veya açıklamada ara..." />
+        <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem Geçmişinde Ara" />
         <DateRangeField label="Tarih" from={from} to={to} onChange={(range) => { setFrom(range.from); setTo(range.to); list.setPage(1); }} />
         <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
           <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem Geçmişini sil</span><ChevronDown size={15} /></button>

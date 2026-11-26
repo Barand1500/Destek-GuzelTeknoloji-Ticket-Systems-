@@ -142,7 +142,6 @@ export function Search({
   value,
   onChange,
   label = "Kayıtlarda ara",
-  placeholder = "Ad veya metin yazın…",
   limit,
   onLimitChange,
   afterSearch,
@@ -150,19 +149,18 @@ export function Search({
   value: string;
   onChange: (value: string) => void;
   label?: string;
-  placeholder?: string;
   limit?: number;
   onLimitChange?: (limit: number) => void;
   afterSearch?: ReactNode;
 }) {
   const field = (
     <label className="management-search">
-      <span className="field-label">{label}</span>
+      <span className="field-label">Ara</span>
       <input
         type="search"
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
       />
     </label>
   );

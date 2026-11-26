@@ -176,21 +176,20 @@ export function CurrenciesPage() {
         )}
       </div>
 
-      <section className="credit-sales-card" aria-label="Para birimleri listesi">
-        <div className="credit-orders-filters" style={{ marginBottom: 18 }}>
+        <div className="credit-orders-filters currency-search-toolbar">
           <label className="credit-orders-search">
             <span className="field-label">Ara</span>
             <input
               aria-label="Para birimi ara"
               maxLength={80}
               value={search}
-              placeholder="Para birimi adı veya kodu ara..."
               onChange={event => setSearch(event.target.value)}
             />
           </label>
         </div>
 
-        <ErrorMessage error={query.error || refreshRate.error || remove.error} />
+      <section className="credit-sales-card currency-list-card" aria-label="Para birimleri listesi">
+        <ErrorMessage error={query.error || save.error || refreshRate.error || remove.error} />
         {query.isPending && <p role="status">Para birimleri yükleniyor…</p>}
 
         {!query.isPending && (
@@ -218,7 +217,7 @@ export function CurrenciesPage() {
                     </td>
                     <td>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <span className={`credit-order-status ${row.autoUpdate ? 'credit-order-status-paid' : 'credit-order-status-cancelled'}`}>
+                        <span className={row.autoUpdate ? 'credit-order-status credit-order-status-paid' : 'badge status-CLOSED'}>
                           {row.autoUpdate ? 'Açık' : 'Kapalı'}
                         </span>
                         {editable && row.code !== 'TRY' && (
@@ -236,9 +235,13 @@ export function CurrenciesPage() {
                       </div>
                     </td>
                     <td>
-                      <span className={`credit-order-status ${row.isActive ? 'credit-order-status-paid' : 'credit-order-status-cancelled'}`}>
-                        {row.isActive ? 'Aktif' : 'Pasif'}
-                      </span>
+                      <div className="status-toggle">
+                        <label className="switch">
+                          <input type="checkbox" role="switch" aria-label={`${row.name} aktif`} checked={row.isActive} disabled={!editable || busy || row.code === 'TRY'} onChange={() => save.mutate({ ...row, isActive: !row.isActive })} />
+                          <span aria-hidden="true" />
+                        </label>
+                        <span>{row.isActive ? 'Aktif' : 'Pasif'}</span>
+                      </div>
                     </td>
                     {editable && (
                       <td style={{ textAlign: 'right' }}>

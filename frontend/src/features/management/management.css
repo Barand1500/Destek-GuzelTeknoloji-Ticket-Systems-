@@ -4813,8 +4813,8 @@ html[data-theme="dark"] .presence-summary > button.status-filter.idle.active {
 html[data-theme="dark"]
   .presence-summary
   > button.status-filter.offline.active {
-  background: #29332f;
-  border-color: #8c9993;
+  background: #30414c;
+  border-color: #415765;
 }
 html[data-theme="dark"] .presence-summary-people {
   color: var(--ui-text-secondary);
@@ -4832,7 +4832,14 @@ html[data-theme="dark"] .presence-current.idle {
   background: #3b321e;
 }
 html[data-theme="dark"] .presence-current.offline {
-  background: #29332f;
+  background: #30414c;
+}
+html[data-theme="dark"] .presence-current.offline strong {
+  color: var(--ui-text-secondary);
+}
+html[data-theme="dark"] .presence-dot.offline {
+  background: var(--ui-text-secondary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-text-secondary) 11%, transparent);
 }
 html[data-theme="dark"] .presence-metrics,
 html[data-theme="dark"] .presence-metrics > div {
@@ -5130,8 +5137,9 @@ html[data-theme="dark"] :is(.customer-existing-requests-scroll,.phone-support-re
 .customer-request-card:focus-visible{outline:2px solid var(--ui-tab-indicator);outline-offset:1px}
 .customer-request-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .customer-request-card-heading>strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere;min-width:0;color:var(--ui-text-navigation)}
-.customer-request-state{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;max-width:45%}
-.customer-request-state>.customer-request-credit{font-size:11px;line-height:1.4;font-weight:600;color:var(--ui-text-secondary);text-align:right;overflow-wrap:anywhere}
+.customer-request-state{position:relative;display:flex;align-items:flex-start;flex-shrink:0;max-width:45%}
+.customer-request-state>.customer-request-credit{position:absolute;top:calc(100% + 5px);right:0;white-space:nowrap;font-size:11px;line-height:1.4;font-weight:600;color:var(--ui-text-secondary);text-align:right}
+.customer-request-card:has(.customer-request-credit) .customer-request-owner{padding-right:100px}
 .customer-request-owner{margin:0;line-height:1.5;font-size:12px;overflow-wrap:anywhere;color:var(--ui-text-secondary)}
 .customer-request-owner>span{font-size:11px}
 .customer-request-owner>strong{font-weight:600;color:var(--ui-text-primary)}

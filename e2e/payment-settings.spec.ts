@@ -19,15 +19,23 @@ test('admin saves masked payment keys, tests connection and enables payments', a
   });
   await page.goto('/admin/settings/payments');
   const panel = page.getByRole('region', { name: 'Ödeme Ayarları' });
-  await expect(panel.getByRole('switch', { name: 'Online ödeme', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('switch', { name: 'iyzico online ödeme', exact: true })).toBeVisible();
+  for (const toggle of await page.locator('.payment-provider-heading .integration-toggle').all()) {
+    await expect(toggle).toHaveCSS('border-top-width', '0px');
+    await expect(toggle).toHaveCSS('padding-top', '0px');
+    await expect(toggle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  }
+  await panel.getByText('iyzico online ödeme', { exact: true }).click();
+  await expect(panel.getByRole('switch', { name: 'iyzico online ödeme', exact: true })).not.toBeChecked();
+  await expect(page.getByText('Online ödemeyi açmak için önce bilgileri kaydedip bağlantıyı test edin.', { exact: true })).toBeVisible();
   await panel.getByLabel('API anahtarı', { exact: true }).fill('test-api-key');
   await panel.getByLabel('Gizli anahtar', { exact: true }).fill('test-secret-key');
   await panel.getByRole('button', { name: 'Ödeme Ayarlarını Kaydet' }).click();
   await expect(panel.getByLabel('API anahtarı', { exact: true })).toHaveValue('');
   await expect(panel.getByLabel('Gizli anahtar', { exact: true })).toHaveValue('');
   await panel.getByRole('button', { name: 'Bağlantıyı Test Et' }).click();
-  await expect(panel.getByRole('switch', { name: 'Online ödeme', exact: true })).toBeEnabled();
-  await panel.getByText('Online ödeme', { exact: true }).click();
+  await expect(panel.getByRole('switch', { name: 'iyzico online ödeme', exact: true })).toBeEnabled();
+  await panel.getByText('iyzico online ödeme', { exact: true }).click();
   await panel.getByRole('button', { name: 'Ödeme Ayarlarını Kaydet' }).click();
   await expect(panel.getByRole('button', { name: 'Ödeme Ayarlarını Kaydet' })).toBeDisabled();
   expect(writes[0].secretKey).toBe('test-secret-key');
@@ -37,5 +45,6 @@ test('admin saves masked payment keys, tests connection and enables payments', a
   await panel.screenshot({ path: 'test-results/payment-settings-light.png' });
   await page.getByRole('button', { name: 'Gece Moduna Geç' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  for (const toggle of await page.locator('.payment-provider-heading .integration-toggle').all()) await expect(toggle).toHaveCSS('border-top-width', '0px');
   await panel.screenshot({ path: 'test-results/payment-settings-dark.png' });
 });

@@ -514,7 +514,7 @@ function WorkspaceLayout() {
               className="global-search"
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
-              placeholder="Ara…"
+              placeholder="Ara"
               aria-label="Genel Arama"
             />
             {globalSearch && (

@@ -27,7 +27,7 @@ export function CategoryHubPage({ section = "categories" }: { section?: "categor
           {hasPermission(user, "skills.view") && (
             <NavLink to={workspacePath(user.role, "tags/skills")}>
               <Award size={17} />
-              Yetenekler
+              Personel Yetenekleri
             </NavLink>
           )}
         </nav>

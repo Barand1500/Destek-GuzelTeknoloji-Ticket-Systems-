@@ -375,7 +375,7 @@ export function AnnouncementsModal({
             </div>}
             <label className="announcement-history-search">
               <Search size={16} aria-hidden="true" />
-              <input type="search" aria-label="Geçmiş Duyurularda Ara" placeholder="Duyurularda ara..." maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
+              <input type="search" aria-label="Geçmiş Duyurularda Ara" placeholder="Ara" maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
             </label>
           </>
         )}
@@ -629,7 +629,7 @@ export function AnnouncementsModal({
                     <input
                       type="search"
                       aria-label="Alıcı Ara"
-                      placeholder="Ad, e-posta veya telefon ile ara…"
+                      placeholder="Ara"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />

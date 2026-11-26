@@ -43,10 +43,10 @@ const workScreens: GuideScreen[] = [
       label: "Genel Görünüm",
       alt: "Genel Bakış ekranında talep sayaçları ve durum grafiği",
       pins: [
-        { detail: 1, labelX: 28, labelY: 23, targetX: 36, targetY: 33 },
-        { detail: 2, labelX: 81, labelY: 61, targetX: 88, targetY: 52 },
+        { detail: 1, labelX: 28, labelY: 23, targetX: 38, targetY: 32 },
+        { detail: 2, labelX: 81, labelY: 38, targetX: 88, targetY: 51 },
         { detail: 3, labelX: 61, labelY: 69, targetX: 70, targetY: 76 },
-        { detail: 4, labelX: 86, labelY: 20, targetX: 94, targetY: 15 },
+        { detail: 4, labelX: 81, labelY: 12, targetX: 94, targetY: 16 },
       ],
     }],
     details: [
@@ -68,10 +68,10 @@ const workScreens: GuideScreen[] = [
         alt: "Gelen Kutusu talep listesi, sekmeler ve filtreler",
         pins: [
           { detail: 1, labelX: 18, labelY: 18, targetX: 25, targetY: 25 },
-          { detail: 2, labelX: 36, labelY: 23, targetX: 25, targetY: 32 },
+          { detail: 2, labelX: 36, labelY: 23, targetX: 25, targetY: 33 },
           { detail: 3, labelX: 60, labelY: 39, targetX: 53, targetY: 46 },
-          { detail: 4, labelX: 79, labelY: 38, targetX: 83, targetY: 46 },
-          { detail: 5, labelX: 16, labelY: 52, targetX: 23, targetY: 44 },
+          { detail: 4, labelX: 68, labelY: 39, targetX: 77, targetY: 46 },
+          { detail: 5, labelX: 16, labelY: 52, targetX: 23, targetY: 45 },
         ],
       },
     ],
@@ -96,17 +96,16 @@ const workScreens: GuideScreen[] = [
         pins: [
           { detail: 1, labelX: 20, labelY: 19, targetX: 26, targetY: 27 },
           { detail: 2, labelX: 89, labelY: 19, targetX: 95, targetY: 27 },
-          { detail: 3, labelX: 42, labelY: 53, targetX: 48, targetY: 40 },
-          { detail: 4, labelX: 56, labelY: 31, targetX: 61, targetY: 41 },
-          { detail: 5, labelX: 74, labelY: 31, targetX: 68, targetY: 40 },
+          { detail: 3, labelX: 37, labelY: 51, targetX: 24, targetY: 42 },
         ],
       },
       {
         src: "/guide/musteri-gelen-kutusu.png",
         label: "Müşterinin Görüşmeleri",
-        alt: "Görüşmeleri aç düğmesiyle seçili müşteriye göre filtrelenmiş gelen kutusu",
+        alt: "Müşteri detayındaki Görüşmeler sekmesi ve talep kartları",
         pins: [
-          { detail: 4, labelX: 47, labelY: 20, targetX: 31, targetY: 14 },
+          { detail: 4, labelX: 40, labelY: 23, targetX: 49, targetY: 30 },
+          { detail: 5, labelX: 65, labelY: 24, targetX: 55, targetY: 30 },
         ],
       },
     ],
@@ -114,10 +113,10 @@ const workScreens: GuideScreen[] = [
       { title: "Müşteri Arama", text: "Ad, telefon veya e-posta ile kayıt arayın. Aynı adlı kişileri iletişim bilgilerinden ayırt edin." },
       { title: "Yeni Müşteri", text: "Sağdaki + düğmesiyle ad, telefon, ek iletişim bilgileri, şirket, personel notu ve dosya ekleyin." },
       { title: "Kayıt Listesi", text: "İletişim bilgilerini, hesap durumunu ve kayıt üzerindeki personel notunu inceleyin. Kaydı düzenleyebilir veya dosyalarını görebilirsiniz." },
-      { title: "Görüşmeleri Aç", text: "Seçili müşterinin taleplerini gelen kutusunda filtreli olarak açın." },
-      { title: "Talep Oluştur", text: "Müşteriyi önceden seçilmiş olarak Telefon talebi ekranına geçin." },
+      { title: "Görüşmeler", text: "Müşteri kaydını açıp Görüşmeler sekmesinde talepleri inceleyin. Şirkete bağlı kişiler varsa kişi filtresini kullanın." },
+      { title: "Talep Aç", text: "Müşteri kaydındaki Talep Aç sekmesinden bu müşteri adına yeni talep oluşturun." },
     ],
-    next: "Müşteri bulunduysa Talep Oluştur ile devam edin; yeni arayan için Telefon talebi ekranını kullanın.",
+    next: "Müşteri bulunduysa kaydı açıp Talep Aç sekmesiyle devam edin; yeni arayan için Telefon talebi ekranını kullanın.",
   },
   {
     id: "phone", number: "04", title: "Telefon Talebi", icon: Phone,
@@ -129,8 +128,8 @@ const workScreens: GuideScreen[] = [
         label: "Arayanı Bul",
         alt: "Telefon desteği ekranında mevcut müşteri araması",
         pins: [
-          { detail: 1, labelX: 46, labelY: 20, targetX: 54, targetY: 30 },
-          { detail: 2, labelX: 88, labelY: 20, targetX: 95, targetY: 30 },
+          { detail: 1, labelX: 46, labelY: 20, targetX: 54, targetY: 28 },
+          { detail: 2, labelX: 88, labelY: 20, targetX: 95, targetY: 28 },
         ],
       },
       {
@@ -138,7 +137,7 @@ const workScreens: GuideScreen[] = [
         label: "Mevcut Kişiye Talep",
         alt: "Seçilen mevcut müşteri için telefon talebi formu",
         pins: [
-          { detail: 3, labelX: 30, labelY: 26, targetX: 23, targetY: 37 },
+          { detail: 3, labelX: 30, labelY: 38, targetX: 23, targetY: 49 },
         ],
       },
       {
@@ -146,9 +145,9 @@ const workScreens: GuideScreen[] = [
         label: "Yeni Arayan",
         alt: "Yeni arayan kişi ve talep bilgilerinin birlikte girildiği form",
         pins: [
-          { detail: 4, labelX: 27, labelY: 49, targetX: 36, targetY: 58 },
-          { detail: 5, labelX: 84, labelY: 49, targetX: 76, targetY: 58 },
-          { detail: 6, labelX: 64, labelY: 94, targetX: 54, targetY: 90 },
+          { detail: 4, labelX: 27, labelY: 39, targetX: 36, targetY: 57 },
+          { detail: 5, labelX: 84, labelY: 39, targetX: 76, targetY: 59 },
+          { detail: 6, labelX: 67, labelY: 88, targetX: 54, targetY: 89 },
         ],
       },
     ],
@@ -176,7 +175,7 @@ const workScreens: GuideScreen[] = [
         { detail: 3, labelX: 40, labelY: 28, targetX: 37, targetY: 37 },
         { detail: 4, labelX: 60, labelY: 68, targetX: 50, targetY: 83 },
         { detail: 5, labelX: 80, labelY: 43, targetX: 91, targetY: 54 },
-        { detail: 6, labelX: 79, labelY: 65, targetX: 89, targetY: 73 },
+        { detail: 6, labelX: 79, labelY: 61, targetX: 88, targetY: 67 },
       ],
     }],
     details: [

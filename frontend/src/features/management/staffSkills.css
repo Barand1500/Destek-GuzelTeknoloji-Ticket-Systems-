@@ -12,7 +12,7 @@
   gap: 8px;
 }
 .staff-skills-heading > svg {
-  color: #c38d26;
+  color: var(--ui-accent);
 }
 .staff-skills-heading small {
   border-radius: 20px;

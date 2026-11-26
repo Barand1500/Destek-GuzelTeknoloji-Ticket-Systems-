@@ -1,4 +1,22 @@
 /* Shared palette, loaded after component and responsive styles. */
+html { --credit-color: #b45309; }
+html[data-theme="dark"] { --credit-color: #fb923c; }
+:root .app-shell .field-warning-icon {
+  color: var(--credit-color);
+  background: color-mix(in srgb, var(--credit-color) 16%, transparent);
+}
+html[data-theme] :is(
+  .credit-log-table .credit-log-amount,
+  .credit-value,
+  .agreement-package-credits strong,
+  .agreement-card-body > p strong,
+  .customer-credit-balance > strong,
+  .agreement-header-credit > strong,
+  .customer-credit-cell > strong,
+  .company-credit-overview strong
+) { color: var(--credit-color); }
+html[data-theme] :is(.customer-credit-balance, .agreement-header-credit > span) { color: var(--ui-text-secondary); }
+html[data-theme] .credit-log-table .credit-log-amount small { color: var(--muted); }
 :root .app-shell .notification-table :is(.button.secondary, .notification-conversation-link) {
   background: var(--brand-primary-light);
   border-color: var(--ui-border);
@@ -258,3 +276,98 @@ html[data-theme] .credit-sales-page .credit-fields > label:not(.credit-check):no
 html[data-theme] .credit-sales-page label:has(> .field-label) > :is(input, textarea, select),
 html[data-theme] .credit-sales-page .styled-dropdown:has(> .styled-dropdown-label) > .styled-dropdown-trigger,
 html[data-theme] .credit-sales-page .credit-fields > label > :is(input, textarea) { background: transparent; }
+
+/* One transparent control surface across forms, filters and dropdowns.
+   Keep menu surfaces opaque so options remain readable over page content. */
+:root {
+  --control-radius: 8px;
+  --field-surface: var(--bg);
+}
+:is(.management-panel, .integration-card, .credit-sales-card, .report-panel,
+    .agreement-card, .credit-checkout, .confirm-modal, .modal,
+    .styled-dropdown-menu, .searchable-dropdown-menu) {
+  --field-surface: var(--surface);
+}
+html[data-theme="dark"] :is(.management-panel, .integration-card, .report-panel,
+    .credit-sales-card, .credit-checkout, .confirm-modal) {
+  --field-surface: #1c262d;
+}
+/* Background is intentionally authoritative: legacy page styles must not
+   reintroduce filled controls or filled wrappers in either theme. */
+:root :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]),
+    textarea, select, label:has(> .field-label), .styled-dropdown,
+    .styled-dropdown-trigger, .password-field, .email-field,
+    .files-search, .notification-search, .relation-list-search,
+    .project-guide-search, .search-box, .inbox-search, .global-search-wrap,
+    .announcement-history-search, .announcement-person-search,
+    .date-range-control, .agreement-calendar-control) {
+  background: transparent !important;
+}
+:root :is(label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label),
+    .styled-dropdown-trigger, .files-search, .notification-search,
+    .relation-list-search, .project-guide-search, .inbox-search) {
+  border-color: var(--ui-border);
+  border-radius: var(--control-radius);
+}
+:root :is(.field-label, .styled-dropdown-label) {
+  background: var(--field-surface) !important;
+  color: var(--ui-text-secondary);
+}
+:root :is(label:has(> .field-label), .styled-dropdown:has(> .styled-dropdown-label)):focus-within {
+  border-color: var(--ui-accent);
+}
+:root :is(.styled-dropdown-menu, .searchable-dropdown-menu) {
+  background: var(--surface);
+}
+.credit-orders-filters.currency-search-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+.currency-search-toolbar .credit-orders-search {
+  flex: 0 1 320px;
+  width: 320px;
+  min-width: 0;
+  max-width: 100%;
+}
+.report-credit-search:has(> .field-label) > input {
+  height: 29px;
+}
+.reports-page, .currency-search-toolbar { --field-surface: #f6f8fa; }
+html[data-theme="dark"] :is(.reports-page, .currency-search-toolbar) { --field-surface: #151c21; }
+
+/* Toggle tracks keep their own state colors; their field wrapper is clear. */
+:root .app-shell .integration-toggle,
+html[data-theme] .integration-toggle {
+  background: transparent;
+  border-color: var(--ui-border);
+}
+:root .form-required-fields { border-color: var(--ui-border); }
+.currency-list-card { padding-block: 0; overflow: hidden; }
+
+.filters > .management-search { flex: 1 1 240px; min-width: 180px; margin-bottom: 0; }
+.ticket-panel { --field-surface: #fff; }
+html[data-theme="dark"] .ticket-panel { --field-surface: #1c262d; }
+:root[data-theme] .app-shell .filters .inbox-delete { background: transparent !important; border-color: var(--ui-border) !important; border-radius: var(--control-radius); }
+:root .app-shell .inbox-delete .notification-delete-trigger {
+  background: transparent;
+  border-color: var(--ui-border);
+  color: var(--ui-text-secondary);
+  border-radius: var(--control-radius);
+}
+:root .app-shell .inbox-delete .notification-delete-menu { background: var(--surface); border-color: var(--ui-border); color: var(--text); }
+.activity-history-page .activity-history-table { width: 100%; min-width: 0; table-layout: fixed; }
+.activity-history-page .activity-history-table :is(th, td) { white-space: normal; overflow-wrap: anywhere; }
+.activity-history-page .activity-history-table :is(th, td):nth-child(1) { width: 17%; }
+.activity-history-page .activity-history-table :is(th, td):nth-child(2) { width: 19%; }
+.activity-history-page .activity-history-table :is(th, td):nth-child(3) { width: 20%; }
+.activity-history-page .activity-history-table td > span { white-space: normal; overflow-wrap: anywhere; }
+.activity-history-page .activity-history-table td > .button { display: inline-flex; max-width: 100%; white-space: normal; margin-top: 8px; }
+:root .reports-page :is(.report-credit-amount, .report-credit-total, .report-credit-count) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ui-text-secondary);
+}
+:root .reports-page .report-credit-amount { color: var(--credit-color); }

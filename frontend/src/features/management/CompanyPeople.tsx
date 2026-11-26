@@ -45,7 +45,7 @@ export function CompanyPeoplePanel({ customer, onPendingChange }: { customer: Pe
   if (filesPerson) return <CompanyPersonFiles person={filesPerson} canDelete={canDelete} onBack={() => setFilesPerson(null)} onPendingChange={onPendingChange} />;
   return <section className="company-people-panel">
     <div className="company-people-toolbar"><h3>Kişiler <span className="muted">({data.data?.children.length ?? 0})</span></h3><div>
-      <label className="relation-list-search"><Search size={15} /><input aria-label="Şirket kişilerinde ara" placeholder="Ad, e-posta veya telefon ara…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
+      <label className="relation-list-search"><Search size={15} /><input aria-label="Şirket kişilerinde ara" placeholder="Ara" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
       {editable && !creating && !editing && <button type="button" className="button primary" disabled={pending} onClick={() => { save.reset(); setFiles([]); setExisting(!canCreate); setCreating(true); }}><Plus size={15} /> Kişi Ekle</button>}
     </div></div>
     {error && <p className="error" role="alert">{errorText(error)}</p>}

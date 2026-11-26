@@ -32,8 +32,9 @@ export function CalendarPage() {
     month = cursor.getMonth();
   const first = new Date(year, month, 1),
     start = (first.getDay() + 6) % 7;
+  const weeks = Math.ceil((start + new Date(year, month + 1, 0).getDate()) / 7);
   const cells = Array.from(
-    { length: 42 },
+    { length: weeks * 7 },
     (_, i) => new Date(year, month, i - start + 1),
   );
   const today = new Date();
@@ -93,10 +94,11 @@ export function CalendarPage() {
             <span key={day}>{day}</span>
           ))}
         </div>
-        <div className="calendar-grid">
+        <div className="calendar-grid" style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}>
           {cells.map((date) => {
             const valid = date.getMonth() === month;
             const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            if (!valid) return <div key={key} className="calendar-cell calendar-cell-empty" aria-hidden="true" />;
             const dailyEvents = events.get(key) ?? [];
             return (
               <div
@@ -106,7 +108,7 @@ export function CalendarPage() {
                 tabIndex={0}
                 onClick={() => setSelectedDay(date)}
                 onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedDay(date); } }}
-                className={`calendar-cell${!valid ? " muted" : ""}${date.toDateString() === today.toDateString() ? " today" : ""}`}
+                className={`calendar-cell${date.toDateString() === today.toDateString() ? " today" : ""}`}
               >
                 <span className="calendar-day-number">{date.getDate()}</span>
                 {dailyEvents.slice(0, 2).map(event => (

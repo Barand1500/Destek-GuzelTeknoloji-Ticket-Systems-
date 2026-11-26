@@ -17,6 +17,8 @@ async function ready() {
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => document.fonts.ready);
   await page.locator('main').waitFor();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.waitForFunction(() => !/yükleniyor/i.test(document.querySelector('main')?.textContent || ''));
 }
 async function shot(name) {
   await ready();
@@ -30,36 +32,41 @@ async function visit(route, name) {
 }
 try {
   await page.goto('/login');
-  await page.getByLabel('E-posta adresi').fill(process.env.GUIDE_ADMIN_EMAIL || process.env.SEED_ADMIN_EMAIL);
-  await page.getByLabel('Şifre', { exact: true }).fill(process.env.GUIDE_ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Giriş yap', exact: true }).click();
+  await page.locator('.auth-form input[name="email"]').fill(process.env.GUIDE_ADMIN_EMAIL || process.env.SEED_ADMIN_EMAIL);
+  await page.locator('.auth-form input[name="password"]').fill(process.env.GUIDE_ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD);
+  await page.locator('.auth-form .button.primary').click();
   await page.waitForURL('**/admin/dashboard');
-  await shot('genel-bakis');
-  await page.goto('/admin/conversations');
-  await page.locator('a[href^="/admin/conversations/"]').first().waitFor();
-  await shot('gelen-kutusu');
-  const conversationURL = await page.locator('a[href^="/admin/conversations/"]').first().getAttribute('href');
-  await visit('/admin/customers', 'musteriler');
-  await shot('musteriler-liste');
-  const customerChoice = page.getByRole('link', { name: 'Görüşmeleri aç', exact: true }).first();
-  await customerChoice.click();
-  await shot('musteri-gelen-kutusu');
-  await page.goto('/admin/phone-support');
-  await ready();
-  await page.locator('.phone-support-search input').fill('m');
-  await page.locator('.customer-choice').first().waitFor();
-  await shot('telefon-arama');
-  await page.locator('.customer-choice').first().click();
-  await shot('telefon-mevcut-kisi');
-  await page.goto('/admin/phone-support');
-  await ready();
-  await page.getByRole('button', { name: 'Yeni kişi ekle', exact: true }).click();
-  await shot('telefon-yeni-kisi');
-  if (!conversationURL) throw new Error('A conversation is required to capture its detail screen.');
-  await visit(conversationURL, 'konusma-detayi');
-  if (process.argv.includes('--publish')) {
-    for (const name of captured) {
-      await copyFile(path.join(output, `${name}.png`), path.resolve('frontend/public/guide', `${name}.png`));
+  if (!process.argv.includes('--verify-only')) {
+    await shot('genel-bakis');
+    await page.goto('/admin/conversations');
+    await page.locator('a[href^="/admin/conversations/"]').first().waitFor();
+    await shot('gelen-kutusu');
+    const openConversation = page.locator('tr:has(.status-OPEN) a[href^="/admin/conversations/"]').first();
+    const conversationURL = await (await openConversation.count() ? openConversation : page.locator('a[href^="/admin/conversations/"]').first()).getAttribute('href');
+    await visit('/admin/customers', 'musteriler');
+    await shot('musteriler-liste');
+    const customerChoice = page.locator('.management-table tbody tr').first();
+    await customerChoice.click();
+    await page.getByRole('button', { name: 'Görüşmeler', exact: true }).click();
+    await page.locator('.customer-request-card').first().waitFor();
+    await shot('musteri-gelen-kutusu');
+    await page.goto('/admin/phone-support');
+    await ready();
+    await page.locator('.phone-support-search input').fill('m');
+    await page.locator('.customer-choice').first().waitFor();
+    await shot('telefon-arama');
+    await page.locator('.customer-choice').first().click();
+    await shot('telefon-mevcut-kisi');
+    await page.goto('/admin/phone-support');
+    await ready();
+    await page.getByRole('button', { name: 'Yeni Kişi Ekle', exact: true }).click();
+    await shot('telefon-yeni-kisi');
+    if (!conversationURL) throw new Error('A conversation is required to capture its detail screen.');
+    await visit(conversationURL, 'konusma-detayi');
+    if (process.argv.includes('--publish')) {
+      for (const name of captured) {
+        await copyFile(path.join(output, `${name}.png`), path.resolve('frontend/public/guide', `${name}.png`));
+      }
     }
   }
   await page.goto('/admin/guide/system');
@@ -86,6 +93,13 @@ try {
   if (process.argv.includes('--publish')) {
     console.log('Guide images updated. Review the numbered annotations in Guide.tsx.');
   }
+} catch (error) {
+  let message = error instanceof Error ? error.message : String(error);
+  for (const key of ['GUIDE_ADMIN_EMAIL', 'SEED_ADMIN_EMAIL', 'GUIDE_ADMIN_PASSWORD', 'SEED_ADMIN_PASSWORD']) {
+    if (process.env[key]) message = message.replaceAll(process.env[key], '[redacted]');
+  }
+  console.error(message);
+  process.exitCode = 1;
 } finally {
   await context.close();
   await browser.close();

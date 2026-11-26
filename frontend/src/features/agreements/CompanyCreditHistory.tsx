@@ -41,7 +41,7 @@ export function CompanyCreditHistory({ customerId, onBack }: { customerId: strin
     <div className="company-credit-filters">
       <div className="company-credit-overview" aria-live="polite">
         <h3>{view === 'people' ? 'Kişilere göre kullanım' : 'Son hareketler'}</h3>
-        {summary && <p><strong>{number(summary.net)} kredi kullanıldı</strong><span>·</span>{number(summary.tickets)} talep</p>}
+        {summary && <p><strong>{number(summary.net)}</strong> kredi kullanıldı<span>·</span>{number(summary.tickets)} talep</p>}
       </div>
       <DropdownSelect ariaLabel="Kredi kişisi" label="Kişi" value={personId} onChange={value => update(setPerson, value)} options={[{ value: '', label: 'Tüm kişiler' }, ...(query.data?.people ?? []).map(person => ({ value: person.id, label: person.name }))]} />
       <DateRangeField label="Tarih aralığı" from={startsOn} to={endsOn} onChange={range => { setStart(range.from); setEnd(range.to); setPage(1); }} />

@@ -1,3 +1,4 @@
+import { responseColor } from '../../utils/semantic-colors';
 import {displayEmail} from '../../utils/email';
 import { TurnstileSettingsPanel } from './TurnstileSettingsPanel';
 import { FormSettingsPanel } from './FormSettingsPanel';
@@ -91,7 +92,7 @@ export function NotificationsPage() {
       </Heading>
       <section className="management-panel">
         <div className="notification-toolbar">
-          <label className="notification-search"><Search size={16} aria-hidden="true" /><input aria-label="Bildirimlerde Ara" placeholder="Bildirimlerde ara…" value={list.search} onChange={(e) => list.setSearch(e.target.value)} /></label>
+          <label className="notification-search"><Search size={16} aria-hidden="true" /><input aria-label="Bildirimlerde Ara" placeholder="Ara" value={list.search} onChange={(e) => list.setSearch(e.target.value)} /></label>
           <div className="notification-limit"><span>Kayıt sayısı</span><DropdownSelect value={String(limit)} onChange={(value) => { setLimit(Number(value)); list.setPage(1); }} ariaLabel="Kayıt Sayısı" options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))} /></div>
           <label className="notification-toggle"><span>Yalnızca okunmamış</span><input type="checkbox" checked={unread} onChange={(e) => { setUnread(e.target.checked); list.setPage(1); }} /></label>
           <button className="button secondary" disabled={read.isPending || !list.data?.data.length} onClick={() => read.mutate(undefined)}>Tümünü Okundu Olarak İşaretle</button>
@@ -289,9 +290,9 @@ export function ResponseTimeRulesPage() {
   const fast = [settings.data?.responseFastFromMinutes ?? 0, settings.data?.responseFastToMinutes ?? 15];
   const normal = [settings.data?.responseNormalFromMinutes ?? 16, settings.data?.responseNormalToMinutes ?? 60];
   const late = [settings.data?.responseLateFromMinutes ?? 61, settings.data?.responseLateToMinutes ?? 10080];
-  const fastColor = settings.data?.responseFastColor ?? "#16715d";
-  const normalColor = settings.data?.responseNormalColor ?? "#a86606";
-  const lateColor = settings.data?.responseLateColor ?? "#c2413c";
+  const fastColor = responseColor('fast', settings.data?.responseFastColor);
+  const normalColor = responseColor('normal', settings.data?.responseNormalColor);
+  const lateColor = responseColor('late', settings.data?.responseLateColor);
   return <main className={`page response-rules-page tab-${tab}`}><Heading title={tab === "response" ? "Yanıt Süresi Kuralları" : "Personel Süresi"} description={tab === "response" ? "Talebin oluşturulması ile ilk personel yanıtı arasındaki süreyi sınıflandırın." : "Personelin işlem yapmadığında ne zaman boşta görüneceğini belirleyin."} />
     <div className="integration-subtabs response-settings-tabs" role="tablist" aria-label="Süre Ayarları"><button type="button" role="tab" aria-selected={tab === "response"} className={tab === "response" ? "active" : ""} onClick={() => setTab("response")}>Yanıt Süresi</button><button type="button" role="tab" aria-selected={tab === "presence"} className={tab === "presence" ? "active" : ""} onClick={() => setTab("presence")}>Personel Süresi</button></div>
     <ListState loading={tab === "response" ? settings.isPending : idleSettings.isPending} error={tab === "response" ? settings.error : idleSettings.error} empty={false} />

@@ -1,3 +1,4 @@
+import { optionColor } from '../../utils/semantic-colors';
 import { SortableTableHead } from "../../components/TableSorting";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -326,10 +327,7 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
   const isStatus = kind === "status";
   const basePath = isStatus ? "/status-options" : "/priority-options";
   const title = isStatus ? "Durumlar" : "Öncelikler";
-  const defaultColors: Record<string, string> = isStatus
-    ? { OPEN: "#2f8f73", PENDING: "#d49a2a", IN_PROGRESS: "#3b82c4", RESOLVED: "#398571", CLOSED: "#78848a" }
-    : { LOW: "#3b82c4", NORMAL: "#78848a", HIGH: "#dd7a2d", URGENT: "#c94b4b" };
-  const displayColor = (item: ManagedOption) => item.color === (isStatus ? "#398571" : "#64748b") ? (defaultColors[item.code] ?? item.color) : item.color;
+  const displayColor = (item: ManagedOption) => optionColor(kind, item.code, item.color);
   const list = useList<ManagedOption>(basePath);
   const [editing, setEditing] = useState<ManagedOption | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedOption | null>(null);
@@ -349,7 +347,7 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
     {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table catalog-table"><SortableTableHead sorting={list} columns={[{label:isStatus?'Durum':'Öncelik',field:'name'},{label:'Kod',field:'code'},...((canUpdate||canDelete)?[{label:'İşlemler'}]:[])]} /><tbody>{list.data.data.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
       <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
-    {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen Ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem Kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={editing?.color ?? (isStatus ? "#398571" : "#64748b")} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
+    {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen Ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem Kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={optionColor(kind, editing?.code ?? "", editing?.color)} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
     {deleteTarget && <div className="confirm-backdrop" role="presentation"><form className="confirm-modal" role="dialog" aria-modal="true" aria-label={`${title.slice(0, -1)} silme onayı`} onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }); }}><button className="confirm-close" type="button" onClick={() => setDeleteTarget(null)} aria-label="Kapat">×</button><h2>{title.slice(0, -1)} Sil</h2><p><strong>{deleteTarget.name}</strong> kaydını silmek istediğinize emin misiniz?</p><div className="confirm-actions"><button className="button danger" type="submit" autoFocus disabled={remove.isPending}>{remove.isPending ? "Siliniyor…" : "Sil"}</button></div></form></div>}
   </div>;
 }

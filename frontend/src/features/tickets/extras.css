@@ -15,7 +15,7 @@
 .ticket-properties .customer-ticket-property{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;align-self:stretch}
 .ticket-properties .customer-ticket-property>span:first-child{color:var(--muted);font-size:12px;font-weight:500}
 
-.ticket-credit-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;box-sizing:border-box;padding:5px 9px;border:1px solid #d9a547;border-radius:6px;background:#fff2d9;color:#775005;font-size:11px;line-height:1.35}.ticket-credit-pill strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-html[data-theme="dark"] .ticket-credit-pill{background:#45351c;border-color:#8d6b30;color:#ffdb8f}
+.ticket-credit-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;box-sizing:border-box;padding:0;border:0;background:transparent;color:var(--ui-text-secondary);font-size:11px;line-height:1.35}.ticket-credit-pill strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--credit-color)}
+html[data-theme="dark"] .ticket-credit-pill{background:transparent;color:var(--ui-text-secondary)}
 
 .inbox-table-scroll .inbox-credit-cell{width:1%;white-space:nowrap}.inbox-credit-cell .ticket-credit-pill{text-decoration:none;white-space:nowrap}.inbox-credit-cell .ticket-credit-pill:hover{filter:brightness(1.1)}

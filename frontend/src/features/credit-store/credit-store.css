@@ -666,7 +666,7 @@ html[data-theme="dark"] .credit-admin-plans .credit-plan-delete:hover:not(:disab
 .akbank-card-form .credit-help { display:flex; align-items:flex-start; gap:8px; margin:20px 0; }
 .akbank-card-form .credit-help svg { flex:0 0 auto; margin-top:2px; }
 .payment-reviews { margin-top:24px; }
-.payment-provider-heading > .integration-toggle { width:auto; flex:0 0 auto; padding:0; border:0; background:transparent; }
+.payment-provider-heading .integration-toggle { width:auto; min-height:0; flex:0 0 auto; padding:0; border:0; background:transparent; }
 .payment-settings-fields .payment-callback-url { grid-column:auto; }
 .payment-provider-heading { gap:16px; }
 @media(max-width:640px) { .payment-settings-fields { grid-template-columns:minmax(0,1fr); } }

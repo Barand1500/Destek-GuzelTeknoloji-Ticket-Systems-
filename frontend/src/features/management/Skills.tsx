@@ -1,7 +1,7 @@
 import { SortableTableHead, sortTableRows, useTableSort } from "../../components/TableSorting";
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Award, Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { api, errorText } from "../../services/api";
 import { DropdownSelect } from "../../components/DropdownSelect";
 import { DeleteModal } from "../../components/DeleteModal";
@@ -139,7 +139,6 @@ export function SkillsPage() {
         <section className="management-panel">
           <Search
             label={`${labels[kind]} içinde ara`}
-            placeholder="Ad ile ara..."
             value={search}
             onChange={value => { setSearch(value); setPage(1); }}
             limit={limit}
@@ -209,7 +208,6 @@ export function SkillsPage() {
         {(hasPermission(user, "skills.create") || editing) && (
           <section className="management-panel">
             <h2>
-              <Award size={18} />{" "}
               {editing
                 ? "Tanımı Düzenle"
                 : kind === "skill"

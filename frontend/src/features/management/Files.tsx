@@ -313,7 +313,7 @@ export function FilesPage() {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Dosya ara..."
+              placeholder="Ara"
             />
           </label>
           <button

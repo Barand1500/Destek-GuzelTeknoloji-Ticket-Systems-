@@ -20,6 +20,7 @@ for (const hasPeople of [false, true]) {
       await route.fulfill({ json: { success: true, data } });
     });
     await page.goto('/customer/agreements?view=history');
+    await expect(page.locator('.agreement-header-credit > strong').first()).toHaveCSS('color', 'rgb(180, 83, 9)');
     if (hasPeople) {
       await expect(page.getByRole('button', { name: 'Kredi kişisi', exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'Kişilere göre kullanım', exact: true }).click();

@@ -71,6 +71,8 @@ test('credit history switches to person totals and drills down with filters inta
   await page.goto(`/admin/customers/${companyId}?section=history`);
   await expect(page.getByRole('button', { name: 'Son hareketler', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('link', { name: '#TK-00825' })).toBeVisible();
+  await expect(page.locator('.credit-log-amount').first()).toHaveCSS('color', 'rgb(251, 146, 60)');
+  await expect(page.locator('.company-credit-overview strong')).toHaveCSS('color', 'rgb(251, 146, 60)');
   const filterBoxes = await page.locator('.company-credit-filters > *').evaluateAll(elements => elements.map(element => {
     const box = element.getBoundingClientRect(); return { top: box.top, height: box.height, right: box.right };
   }));
@@ -158,12 +160,36 @@ test('completed request cards show actual credit charges including zero', async 
     { id: 'closed-credit', number: 1, subject: 'Paid request', status: 'CLOSED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: { credits: 1200, agreementId: companyId } },
     { id: 'free-credit', number: 2, subject: 'Free request', status: 'RESOLVED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: { credits: 0, agreementId: null } },
     { id: 'unknown-credit', number: 3, subject: 'Historical request', status: 'CLOSED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: null },
+    { id: 'open-credit', number: 4, subject: 'Open request', status: 'OPEN', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: null },
   ], pagination: { page: 1, limit: 15, total: 3, totalPages: 1 } } }));
   await page.goto(`/admin/customers/${companyId}?section=conversations`);
   const cards = page.locator('.customer-request-card');
   await expect(cards.filter({ hasText: 'Paid request' }).locator('.customer-request-credit')).toContainText('1.200 kredi');
   await expect(cards.filter({ hasText: 'Free request' }).locator('.customer-request-credit')).toContainText('0 kredi');
   await expect(cards.filter({ hasText: 'Historical request' }).locator('.customer-request-credit')).toContainText('Kesinti kaydı yok');
+  const paidCard = cards.filter({ hasText: 'Paid request' }), openCard = cards.filter({ hasText: 'Open request' });
+  const ownerOffset = (card: typeof paidCard) => card.evaluate(element => element.querySelector('.customer-request-owner')!.getBoundingClientRect().top - element.getBoundingClientRect().top);
+  expect(Math.abs(await ownerOffset(paidCard) - await ownerOffset(openCard))).toBeLessThan(2);
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+    const orange = theme === 'dark' ? 'rgb(251, 146, 60)' : 'rgb(180, 83, 9)';
+    await expect(paidCard.locator('.customer-request-credit .credit-value')).toHaveCSS('color', orange);
+    await expect(paidCard.locator('.customer-request-credit')).not.toHaveCSS('color', orange);
+  }
+  await page.locator('.customer-request-cards').screenshot({ path: 'output/customer-credit-orange.png' });
+});
+
+test('available credit uses orange for the number and normal color for its label', async ({ page }) => {
+  await setup(page);
+  await page.goto(`/admin/customers/${companyId}?section=agreements`);
+  const balance = page.locator('.customer-credit-balance');
+  await expect(balance).toBeVisible();
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+    const orange = theme === 'dark' ? 'rgb(251, 146, 60)' : 'rgb(180, 83, 9)';
+    await expect(balance.locator('strong')).toHaveCSS('color', orange);
+    await expect(balance).not.toHaveCSS('color', orange);
+  }
 });
 
 test('request tab creates the conversation for the selected company person', async ({ page }) => {

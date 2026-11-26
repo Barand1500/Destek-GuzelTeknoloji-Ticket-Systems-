@@ -54,7 +54,7 @@ export function PaymentSettings({
   return <section className="credit-sales-card" aria-label="Ödeme Ayarları">
     <div className="credit-sales-card-heading payment-provider-heading"><h2>iyzico</h2>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {draft && <label className="integration-toggle"><span>Online ödeme</span><input type="checkbox" role="switch" checked={draft.enabled} disabled={!editable || pending} onChange={e => handleToggle(e.target.checked)} /><i aria-hidden="true" /></label>}
+        {draft && <label className="integration-toggle"><span>iyzico online ödeme</span><input type="checkbox" role="switch" checked={draft.enabled} disabled={!editable || pending} onChange={e => handleToggle(e.target.checked)} /><i aria-hidden="true" /></label>}
         {editable && onClose && <button className="standard-modal-close" type="button" aria-label="iyzico kartını kapat" title="Kartı kaldır" disabled={pending} onClick={handleClose}><X size={18} /></button>}
       </div>
     </div>
