@@ -39,6 +39,7 @@ export const listSchema = paginationSchema.extend({
   tagId: idSchema.optional(),
   assignedAgentId: idSchema.optional(),
   customerId: idSchema.optional(),
+  includeChildren: z.enum(['true', 'false']).optional(),
   channel: z.enum(['TICKET','EMAIL','SMS','WHATSAPP','FORM','LIVE_CHAT']).optional(),
   formSourceId: z.uuid().optional(),
   category: z.string().trim().min(1).max(40).regex(/^[A-Z0-9_]+$/).optional(),

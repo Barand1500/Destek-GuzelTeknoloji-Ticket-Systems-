@@ -23,6 +23,15 @@ test('credit history paginates beyond 100 and enforces customer scope', async ()
       for (const row of result.data) { assert.ok(!seen.has(row.id)); seen.add(row.id); }
     }
     assert.equal(seen.size, 125);
+    const companyReport = await listCreditHistory(actor, parent.id, { view: 'people', personId: child.id });
+    assert.ok('summary' in companyReport);
+    assert.equal(companyReport.summary.net, 125);
+    assert.equal(companyReport.data.length, 1);
+    assert.equal(companyReport.data[0].id, child.id);
+    const outsideFilter = await listCreditHistory(actor, parent.id, { view: 'people', personId: randomUUID() });
+    assert.equal(outsideFilter.data.length, 0);
+    const childReport = await listCreditHistory({ ...actor, id: child.id }, child.id, { view: 'people' });
+    assert.equal('summary' in childReport, false, 'A person without children keeps the simple history');
     assert.equal((await listCreditHistory(actor, parent.id, { page: 100 })).pagination.page, 7);
     await assert.rejects(listCreditHistory({ ...actor, id: child.id }, parent.id, {}), /erişim izniniz yok/);
   } finally {

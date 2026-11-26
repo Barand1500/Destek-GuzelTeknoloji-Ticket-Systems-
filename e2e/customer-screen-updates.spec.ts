@@ -11,7 +11,7 @@ async function setup(page: Page) {
   };
   const child = { id: childId, name: 'Baran Kişi', company: 'Güzel Teknoloji', phone: '5359998877', email: 'baran@example.test', role: 'CUSTOMER', isActive: true, parentCustomerId: companyId };
   const conversation = { id: 'conversation-1', number: 825, subject: 'deneme', status: 'OPEN', firstMessage: 'deneme', createdAt: '2026-11-18T06:18:00Z', updatedAt: '2026-11-18T07:18:00Z', assignees: [] };
-  const state = { conversationQueries: [] as string[], createdBody: null as unknown, personUploads: [] as string[] };
+  const state = { conversationQueries: [] as string[], conversationAllQueries: [] as boolean[], createdBody: null as unknown, personUploads: [] as string[] };
 
   await page.route('**/socket.io/**', route => route.abort());
   await page.route('**/api/v1/**', async route => {
@@ -35,7 +35,8 @@ async function setup(page: Page) {
     }
     if (path === '/conversations' && method === 'GET') {
       state.conversationQueries.push(url.searchParams.get('customerId') ?? '');
-      return send([conversation], { total: 1, page: 1, totalPages: 1, limit: 15 });
+      state.conversationAllQueries.push(url.searchParams.get('includeChildren') === 'true');
+      return send([{ ...conversation, customerId: childId, customer: child }], { total: 1, page: 1, totalPages: 1, limit: 15 });
     }
     if (path === '/conversations' && method === 'POST') {
       state.createdBody = route.request().postDataJSON();
@@ -118,11 +119,19 @@ test('credit history switches to person totals and drills down with filters inta
 test('conversations tab filters by company person and keeps filters right aligned', async ({ page }) => {
   const state = await setup(page);
   await page.goto(`/admin/customers/${companyId}?section=conversations`);
-  const personFilter = page.getByRole('button', { name: 'Görüşme kişisi', exact: true });
-  await expect(personFilter).toContainText('Güzel Teknoloji');
+  const personFilter = page.getByRole('textbox', { name: 'Kişi', exact: true });
+  await expect(personFilter).toHaveValue('Tümü');
+  await expect.poll(() => state.conversationAllQueries.at(-1)).toBe(true);
+  expect(state.conversationQueries.at(-1)).toBe(companyId);
   await personFilter.click();
   await page.getByRole('option', { name: 'Baran Kişi', exact: true }).click();
   await expect.poll(() => state.conversationQueries.at(-1)).toBe(childId);
+  await expect(page.locator('.customer-request-owner')).toHaveCount(0);
+  await personFilter.click();
+  await page.getByRole('option', { name: 'Tümü', exact: true }).click();
+  await expect(personFilter).toHaveValue('Tümü');
+  await expect(page.locator('.customer-request-owner')).toContainText('Talep sahibi:');
+  await expect(page.locator('.customer-request-owner strong')).toHaveText('Baran Kişi');
   await expect(page.getByText('deneme', { exact: true }).first()).toBeVisible();
   const filters = page.locator('.customer-requests-filters');
   await expect(filters.getByText('Durum', { exact: true })).toBeVisible();
@@ -141,6 +150,20 @@ test('conversations tab filters by company person and keeps filters right aligne
   await page.setViewportSize({ width: 700, height: 900 });
   await expect(personFilter).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('completed request cards show actual credit charges including zero', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/conversations?**', route => route.fulfill({ json: { success: true, data: [
+    { id: 'closed-credit', number: 1, subject: 'Paid request', status: 'CLOSED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: { credits: 1200, agreementId: companyId } },
+    { id: 'free-credit', number: 2, subject: 'Free request', status: 'RESOLVED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: { credits: 0, agreementId: null } },
+    { id: 'unknown-credit', number: 3, subject: 'Historical request', status: 'CLOSED', customer: { name: 'Baran' }, customerId: childId, createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T10:00:00Z', assignees: [], creditCharge: null },
+  ], pagination: { page: 1, limit: 15, total: 3, totalPages: 1 } } }));
+  await page.goto(`/admin/customers/${companyId}?section=conversations`);
+  const cards = page.locator('.customer-request-card');
+  await expect(cards.filter({ hasText: 'Paid request' }).locator('.customer-request-credit')).toContainText('1.200 kredi');
+  await expect(cards.filter({ hasText: 'Free request' }).locator('.customer-request-credit')).toContainText('0 kredi');
+  await expect(cards.filter({ hasText: 'Historical request' }).locator('.customer-request-credit')).toContainText('Kesinti kaydı yok');
 });
 
 test('request tab creates the conversation for the selected company person', async ({ page }) => {

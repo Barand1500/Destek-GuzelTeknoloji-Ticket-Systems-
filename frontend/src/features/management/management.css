@@ -5130,6 +5130,11 @@ html[data-theme="dark"] :is(.customer-existing-requests-scroll,.phone-support-re
 .customer-request-card:focus-visible{outline:2px solid var(--ui-tab-indicator);outline-offset:1px}
 .customer-request-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .customer-request-card-heading>strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere;min-width:0;color:var(--ui-text-navigation)}
+.customer-request-state{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;max-width:45%}
+.customer-request-state>.customer-request-credit{font-size:11px;line-height:1.4;font-weight:600;color:var(--ui-text-secondary);text-align:right;overflow-wrap:anywhere}
+.customer-request-owner{margin:0;line-height:1.5;font-size:12px;overflow-wrap:anywhere;color:var(--ui-text-secondary)}
+.customer-request-owner>span{font-size:11px}
+.customer-request-owner>strong{font-weight:600;color:var(--ui-text-primary)}
 .customer-request-status{flex-shrink:0;padding:4px 8px;border-radius:6px;background:#edf1f3;color:#435968;font-size:11px}
 .customer-request-status[data-status=OPEN]{background:#eaf3fe;color:#2767a4}
 .customer-request-status[data-status=RESOLVED]{background:#e4f5eb;color:#216844}

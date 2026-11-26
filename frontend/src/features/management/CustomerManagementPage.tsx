@@ -23,7 +23,7 @@ type Section = { id: string; label: string; icon: typeof Building2; permission?:
 const sections: Section[] = [
   { id: 'details', label: 'Müşteri Bilgileri', icon: Building2 },
   { id: 'agreements', label: 'Anlaşmalar ve Krediler', icon: Handshake },
-  { id: 'people', label: 'Şirkete Bağlı Kişiler', icon: Users },
+  { id: 'people', label: 'Kişiler', icon: Users },
   { id: 'history', label: 'Kredi Hareketleri', icon: History },
   { id: 'conversations', label: 'Görüşmeler', icon: MessagesSquare, permission: 'conversations.view' },
   { id: 'request', label: 'Talep Aç', icon: Plus, permission: 'conversations.create' },

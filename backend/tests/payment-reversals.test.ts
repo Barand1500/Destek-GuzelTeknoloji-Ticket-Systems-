@@ -50,27 +50,14 @@ test('refund/cancel reserve unused credit, serialize replays, reconcile uncertai
   try {
     const customer = { ...actor, role: 'CUSTOMER' as const };
     const unused = await paidOrder();
-    const selfRequest = { requestKey: randomUUID(), reason: 'Kullanılmamış sipariş iadesi' };
-    await assert.rejects(startPaymentReversal({ ...customer, id: randomUUID() }, unused.order.id, selfRequest, false), { code: 'ORDER_NOT_FOUND' });
-    await assert.rejects(startPaymentReversal(customer, unused.order.id, { ...selfRequest, credits: 1 }, false));
-    assert.equal((await reversalSummary(customer, unused.order.id, false)).canSelfRefund, true);
-    await db.creditRefundRequest.create({ data: { orderId: unused.order.id, reason: 'Refund request fixture' } });
+    const selfRequest = { requestKey: randomUUID(), reason: 'Customer refund blocked' };
     const beforeSelf = calls.length;
-    const selfResult = await startPaymentReversal(customer, unused.order.id, selfRequest, false);
-    assert.equal(selfResult.status, 'SUCCEEDED');
-    assert.equal(selfResult.kind, 'CANCEL');
-    assert.equal((await db.notification.findFirstOrThrow({ where: { userId: owner.id, type: 'CREDIT_REFUND_COMPLETED' }, orderBy: { createdAt: 'desc' } })).title, 'Ödeme iptal edildi');
-    assert.equal((await db.creditRefundRequest.findUniqueOrThrow({ where: { orderId: unused.order.id } })).status, 'RESOLVED');
-    assert.equal(selfResult.credits, 100);
-    assert.equal(selfResult.kind, 'CANCEL');
-    assert.equal((await startPaymentReversal(customer, unused.order.id, selfRequest, false)).id, selfResult.id);
-    assert.equal(calls.length, beforeSelf + 1, 'Customer replay cannot dispatch a second bank reversal');
-    const used = await paidOrder(1);
-    assert.equal((await reversalSummary(customer, used.order.id, false)).canSelfRefund, false);
-    await assert.rejects(startPaymentReversal(customer, used.order.id, { ...selfRequest, requestKey: randomUUID() }, false), { code: 'REFUND_NOT_ALLOWED' });
-    const older = await paidOrder();
-    await db.creditOrder.update({ where: { id: older.order.id }, data: { paidAt: new Date(Date.now() - 172800000) } });
-    assert.equal((await startPaymentReversal(customer, older.order.id, { ...selfRequest, requestKey: randomUUID() }, false)).kind, 'REFUND');
+    for (const fixture of [unused, await paidOrder(1)]) {
+      await assert.rejects(startPaymentReversal(customer, fixture.order.id, selfRequest, false), { code: 'CUSTOMER_REVERSAL_DISABLED' });
+      assert.equal((await reversalSummary(customer, fixture.order.id, false)).canSelfRefund, false);
+      assert.equal((await reversalSummary(customer, fixture.order.id, false)).canCancel, false);
+    }
+    assert.equal(calls.length, beforeSelf, 'Blocked customer operations must not call the bank');
     calls.length = 0;
     const first = await paidOrder(10);
     await assert.rejects(startPaymentReversal({ ...actor, role: 'CUSTOMER' }, first.order.id, {}), { code: 'FORBIDDEN' });

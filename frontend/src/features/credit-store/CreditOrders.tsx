@@ -1,4 +1,3 @@
-import { CustomerRefundPanel } from './CustomerRefundPanel';
 import { bankCancellationConfirmed } from './reversal-labels';
 import { PaymentReversalPanel } from "./PaymentReversalPanel";
 import { PaymentReviews } from "./PaymentSettings";
@@ -139,7 +138,6 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
   }, [orders.data, page]);
   return (
     <section className="credit-orders" aria-label="Siparişler">
-      {!admin && refundOrderId && <CustomerRefundPanel key={refundOrderId} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {admin && refundOrderId && <PaymentReversalPanel key={`${refundOrderId}-${reversalKind}`} kind={reversalKind} orderId={refundOrderId} onClose={() => setRefundOrderId(null)} />}
       {admin && reviewOrderId && <PaymentReviews key={reviewOrderId} editable={canCancel} orderId={reviewOrderId} onClose={() => setReviewOrderId(null)} />}
       {subscriptionId && <div className="credit-store-notice" role="status">Yalnızca seçilen aboneliğin siparişleri gösteriliyor. <Link to={(() => { const next = new URLSearchParams(params); next.delete('subscriptionId'); return '?' + next.toString(); })()} onClick={() => { setPage(1); setSearch(''); setTerm(''); setStatus(''); }}>Tüm siparişleri göster</Link></div>}
@@ -281,7 +279,6 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                         <td>
                           <div className="credit-order-actions">
                             {admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => { setReversalKind(order.canBankCancel ? 'CANCEL' : 'REFUND'); setRefundOrderId(order.id); }}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini İncele' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
-                            {!admin && ["PAID", "PARTIAL_REFUND", "REFUNDED"].includes(order.status) && <button className="button secondary" type="button" onClick={() => setRefundOrderId(order.id)}>{order.reversals?.some(row => ['PENDING', 'REVIEW'].includes(row.status)) ? (order.reversals.some(row => row.kind === 'CANCEL' && ['PENDING', 'REVIEW'].includes(row.status)) ? 'İptal Detayı' : 'İade Detayı') : order.status === 'REFUNDED' ? (bankCancellationConfirmed(order.reversals) ? 'İptal Detayı' : 'İade Detayı') : order.refundRequest?.status === 'OPEN' ? 'İade Talebini Gör' : order.kind === 'TOP_UP' || order.usedCredits || order.status === 'PARTIAL_REFUND' ? 'İade Talep Et' : order.canBankCancel ? 'Ödemeyi İptal Et' : 'İade Et'}</button>}
                             {admin && canCancel && order.bankTransferPending && (
                               <>
                                 <button className="button primary" type="button" disabled={approveTransfer.isPending || rejectTransfer.isPending} onClick={() => approveTransfer.mutate(order.id)}>
@@ -294,7 +291,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
                             )}
                             {!admin && !order.paymentInProgress && !order.bankTransferPending && ["PENDING", "FAILED"].includes(order.status) && <Link className="button primary" to={`/customer/agreements?view=checkout&orderId=${encodeURIComponent(order.id)}`}>Ödemeye Geç</Link>}
                             {admin && order.paymentInProgress && <button className="button secondary" type="button" onClick={() => { setRefundOrderId(null); setReviewOrderId(order.id); }}>Ödemeyi İncele</button>}
-                            {(canCancel || (!admin && order.kind === "SUBSCRIPTION")) && !order.bankTransferPending && ["PENDING", "FAILED"].includes(order.status) && (
+                            {canCancel && !order.bankTransferPending && ["PENDING", "FAILED"].includes(order.status) && (
                               <button
                                 type="button"
                                 className="button secondary"

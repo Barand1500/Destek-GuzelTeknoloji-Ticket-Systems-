@@ -37,12 +37,13 @@ test('retired renewals never dispatch and historical pending payments settle onc
     assert.deepEqual(await runCreditRenewals(provider, now), { dispatched: 0 });
     assert.equal(calls, 0);
     assert.equal(await db.creditOrder.count({ where: { customerId: owner.id } }), 0);
-    await assert.rejects(changeSubscription(actor, sub.id, 'accept'), { code: 'RENEWAL_DISABLED' });
+    await assert.rejects(changeSubscription(actor, sub.id, 'accept'), { code: 'CUSTOMER_CANCELLATION_DISABLED' });
     await assert.rejects(subscriptionCheckoutOrder(actor, sub.id), { code: 'RENEWAL_DISABLED' });
     const order = await db.creditOrder.create({ data: { customerId: owner.id, requestedById: owner.id, subscriptionId: sub.id, periodNumber: 1, requestKey: randomUUID(), inputHash: 'legacy', name: sub.name, kind: 'SUBSCRIPTION', credits: 50, total: '100', currency: 'TRY', periodMonths: 1 } });
     const attempt = await db.creditPaymentAttempt.create({ data: { orderId: order.id, attemptNumber: 1, provider: providerName } });
-    await assert.rejects(changeSubscription({ ...actor, id: other.id }, sub.id, 'stop'), { code: 'SUBSCRIPTION_NOT_FOUND' });
-    await changeSubscription(actor, sub.id, 'stop');
+    await assert.rejects(changeSubscription({ ...actor, id: other.id }, sub.id, 'stop'), { code: 'CUSTOMER_CANCELLATION_DISABLED' });
+    await assert.rejects(changeSubscription(actor, sub.id, 'stop'), { code: 'CUSTOMER_CANCELLATION_DISABLED' });
+    await changeSubscription({ ...actor, role: 'ADMIN' }, sub.id, 'stop', true);
     assert.equal((await db.creditOrder.findUniqueOrThrow({ where: { id: order.id } })).status, 'PENDING');
     const event = { attemptId: attempt.id, provider: providerName, paymentId: attempt.id, outcome: 'PAID' as const, amount: '100', currency: 'TRY' };
     const recovered: RecurringPaymentProvider = { name: providerName, charge: async () => { throw Error('Must never charge'); }, reconcile: async () => event };

@@ -245,6 +245,7 @@ export async function cancelCreditOrder(
   id: string,
   admin = false,
 ) {
+  if (!admin) throw new AppError(403, 'CUSTOMER_CANCELLATION_DISABLED', 'İptal işlemlerini yalnızca yönetici yapabilir.');
   if (admin) staff(actor, true);
   const result = await db.$transaction(async (tx) => {
     const customerId = admin

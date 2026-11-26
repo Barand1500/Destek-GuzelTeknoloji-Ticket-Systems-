@@ -102,7 +102,10 @@ export async function listCreditHistory(actor: Actor, customerId: string, raw: z
       { agreement: { customerId: person.id } },
     ] };
   return db.$transaction(async tx => {
-    if (input.view && actor.role !== 'CUSTOMER') return creditHistoryReport(tx, where, { ...input, allRecords });
+    if (input.view) {
+      const companyHistory = actor.role !== 'CUSTOMER' || (!person.parentCustomerId && await tx.user.count({ where: { parentCustomerId: person.id, role: 'CUSTOMER', deletedAt: null } }) > 0);
+      if (companyHistory) return creditHistoryReport(tx, where, { ...input, allRecords: actor.role !== 'CUSTOMER' && allRecords });
+    }
     const total = await tx.creditCharge.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / input.limit));
     const page = Math.min(input.page, totalPages);

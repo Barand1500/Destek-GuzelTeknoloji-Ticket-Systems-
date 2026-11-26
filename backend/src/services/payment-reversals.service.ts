@@ -45,11 +45,12 @@ export async function reversalSummary(actor: Actor, orderId: string, admin = tru
   if (available) try { amount = refundValue(order.total.toFixed(2), order.credits, totals._sum.credits ?? 0, totals._sum.amount?.toFixed(2) ?? '0', available).toFixed(2); } catch (error) { if (!(error instanceof AppError)) throw error; }
   return { refundRequest: order.refundRequest, data: data.map(serialize), orderKind: order.kind, orderId, orderNumber: order.number, orderName: order.name, currency: order.currency, refundableCredits: available, refundableAmount: amount, maxRefundAmount: Prisma.Decimal.max(0, order.total.sub(totals._sum.amount ?? 0)).toFixed(2), originalCredits: order.credits, total: order.total.toFixed(2),
     refundedCredits: totals._sum.credits ?? 0, refundedAmount: totals._sum.amount?.toFixed(2) ?? '0.00', hasPending: data.some(v => ['PENDING', 'REVIEW'].includes(v.status)), usedCredits: agreement?.usedCredits ?? 0,
-    canSelfRefund: (admin || order.kind !== 'TOP_UP') && order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
-    canCancel: Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
+    canSelfRefund: admin && order.status === 'PAID' && !agreement?.usedCredits && !totals._sum.credits && available === order.credits,
+    canCancel: admin && Boolean(order.paidAt && localDay(order.paidAt) === localDay(new Date()) && !agreement?.usedCredits && !totals._sum.credits && available === order.credits) };
 }
 
 export async function startPaymentReversal(actor: Actor, orderId: string, raw: unknown, admin = true) {
+  if (!admin) throw new AppError(403, 'CUSTOMER_REVERSAL_DISABLED', 'İptal ve iade işlemlerini yalnızca yönetici yapabilir.');
   if (admin) paymentStaff(actor, true);
   const input = admin ? inputSchema.parse(raw) : { ...customerInputSchema.parse(raw), kind: 'REFUND' as 'REFUND' | 'CANCEL', credits: 0 };
   const prepared = await db.$transaction(async tx => {

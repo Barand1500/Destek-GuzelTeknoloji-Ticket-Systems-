@@ -6,7 +6,7 @@ import { db } from '../src/config/db.js';
 import { requestCreditRefund, rejectCreditRefundRequest } from '../src/services/credit-refund-requests.service.js';
 import { reversalSummary } from '../src/services/payment-reversals.service.js';
 import { listCreditOrders, creditOrderListInput } from '../src/services/credit-orders.service.js';
-test('refund requests are owner-scoped, idempotent, visible in orders and never move credit or money', async () => {
+test('new customer refund requests are blocked while managers can review historical requests', async () => {
  const owner = await db.user.create({ data: { name: 'Refund request fixture', role: 'CUSTOMER', passwordHash: 'fixture' } });
  const actor = { id: owner.id, role: 'CUSTOMER' as const, name: owner.name, email: '', departmentIds: [], sessionId: '' };
  const admin = { ...actor, role: 'ADMIN' as const };
@@ -15,8 +15,9 @@ test('refund requests are owner-scoped, idempotent, visible in orders and never 
  try {
   await assert.rejects(requestCreditRefund({ ...actor, id: randomUUID() }, order.id, { reason: 'Unused credits refund' }));
   await assert.rejects(rejectCreditRefundRequest(actor, order.id, { reason: 'Customer cannot review' }), { code: 'FORBIDDEN' });
-  const first = await requestCreditRefund(actor, order.id, { reason: 'Refund unused credits' });
-  assert.equal((await requestCreditRefund(actor, order.id, { reason: 'Duplicate' })).reason, first.reason);
+  await assert.rejects(requestCreditRefund(actor, order.id, { reason: 'Refund unused credits' }), { code: 'CUSTOMER_REFUND_REQUEST_DISABLED' });
+  assert.equal(await db.creditRefundRequest.count({ where: { orderId: order.id } }), 0);
+  await db.creditRefundRequest.create({ data: { orderId: order.id, reason: 'Historical request' } });
   const summary = await reversalSummary(actor, order.id, false);
   assert.equal(summary.refundRequest?.status, 'OPEN'); assert.equal(summary.refundableCredits, 90); assert.equal(summary.refundableAmount, '0.90');
   const list = await listCreditOrders(admin, creditOrderListInput.parse({ search: 'Refund request fixture', refundRequested: 'true' }), true);
@@ -31,7 +32,7 @@ test('refund requests are owner-scoped, idempotent, visible in orders and never 
   await rejectCreditRefundRequest(admin, order.id, { reason: 'Request reviewed and declined' });
   assert.equal((await reversalSummary(actor, order.id, false)).refundRequest?.reviewNote, 'Request reviewed and declined');
   await db.agreement.update({ where: { id: grant.id }, data: { usedCredits: 100 } });
-  await assert.rejects(requestCreditRefund(actor, order.id, { reason: 'No refundable credit' }), { code: 'REFUND_REQUEST_NOT_ALLOWED' });
+  await assert.rejects(requestCreditRefund(actor, order.id, { reason: 'No refundable credit' }), { code: 'CUSTOMER_REFUND_REQUEST_DISABLED' });
  } finally {
   await db.paymentReversal.deleteMany({ where: { orderId: order.id } });
   await db.creditRefundRequest.deleteMany({ where: { orderId: order.id } });

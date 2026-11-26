@@ -69,7 +69,7 @@ export function CustomerAgreementsModal({ customer, onClose }: { customer: Perso
     headerActions={<>{summary.data && <div className="agreement-header-credit"><span>{summary.data.parent || summary.data.children.length ? 'Şirket kredisi' : 'Kullanılabilir kredi'}</span><strong>{new Intl.NumberFormat('tr-TR').format(summary.data.availableCredits)}</strong></div>}{tab === 'agreements' && <button className="standard-modal-close" type="button" aria-label="Kredi Hareketleri" title="Kredi Hareketleri" disabled={pending || Boolean(editing)} aria-pressed={history} onClick={() => setHistory(v => !v)}><History size={18} /></button>}</>}>
     <div className="customer-relation-choices company-management-tabs" aria-label="Yönetim Bölümleri">
       <button type="button" className={'relation-tab' + (tab === 'agreements' ? ' active' : '')} aria-pressed={tab === 'agreements'} disabled={pending} onClick={() => switchTab('agreements')}>Anlaşmalar ve Kredi</button>
-      {showPeople && <button type="button" className={'relation-tab' + (tab === 'people' ? ' active' : '')} aria-pressed={tab === 'people'} disabled={pending} onClick={() => switchTab('people')}>Şirkete Bağlı Kişiler</button>}
+      {showPeople && <button type="button" className={'relation-tab' + (tab === 'people' ? ' active' : '')} aria-pressed={tab === 'people'} disabled={pending} onClick={() => switchTab('people')}>Kişiler</button>}
     </div>
     {tab === 'people' && showPeople ? <CompanyPeoplePanel customer={companyCustomer} onPendingChange={setPending} /> : <><div hidden={history}><AgreementWorkspace customerId={customer.id} modalControl={{ adding, setAdding, editing, setEditing, formId, onPendingChange: setPending, onReadyChange: setReady }} /></div>{history && <CreditHistory customerId={customer.id} onBack={() => setHistory(false)} />}</>}
   </AgreementDialog>;
@@ -99,7 +99,15 @@ export function CustomerAgreementsPage() {
 }
 export function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
   const { user } = useAuth();
-  return user?.role !== 'CUSTOMER' ? <CompanyCreditHistory key={customerId} customerId={customerId} onBack={onBack} /> : <LegacyCreditHistory customerId={customerId} onBack={onBack} />;
+  return user?.role !== 'CUSTOMER' ? <CompanyCreditHistory key={customerId} customerId={customerId} onBack={onBack} /> : <CustomerCreditHistory customerId={customerId} onBack={onBack} />;
+}
+function CustomerCreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
+  const summary = useQuery({ queryKey: ['agreements', customerId], queryFn: async () => (await api.get(`/customers/${customerId}/agreements`)).data.data as Summary });
+  if (summary.isPending) return <p role="status">Hareketler yükleniyor…</p>;
+  if (summary.error) return <p className="error" role="alert">{errorText(summary.error)}</p>;
+  return !summary.data.customer.parentCustomerId && summary.data.children.length > 0
+    ? <CompanyCreditHistory key={customerId} customerId={customerId} onBack={onBack} />
+    : <LegacyCreditHistory customerId={customerId} onBack={onBack} />;
 }
 function LegacyCreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
   const { user } = useAuth(); const [page, setPage] = useState(1);
@@ -107,13 +115,15 @@ function LegacyCreditHistory({ customerId, onBack }: { customerId: string; onBac
   const charges = query.data?.data ?? [], pages = query.data?.pagination.totalPages ?? 1;
   useEffect(() => { setPage(1); }, [customerId]);
   useEffect(() => { if (query.data) setPage(query.data.pagination.page); }, [query.data]);
-  return <section className="credit-log">
-    <div className="credit-log-toolbar">{onBack && <button className="button secondary" type="button" onClick={onBack}><ArrowLeft size={16} /> Anlaşmalara Dön</button>}<span className="muted">{query.data ? `${query.data.pagination.total.toLocaleString('tr-TR')} kullanım` : ''}</span></div>
+  return <section className="credit-log credit-log--simple">
+    {onBack && <div className="credit-log-toolbar"><button className="button secondary" type="button" onClick={onBack}><ArrowLeft size={16} /> Anlaşmalara Dön</button></div>}
     {query.isPending && <p role="status">Hareketler yükleniyor…</p>}{query.error && <p className="error" role="alert">{errorText(query.error)}</p>}
     <div className="credit-log-table-wrap"><table className="credit-log-table" aria-label="Kredi Hareketleri"><thead><tr><th scope="col">Tarih / Saat</th><th scope="col">Müşteri</th><th scope="col">Talep</th><th scope="col">Anlaşma</th><th scope="col">Kredi</th></tr></thead>
       <tbody>{charges.map(c => <tr key={c.id}><td><time dateTime={c.createdAt}>{new Date(c.createdAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}</time></td><td>{c.conversation.customer.name}</td><td><Link to={conversationPath(user!.role, c.conversation.id)}>#TK-{String(c.conversation.number).padStart(5, '0')}</Link><small>{c.conversation.subject}</small></td><td>{c.agreement?.name ?? 'Ücretsiz destek'}</td><td className="credit-log-amount">{c.credits > 0 ? '-' : ''}{c.credits}</td></tr>)}
       {!query.isPending && !query.error && charges.length === 0 && <tr><td colSpan={5} className="credit-log-empty">Henüz kredi kullanımı yok.</td></tr>}</tbody></table></div>
+    <div className="credit-log-footer"><span className="muted">{query.data ? `${query.data.pagination.total.toLocaleString('tr-TR')} kullanım` : ''}</span>
     {pages > 1 && <nav className="pagination" aria-label="Kredi Hareketleri Sayfaları"><button className="button secondary" disabled={page === 1 || query.isFetching} onClick={() => setPage(v => v - 1)}>Önceki</button><span>{page} / {pages}</span><button className="button secondary" disabled={page >= pages || query.isFetching} onClick={() => setPage(v => v + 1)}>Sonraki</button></nav>}
+    </div>
   </section>;
 }
 type WorkspaceModalControl = { editing: Agreement | null; setEditing: (agreement: Agreement | null) => void; adding: boolean; setAdding: (value: boolean) => void; formId: string; onPendingChange: (pending: boolean) => void; onReadyChange: (ready: boolean) => void };

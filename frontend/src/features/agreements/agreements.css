@@ -106,6 +106,9 @@ html[data-theme="dark"] .company-people-panel .management-actions>.danger-icon:h
 
 
 .company-credit-history {container:credit-history / inline-size}
+.credit-log-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap}
+.credit-log-footer>span {font-size:12px}
+.credit-log-footer>.pagination {margin:0}
 .company-credit-filters {
   display:grid;
   grid-template-columns:minmax(180px,.85fr) repeat(3,minmax(0,1fr)) auto;

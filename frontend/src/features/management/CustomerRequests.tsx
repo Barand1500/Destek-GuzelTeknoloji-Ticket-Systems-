@@ -19,16 +19,17 @@ export function CustomerRequests({ customerId, name, expanded = false, people }:
   const [page, setPage] = useState(1);
   const [limit, setLimit] = usePageSize('customer-existing-request-cards');
   const [status, setStatus] = useState('');
-  const [personId, setPersonId] = useState('');
-  useEffect(() => { setPersonId(''); setPage(1); }, [customerId]);
+  const [personId, setPersonId] = useState('all');
+  useEffect(() => { setPersonId('all'); setPage(1); }, [customerId]);
 
   const statusOptions = useQuery({ queryKey: ['status-options'], queryFn: async () => (await api.get<Page<{ id: string; code: string; name: string; color: string }>>('/status-options', { params: { limit: 100 } })).data.data });
   const statusNames = { ...statuses, ...Object.fromEntries((statusOptions.data ?? []).map(option => [option.code, option.name])) };
-  const selectedCustomerId = personId || customerId;
+  const includeChildren = personId === 'all' && (people?.length ?? 0) > 1;
+  const selectedCustomerId = personId && personId !== 'all' ? personId : customerId;
   const requests = useQuery({
-    queryKey: ['customer-existing-requests', selectedCustomerId, page, limit, status],
-    queryFn: async () => (await api.get<Page<Conversation>>('/conversations', { params: { customerId: selectedCustomerId, view: 'all', page, limit, status: status || undefined } })).data,
-    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[1] === selectedCustomerId && previousQuery.queryKey[4] === status ? previous : undefined,
+    queryKey: ['customer-existing-requests', selectedCustomerId, page, limit, status, includeChildren],
+    queryFn: async () => (await api.get<Page<Conversation>>('/conversations', { params: { customerId: selectedCustomerId, includeChildren: includeChildren ? 'true' : undefined, view: 'all', page, limit, status: status || undefined } })).data,
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[1] === selectedCustomerId && previousQuery.queryKey[4] === status && previousQuery.queryKey[5] === includeChildren ? previous : undefined,
     refetchInterval: 15_000,
   });
   useEffect(() => {
@@ -41,7 +42,7 @@ export function CustomerRequests({ customerId, name, expanded = false, people }:
     <Heading className="customer-requests-toggle"><div><h2>Mevcut Talepler{requests.data ? ` (${requests.data.pagination.total})` : ''}</h2><p>{expanded ? 'Mevcut görüşmeler ve talepler.' : `${name} için mevcut talepler.`}</p></div><ChevronDown size={20} aria-hidden="true" /></Heading>
     <div className="customer-requests-body">
     <div className="customer-requests-filters">
-      {peopleOptions && <div><SearchableDropdown label="Kişi" name="personId" searchable searchPlaceholder="Kişi ara..." value={personId || customerId} options={peopleOptions.map(person => ({ value: person.id, label: person.name }))} onChange={value => { setPersonId(value); setPage(1); }} /></div>}
+      {peopleOptions && <div><SearchableDropdown label="Kişi" name="personId" searchable searchPlaceholder="Kişi ara..." value={personId || customerId} options={[{ value: 'all', label: 'Tümü' }, ...peopleOptions.map(person => ({ value: person.id, label: person.name }))]} onChange={value => { setPersonId(value); setPage(1); }} /></div>}
       <div><DropdownSelect label="Durum" ariaLabel="Mevcut talepler durum filtresi" value={status} options={[{ value: '', label: 'Tüm Durumlar' }, ...Object.entries(statusNames).map(([value, label]) => ({ value, label }))]} onChange={value => { setStatus(value); setPage(1); }} /></div>
       <div><DropdownSelect label="Kayıt sayısı" ariaLabel="Mevcut talepler kayıt sayısı" value={String(limit)} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} onChange={value => { setLimit(Number(value)); setPage(1); }} /></div>
     </div>
@@ -50,7 +51,8 @@ export function CustomerRequests({ customerId, name, expanded = false, people }:
     {requests.data && (requests.data.data.length ? <div className="customer-existing-requests-scroll customer-request-cards-scroll" tabIndex={0} role="region" aria-label="Mevcut talep kartları">
       <div className="customer-request-cards">
         {requests.data.data.map(request => <Link className="customer-request-card" to={conversationPath(user!.role, request.id)} key={request.id}>
-          <div className="customer-request-card-heading"><strong>#{`TK-${String(request.number).padStart(5, '0')}`} · {request.subject}</strong><span className="customer-request-status" data-status={request.status}>{statusNames[request.status] ?? request.status}</span></div>
+          <div className="customer-request-card-heading"><strong>#{`TK-${String(request.number).padStart(5, '0')}`} · {request.subject}</strong><div className="customer-request-state"><span className="customer-request-status" data-status={request.status}>{statusNames[request.status] ?? request.status}</span>{['CLOSED', 'RESOLVED'].includes(request.status) && <span className="customer-request-credit" title="Kullanılan kredi">{request.creditCharge ? `${request.creditCharge.credits.toLocaleString('tr-TR')} kredi` : 'Kesinti kaydı yok'}</span>}</div></div>
+          {includeChildren && <p className="customer-request-owner"><span>Talep sahibi:</span> <strong>{request.customer?.name || people?.find(person => person.id === request.customerId)?.name || 'Belirtilmemiş'}</strong></p>}
           <p className="customer-request-description" title={request.firstMessage ?? undefined}>{request.firstMessage === '' ? 'İlk mesaj metin içermiyor.' : request.firstMessage ?? 'Açıklama bulunmuyor.'}</p>
           <dl className="customer-request-dates">
             <div><dt>Atanan personel</dt><dd>{request.assignees?.length ? request.assignees.map(assignee => assignee.user.name).join(', ') : request.assignedAgent?.name ?? 'Atanmamış'}</dd></div>

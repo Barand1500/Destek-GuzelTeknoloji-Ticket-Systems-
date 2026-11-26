@@ -131,7 +131,9 @@ export async function listConversations(actor: Actor, q: z.infer<typeof listSche
     priority: q.priority,
     departmentId: q.departmentId,
     ...(q.assignedAgentId ? assignedTo(q.assignedAgentId) : {}),
-    customerId: q.customerId,
+    ...(q.customerId && q.includeChildren === 'true'
+      ? { customer: { OR: [{ id: q.customerId }, { parentCustomerId: q.customerId, deletedAt: null, role: 'CUSTOMER' as const }] } }
+      : { customerId: q.customerId }),
     ...(q.tagId?{tags:{some:{tagId:q.tagId}}}:{}),
   };
   const categoryFilter: Prisma.ConversationWhereInput[] = q.category

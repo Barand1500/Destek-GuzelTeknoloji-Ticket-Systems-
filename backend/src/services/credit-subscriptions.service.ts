@@ -61,6 +61,7 @@ export async function listSubscriptions(actor: Actor, input: z.infer<typeof subs
   }, { isolationLevel: 'RepeatableRead' });
 }
 export async function changeSubscription(actor: Actor, id: string, action: 'accept' | 'stop', admin = false) {
+  if (!admin) throw new AppError(403, 'CUSTOMER_CANCELLATION_DISABLED', 'Abonelik işlemlerini yalnızca yönetici yapabilir.');
   if (action === 'accept') throw new AppError(410, 'RENEWAL_DISABLED', 'Otomatik yenileme kaldırıldı. Bu işlem kullanılamıyor.');
   if (admin) staff(actor, true);
   const owner = admin ? undefined : await creditStoreOwner(actor);

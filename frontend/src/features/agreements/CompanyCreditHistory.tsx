@@ -47,7 +47,7 @@ export function CompanyCreditHistory({ customerId, onBack }: { customerId: strin
       <DateRangeField label="Tarih aralığı" from={startsOn} to={endsOn} onChange={range => { setStart(range.from); setEnd(range.to); setPage(1); }} />
       <DropdownSelect ariaLabel="Kredi anlaşması" label="Anlaşma / Paket" value={agreementId} onChange={value => update(setAgreement, value)} options={[{ value: '', label: 'Tüm anlaşmalar' }, ...(query.data?.agreements ?? []).map(row => ({ value: row.id, label: row.name }))]} />
       <div className="company-credit-actions">
-      <button className="button secondary" aria-label="Excel indir" title="Excel indir (filtreye uyan tüm kayıtlar)" disabled={exporting || invalid || query.isPending || query.isError} onClick={() => void downloadExcel()}>{exporting ? <Loader2 size={19} /> : <FileSpreadsheet size={19} />}</button>
+      {user?.role !== 'CUSTOMER' && <button className="button secondary" aria-label="Excel indir" title="Excel indir (filtreye uyan tüm kayıtlar)" disabled={exporting || invalid || query.isPending || query.isError} onClick={() => void downloadExcel()}>{exporting ? <Loader2 size={19} /> : <FileSpreadsheet size={19} />}</button>}
       <button className="button secondary" aria-label="Filtreleri temizle" title="Filtreleri temizle" onClick={() => { setPerson(''); setAgreement(''); setStart(''); setEnd(''); setPage(1); }}><FilterX size={19} /></button>
       <div className="company-credit-view" role="group" aria-label="Kredi görünümü">
         <button className="button secondary" aria-label="Son hareketler" title="Son hareketler" aria-pressed={view === 'movements'} onClick={() => switchView('movements')}><List size={19} /></button>
