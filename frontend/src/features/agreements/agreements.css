@@ -103,3 +103,41 @@ html[data-theme="dark"] .company-people-panel .management-actions>.danger-icon:h
 .money-currency-row > * { min-width: 0; }
 .money-currency-row .styled-dropdown-menu { min-width: 220px; right: 0; left: auto; }
 @media (max-width: 520px) { .money-currency-row { grid-template-columns: minmax(0, 1fr) 128px; } }
+
+
+.company-credit-history {container:credit-history / inline-size}
+.company-credit-filters {
+  display:grid;
+  grid-template-columns:minmax(180px,.85fr) repeat(3,minmax(0,1fr)) auto;
+  align-items:center;
+  gap:10px;
+  padding:4px 0 0;
+  margin-bottom:24px;
+}
+.company-credit-filters>* {min-width:0;margin:0;box-sizing:border-box}
+.company-credit-overview {height:48px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.company-credit-overview h3 {margin:0;font-size:14px;line-height:18px;font-weight:650}
+.company-credit-overview p {display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;color:var(--muted);font-size:12px;line-height:16px}
+.company-credit-overview strong {font-weight:500;color:var(--text)}
+.company-credit-filters>.styled-dropdown {height:48px;min-height:48px;padding:8px 12px;position:relative;border:1px solid var(--border);border-radius:8px;background:transparent}
+.company-credit-filters .date-range-control {width:100%;height:48px;box-sizing:border-box;background:transparent;border-color:var(--border)}
+.company-credit-actions {display:flex;align-items:center;gap:8px;height:48px}
+.company-credit-actions>.button {width:40px;min-width:40px;height:40px;min-height:40px;padding:0}
+.company-credit-view {display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+.company-credit-view>.button {width:40px;min-width:40px;height:40px;min-height:40px;padding:0;background:transparent;color:var(--muted);border:1px solid var(--border)}
+.company-credit-view button[aria-pressed=true] {color:#0d8fc5;border-color:#0d8fc5;background:rgba(13,143,197,.12)}
+.company-credit-return-note {font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.6}
+.credit-person-link {background:none;border:0;padding:0;color:var(--text);font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.credit-person-link:hover {text-decoration:underline}
+.company-credit-pagination {display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:20px;flex-wrap:wrap}
+.company-credit-pagination>.styled-dropdown {width:140px;min-width:140px;flex:0 0 140px}
+.company-credit-pagination .pagination {display:flex;align-items:center;gap:10px;margin:0}
+.company-credit-pagination .pagination>span {font-size:12px;color:var(--muted);margin-right:6px}
+.company-credit-history .credit-log-table th {width:auto}
+.company-credit-history .credit-log-table td {vertical-align:middle}
+.company-credit-history .credit-log-ticket-count {text-align:left;padding-left:82px;font-variant-numeric:tabular-nums}
+.company-credit-history .credit-log-table .credit-log-amount small {font-size:11px;font-weight:400}
+@container credit-history (max-width:850px){.company-credit-filters{grid-template-columns:minmax(120px,1fr) minmax(225px,1fr) minmax(120px,1fr) auto}.company-credit-overview{grid-column:1/-1}}
+@container credit-history (max-width:650px){.company-credit-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container credit-history (max-width:450px){.company-credit-filters{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.company-credit-pagination{gap:20px}.company-credit-pagination .pagination{flex-wrap:wrap}.company-credit-pagination .pagination>span{width:100%}}

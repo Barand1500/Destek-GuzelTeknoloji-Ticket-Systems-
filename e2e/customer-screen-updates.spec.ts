@@ -50,6 +50,71 @@ async function setup(page: Page) {
   return state;
 }
 
+test('credit history switches to person totals and drills down with filters intact', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('helpdesk-theme', 'dark'));
+  await setup(page);
+  const requests: URL[] = [];
+  let exportRequest: URL | undefined;
+  await page.route('**/agreements/credit-history/export?**', async route => {
+    exportRequest = new URL(route.request().url());
+    const { default: ExcelJS } = await import('exceljs');
+    const workbook = new ExcelJS.Workbook(); workbook.addWorksheet('Kişilere göre kullanım').addRow(['Kişi', 'Talep sayısı', 'Kullanılan kredi']);
+    await route.fulfill({ contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', body: Buffer.from(await workbook.xlsx.writeBuffer()) });
+  });
+  await page.route('**/agreements/credit-history?**', async route => {
+    const url = new URL(route.request().url()); requests.push(url);
+    const person = { id: childId, name: 'Baran' };
+    const data = url.searchParams.get('view') === 'people' ? [{ ...person, spent: 60, returned: 10, net: 50, ticketCount: 2 }] : [{ id: 'charge', credits: 30, kind: 'USED', createdAt: '2026-11-25T09:00:00Z', agreement: { id: companyId, name: 'Paket' }, conversation: { id: 'ticket', number: 825, subject: 'Destek', customer: person } }];
+    await route.fulfill({ json: { success: true, data, people: [person], agreements: [{ id: companyId, name: 'Paket' }], summary: { spent: 60, returned: 10, net: 50, tickets: 2 }, pagination: { page: 1, totalPages: 1, total: 1, limit: 20 } } });
+  });
+  await page.goto(`/admin/customers/${companyId}?section=history`);
+  await expect(page.getByRole('button', { name: 'Son hareketler', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('link', { name: '#TK-00825' })).toBeVisible();
+  const filterBoxes = await page.locator('.company-credit-filters > *').evaluateAll(elements => elements.map(element => {
+    const box = element.getBoundingClientRect(); return { top: box.top, height: box.height, right: box.right };
+  }));
+  expect(Math.max(...filterBoxes.map(box => box.top)) - Math.min(...filterBoxes.map(box => box.top))).toBeLessThan(2);
+  expect(filterBoxes.every(box => Math.abs(box.height - 48) < 2)).toBe(true);
+  await expect(page.locator('.company-credit-overview')).toContainText('Son hareketler');
+  await expect(page.locator('.company-credit-overview')).toContainText('50 kredi kullanıldı');
+  await page.getByRole('button', { name: 'Tarih aralığı seç', exact: true }).click();
+  const calendar = page.getByRole('dialog', { name: 'Tarih aralığı takvimi', exact: true });
+  await calendar.locator('.date-range-grid > button').nth(7).click();
+  await calendar.locator('.date-range-grid > button').nth(14).click();
+  await expect(calendar).toHaveCount(0);
+  await expect.poll(() => requests.at(-1)?.searchParams.get('startsOn')).toBeTruthy();
+  const start = requests.at(-1)!.searchParams.get('startsOn'), end = requests.at(-1)!.searchParams.get('endsOn');
+  expect(start! < end!).toBe(true);
+  await page.locator('.company-credit-history').screenshot({ path: 'output/credit-history-simple.png' });
+  await page.getByRole('button', { name: 'Kredi anlaşması', exact: true }).click();
+  await page.getByRole('option', { name: 'Paket', exact: true }).click();
+  await page.getByRole('button', { name: 'Kişilere göre kullanım', exact: true }).click();
+  await expect(page.getByRole('table', { name: 'Kişilere göre kredi kullanımı' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Kişilere göre kredi kullanımı' }).getByRole('columnheader')).toHaveCount(3);
+  const downloadReady = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Excel indir', exact: true }).click();
+  const download = await downloadReady;
+  expect(download.suggestedFilename()).toMatch(/^kredi-kisi-kullanimi-.*\.xlsx$/);
+  expect(exportRequest?.searchParams.get('view')).toBe('people');
+  expect(exportRequest?.searchParams.get('agreementId')).toBe(companyId);
+  expect(exportRequest?.searchParams.get('startsOn')).toBe(start);
+  expect(exportRequest?.searchParams.get('endsOn')).toBe(end);
+  expect(exportRequest?.searchParams.has('page')).toBe(false);
+  await page.locator('.company-credit-history').screenshot({ path: 'output/credit-history-people-simple.png' });
+  await page.getByRole('button', { name: 'Baran', exact: true }).click();
+  await expect(page.getByRole('table', { name: 'Kredi Hareketleri', exact: true })).toBeVisible();
+  await expect.poll(() => requests.at(-1)?.searchParams.get('personId')).toBe(childId);
+  expect(requests.at(-1)?.searchParams.get('agreementId')).toBe(companyId);
+  expect(requests.at(-1)?.searchParams.get('startsOn')).toBe(start);
+  expect(requests.at(-1)?.searchParams.get('endsOn')).toBe(end);
+  await page.getByRole('button', { name: 'Filtreleri temizle', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Tarih aralığı seç', exact: true })).toContainText('Gün veya aralık seç');
+  await expect(page.getByRole('button', { name: 'Kredi kişisi', exact: true })).toContainText('Tüm kişiler');
+  await expect(page.getByRole('button', { name: 'Kredi anlaşması', exact: true })).toContainText('Tüm anlaşmalar');
+  await page.setViewportSize({ width: 600, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('conversations tab filters by company person and keeps filters right aligned', async ({ page }) => {
   const state = await setup(page);
   await page.goto(`/admin/customers/${companyId}?section=conversations`);

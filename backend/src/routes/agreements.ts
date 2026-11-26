@@ -5,6 +5,7 @@ import * as service from '../services/agreements.service.js';
 import { getConversation } from '../services/conversations.service.js';
 import { db } from '../config/db.js';
 import { AppError } from '../utils/errors.js';
+import { exportCreditHistory } from '../services/credit-history-export.js';
 export const agreementsRouter = Router();
 agreementsRouter.get('/agreement-types', async (req, res) => res.json({ success: true, data: await service.listAgreementTypes(req.actor) }));
 agreementsRouter.post('/agreement-types', async (req, res) => { const input = z.object({ name: z.string().trim().min(1).max(80) }).strict().parse(req.body); res.status(201).json({ success: true, data: await service.createAgreementType(req.actor, input.name) }); });
@@ -13,6 +14,18 @@ agreementsRouter.get('/customers/:id/relation-candidates', async (req, res) => r
 agreementsRouter.get('/customers/:id/relations', async (req, res) => res.json({ success: true, data: await service.listCustomerRelations(req.actor, idSchema.parse(req.params.id)) }));
 agreementsRouter.post('/customers/:id/relations', async (req, res) => res.status(201).json({ success: true, data: await service.createRelatedCustomer(req.actor, idSchema.parse(req.params.id), service.relatedCustomerInput.parse(req.body)) }));
 agreementsRouter.get('/customers/:id/agreements/credit-history', async (req, res) => res.json({ success: true, ...await service.listCreditHistory(req.actor, idSchema.parse(req.params.id), service.creditHistoryInput.parse(req.query)) }));
+agreementsRouter.get('/customers/:id/agreements/credit-history/export', async (req, res) => {
+  if (req.actor.role === 'CUSTOMER') throw new AppError(403, 'FORBIDDEN', 'Bu işlem için yetkiniz yok.');
+  const id = idSchema.parse(req.params.id);
+  const filters = service.creditHistoryInput.parse({ ...req.query, view: req.query.view ?? 'movements' });
+  const report = await service.listCreditHistory(req.actor, id, filters, true);
+  if (!('people' in report)) throw new AppError(403, 'FORBIDDEN', 'Bu işlem için yetkiniz yok.');
+  const company = await db.user.findUniqueOrThrow({ where: { id }, select: { name: true, company: true } });
+  const content = await exportCreditHistory(report, filters, company.company || company.name);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="kredi-${filters.view}-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+  res.send(Buffer.from(content));
+});
 agreementsRouter.get('/customers/:id/agreements', async (req, res) => res.json({ success: true, data: await service.listAgreements(req.actor, idSchema.parse(req.params.id)) }));
 agreementsRouter.post('/customers/:id/agreements', async (req, res) => res.status(201).json({ success: true, data: await service.createAgreement(req.actor, idSchema.parse(req.params.id), service.agreementInput.parse(req.body)) }));
 agreementsRouter.post('/customers/:id/agreements/:agreementId/cancel', async (req, res) => { await service.cancelAgreement(req.actor, idSchema.parse(req.params.id), idSchema.parse(req.params.agreementId)); res.json({ success: true }); });

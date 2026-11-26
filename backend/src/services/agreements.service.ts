@@ -9,6 +9,7 @@ import { can } from './permissions.js';
 import { AppError } from '../utils/errors.js';
 import { createCustomerSchema } from '../validators/management.js';
 import { createCustomer } from './management.service.js';
+import { creditHistoryReport } from './credit-history-report.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v, 'Geçerli bir tarih girin.');
 export const agreementInput = z.object({
@@ -80,10 +81,15 @@ export async function listCustomerRelations(actor: Actor, customerId: string) {
   return { customer: person, parent, children };
 }
 export const creditHistoryInput = z.object({
+  view: z.enum(['movements', 'people']).optional(),
+  personId: z.uuid().optional(),
+  agreementId: z.uuid().optional(),
+  startsOn: day.optional(),
+  endsOn: day.optional(),
   page: z.coerce.number().int().min(1).max(100000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
-export async function listCreditHistory(actor: Actor, customerId: string, raw: z.input<typeof creditHistoryInput>) {
+export async function listCreditHistory(actor: Actor, customerId: string, raw: z.input<typeof creditHistoryInput>, allRecords = false) {
   const input = creditHistoryInput.parse(raw);
   const person = await customer(db, customerId);
   if (actor.role === 'CUSTOMER') {
@@ -96,6 +102,7 @@ export async function listCreditHistory(actor: Actor, customerId: string, raw: z
       { agreement: { customerId: person.id } },
     ] };
   return db.$transaction(async tx => {
+    if (input.view && actor.role !== 'CUSTOMER') return creditHistoryReport(tx, where, { ...input, allRecords });
     const total = await tx.creditCharge.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / input.limit));
     const page = Math.min(input.page, totalPages);

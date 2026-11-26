@@ -1,4 +1,5 @@
 import { CreditSubscriptions } from '../credit-store/CreditSubscriptions';
+import { CompanyCreditHistory } from './CompanyCreditHistory';
 import { MoneyInput } from '../credit-store/MoneyInput';
 import { currencyOptions, type Currency } from '../credit-store/types';
 import { DropdownSelect } from '../../components/DropdownSelect';
@@ -97,6 +98,10 @@ export function CustomerAgreementsPage() {
   </main>;
 }
 export function CreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
+  const { user } = useAuth();
+  return user?.role !== 'CUSTOMER' ? <CompanyCreditHistory key={customerId} customerId={customerId} onBack={onBack} /> : <LegacyCreditHistory customerId={customerId} onBack={onBack} />;
+}
+function LegacyCreditHistory({ customerId, onBack }: { customerId: string; onBack?: () => void }) {
   const { user } = useAuth(); const [page, setPage] = useState(1);
   const query = useQuery({ queryKey: ['credit-history', customerId, page], queryFn: async () => (await api.get(`/customers/${customerId}/agreements/credit-history`, { params: { page, limit: 20 } })).data as { data: Charge[]; pagination: { page: number; total: number; totalPages: number } } });
   const charges = query.data?.data ?? [], pages = query.data?.pagination.totalPages ?? 1;
