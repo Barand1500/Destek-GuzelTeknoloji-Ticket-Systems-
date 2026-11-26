@@ -329,3 +329,87 @@
 }
 .whatsapp-window-warning{display:grid;gap:6px;flex:0 0 auto;min-width:0;margin:12px 16px 0;padding:12px 14px;border:1px solid #e4bf55;border-radius:8px;background:#fff7d6;color:#795700;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
 html[data-theme=dark] .whatsapp-window-warning{background:#3c3219;border-color:#8e7430;color:#ffe29a}
+
+/* Consistent touch controls and toolbars without changing desktop dimensions. */
+@media (max-width: 1000px) {
+  .app-shell :is(.management-table-wrap, .inbox-table-scroll) { overflow-x: auto; min-width: 0; max-width: 100%; scrollbar-width: thin; }
+  .app-shell .management-table-wrap > .management-table { table-layout: auto; }
+  .app-shell .management-table-wrap > .management-table :is(th, td) { padding: 12px; font-size: 12px; vertical-align: middle; }
+  .app-shell .management-table-wrap .management-actions { flex-wrap: nowrap; gap: 6px; }
+  .app-shell .management-table-wrap .management-actions > .button { width: auto; flex: 0 0 auto; padding: 8px 12px; }
+  .app-shell .customer-list-table { min-width: 720px; }
+  .app-shell .users-table { min-width: 680px !important; }
+  .app-shell .catalog-table { min-width: 520px; }
+  .app-shell .department-table { min-width: 520px; }
+  .app-shell .projects-table { min-width: 680px; }
+  .app-shell .activity-history-page .activity-history-table { min-width: 680px; table-layout: fixed; }
+  .app-shell .customer-list-table .customer-contact-cell { min-width: 240px; }
+  .app-shell .customer-list-table .customer-contact-cell :is(strong, small) { white-space: nowrap; }
+  .app-shell .inbox-table-scroll :is(th, td) { padding: 12px; }
+  .app-shell .currency-list-card { padding-inline: 0; }
+  .app-shell .currency-list-card .management-table-wrap { margin: 0; }
+  .app-shell .currency-list-card table { min-width: 760px; }
+  .app-shell .currency-search-toolbar { padding: 0; }
+  .app-shell .currency-search-toolbar .credit-orders-search { flex: 1 1 auto; width: 100%; max-width: none; }
+  .app-shell .credit-store-title { flex-direction: column; align-items: stretch; gap: 12px; }
+  .app-shell .credit-store-title > .page-heading { margin-bottom: 0; }
+  .app-shell .credit-store-title > .payment-settings-actions { margin-top: 0; }
+  .app-shell .status-chart-card { container-type: inline-size; }
+  @container (min-width: 310px) {
+    .status-chart-card .status-chart-wrap { flex-direction: row; align-items: center; gap: 16px; }
+    .status-chart-card .status-pie { width: clamp(140px, 45cqw, 170px); }
+    .status-chart-card .status-chart-legend { min-width: 140px; max-width: 240px; flex: 1; }
+  }
+}
+@media (max-width: 1000px) {
+  .app-shell main :is(.button, .icon-button, .styled-dropdown-trigger) { min-height: 44px; box-sizing: border-box; }
+  .app-shell main .icon-button { width: 44px; min-width: 44px; height: 44px; padding: 10px; }
+  .app-shell main :is(.button, .styled-dropdown-trigger) { font-size: 14px; line-height: 1.4; }
+  .app-shell main :is(.button, .icon-button) > svg { flex-shrink: 0; }
+  .app-shell main :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file]), textarea, select) { font-size: 16px; min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .app-shell main :is(label:has(> .field-label), .styled-dropdown) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .app-shell main .styled-dropdown-menu { min-width: 0; max-width: min(100%, calc(100vw - 48px)); }
+  .app-shell main .styled-dropdown-menu > [role=option] { min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
+  .app-shell main :is(.management-form, .integration-fields, .payment-settings-grid, .credit-sales-card, .report-panel) { min-width: 0; }
+  .app-shell main :is(.management-form, .integration-fields) > * { min-width: 0; }
+  .app-shell main .management-pagination { flex-wrap: wrap; gap: 12px; }
+  .app-shell main :is(.catalog-tabs, .report-tabs, .guide-hub-tabs) { max-width: 100%; }
+
+}
+@media (max-width: 600px) {
+  .app-shell main :is(.management-list-toolbar, .management-search-tools) { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .app-shell main .management-list-toolbar > .management-search,
+  .app-shell main .management-search-tools > .management-search { flex: 1 1 100%; width: 100%; margin: 0; }
+  .app-shell main .management-search-tools { flex: 1 1 100%; margin: 0; }
+  .app-shell main .management-search { height: 48px; min-height: 48px; padding: 0 12px; display: flex; align-items: center; box-sizing: border-box; }
+  .app-shell main .management-search input { height: 46px; min-height: 0; width: 100%; padding: 0; }
+  .app-shell main .management-page-size { gap: 10px; margin: 0; flex: 1 1 auto; }
+  .app-shell main .management-page-size > .styled-dropdown { width: 88px; }
+  .app-shell main .customer-search-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 44px); align-items: end; gap: 10px; margin-bottom: 18px; }
+  .app-shell main .customer-search-row > .management-list-toolbar { display: contents; }
+  .app-shell main .customer-search-row .management-search-tools { display: contents; }
+  .app-shell main .customer-search-row .management-search { grid-column: 1 / -1; }
+  .app-shell main .customer-search-row .management-page-size { grid-column: 1; grid-row: 2; }
+  .app-shell main .customer-search-row .management-page-size > span { display: none; }
+  .app-shell main .customer-search-row .management-page-size > .styled-dropdown { width: 76px; }
+  .app-shell main .customer-merge-trigger { grid-column: 2; grid-row: 2; }
+  .app-shell main .customer-search-row > .customer-bulk-delete-button { grid-column: 3; grid-row: 2; }
+  .app-shell main .customer-search-row > .customer-add-button { grid-column: 4; grid-row: 2; }
+  .app-shell main .customer-search-row :is(.customer-merge-trigger, .customer-bulk-delete-button, .customer-add-button) { width: 44px; height: 44px; margin: 0; padding: 10px; min-width: 0; }
+  .app-shell .ticket-panel > .tabs { flex-wrap: nowrap; overflow-x: auto; gap: 0 18px; padding: 0 16px; scrollbar-width: thin; }
+  .app-shell .ticket-panel > .tabs > button { flex: 0 0 auto; min-height: 48px; white-space: nowrap; }
+  .app-shell .ticket-panel > .tabs > .tabs-edit-button { align-self: center; min-height: 40px; margin-left: auto; }
+  .app-shell .ticket-panel .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 20px 16px; align-items: center; }
+  .app-shell .ticket-panel .filters > .management-search { grid-column: 1 / -1; min-width: 0; width: 100%; margin: 0; }
+  .app-shell .ticket-panel .filters > .styled-dropdown { width: 100%; min-width: 0; }
+  .app-shell .ticket-panel .filters .inbox-limit { grid-column: 1; gap: 8px; margin: 0; }
+  .app-shell .ticket-panel .filters .inbox-limit .styled-dropdown { width: 72px; }
+  .app-shell .ticket-panel .filters .inbox-delete { justify-self: end; height: 44px; margin: 0; box-sizing: border-box; }
+  .app-shell .ticket-panel .inbox-delete .notification-delete-trigger { height: 42px; min-height: 42px; }
+  .app-shell .ticket-panel .notification-delete-menu { right: 0; left: auto; max-width: calc(100vw - 64px); }
+  .app-shell main :is(.catalog-tabs, .report-tabs, .guide-hub-tabs) { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+  .app-shell main :is(.catalog-tabs, .report-tabs, .guide-hub-tabs) > :is(button, a) { flex: 0 0 auto; min-height: 44px; white-space: nowrap; }
+  .app-shell main :is(.form-actions, .page-heading > .management-actions) { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
+  .app-shell main .form-actions > .button { flex: 1 1 auto; justify-content: center; white-space: normal; }
+
+}

@@ -151,15 +151,15 @@ export function SkillsPage() {
           />
           {!!visible.length && (
             <div className="management-table-wrap">
-              <table className="management-table">
+              <table className="management-table mobile-record-table">
 <SortableTableHead sorting={sorting} columns={[{label:'Ad',field:'name'},{label:kind==='skill'?'Kategori':kind==='level'?'Sıra':'Yetenek Sayısı',field:'detail'},{label:'İşlemler'}]} />
                 <tbody>
                   {visible.map((item) => (
                     <tr key={item.id}>
-                      <td>
+                      <td data-label="Ad">
                         <strong>{item.name}</strong>
                       </td>
-                      <td>
+                      <td data-label={kind === 'skill' ? 'Kategori' : kind === 'level' ? 'Sıra' : 'Yetenek Sayısı'}>
                         {kind === "skill"
                           ? catalog.data?.categories.find(
                               (category) => category.id === item.categoryId,
@@ -170,7 +170,7 @@ export function SkillsPage() {
                                 (skill) => skill.categoryId === item.id,
                               ).length}
                       </td>
-                      <td>
+                      <td data-label="İşlemler">
                         <div className="management-actions">
                           {hasPermission(user, "skills.update") && (
                             <button

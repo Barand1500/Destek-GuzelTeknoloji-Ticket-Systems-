@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
-  Activity, ArrowRight, BarChart3, Bell, BookOpen, Building2, CheckCircle2, ChevronRight, ClipboardList, FileText, History, Inbox,
+  Activity, BarChart3, Bell, BookOpen, Building2, CheckCircle2, ChevronRight, ClipboardList, FileText, History, Inbox,
   LayoutDashboard, MessageSquare, Phone, Settings, ShieldCheck, Tags,
   Timer, UserPlus, UserRound, UsersRound, X,
 } from "lucide-react";
@@ -50,10 +50,10 @@ const workScreens: GuideScreen[] = [
       ],
     }],
     details: [
-      { title: "Talep Sayaçları", text: "Toplam, açık, bekleyen, çözülen ve kapalı talep sayılarını; bugün açılan talepleri görün." },
-      { title: "Ekip Yükü", text: "atanmamış talepleri ve aktif personel sayısını izleyerek hangi işe öncelik vereceğinizi belirleyin." },
-      { title: "Durum Grafiği", text: "Taleplerin durumlara dağılımını görün. Grafiğin yanındaki duruma tıklayınca gelen kutusu o duruma göre açılır." },
-      { title: "Talepleri Görüntüleyin", text: "Üstteki düğme sizi doğrudan gelen kutusuna götürür." },
+      { title: "Talep Sayaçları", text: "Açık, bekleyen, çözülen ve kapalı taleplerin sayısını görün." },
+      { title: "Ekip Yükü", text: "Atanmamış talepleri ve aktif personeli kontrol edin." },
+      { title: "Durum Grafiği", text: "Bir duruma tıklayarak ilgili talepleri gelen kutusunda açın." },
+      { title: "Talepleri Görüntüleyin", text: "Gelen kutusuna geçip işlem yapacağınız talebi açın." },
     ],
     next: "İşlem gerektiren bir talep gördüğünüzde Gelen Kutusu ekranına geçin.",
   },
@@ -76,11 +76,11 @@ const workScreens: GuideScreen[] = [
       },
     ],
     details: [
-      { title: "Görünüm Sekmeleri", text: "Tümü, Telefon talebi, Mail, SMS, WhatsApp, Bana atanan, Atanmamış ve etiket görünümleri arasında geçin. Kalem simgesiyle sekmeleri düzenleyin." },
-      { title: "Arama ve Filtreler", text: "Talep numarası, konu, müşteri veya personel arayın. Kayıt sayısını, durumu ve önceliği ayrıca seçin." },
-      { title: "Talep Tablosu", text: "Her satırda kanal, durum, öncelik, departman, atanan personel, açılış ve son güncelleme bilgisi vardır." },
-      { title: "Yanıt Süresi", text: "Yanıt bekleyen veya cevaplanmış talebin süre bilgisini aynı satırda izleyin." },
-      { title: "Konuşmaya Geçiş", text: "Talep başlığına tıklayın; mesaj geçmişi ve yanıt alanı açılır." },
+      { title: "Görünüm Sekmeleri", text: "Kanal veya atamaya göre geçiş yapın. Kalem düğmesiyle sekmeleri düzenleyin." },
+      { title: "Arama ve Filtreler", text: "Talebi arayın; kaynak site, durum ve öncelik filtrelerini kullanın." },
+      { title: "Talep Tablosu", text: "Sorumlu ekibi, atanan kişiyi ve kullanılan krediyi görün." },
+      { title: "Yanıt Süresi", text: "Bekleyen yanıtları ve ilk yanıt süresini takip edin." },
+      { title: "Konuşmaya Geçiş", text: "Talep başlığına tıklayarak mesajları ve yanıt alanını açın." },
     ],
     next: "Talebi açınca konuşmayı okuyun, gerekiyorsa personel atayın ve yanıtlayın.",
   },
@@ -110,11 +110,11 @@ const workScreens: GuideScreen[] = [
       },
     ],
     details: [
-      { title: "Müşteri Arama", text: "Ad, telefon veya e-posta ile kayıt arayın. Aynı adlı kişileri iletişim bilgilerinden ayırt edin." },
-      { title: "Yeni Müşteri", text: "Sağdaki + düğmesiyle ad, telefon, ek iletişim bilgileri, şirket, personel notu ve dosya ekleyin." },
-      { title: "Kayıt Listesi", text: "İletişim bilgilerini, hesap durumunu ve kayıt üzerindeki personel notunu inceleyin. Kaydı düzenleyebilir veya dosyalarını görebilirsiniz." },
-      { title: "Görüşmeler", text: "Müşteri kaydını açıp Görüşmeler sekmesinde talepleri inceleyin. Şirkete bağlı kişiler varsa kişi filtresini kullanın." },
-      { title: "Talep Aç", text: "Müşteri kaydındaki Talep Aç sekmesinden bu müşteri adına yeni talep oluşturun." },
+      { title: "Müşteri Arama", text: "Ad, telefon veya e-posta ile doğru kişiyi bulun." },
+      { title: "Yeni Müşteri", text: "Sağdaki + düğmesiyle müşteri kaydı oluşturun." },
+      { title: "Kayıt Listesi", text: "Şirket, iletişim, kredi ve hesap durumunu kontrol edin." },
+      { title: "Görüşmeler", text: "Müşterinin taleplerini açın; şirkete bağlı kişilere göre filtreleyin." },
+      { title: "Talep Aç", text: "Müşteri kaydındaki Talep Aç sekmesinden yeni talep oluşturun." },
     ],
     next: "Müşteri bulunduysa kaydı açıp Talep Aç sekmesiyle devam edin; yeni arayan için Telefon talebi ekranını kullanın.",
   },
@@ -152,14 +152,14 @@ const workScreens: GuideScreen[] = [
       },
     ],
     details: [
-      { title: "Arayanı Bul", text: "Telefon, e-posta veya ad yazın. Eşleşen kayıtların iletişim bilgilerini karşılaştırıp doğru kişiyi seçin." },
-      { title: "Yeni Arayan Ekle", text: "Aynı adla kayıt bulunsa bile Enter veya sağdaki + yeni kişi formunu açar; arama sonuçları gizlenir." },
-      { title: "Kayıtlı Kişiye Talep Aç", text: "Arama sonucundan kayıtlı kişiyi seçtiğinizde kişinin adı hazır gelir ve yalnızca Talep bilgileri formu gösterilir." },
-      { title: "Yeni Kişi Bilgileri", text: "Yeni arayan için ad, telefon, e-posta, şirket ve isteğe bağlı kalıcı müşteri notunu doldurun." },
-      { title: "Talep Bilgileri", text: "Dönüş kanalını, projeyi, konuyu, açıklamayı, departmanı ve atanacak personeli seçin. Gerekli alanları tamamlayıp talebi oluşturun." },
-      { title: "Konuşmaya Geçiş", text: "Oluşturulan talep sizi doğrudan konuşma ekranına taşır." },
+      { title: "Arayanı Bul", text: "Telefon, e-posta veya adla arayıp doğru kişiyi seçin." },
+      { title: "Yeni Arayan Ekle", text: "Kişi kayıtlı değilse + düğmesine basın; yeni kişi formu açılır." },
+      { title: "Kayıtlı Kişiye Talep Aç", text: "Kişiyi seçin; iletişim bilgileri hazır gelir." },
+      { title: "Yeni Kişi Bilgileri", text: "Ad, telefon, e-posta ve varsa şirket bilgisini girin." },
+      { title: "Talep Bilgileri", text: "Proje, konu, açıklama, departman ve sorumlu personeli belirleyin." },
+      { title: "Konuşmaya Geçiş", text: "Talep oluşturulduğunda konuşma ekranından devam edin." },
     ],
-    next: "Talep Oluşturılınca konuşma ekranından yanıtı ve durumunu takip edin.",
+    next: "Talebi oluşturduktan sonra konuşma ekranından devam edin.",
   },
   {
     id: "conversation", number: "05", title: "Konuşma Ekranı", icon: MessageSquare,
@@ -179,12 +179,12 @@ const workScreens: GuideScreen[] = [
       ],
     }],
     details: [
-      { title: "Talep Kaynağı ve Durumu", text: "Sağ üstte talebi kimin oluşturduğunu, geldiği kanalı ve güncel durumunu kontrol edin." },
-      { title: "Müşteri Bilgileri", text: "Talep sahibinin adını, telefonunu ve e-posta adresini başlığın altındaki bilgi şeridinde görün." },
-      { title: "Mesaj Geçmişi", text: "Müşteri ve personel mesajlarını zaman sırasıyla okuyun; mesaj sayısını konuşma başlığından takip edin." },
-      { title: "Yanıt ve Dahili Not", text: "Müşteriye yanıt yazın veya yalnızca personelin görebileceği Dahili not ekleyin. Hazır yanıt ve dosya ekleme araçlarını kullanın." },
-      { title: "Talep Bilgileri", text: "Sağ panelden durum, öncelik, proje, departman, atanan personel ve etiketleri güncelleyin." },
-      { title: "Talebi Sonuçlandır", text: "İşlem tamamlandığında Çözüldü olarak işaretle düğmesini kullanın; silme işlemini yalnızca gerçekten gerekiyorsa yapın." },
+      { title: "Talep Kaynağı ve Durumu", text: "Talebi kimin oluşturduğunu, kanalı ve durumunu görün." },
+      { title: "Müşteri Bilgileri", text: "Başlığın altından müşteri iletişim bilgilerine ulaşın." },
+      { title: "Mesaj Geçmişi", text: "Müşteri ve personel mesajlarını zaman sırasıyla okuyun." },
+      { title: "Yanıt ve Dahili Not", text: "Müşteriye yanıt verin veya ekibin görebileceği dahili not ekleyin." },
+      { title: "Talep Bilgileri", text: "Durum, öncelik, proje, departman, sorumlu personel ve etiketleri düzenleyin." },
+      { title: "Talebi Sonuçlandır", text: "Çözüm tamamlandığında talebin durumunu güncelleyin." },
     ],
     next: "Yanıtı gönderdikten sonra talebin durumunu güncelleyin ve çözüm tamamlandıysa talebi kapatın.",
   },
@@ -198,143 +198,32 @@ type SettingsScreen = {
 };
 
 const settingsScreens: SettingsScreen[] = [
-  {
-    icon: UsersRound,
-    title: "Yetenekler",
-    text: "Ayarlar → Kategoriler → Yetenekler sayfasında personel için seçilebilir kategori, seviye ve yetenek tanımlarını yönetin.",
-    details: [
-      "Kategoriler ve Seviyeler sekmelerinden kendi tanımlarınızı oluşturun; seviye sırasını belirleyin.",
-      "Yetenekler sekmesinde kategoriye bağlı yetenek ekleyin; personel formunda kategori, seviye ve yeteneği seçip ekleyin.",
-      "Ad değişiklikleri personel kayıtlarına da uygulanır; personelde kullanılan tanımlar silinmeden önce ilgili atamalar kaldırılmalıdır.",
-    ],
-  },
-  {
-    icon: Settings,
-    title: "Entegrasyonlar",
-    text: "Sisteme mesaj getiren ve sistemden yanıt gönderen kanallar burada bağlanır.",
-    details: [
-      "Ayarlar → Entegrasyonlar sayfasında E-Posta, SMS ve WhatsApp sekmeleri arasında geçin.",
-      "E-Posta bölümünde giden posta için SMTP, gelen posta için IMAP bağlantı bilgilerini girin.",
-      "Bağlantıyı test edin; çalışan ve sorunlu kanalları durum bilgisinden izleyin.",
-      "SMS ve WhatsApp bağlantılarını etkinleştirin; erişim bilgilerini ve varsayılan departmanı ayarlayın.",
-    ],
-  },
-  {
-    icon: Timer,
-    title: "Yanıt Süreleri",
-    text: "Ekibin yanıt performansında kullanılacak süre kuralları iki ayrı sekmede yönetilir.",
-    details: [
-      "Yanıt süresi sekmesinde ilk yanıt için süre aralıklarını belirleyin.",
-      "Personel süresi sekmesinde işlem yapılmadığında kaç dakika sonra Boşta görüneceğini ayarlayın.",
-      "Değişiklikleri kaydettikten sonra yeni hesaplamalar belirlenen süreleri kullanır.",
-    ],
-  },
-  {
-    icon: ShieldCheck,
-    title: "Roller",
-    text: "Ayarlar → Roller sayfasında personelin erişebileceği ekranları ve yapabileceği işlemleri belirleyin.",
-    details: [
-      "Hazır bir şablondan başlayın veya ekibinize uygun yeni bir rol oluşturun.",
-      "Her ekran için görüntüleme, oluşturma, düzenleme ve silme gibi izinleri ayrı ayrı seçin.",
-      "Talep kapsamını kendisine atanan talepler, bağlı departmanlar veya tüm departmanlar olarak belirleyin; rolü personele atayın.",
-    ],
-  },
-  {
-    icon: Activity,
-    title: "Personel Etkinliği",
-    text: "Ekibin o anki durumunu ve destek performansını tek ekranda takip edin.",
-    details: [
-      "Çevrimiçi, Boşta veya Çevrimdışı özet kutusuna basarak personeli filtreleyin.",
-      "Personelin şu an ne yaptığını ve son hareket zamanını görün.",
-      "Bugün cevaplanan, bugün çözülen, toplam cevaplanan, açık atama ve ortalama ilk yanıt değerlerini inceleyin.",
-    ],
-  },
-  {
-    icon: UsersRound,
-    title: "Personeller",
-    text: "Destek ekibinin hesaplarını, yetkilerini ve çalışma alanlarını yönetin.",
-    details: [
-      "Yeni personel hesabı açın veya mevcut hesabın bilgilerini güncelleyin.",
-      "Yönetici, departman sorumlusu ve destek uzmanı gibi rol ve yetkileri belirleyin.",
-      "Personeli bir veya birden fazla departmana bağlayın; gerekirse hesabı pasif duruma alın.",
-    ],
-  },
-  {
-    icon: Tags,
-    title: "Kategoriler",
-    text: "Taleplerin düzenli bulunmasını sağlayan etiket ve sınıflandırmaları yönetin.",
-    details: [
-      "Yeni kategori veya etiket ekleyin ve adını düzenleyin.",
-      "Gelen Kutusunda kullanılacak özel görünümleri sınıflandırmalara göre hazırlayın.",
-      "Artık kullanılmayan kayıtları silmeden önce bağlı talepleri kontrol edin.",
-    ],
-  },
-  {
-    icon: Tags,
-    title: "Projeler",
-    text: "Talebin hangi ürün, site veya hizmetle ilgili olduğunu gösteren proje kayıtlarını yönetin.",
-    details: [
-      "Yeni proje ekleyin; proje adını ve varsa web adresini kaydedin.",
-      "Telefon talebi ve konuşma panelindeki Proje alanı bu listedeki kayıtları kullanır.",
-      "Proje seçimi sayesinde aynı müşterinin farklı ürünlerle ilgili taleplerini ayırın.",
-    ],
-  },
-  {
-    icon: BookOpen,
-    title: "Rehber",
-    text: "Ayarlar → Rehber sayfasında Proje Rehberi ve Sistem Rehberi sekmelerine tek yerden ulaşın.",
-    details: [
-      "Proje Rehberi sekmesinde projelere ait destek bilgilerini ve rehber dosyalarını inceleyin.",
-      "Sistem Rehberi sekmesinde günlük talep akışını güncel ekran görüntüleriyle öğrenin.",
-      "Numaralı oklarla açıklanan alanları bulun; görselleri tam boy açın ve farklı ekran örnekleri arasında geçin.",
-    ],
-  },
-  {
-    icon: Building2,
-    title: "Departmanlar",
-    text: "Personeller sayfasındaki Departmanlar bölümünden destek ekibinin çalışma birimlerini yönetin.",
-    details: [
-      "Yeni departman oluşturun, adını düzenleyin ve aktiflik durumunu belirleyin.",
-      "Personelleri ilgili departmanlara bağlayarak talepleri doğru ekibe yönlendirin.",
-      "Talep Oluşturarken veya mevcut talebi aktarırken departman seçimini kullanın.",
-    ],
-  },
-  {
-    icon: ClipboardList,
-    title: "Anketler",
-    text: "Ayarlar → Anketler sayfasında Anket ve Oylama ekranını açın; ekipten geri bildirim toplayın.",
-    details: [
-      "Başlık ve soruları hazırlayın; hedef departmanı, katılımcıları ve anonim oylama seçeneğini belirleyin.",
-      "Duyuruyu bildirim, SMS veya e-posta ile iletin; seçilen kanalın entegrasyonunu kontrol edin.",
-      "Aktif ve tamamlanan anketleri ayrı listelerde takip edin; İstatistikler üzerinden katılımı ve yanıt dağılımlarını inceleyin.",
-    ],
-  },
-  {
-    icon: BarChart3,
-    title: "Raporlar",
-    text: "Ayarlar → Raporlar sayfasında destek taleplerinin ve ekibin performansını inceleyin.",
-    details: [
-      "Genel Rapor, Kişi Raporu ve Departman Raporu sekmeleriyle farklı kapsamları karşılaştırın.",
-      "Kişi raporunda çalışanı, departman raporunda ilgili departmanı seçin; trend ve süre dönemi için son 7, 30 veya 90 günü kullanın.",
-      "Talep durumlarını, öncelik dağılımını, tamamlanma oranını ve yanıt ile çözüm sürelerini takip edin.",
-    ],
-  },
-  {
-    icon: History,
-    title: "İşlem Geçmişi",
-    text: "Sol menünün altındaki İşlem Geçmişi aracından sistemde yapılan işlemleri ve işlemi yapan kişileri izleyin.",
-    details: [
-      "Her kayıtta tarih, kullanıcı, işlem ve açıklama bilgilerini inceleyin.",
-      "Kullanıcı, işlem veya açıklama üzerinden arayın; talebe bağlı kayıtlarda Görüşmeyi aç ile ilgili konuşmaya geçin.",
-      "İşlem Geçmişini sil menüsünden son 24 saat, son 7 gün, son 30 gün veya tüm kayıtları seçebilirsiniz; bu işlem kalıcıdır.",
-    ],
-  },
+  { icon: UsersRound, title: "Personeller ve Departmanlar", text: "Ekip hesaplarını ve çalışma birimlerini yönetin.", details: ["Rol ve departman atayın; hesapları aktif veya pasif yapın.","Personel formundan yetenekleri ekleyin."] },
+  { icon: Tags, title: "Kategoriler ve Personel Yetenekleri", text: "Talepleri ve ekip yeteneklerini sınıflandırın.", details: ["Etiket, durum ve öncelikleri düzenleyin.","Personel Yetenekleri bölümünde kategori, yetenek ve seviye tanımlayın."] },
+  { icon: Settings, title: "Entegrasyonlar", text: "Mesaj kanallarını ve form bağlantılarını kurun.", details: ["E-Posta, SMS ve WhatsApp bağlantılarını test edin.","Form alanlarını ve Cloudflare doğrulamasını ayarlayın."] },
+  { icon: Timer, title: "Yanıt Süreleri", text: "Yanıt eşiklerini ve personelin boşta kalma süresini belirleyin.", details: ["Süre aralıklarını ve renkleri seçin.","Personel Süresi sekmesinden boşta kalma eşiğini ayarlayın."] },
+  { icon: ShieldCheck, title: "Roller", text: "Personelin erişebileceği ekranları ve işlemleri belirleyin.", details: ["Hazır şablonu kullanın veya yeni rol oluşturun.","İzinleri ve talep kapsamını belirleyip rolü personele atayın."] },
+  { icon: Activity, title: "Personel Etkinliği", text: "Ekibin anlık durumunu ve destek yükünü görün.", details: ["Çevrimiçi, Boşta veya Çevrimdışı durumuna göre filtreleyin.","Yanıt, çözüm ve açık atama sayılarını inceleyin."] },
+  { icon: Tags, title: "Projeler", text: "Destek verilen ürün, site ve hizmetleri tanımlayın.", details: ["Proje adı, web adresi ve dosyalarını ekleyin.","Talep oluştururken ilgili projeyi seçin."] },
+  { icon: BookOpen, title: "Rehber", text: "Proje bilgilerine ve kullanım adımlarına ulaşın.", details: ["Proje Rehberi bölümünden destek bilgilerini bulun.","Sistem Rehberi görsellerini tam boy açarak inceleyin."] },
+  { icon: ClipboardList, title: "Anketler", text: "Ekipten görüş ve geri bildirim alın.", details: ["Soruları ve katılımcıları belirleyin.","Katılımı ve yanıtları İstatistikler bölümünde görün."] },
+  { icon: BarChart3, title: "Raporlar", text: "Talep, ekip ve departman performansını inceleyin.", details: ["Dönemi, personeli veya departmanı seçin.","Personel kredi kullanımını ve ilgili talepleri takip edin."] },
+  { icon: History, title: "İşlem Geçmişi", text: "Kimin, ne zaman, hangi işlemi yaptığını bulun.", details: ["Kullanıcı veya işlemle arayın.","Talebe bağlı kayıttan görüşmeyi açın."] },
+  { icon: FileText, title: "Kredi ve Paketler", text: "Kredi paketlerini, siparişleri ve abonelikleri yönetin.", details: ["Paket içeriklerini ve fiyatlarını düzenleyin.","Siparişlerin ödeme ve kredi durumlarını takip edin."] },
+  { icon: Settings, title: "Ödeme Ayarları", text: "Banka ve ödeme sağlayıcılarını bağlayın.", details: ["Sağlayıcı bilgilerini girip bağlantıyı test edin.","İlgili sağlayıcının online ödeme anahtarını kullanın."] },
+  { icon: BarChart3, title: "Para Birimleri", text: "Kur ve otomatik güncelleme ayarlarını yönetin.", details: ["Para birimini ve kur tipini seçin.","Kurları güncelleyin; aktiflik durumunu değiştirin."] },
+  { icon: Building2, title: "Müşteri Anlaşmaları ve Kredi Geçmişi", text: "Müşteri kaydından anlaşmaları ve kredi hareketlerini inceleyin.", details: ["Anlaşma tarihlerini, toplam ve kalan krediyi görün.","Şirket ve kişi filtreleriyle kullanımları inceleyin; geçmişi Excel olarak indirin."] },
+  { icon: FileText, title: "Dosyalar", text: "Dosyaları klasörlerde düzenleyip paylaşın.", details: ["Klasör oluşturun veya dosya yükleyin.","Aramayla dosyayı bulun; liste ya da kart görünümünü kullanın."] },
+  { icon: ClipboardList, title: "Takvim", text: "Duyuruları ve özel günleri aylık görünümde takip edin.", details: ["Oklarla ay değiştirin; Bugün ile bu aya dönün.","Bir güne dokunup o günün duyurularını açın."] },
+  { icon: MessageSquare, title: "Hazır Yanıtlar", text: "Sık kullanılan destek mesajlarını kaydedin.", details: ["Şablonları oluşturun ve düzenleyin.","Konuşmadaki hazır yanıt alanından seçip kullanın."] },
+  { icon: Bell, title: "Bildirimler", text: "Yeni talepleri ve ekip duyurularını takip edin.", details: ["Üst çubuktaki zilden bildirimleri açın.","Bildirim Ayarları bölümünden gönderim tercihlerini yönetin."] },
+  { icon: UserRound, title: "Profil", text: "Hesap ve güvenlik bilgilerinizi yönetin.", details: ["Sağ üstteki profil düğmesinden hesabınızı açın.","İletişim ve güvenlik bilgilerinizi güncelleyin."] },
 ];
 
 function AnnotatedShot({ shot, markerId, eager = false }: { shot: GuideShot; markerId: string; eager?: boolean }) {
   return (
     <div className="guide-annotated-shot">
-      <img src={`${shot.src}?v=20261012`} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
+      <img src={`${shot.src}?v=20261126`} alt={shot.alt} loading={eager ? "eager" : "lazy"} />
       {!!shot.pins?.length && (
         <svg className="guide-arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -442,9 +331,11 @@ function ScreenGuide({ screen }: { screen: GuideScreen }) {
     <section className="guide-screen-row" id={screen.id}>
       <Screenshot screen={screen} />
       <div className="guide-screen-copy">
+        <div className="guide-screen-intro">
         <span className="guide-eyebrow">{screen.number} · Çalışma Alanı</span>
         <h2>{screen.title}</h2>
         <p>{screen.summary}</p>
+        </div>
         <ol className="guide-callout-list">
           {screen.details.map((detail, index) => (
             <li key={detail.title}><span>{index + 1}</span><div><h3>{detail.title}</h3><p>{detail.text}</p></div></li>
@@ -464,32 +355,32 @@ export function GuidePage() {
   }> = [
     {
       title: "Normal Destek Akışı",
-      description: "E-Posta veya diğer kanallardan gelen bir talebi bulup sonuçlandırma sırası.",
+      description: "Gelen talebi bulun, yanıtlayın ve sonuçlandırın.",
       steps: [
-        [LayoutDashboard, "Genel Bakış", "Açık, bekleyen ve atanmamış talepleri kontrol edin."],
-        [Inbox, "Gelen Kutusu", "Talebi arayın veya filtreleyin ve başlığına tıklayın."],
-        [MessageSquare, "Konuşma", "Mesajı okuyun, atamayı yapın ve müşteriye yanıt verin."],
-        [CheckCircle2, "Sonuçlandır", "Durumu güncelleyin ve tamamlanan talebi çözüldü olarak işaretleyin."],
+        [LayoutDashboard, "Kontrol et", "Açık ve bekleyen talepleri görün."],
+        [Inbox, "Talebi bul", "Arayın veya filtreleyin."],
+        [MessageSquare, "Yanıtla", "Mesajı okuyup yanıt verin."],
+        [CheckCircle2, "Sonuçlandır", "Talebin durumunu güncelleyin."],
       ],
     },
     {
       title: "Telefon Talebi · Mevcut Kişi",
-      description: "Arayan kişi sistemde kayıtlıysa bilgilerini yeniden girmeden talep açın.",
+      description: "Kayıtlı müşteri adına talep açın.",
       steps: [
-        [Phone, "Arayanı ara", "Telefon, e-posta veya adı arama alanına yazın."],
-        [UsersRound, "Kaydı seç", "İletişim bilgisini kontrol edip doğru müşteriye tıklayın."],
-        [FileText, "Talebi doldur", "Proje, konu, açıklama, departman ve personel bilgilerini seçin."],
-        [MessageSquare, "Takibe geç", "Talebi oluşturun; açılan konuşma ekranından süreci yönetin."],
+        [Phone, "Arayanı bul", "Ad, telefon veya e-posta yazın."],
+        [UsersRound, "Kişiyi seç", "İletişim bilgisini kontrol edin."],
+        [FileText, "Talebi oluştur", "Konu ve açıklamayı doldurun."],
+        [MessageSquare, "Takip et", "Konuşma ekranından devam edin."],
       ],
     },
     {
       title: "Telefon Talebi · Yeni Kişi Ekleme",
-      description: "Arayan sistemde yoksa kişi kaydıyla talebi aynı işlem içinde oluşturun.",
+      description: "Yeni kişiyle talebi birlikte oluşturun.",
       steps: [
-        [Phone, "Önce arayın", "Mükerrer kayıt oluşmaması için adı, telefonu veya e-postayı kontrol edin."],
-        [UserPlus, "Enter veya +", "Eşleşme olsun ya da olmasın Enter'a veya sağdaki + düğmesine basın."],
-        [UsersRound, "Kişi + talep", "Solda yeni kişinin, sağda açılacak talebin bilgilerini doldurun."],
-        [MessageSquare, "Birlikte oluştur", "Kişiyi ve talebi oluşturun; konuşma ekranından devam edin."],
+        [Phone, "Önce ara", "Kişinin kayıtlı olmadığını doğrulayın."],
+        [UserPlus, "Yeni kişi", "+ düğmesiyle formu açın."],
+        [UsersRound, "Bilgileri gir", "Kişi ve talep alanlarını doldurun."],
+        [MessageSquare, "Oluştur", "Açılan konuşmadan devam edin."],
       ],
     },
   ];
@@ -499,7 +390,7 @@ export function GuidePage() {
       <section className="guide-flow-section" aria-labelledby="work-flow-title">
         <span className="guide-eyebrow">Günlük Kullanım</span>
         <h2 id="work-flow-title">Talep Ekranları Birbirine Nasıl Bağlanır?</h2>
-        <p className="guide-flow-intro">Aşağıdaki üç akıştan size uygun olanı izleyin. Her kutu, bir sonraki ekrana hangi işlemle geçileceğini gösterir.</p>
+        <p className="guide-flow-intro">İşinize uygun akışı seçin; adımları sırayla izleyin.</p>
         <div className="guide-flow-grid">
           {flowGroups.map(({ title, description, steps }) => (
             <article className="guide-flow-card" key={title}>
@@ -516,25 +407,17 @@ export function GuidePage() {
             </article>
           ))}
         </div>
-        <div className="guide-phone-add-note"><UserPlus size={18} /><div><strong>Yeni kişi eklerken önemli</strong><p>Arama sonucunda aynı isimli kişiler görünse bile yeni bir kayıt açabilirsiniz. Enter veya sağdaki + düğmesi sonuç listesini kapatır ve Yeni arayan kişi formunu açar. Böylece aynı isimli farklı bir kişiye telefon ve e-posta bilgileriyle ayrı kayıt oluşturulur.</p></div></div>
+        <div className="guide-phone-add-note"><UserPlus size={18} /><div><strong>Yeni kişi eklerken önemli</strong><p>Aynı adlı kişiler olabilir. Yeni kayıt açmadan önce telefon ve e-postayı kontrol edin.</p></div></div>
       </section>
       <div className="guide-screen-list">{workScreens.map((screen) => <ScreenGuide key={screen.id} screen={screen} />)}</div>
       <section className="guide-settings" id="settings">
-        <div className="guide-section-heading"><span className="guide-eyebrow">Yönetim ve Ekip Araçları</span><h2>Ayarlar ve Yönetim Ekranları</h2><p>Ayarlar menüsündeki sayfaları ve ekip araçlarını burada tanıyın. Ekranların ve işlemlerin görünürlüğü hesabınıza verilen yetkilere bağlıdır.</p></div>
-        <div className="guide-settings-flow">
-          {[
-            "Kanalları bağla",
-            "Süre ve bildirimleri ayarla",
-            "Personel ve projeleri tanımla",
-            "Anket, rapor ve geçmişi incele",
-          ].map((step, index, items) => <span key={step}><b>{index + 1}</b>{step}{index < items.length - 1 && <ArrowRight size={22} />}</span>)}
-        </div>
+        <div className="guide-section-heading"><span className="guide-eyebrow">Yönetim ve Ekip Araçları</span><h2>Ayarlar ve Yönetim Ekranları</h2><p>Ekranlar ve yapabileceğiniz işlemler hesabınızın yetkilerine bağlıdır.</p></div>
         <div className="guide-directory-grid">
           {settingsScreens.map(({ icon: Icon, title, text, details }, index) => (
             <article key={title}>
               <div className="guide-setting-icon"><Icon size={18} /></div>
               <div className="guide-setting-copy">
-                <span className="guide-setting-number">Ayar {String(index + 1).padStart(2, "0")}</span>
+                <span className="guide-setting-number">Ekran {String(index + 1).padStart(2, "0")}</span>
                 <strong>{title}</strong>
                 <p>{text}</p>
                 <ul>{details.map((detail) => <li key={detail}>{detail}</li>)}</ul>

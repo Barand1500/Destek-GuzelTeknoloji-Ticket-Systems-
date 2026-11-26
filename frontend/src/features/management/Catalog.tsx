@@ -77,18 +77,18 @@ export function DepartmentsPage() {
           />
           {!!list.data?.data.length && (
             <div className="management-table-wrap">
-              <table className="management-table department-table">
+              <table className="management-table department-table mobile-record-table">
                 <SortableTableHead sorting={list} columns={[{label:'Departman',field:'name'},...(canUpdate?[{label:'Durum'}]:[]),...((canUpdate||canDelete)?[{label:'İşlemler'}]:[])]} />
                 <tbody>
                   {list.data.data.map((item) => (
                     <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((v) => v + 1); save.reset(); })} className={!item.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
-                      <td>
+                      <td data-label="Departman">
                         <strong>{item.name}</strong>
                       </td>
-                      {canUpdate && <td>
+                      {canUpdate && <td data-label="Durum">
                         <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${item.name} aktif`} checked={item.isActive} disabled={changeStatus.isPending} onChange={() => changeStatus.mutate({ id: item.id, data: { isActive: !item.isActive } })} /><span /></label><span>{item.isActive ? 'Aktif' : 'Pasif'}</span></div>
                       </td>}
-                      {(canUpdate || canDelete) && <td>
+                      {(canUpdate || canDelete) && <td data-label="İşlemler">
                         <div className="management-actions">
                           {canUpdate && <button
                             type="button"
@@ -238,21 +238,21 @@ export function TagsPage() {
           />
           {!!(list.data?.data.length || inboxViews.length) && (
             <div className="management-table-wrap">
-              <table className="management-table catalog-table">
+              <table className="management-table catalog-table mobile-record-table">
                 <SortableTableHead sorting={list} columns={[{label:'Görünen Ad',field:'name'},{label:'Sistem Kodu',field:'code'},...((canUpdate||canDelete)?[{label:'İşlemler'}]:[])]} />
                 <tbody>
                   {list.data?.data.map((tag) => tag.id.startsWith('view-') ? (
                     <tr key={tag.id} {...editableRowProps(() => { setEditing(null); setEditingView({ id: tag.id, name: tag.name, code: tag.code }); setVersion((v) => v + 1); })}>
-                      <td>{tag.name}</td>
-                      <td><code>{tag.code}</code></td>
-                      {(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: tag.id, name: tag.name, code: tag.code }); setVersion((v) => v + 1); }}>Düzenle</button>}</div></td>}
+                      <td data-label="Ad">{tag.name}</td>
+                      <td data-label="Kod"><code>{tag.code}</code></td>
+                      {(canUpdate || canDelete) && <td data-label="İşlemler"><div className="management-actions">{canUpdate && <button className="button secondary" type="button" onClick={() => { setEditing(null); setEditingView({ id: tag.id, name: tag.name, code: tag.code }); setVersion((v) => v + 1); }}>Düzenle</button>}</div></td>}
                     </tr>
                   ) : (
 
                     <tr key={tag.id} {...editableRowProps(() => { setEditing({ ...tag }); setEditingView(null); setVersion((v) => v + 1); save.reset(); })}>
-                      <td>{tag.name}</td>
-                      <td><code>{tag.code}</code></td>
-                      {(canUpdate || canDelete) && <td>
+                      <td data-label="Ad">{tag.name}</td>
+                      <td data-label="Kod"><code>{tag.code}</code></td>
+                      {(canUpdate || canDelete) && <td data-label="İşlemler">
                         <div className="management-actions">
                           {canUpdate && <button
                             className="button secondary"
@@ -344,7 +344,7 @@ function OptionSection({ kind }: { kind: "status" | "priority" }) {
       <Search value={list.search} onChange={list.setSearch} label={`${title} içinde ara`} limit={list.limit} onLimitChange={list.setLimit} />
       <ErrorMessage error={remove.error} />
       <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-    {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table catalog-table"><SortableTableHead sorting={list} columns={[{label:isStatus?'Durum':'Öncelik',field:'name'},{label:'Kod',field:'code'},...((canUpdate||canDelete)?[{label:'İşlemler'}]:[])]} /><tbody>{list.data.data.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}><td><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td><code>{item.code}</code></td>{(canUpdate || canDelete) && <td><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
+    {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table catalog-table mobile-record-table"><SortableTableHead sorting={list} columns={[{label:isStatus?'Durum':'Öncelik',field:'name'},{label:'Kod',field:'code'},...((canUpdate||canDelete)?[{label:'İşlemler'}]:[])]} /><tbody>{list.data.data.map((item) => <tr key={item.id} {...editableRowProps(() => { setEditing(item); setVersion((value) => value + 1); save.reset(); })}><td data-label="Ad"><span className="management-swatch" style={{ backgroundColor: displayColor(item) }} />{item.name}</td><td data-label="Kod"><code>{item.code}</code></td>{(canUpdate || canDelete) && <td data-label="İşlemler"><div className="management-actions">{canUpdate && <button className="button secondary" onClick={() => { setEditing(item); setVersion((value) => value + 1); save.reset(); }}>Düzenle</button>}{canDelete && <button className="button management-danger" disabled={remove.isPending} onClick={() => setDeleteTarget(item)}>Sil</button>}</div></td>}</tr>)}</tbody></table></div>}
       <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
     </section>
     {(editing ? canUpdate : canCreate) && <section className="management-panel"><h2>{editing ? `${title.slice(0, -1)} düzenle` : `${title.slice(0, -1)} ekle`}</h2><form key={version} className="management-form" onSubmit={submit}><label><span className="field-label">Görünen Ad</span><input required minLength={1} maxLength={60} name="name" defaultValue={editing?.name} placeholder={isStatus ? "Beklemede" : "Yüksek"} /></label><label><span className="field-label">Sistem Kodu</span><input required pattern="[A-Z0-9_]+" maxLength={40} name="code" defaultValue={editing?.code} placeholder={isStatus ? "WAITING" : "IMPORTANT"} /></label><label><span className="field-label">Renk</span><input name="color" type="color" defaultValue={optionColor(kind, editing?.code ?? "", editing?.color)} /></label><ErrorMessage error={save.error} /><FormActions pending={save.isPending} onCancel={editing ? reset : undefined} /></form></section>}
@@ -397,7 +397,7 @@ export function WebsitesPage() {
         <Search value={list.search} onChange={list.setSearch} label="Proje Ara" limit={list.limit} onLimitChange={list.setLimit} />
         <ErrorMessage error={remove.error} />
         <ListState loading={list.isPending} error={list.error} empty={!list.data?.data.length} />
-        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table projects-table"><SortableTableHead sorting={list} columns={[{label:'Ad',field:'name'},{label:'URL',field:'url'},...(canUpdate?[{label:'Durum'}]:[]),{label:'İşlemler'}]} /><tbody>{list.data.data.map((site) => <tr key={site.id} {...editableRowProps(() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); })} className={!site.isActive ? "inactive-record management-editable-row" : "management-editable-row"}><td><strong>{site.name}</strong></td><td><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber Dosyasını Gör" : "Rehber Dosyası Yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
+        {!!list.data?.data.length && <div className="management-table-wrap"><table className="management-table projects-table mobile-record-table"><SortableTableHead sorting={list} columns={[{label:'Ad',field:'name'},{label:'URL',field:'url'},...(canUpdate?[{label:'Durum'}]:[]),{label:'İşlemler'}]} /><tbody>{list.data.data.map((site) => <tr key={site.id} {...editableRowProps(() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); })} className={!site.isActive ? "inactive-record management-editable-row" : "management-editable-row"}><td data-label="Proje"><strong>{site.name}</strong></td><td data-label="URL"><a href={site.url} target="_blank" rel="noreferrer">{site.url}</a></td>{canUpdate && <td data-label="Durum"><label className="switch"><input type="checkbox" checked={site.isActive} disabled={changeStatus.isPending} onChange={(event) => changeStatus.mutate({ id: site.id, data: { isActive: event.target.checked } })} /><span /></label><small>{site.isActive ? "Aktif" : "Pasif"}</small></td>}<td data-label="İşlemler"><div className="management-actions">{canUpdate && <button className="icon-button" type="button" aria-label={`${site.name} düzenle`} title="Düzenle" onClick={() => { setEditing(site); setGuideFiles([]); setFileError(""); setVersion((value) => value + 1); save.reset(); }}><Pencil size={15} aria-hidden="true" /></button>}<button className={`icon-button ${site.guideFileCount ? "" : "is-muted"}`} type="button" aria-label={`${site.name} rehberini gör`} title={site.guideFileCount ? "Rehber Dosyasını Gör" : "Rehber Dosyası Yok"} disabled={!site.guideFileCount} onClick={() => setPreviewProject(site)}><Eye size={15} aria-hidden="true" /></button>{canDelete && <button className="icon-button danger-icon" type="button" aria-label={`${site.name} sil`} title="Sil" disabled={remove.isPending} onClick={() => setDeleteTarget(site)}><Trash2 size={15} aria-hidden="true" /></button>}</div></td></tr>)}</tbody></table></div>}
         <Pagination pagination={list.data?.pagination} onChange={list.setPage} alwaysVisible />
       </section>
       {(editing ? canUpdate : canCreate) && <section className="management-panel">

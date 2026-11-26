@@ -368,14 +368,15 @@ export function AnnouncementsModal({
         {tab === "history" && (
           <>
             {hasPermission(user, "announcements.delete") && <div className={`notification-delete announcement-history-delete${announcementDeleteMenuOpen ? " open" : ""}`}>
+              <span className="styled-dropdown-label">Sil</span>
               <button type="button" className="notification-delete-trigger" disabled={removeAnnouncements.isPending || removeAnnouncement.isPending} aria-haspopup="menu" aria-expanded={announcementDeleteMenuOpen} onClick={() => setAnnouncementDeleteMenuOpen(value => !value)}><Trash2 size={16} aria-hidden="true" /><span>{removeAnnouncements.isPending ? "Siliniyor…" : "Duyuruları sil"}</span><ChevronDown size={15} aria-hidden="true" /></button>
               {announcementDeleteMenuOpen && <div className="notification-delete-menu" role="menu">
                 {([["day", "Son 24 saatteki duyuruları sil"], ["week", "Son 7 gündeki duyuruları sil"], ["month", "Son 30 gündeki duyuruları sil"], ["all", "Tüm duyuruları sil"]] as const).map(([period, label]) => <button key={period} type="button" role="menuitem" disabled={removeAnnouncements.isPending || removeAnnouncement.isPending} onClick={() => { setAnnouncementDeleteMenuOpen(false); setError(""); setNotice(""); removeAnnouncements.mutate(period); }}>{label}</button>)}
               </div>}
             </div>}
             <label className="announcement-history-search">
-              <Search size={16} aria-hidden="true" />
-              <input type="search" aria-label="Geçmiş Duyurularda Ara" placeholder="Ara" maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
+              <span className="field-label">Ara</span>
+              <input type="search" aria-label="Geçmiş Duyurularda Ara" maxLength={200} value={historySearch} onChange={event => { setHistorySearch(event.target.value); setPage(1); }} />
             </label>
           </>
         )}

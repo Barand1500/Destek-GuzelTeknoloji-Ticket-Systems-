@@ -393,12 +393,12 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                 <tbody>
                   {list.data.data.map((person) => (
                     <tr key={person.id} {...editableRowProps(() => { if (canUpdateUsers && hasPermission(user, 'users.update') && !(user?.accessRole && person.accessRoleId !== user.accessRole.id)) edit(person); })} className={!person.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
-                      <td>
+                      <td data-label="Kullanıcı">
                         <strong className="users-cell-text" title={person.name}>{person.name}</strong>
                         <small className="users-cell-text" title={displayEmail(person.email) || undefined}>{displayEmail(person.email)}</small>
                         {person.phone && <small>{formatPhone(person.phone)}</small>}
                       </td>
-                      <td>
+                      <td data-label="Rol ve Departman">
                         <span className="users-cell-text users-role-text" title={person.accessRole?.name ?? roles[person.role]}>{person.accessRole?.name ?? roles[person.role]}</span>
                         <small className="users-cell-text users-department-text" title={person.departments.map(d => d.department.name).join(', ') || 'Departman yok'}>
                           {person.departments
@@ -406,10 +406,10 @@ export function UsersPage({ defaultRole }: { defaultRole?: Role }) {
                             .join(", ") || "Departman yok"}
                         </small>
                       </td>
-                      {canUpdateUsers && <td>
+                      {canUpdateUsers && <td data-label="Durum">
                         {(person.role !== "ADMIN" || Boolean(person.accessRoleId)) && <div className="status-toggle"><label className="switch"><input type="checkbox" role="switch" aria-label={`${person.name} aktif`} checked={person.isActive} disabled={changeStatus.isPending || person.id === user?.id} onChange={() => changeStatus.mutate({ id: person.id, data: { isActive: !person.isActive } })} /><span /></label><span>{person.isActive ? 'Aktif' : 'Pasif'}</span></div>}
                       </td>}
-                      {(canUpdateUsers || canDeleteUsers) && <td>
+                      {(canUpdateUsers || canDeleteUsers) && <td data-label="İşlemler">
                         <div className="management-actions">
                           {canUpdateUsers && <button
                             type="button"
@@ -610,7 +610,7 @@ export function CustomersPage() {
         description="Müşteri kayıtlarını yönetin, iletişim bilgilerini güncelleyin ve hızlıca yeni talep oluşturun."
       />
       <section className="management-panel">
-        <div className="customer-search-row"><Search afterSearch={canUpdateCustomers && canDeleteCustomers && <button className="button secondary customer-merge-trigger" type="button" title="Mükerrer Müşterileri Birleştir" aria-label="Mükerrer Müşterileri Birleştir" onClick={() => { setBulkSelectionMode(false); setSelectedCustomerIds([]); setMergeModalOpen(true); }}><UserRoundPlus size={19}/></button>} value={list.search} onChange={list.setSearch} label="Ad, Telefon veya E-Posta ile Ara" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"} title={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"}><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni Müşteri Ekle">+</button>}</div>
+        <div className="customer-search-row"><Search afterSearch={canUpdateCustomers && canDeleteCustomers && <button className="button secondary customer-merge-trigger" type="button" title="Mükerrer Müşterileri Birleştir" aria-label="Mükerrer Müşterileri Birleştir" onClick={() => { setBulkSelectionMode(false); setSelectedCustomerIds([]); setMergeModalOpen(true); }}><UserRoundPlus size={19}/></button>} value={list.search} onChange={list.setSearch} label="Ad, Telefon veya E-Posta ile Ara" limit={list.limit} onLimitChange={list.setLimit} />{canDeleteCustomers && <button className={`button ${bulkSelectionMode ? "danger" : "secondary"} customer-bulk-delete-button`} type="button" onClick={() => { if (!bulkSelectionMode) { setBulkSelectionMode(true); return; } if (selectedCustomerIds.length) { setBulkDeleteConfirm(true); return; } setBulkSelectionMode(false); }} aria-label={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"} title={bulkSelectionMode ? "Seçilen Müşterileri Sil" : "Toplu Sil"}><span className="styled-dropdown-label">Sil</span><Trash2 size={17} />{bulkSelectionMode && selectedCustomerIds.length > 0 && <span>{selectedCustomerIds.length}</span>}</button>}{canCreateCustomers && <button className="button primary customer-add-button" type="button" onClick={() => { save.reset(); setEditing(null); setCustomerModalOpen(true); }} aria-label="Yeni Müşteri Ekle">+</button>}</div>
         <ListState
           loading={list.isPending}
           error={list.error}
@@ -644,15 +644,15 @@ export function CustomersPage() {
                     if (bulkSelectionMode) { event.currentTarget.click(); return; }
                     navigate(customer.id);
                   }} className={!customer.isActive ? "inactive-record management-editable-row" : "management-editable-row"}>
-                    <td className={bulkSelectionMode ? "customer-select-cell" : undefined}>
+                    <td data-label="Şirket" className={bulkSelectionMode ? "customer-select-cell" : undefined}>
                       {(bulkSelectionMode) && <input type="checkbox" disabled={bulkRemove.isPending} checked={selectedCustomerIds.includes(customer.id)} onChange={(event) => setSelectedCustomerIds((current) => event.target.checked ? [...current, customer.id] : current.filter((id) => id !== customer.id))} aria-label={`${customer.name} müşterisini seç`} />}
                       <strong>{customer.company || customer.name}</strong>
                       {customer.parentCustomer && <small>Ana müşteri: {customer.parentCustomer.name}</small>}
                     </td>
-                    <td className="customer-contact-cell"><strong>{customer.name}</strong><ContactLine kind="phone" value={formatPhone(customer.phone ?? '') || 'Telefon yok'} extras={customer.extraPhones} /><ContactLine kind="email" value={displayEmail(customer.email) || 'E-Posta yok'} extras={customer.extraEmails} /></td>
-                    <td className="customer-credit-cell"><strong>{(customer.availableCredits ?? 0).toLocaleString('tr-TR')}</strong></td>
-                    <td><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
-                    <td>
+                    <td data-label="İletişim" className="customer-contact-cell"><strong>{customer.name}</strong><ContactLine kind="phone" value={formatPhone(customer.phone ?? '') || 'Telefon yok'} extras={customer.extraPhones} /><ContactLine kind="email" value={displayEmail(customer.email) || 'E-Posta yok'} extras={customer.extraEmails} /></td>
+                    <td data-label="Kredi" className="customer-credit-cell"><strong>{(customer.availableCredits ?? 0).toLocaleString('tr-TR')}</strong></td>
+                    <td data-label="Durum"><label className="switch"><input type="checkbox" checked={customer.isActive} disabled={!canUpdateCustomers || save.isPending} onChange={(event) => save.mutate({ id: customer.id, data: { isActive: event.target.checked } })} /><span /></label><small>{customer.isActive ? "Aktif" : "Pasif"}</small></td>
+                    <td data-label="İşlemler">
                       <div className="management-actions customer-table-actions">
                       {canDeleteCustomers && <button className="icon-button danger-icon" type="button" aria-label={`${customer.name} sil`} title="Sil" onClick={() => { remove.reset(); setDeleteTarget(customer); }}><Trash2 size={15} aria-hidden="true" /></button>}
                       </div>
@@ -927,13 +927,12 @@ export function PhoneSupportPage({ fixedCustomerId }: { fixedCustomerId?: string
       {candidateCustomer?.isActive === false && <p className="error" role="alert">Bu müşteri hesabı pasif. Yeni talep açmak için önce hesabı aktif hale getirin.</p>}
       <div className="management-grid phone-support-grid">
         <section className="management-panel phone-support-search-panel">
-          <label className="phone-support-search">
-            <span className="sr-only">Telefon, e-posta veya ad ile ara</span>
+          <div className="phone-support-search">
             <span>
-              <input type="search" value={search} onChange={(event) => searchCustomers(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); searchCustomers(event.currentTarget.value); setEnterCreateRequested(false); setShowCreate(true); } }} placeholder="Ara" autoFocus />
+              <label className="management-search"><span className="field-label">Ara</span><input type="search" aria-label="Telefon, e-posta veya ad ile ara" value={search} onChange={(event) => searchCustomers(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); searchCustomers(event.currentTarget.value); setEnterCreateRequested(false); setShowCreate(true); } }} autoFocus /></label>
               <button type="button" className="button primary phone-support-add" onClick={() => setShowCreate(true)} aria-label="Yeni Kişi Ekle" title="Yeni Kişi Ekle">+</button>
             </span>
-          </label>
+          </div>
           {!hasSearched && <p className="management-empty phone-support-empty">Arayan kişinin bilgilerini yazmaya başlayın.</p>}
           {hasSearched && <ListState loading={customers.isPending} error={customers.error} empty={false} />}
           {displayResults.map((customer) => <button className={`customer-choice ${customerId === customer.id ? "selected" : ""}`} type="button" key={customer.id} onClick={() => selectCustomer(customer)}><strong>{customer.name}</strong><span>{customer.phone ?? "Telefon yok"} · {displayEmail(customer.email) || "E-Posta yok"}</span>{customer.company && <small>{customer.company}</small>}{customer.staffNote && <small>Personel notu: {customer.staffNote}</small>}</button>)}

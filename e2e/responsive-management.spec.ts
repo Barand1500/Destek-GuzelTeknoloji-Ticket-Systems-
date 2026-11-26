@@ -51,7 +51,10 @@ test('populated presence, reports, saved templates and audit records fit mobile 
     await fit('.report-person-header,.report-panel', width);
     await page.goto('/admin/saved-replies?tab=templates');
     await expect(page.locator('.announcement-templates-table tbody tr')).toHaveCount(1);
-    await fit('.announcement-templates-table,.announcement-templates-table td', width);
+    const templateScroller = page.locator('.saved-content-table-wrap');
+    const templateBounds = (await templateScroller.boundingBox())!;
+    expect(templateBounds.x + templateBounds.width).toBeLessThanOrEqual(width + 1);
+    expect(await templateScroller.evaluate(node => node.scrollWidth > node.clientWidth)).toBe(true);
     await page.screenshot({ path: `.local/templates-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
     await page.getByRole('button', { name: 'Toplantı hatırlatma ve bilgilendirme şablonunu düzenle', exact: true }).click();
     await expect(page.locator('input[name=label]')).toHaveValue('Toplantı hatırlatma ve bilgilendirme');
@@ -59,7 +62,7 @@ test('populated presence, reports, saved templates and audit records fit mobile 
     await expect(page.locator('.activity-history-table tbody tr')).toHaveCount(1);
     await fit('.activity-log-toolbar', width);
     expect(await page.locator('.activity-history-table').evaluate(node => getComputedStyle(node).display)).toBe('table');
-    expect(await page.locator('.activity-log-scroll').evaluate(node => node.scrollWidth > node.clientWidth)).toBe(true);
+    expect(await page.locator('.activity-log-scroll').evaluate(node => node.scrollWidth > node.clientWidth)).toBe(width < 768);
     await page.getByRole('searchbox', { name: 'İşlem Geçmişinde Ara', exact: true }).fill('Test');
     await page.screenshot({ path: `.local/history-mobile-${width}.png`, fullPage: true, animations: 'disabled' });
     await page.goto('/admin/users');

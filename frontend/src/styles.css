@@ -2860,7 +2860,7 @@ html[data-theme="dark"] .saved-reply-action-delete::before {
 .customer-search-row .customer-bulk-delete-button + .customer-add-button {
   margin-left: 0;
 }
-.customer-bulk-delete-button > span {
+.customer-bulk-delete-button > span:not(.styled-dropdown-label) {
   position: absolute;
   top: -6px;
   right: -6px;

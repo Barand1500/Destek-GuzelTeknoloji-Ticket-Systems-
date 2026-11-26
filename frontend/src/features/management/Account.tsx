@@ -5,7 +5,7 @@ import { FormSettingsPanel } from './FormSettingsPanel';
 import { SortableTableHead } from "../../components/TableSorting";
 import { formatPhone } from "../../utils/phone";
 import { useEffect, useState, type FormEvent } from "react";
-import { Activity, ChevronDown, Eye, EyeOff, Info, Mail, MessageCircle, MessageSquare, Search, ShieldCheck, Timer, Trash2 } from "lucide-react";
+import { Activity, ChevronDown, Eye, EyeOff, Info, Mail, MessageCircle, MessageSquare, ShieldCheck, Timer, Trash2 } from "lucide-react";
 import { IncomingStartModal } from './IncomingStartModal';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -92,11 +92,12 @@ export function NotificationsPage() {
       </Heading>
       <section className="management-panel">
         <div className="notification-toolbar">
-          <label className="notification-search"><Search size={16} aria-hidden="true" /><input aria-label="Bildirimlerde Ara" placeholder="Ara" value={list.search} onChange={(e) => list.setSearch(e.target.value)} /></label>
-          <div className="notification-limit"><span>Kayıt sayısı</span><DropdownSelect value={String(limit)} onChange={(value) => { setLimit(Number(value)); list.setPage(1); }} ariaLabel="Kayıt Sayısı" options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))} /></div>
+          <label className="notification-search"><span className="field-label">Ara</span><input aria-label="Bildirimlerde Ara" value={list.search} onChange={(e) => list.setSearch(e.target.value)} /></label>
+          <div className="notification-limit"><DropdownSelect label="Kayıt sayısı" value={String(limit)} onChange={(value) => { setLimit(Number(value)); list.setPage(1); }} ariaLabel="Kayıt Sayısı" options={[10, 15, 20, 50].map((value) => ({ value: String(value), label: String(value) }))} /></div>
           <label className="notification-toggle"><span>Yalnızca okunmamış</span><input type="checkbox" checked={unread} onChange={(e) => { setUnread(e.target.checked); list.setPage(1); }} /></label>
           <button className="button secondary" disabled={read.isPending || !list.data?.data.length} onClick={() => read.mutate(undefined)}>Tümünü Okundu Olarak İşaretle</button>
           <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
+            <span className="styled-dropdown-label">Sil</span>
             <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} aria-hidden="true" /><span>Bildirimleri sil</span><ChevronDown size={15} aria-hidden="true" /></button>
             {deleteMenuOpen && <div className="notification-delete-menu" role="menu">{Object.entries(notificationDeleteLabels).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setDeletePeriod(period as "day" | "week" | "month" | "all"); setDeleteMenuOpen(false); }}>{label}</button>)}</div>}
           </div>

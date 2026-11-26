@@ -688,6 +688,12 @@ html[data-theme="dark"] .profile-role {
   min-width: 0;
   flex: 1;
 }
+.phone-support-search .management-search {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
 .phone-support-add {
   min-width: 42px;
   padding: 0;

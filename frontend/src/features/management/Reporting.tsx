@@ -41,7 +41,8 @@ export function ActivityLogsPage() {
         <div className="activity-log-toolbar"><Search value={list.search} onChange={list.setSearch} label="İşlem Geçmişinde Ara" />
         <DateRangeField label="Tarih" from={from} to={to} onChange={(range) => { setFrom(range.from); setTo(range.to); list.setPage(1); }} />
         <div className={`notification-delete${deleteMenuOpen ? " open" : ""}`}>
-          <button type="button" className="notification-delete-trigger" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>İşlem Geçmişini sil</span><ChevronDown size={15} /></button>
+          <span className="styled-dropdown-label">Sil</span>
+          <button type="button" className="notification-delete-trigger" aria-label="İşlem geçmişini silme seçenekleri" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}><Trash2 size={16} /><span>Dönem seçin</span><ChevronDown size={15} /></button>
           {deleteMenuOpen && <div className="notification-delete-menu" role="menu">{Object.entries(deleteLabels).map(([period, label]) => <button key={period} type="button" role="menuitem" onClick={() => { setDeletePeriod(period as "day" | "week" | "month" | "all"); setDeleteMenuOpen(false); }}>{label}</button>)}</div>}
         </div>
         </div>
@@ -52,7 +53,7 @@ export function ActivityLogsPage() {
         />
         {!!list.data?.data.length && (
           <div className="management-table-wrap activity-log-scroll">
-            <table className="management-table activity-history-table">
+            <table className="management-table activity-history-table mobile-record-table">
 <SortableTableHead sorting={list} columns={[{label:'Tarih',field:'createdAt',date:true},{label:'Kullanıcı',field:'user'},{label:'İşlem',field:'action'},{label:'Açıklama',field:'description'}]} />
               <tbody>
                 {list.data.data.map((log) => (

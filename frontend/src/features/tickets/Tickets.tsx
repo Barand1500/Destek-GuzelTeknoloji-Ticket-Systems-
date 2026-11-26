@@ -366,8 +366,8 @@ export function TicketList() {
         <div className="filters">
           <SearchField label="Taleplerde Ara" value={search} onChange={value => { setSearch(value); filter("search", value); }} />
           <div className="notification-limit inbox-limit">
-            <span>Kayıt sayısı</span>
             <DropdownSelect
+              label="Kayıt sayısı"
               value={String(limit)}
               ariaLabel="Kayıt Sayısı"
               onChange={(value) => {
@@ -382,6 +382,7 @@ export function TicketList() {
           </div>
           {user?.role !== 'CUSTOMER' && hasPermission(user, 'conversations.delete') && (
             <div className={`notification-delete inbox-delete${deleteMenuOpen ? " open" : ""}`}>
+              <span className="styled-dropdown-label">Sil</span>
               <button type="button" className="notification-delete-trigger" aria-label="Talepleri Sil" aria-haspopup="menu" aria-expanded={deleteMenuOpen} onClick={() => setDeleteMenuOpen((open) => !open)}>
                 <Trash2 size={16} aria-hidden="true" />
                 <ChevronDown size={15} aria-hidden="true" />
@@ -397,9 +398,9 @@ export function TicketList() {
               )}
             </div>
           )}
-          {user?.role !== 'CUSTOMER' && Boolean(formSources.data?.length) && <DropdownSelect ariaLabel="Kaynak Siteye Göre Filtrele" value={params.get('formSourceId') ?? ''} onChange={value => filter('formSourceId', value)} options={[{ value: '', label: 'Tüm Kaynak Siteler' }, ...(formSources.data ?? []).map(source => ({ value: source.id, label: source.name + (source.enabled ? '' : ' (pasif)') }))]} />}
-          <DropdownSelect ariaLabel="Duruma Göre Filtrele" value={status} onChange={(value) => filter("status", value)} options={[{ value: "", label: "Tüm Durumlar" }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
-          <DropdownSelect ariaLabel="Önceliğe Göre Filtrele" value={params.get("priority") ?? ""} onChange={(value) => filter("priority", value)} options={[{ value: "", label: "Tüm Öncelikler" }, ...Object.entries(priorities).map(([value, label]) => ({ value, label }))]} />
+          {user?.role !== 'CUSTOMER' && Boolean(formSources.data?.length) && <DropdownSelect label="Kaynak site" ariaLabel="Kaynak Siteye Göre Filtrele" value={params.get('formSourceId') ?? ''} onChange={value => filter('formSourceId', value)} options={[{ value: '', label: 'Tüm Kaynak Siteler' }, ...(formSources.data ?? []).map(source => ({ value: source.id, label: source.name + (source.enabled ? '' : ' (pasif)') }))]} />}
+          <DropdownSelect label="Durum" ariaLabel="Duruma Göre Filtrele" value={status} onChange={(value) => filter("status", value)} options={[{ value: "", label: "Tüm Durumlar" }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} />
+          <DropdownSelect label="Öncelik" ariaLabel="Önceliğe Göre Filtrele" value={params.get("priority") ?? ""} onChange={(value) => filter("priority", value)} options={[{ value: "", label: "Tüm Öncelikler" }, ...Object.entries(priorities).map(([value, label]) => ({ value, label }))]} />
         </div>
         {query.isPending ? (
           <div className="empty">Talepler yükleniyor…</div>
@@ -436,8 +437,8 @@ export function TicketList() {
               <tbody>
                 {query.data.data.map((ticket) => (
                   <tr key={ticket.id} className="inbox-ticket-row">
-                    <td className="inbox-number-cell"><Link to={conversationPath(user!.role, ticket.id)} aria-label={`${ticket.number} numaralı talebi aç`}>#TK-{String(ticket.number).padStart(5, '0')}</Link></td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`#TK-${String(ticket.number).padStart(5, "0")} ${ticket.subject}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                    <td data-label="No" className="inbox-number-cell"><Link to={conversationPath(user!.role, ticket.id)} aria-label={`${ticket.number} numaralı talebi aç`}>#TK-{String(ticket.number).padStart(5, '0')}</Link></td>
+                    <td data-label="Talep" className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`#TK-${String(ticket.number).padStart(5, "0")} ${ticket.subject}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <Link
                         className="ticket-title" title={ticket.subject}
                         to={conversationPath(user!.role, ticket.id)}
@@ -449,25 +450,25 @@ export function TicketList() {
                         {[ticket.customer.parentCustomer?.company?.trim() || ticket.customer.parentCustomer?.name || ticket.customer.company?.trim(),ticket.customer.name].filter((value,index,array)=>value&&array.indexOf(value)===index).join(' · ')} <small>({ticket.customerMessageCount ?? 0})</small>
                       </span>
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${conversationChannels(ticket).map(channel => channels[channel]).join(', ')}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                    <td data-label="Kanal" className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Kanal: ${conversationChannels(ticket).map(channel => channels[channel]).join(', ')}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <div className="inbox-channel-list">{conversationChannels(ticket).map(channel => <span className="management-pill" key={channel}>{channels[channel]}</span>)}</div>
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
+                    <td data-label="Durum" className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Durum: ${statuses[ticket.status]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><Badge status={ticket.status} />
                     </td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Öncelik: ${priorities[ticket.priority]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                    <td data-label="Öncelik" className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Öncelik: ${priorities[ticket.priority]}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       <span className={`priority priority-${ticket.priority} inbox-priority-text`}>
                         ●
                       </span>{" "}
                       <span className="inbox-secondary-text">{priorities[ticket.priority]}</span>
                     </td>
-                    <td className="inbox-clickable-cell inbox-department-text" role="link" tabIndex={0} aria-label={`Departman: ${ticket.department.name}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><span className="inbox-secondary-text">{ticket.department.name}</span></td>
-                    <td className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Atanan: ${(ticket.assignees?.map(item => item.user.name).join(", ") || ticket.assignedAgent?.name || "Atanmamış")}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
+                    <td data-label="Departman" className="inbox-clickable-cell inbox-department-text" role="link" tabIndex={0} aria-label={`Departman: ${ticket.department.name}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}><span className="inbox-secondary-text">{ticket.department.name}</span></td>
+                    <td data-label="Atanan" className="inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Atanan: ${(ticket.assignees?.map(item => item.user.name).join(", ") || ticket.assignedAgent?.name || "Atanmamış")}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>
                       {ticket.assignees?.length ? ticket.assignees.map(item => <div className="inbox-secondary-text" key={item.userId}>{item.user.name} <small>({item.messageCount ?? 0})</small></div>) : ticket.assignedAgent ? <span className="inbox-secondary-text">{ticket.assignedAgent.name} <small>({ticket.assignedAgentMessageCount ?? 0})</small></span> : <span className="inbox-secondary-text">Atanmamış</span>}
                     </td>
-                    <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
-                    <td className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-response-cell inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
-                    <td className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
-                    <td className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong></Link> : <span className="muted">—</span>}</td>
+                    <td data-label="Açılış" className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Açılış: ${date(ticket.createdAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.createdAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.createdAt, now)}</small>}</td>
+                    <td data-label="Yanıt süresi" className={`ticket-response response-${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).state} inbox-response-cell inbox-clickable-cell`} role="link" tabIndex={0} aria-label={`Yanıt süresi: ${responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}`} style={{ color: responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).color }} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{responseTime(ticket.responseTimeStartAt, ticket.responseTimeAt, query.data.responseTimeRules).label}</td>
+                    <td data-label="Son güncelleme" className="muted inbox-time-cell inbox-clickable-cell" role="link" tabIndex={0} aria-label={`Son güncelleme: ${date(ticket.updatedAt)}`} onClick={() => navigate(conversationPath(user!.role, ticket.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(conversationPath(user!.role, ticket.id)); } }}>{date(ticket.updatedAt)}{!["RESOLVED", "CLOSED"].includes(ticket.status) && <small className="inbox-elapsed-time">{elapsedDuration(ticket.updatedAt, now)}</small>}</td>
+                    <td data-label="Kullanılan kredi" className="inbox-credit-cell">{ticket.creditCharge ? <Link className="ticket-credit-pill" to={conversationPath(user!.role, ticket.id)} title={`Bu destek için kullanılan kredi: ${ticket.creditCharge.credits}`}><strong>{new Intl.NumberFormat('tr-TR').format(ticket.creditCharge.credits)}</strong></Link> : <span className="muted">—</span>}</td>
                   </tr>
                 ))}
               </tbody>

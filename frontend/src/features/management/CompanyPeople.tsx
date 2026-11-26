@@ -3,7 +3,7 @@ import {ExistingCompanyPerson} from './ExistingCompanyPerson';
 import { useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, Plus, Search, FileText, Paperclip } from 'lucide-react';
+import { Pencil, Trash2, Plus, FileText, Paperclip } from 'lucide-react';
 import { api, errorText } from '../../services/api';
 import { useAuth } from '../auth/Auth';
 import { hasPermission } from '../auth/permissions';
@@ -45,7 +45,7 @@ export function CompanyPeoplePanel({ customer, onPendingChange }: { customer: Pe
   if (filesPerson) return <CompanyPersonFiles person={filesPerson} canDelete={canDelete} onBack={() => setFilesPerson(null)} onPendingChange={onPendingChange} />;
   return <section className="company-people-panel">
     <div className="company-people-toolbar"><h3>Kişiler <span className="muted">({data.data?.children.length ?? 0})</span></h3><div>
-      <label className="relation-list-search"><Search size={15} /><input aria-label="Şirket kişilerinde ara" placeholder="Ara" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
+      <label className="relation-list-search"><span className="field-label">Ara</span><input aria-label="Şirket kişilerinde ara" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
       {editable && !creating && !editing && <button type="button" className="button primary" disabled={pending} onClick={() => { save.reset(); setFiles([]); setExisting(!canCreate); setCreating(true); }}><Plus size={15} /> Kişi Ekle</button>}
     </div></div>
     {error && <p className="error" role="alert">{errorText(error)}</p>}

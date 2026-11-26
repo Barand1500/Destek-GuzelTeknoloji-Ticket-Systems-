@@ -21,7 +21,6 @@ import {
   Palette,
   Pencil,
   Shield,
-  Search,
   Star,
   Trash2,
   Upload,
@@ -308,12 +307,12 @@ export function FilesPage() {
         </div>
         <div className="files-tools">
           <label className="files-search">
-            <Search size={16} />
+            <span className="field-label">Ara</span>
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Ara"
+              aria-label="Dosyalarda ara"
             />
           </label>
           <button

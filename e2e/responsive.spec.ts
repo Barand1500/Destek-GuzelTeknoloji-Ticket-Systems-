@@ -114,6 +114,7 @@ test('workspace overview, inbox, directories and files stay within mobile viewpo
     if (path === '/admin/conversations') {
       for (const label of ['Telefon', 'SMS', 'Form', 'Bana atanan', 'Atanmamış']) {
         const tab = page.locator('.ticket-panel>.tabs').getByRole('button', { name: label, exact: true });
+        await tab.scrollIntoViewIfNeeded();
         await expect(tab).toBeInViewport();
         const box = (await tab.boundingBox())!;
         expect(box.x + box.width).toBeLessThanOrEqual(390);

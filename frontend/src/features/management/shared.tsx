@@ -167,8 +167,7 @@ export function Search({
   return onLimitChange ? <div className="management-list-toolbar">
     {afterSearch ? <div className="management-search-tools">{field}{afterSearch}</div> : field}
     <div className="management-page-size">
-      <span>Kayıt sayısı</span>
-      <DropdownSelect ariaLabel="Kayıt Sayısı" value={String(limit ?? 15)} onChange={value => onLimitChange(Number(value))} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} />
+      <DropdownSelect label="Kayıt sayısı" ariaLabel="Kayıt Sayısı" value={String(limit ?? 15)} onChange={value => onLimitChange(Number(value))} options={[10, 15, 20, 50].map(value => ({ value: String(value), label: String(value) }))} />
     </div>
   </div> : field;
 }

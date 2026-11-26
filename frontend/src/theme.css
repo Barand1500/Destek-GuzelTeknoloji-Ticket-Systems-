@@ -333,8 +333,9 @@ html[data-theme="dark"] :is(.management-panel, .integration-card, .report-panel,
 .report-credit-search:has(> .field-label) > input {
   height: 29px;
 }
-.reports-page, .currency-search-toolbar { --field-surface: #f6f8fa; }
-html[data-theme="dark"] :is(.reports-page, .currency-search-toolbar) { --field-surface: #151c21; }
+.reports-page, .currency-search-toolbar, .files-page { --field-surface: #f6f8fa; }
+html[data-theme="dark"] :is(.reports-page, .currency-search-toolbar, .files-page) { --field-surface: #151c21; }
+.announcements-modal { --field-surface: var(--ann-surface); }
 
 /* Toggle tracks keep their own state colors; their field wrapper is clear. */
 :root .app-shell .integration-toggle,
@@ -345,7 +346,74 @@ html[data-theme] .integration-toggle {
 :root .form-required-fields { border-color: var(--ui-border); }
 .currency-list-card { padding-block: 0; overflow: hidden; }
 
+.app-shell { --list-control-height: 40px; }
 .filters > .management-search { flex: 1 1 240px; min-width: 180px; margin-bottom: 0; }
+.app-shell :is(.filters, .customer-search-row, .activity-log-toolbar) .management-search {
+  height: var(--list-control-height);
+  min-height: var(--list-control-height);
+  box-sizing: border-box;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+}
+.app-shell :is(.filters, .customer-search-row, .activity-log-toolbar) .management-search > input {
+  height: calc(var(--list-control-height) - 2px);
+  padding: 0;
+}
+.app-shell .customer-search-row .button {
+  height: var(--list-control-height);
+  min-height: var(--list-control-height);
+  box-sizing: border-box;
+  padding-block: 0;
+}
+.app-shell .customer-search-row :is(.button.secondary, .customer-bulk-delete-button) {
+  background: transparent;
+}
+.app-shell .activity-log-toolbar .date-range-control {
+  height: var(--list-control-height);
+  min-height: var(--list-control-height);
+  box-sizing: border-box;
+}
+:root[data-theme] .app-shell .notification-delete {
+  height: var(--list-control-height);
+  box-sizing: border-box;
+  background: transparent !important;
+  border-color: var(--ui-border) !important;
+  border-radius: var(--control-radius);
+  color: var(--ui-text-secondary);
+}
+:root .app-shell .notification-delete-trigger {
+  background: transparent;
+  color: var(--ui-text-secondary);
+}
+.app-shell .filters .inbox-delete {
+  flex-basis: 54px;
+  width: 54px;
+}
+.app-shell :is(.management-page-size, .notification-limit) > .styled-dropdown:has(> .styled-dropdown-label) {
+  width: 104px;
+  min-width: 104px;
+  box-sizing: border-box;
+  height: var(--list-control-height);
+  padding: 0 12px;
+}
+.app-shell .filters > .styled-dropdown:has(> .styled-dropdown-label) {
+  box-sizing: border-box;
+  height: var(--list-control-height);
+  padding: 0 12px;
+}
+.app-shell :is(.management-page-size, .notification-limit) > .styled-dropdown:has(> .styled-dropdown-label) .styled-dropdown-trigger,
+.app-shell .filters > .styled-dropdown:has(> .styled-dropdown-label) .styled-dropdown-trigger {
+  height: calc(var(--list-control-height) - 2px);
+  min-height: calc(var(--list-control-height) - 2px);
+  padding: 0;
+}
+@media (max-width: 1000px) {
+  .app-shell { --list-control-height: 48px; }
+}
+@media (min-width: 1001px) {
+  .filters > .inbox-limit { margin-left: auto; }
+}
 .ticket-panel { --field-surface: #fff; }
 html[data-theme="dark"] .ticket-panel { --field-surface: #1c262d; }
 :root[data-theme] .app-shell .filters .inbox-delete { background: transparent !important; border-color: var(--ui-border) !important; border-radius: var(--control-radius); }

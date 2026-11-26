@@ -371,6 +371,7 @@ html[data-theme="dark"] .files-page {
 }
 .files-tools .files-search {
   display: flex;
+  overflow: visible;
   flex-direction: row;
   align-items: center;
   gap: 9px;

@@ -47,6 +47,7 @@ for (const theme of ['light', 'dark']) {
       ['/admin/conversations', '.filters > .management-search'],
       ['/admin/integrations/channels', '.integration-fields'],
       ['/admin/reports', '.report-credit-search'],
+      ['/admin/activity-logs', '.activity-log-toolbar .management-search'],
     ];
     for (const [path, selector] of screens) {
       await test.step(path, async () => {
@@ -66,7 +67,45 @@ for (const theme of ['light', 'dark']) {
         }));
         expect(mismatchedLabels, path).toEqual([]);
         const labels = page.locator(`${selector} .field-label`);
-        if (selector !== '.integration-fields' && await labels.count()) await expect(labels.first()).toHaveText('Ara');
+        if (selector !== '.integration-fields') await expect(labels.first()).toHaveText('Ara');
+        if (path === '/admin/customers') {
+          const heights = await page.locator('.customer-search-row .management-search, .customer-search-row .management-page-size > .styled-dropdown, .customer-search-row .button').evaluateAll(fields => fields.map(field => field.getBoundingClientRect().height));
+          expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
+          await expect(page.locator('.customer-bulk-delete-button > .styled-dropdown-label')).toHaveText('Sil');
+        }
+        if (path === '/admin/activity-logs') {
+          const field = page.locator('.activity-log-toolbar .notification-delete');
+          await expect(field).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+          await expect(field.locator('> .styled-dropdown-label')).toHaveText('Sil');
+          await field.getByRole('button').click();
+          await expect(field.getByRole('menu')).toBeVisible();
+        }
+        if (path === '/admin/conversations') {
+          await expect(page.locator('.filters > .styled-dropdown > .styled-dropdown-label')).toHaveText(['Durum', 'Öncelik']);
+          const heights = await page.locator('.filters > .management-search, .filters .styled-dropdown:has(> .styled-dropdown-label)').evaluateAll(fields => fields.map(field => field.getBoundingClientRect().height));
+          expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
+          const gap = await page.locator('.filters').evaluate(toolbar => {
+            const last = toolbar.lastElementChild!.getBoundingClientRect();
+            return toolbar.getBoundingClientRect().right - last.right - parseFloat(getComputedStyle(toolbar).paddingRight);
+          });
+          expect(Math.abs(gap)).toBeLessThanOrEqual(1);
+        }
+        if (path === '/admin/files') {
+          for (const width of [1440, 390]) {
+            await page.setViewportSize({ width, height: 1000 });
+            const clipped = await labels.first().evaluate(label => {
+              const bounds = label.getBoundingClientRect();
+              for (let parent = label.parentElement; parent; parent = parent.parentElement) {
+                const style = getComputedStyle(parent), rect = parent.getBoundingClientRect();
+                if (['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowY) && bounds.top < rect.top) return true;
+              }
+              return false;
+            });
+            expect(clipped).toBe(false);
+            await page.locator('.files-toolbar').screenshot({ path: `.local/files-search-${theme}-${width}.png` });
+          }
+          await page.setViewportSize({ width: 1440, height: 1000 });
+        }
         if (path === '/admin/tags') {
           await page.locator('.management-search input').fill('test');
           await expect.poll(() => searches.includes('test')).toBe(true);
