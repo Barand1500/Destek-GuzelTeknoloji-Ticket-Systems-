@@ -336,6 +336,7 @@ html[data-theme="dark"] :is(.management-panel, .integration-card, .report-panel,
 .reports-page, .currency-search-toolbar, .files-page { --field-surface: #f6f8fa; }
 html[data-theme="dark"] :is(.reports-page, .currency-search-toolbar, .files-page) { --field-surface: #151c21; }
 .announcements-modal { --field-surface: var(--ann-surface); }
+.currency-modal { --field-surface: var(--surface); }
 
 /* Toggle tracks keep their own state colors; their field wrapper is clear. */
 :root .app-shell .integration-toggle,

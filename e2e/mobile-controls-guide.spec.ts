@@ -18,7 +18,7 @@ async function workspace(page: Page, theme = 'dark') {
     if (path === '/departments') data = [department];
     if (path === '/websites') data = [{ id: 'project', name: 'Örnek Destek Projesi', url: 'https://example.test', isActive: true, guideFileCount: 0 }];
     if (path === '/conversations') data = [ticket];
-    if (path === '/form-sources') data = [{ id: 'source', name: 'Destek Sitesi', enabled: true }];
+    if (path === '/integrations/form/sources') data = [{ id: 'source', name: 'Destek Sitesi', enabled: true }];
     if (path === '/skill-catalog') data = { categories: [], levels: [], skills: [] };
     if (path === '/integrations') data = { emailEnabled: true, smtpEnabled: false, imapEnabled: false, imapAuthType: 'PASSWORD', emailNotifications: {} };
     if (path === '/integrations/inbound-warnings') data = { total: 0, items: [] };
@@ -57,6 +57,15 @@ for (const theme of ['light', 'dark']) {
           await scroll.evaluate(el => { el.scrollLeft = 0; });
           const search = page.locator('main .management-search input').first();
           expect((await search.boundingBox())!.width).toBeGreaterThan(width - 95);
+          if (path === '/admin/conversations') {
+            const source = (await page.getByRole('button', { name: 'Kaynak Siteye Göre Filtrele', exact: true }).locator('..').boundingBox())!;
+            const status = (await page.getByRole('button', { name: 'Duruma Göre Filtrele', exact: true }).locator('..').boundingBox())!;
+            const priority = (await page.getByRole('button', { name: 'Önceliğe Göre Filtrele', exact: true }).locator('..').boundingBox())!;
+            const searchField = (await search.locator('..').boundingBox())!;
+            expect(Math.abs(source.width - searchField.width)).toBeLessThanOrEqual(1);
+            expect(Math.abs(status.y - priority.y)).toBeLessThanOrEqual(1);
+            expect(Math.abs(status.height - searchField.height)).toBeLessThanOrEqual(1);
+          }
           for (const button of await page.locator('main .customer-search-row > button, main .inbox-delete > button, main .management-actions .icon-button').all()) {
             const box = await button.boundingBox();
             if (box) expect(box.height).toBeGreaterThanOrEqual(40);

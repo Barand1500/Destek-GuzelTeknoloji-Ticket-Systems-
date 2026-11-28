@@ -245,7 +245,6 @@ export async function cancelCreditOrder(
   id: string,
   admin = false,
 ) {
-  if (!admin) throw new AppError(403, 'CUSTOMER_CANCELLATION_DISABLED', 'İptal işlemlerini yalnızca yönetici yapabilir.');
   if (admin) staff(actor, true);
   const result = await db.$transaction(async (tx) => {
     const customerId = admin
@@ -257,7 +256,6 @@ export async function cancelCreditOrder(
     });
     if (!row || (customerId && row.customerId !== customerId))
       throw new AppError(404, "ORDER_NOT_FOUND", "Sipariş bulunamadı.");
-    if (!admin && row.kind === 'TOP_UP') throw new AppError(409, 'ORDER_CANCEL_NOT_ALLOWED', 'Tekli kredi siparişini yalnızca yönetici iptal edebilir.');
     if (row.status === "CANCELLED") return json(row);
     if (!["PENDING", "FAILED"].includes(row.status))
       throw new AppError(

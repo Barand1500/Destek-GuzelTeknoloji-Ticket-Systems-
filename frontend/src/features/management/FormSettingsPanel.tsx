@@ -28,10 +28,9 @@ export function FormSettingsPanel() {
   const iframe = `<iframe src="${link}?embed=1" title="Destek Talebi" width="100%" height="1000" style="border:0;border-radius:12px" loading="lazy"></iframe>`;
   async function copy(value: string) { try { await navigator.clipboard.writeText(value); setMessage('Kopyalandı.'); } catch { setMessage('Kopyalanamadı. Metni seçip kopyalayabilirsiniz.'); } }
   return <div className="form-settings-panel"><section className="integration-card" aria-label="Form Ayarları" onKeyDown={event => { if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault(); }}>
-    <h2>Form</h2><div className="form-settings-intro"><p>Müşteriler hesap açmadan talep gönderebilir. Takip ve yanıtlama bağlantısı e-postalarına gönderilir.</p>
+    <div className="integration-heading"><h2>Form</h2>{settings.data && <div className="status-toggle"><label className="switch"><input id="form-enabled" type="checkbox" role="switch" aria-label="Formu Etkinleştir" checked={draft.enabled} disabled={!editable || save.isPending} onChange={e => { setDraft({ ...draft, enabled: e.target.checked }); setMessage(''); }} /><span aria-hidden="true" /></label><label htmlFor="form-enabled">Formu Etkinleştir</label></div>}</div><div className="form-settings-intro"><p>Müşteriler hesap açmadan talep gönderebilir. Takip ve yanıtlama bağlantısı e-postalarına gönderilir.</p>
     {settings.data && <div className="integration-fields form-settings-fields">
       <label><span className="field-label">Form Başlığı</span><input ref={titleInput} required pattern={'.*\\S.*'} value={draft.title} maxLength={100} disabled={!editable || save.isPending} onChange={e => { setDraft({ ...draft, title: e.target.value }); setMessage(''); }} /></label>
-      <label className="management-check"><input type="checkbox" checked={draft.enabled} disabled={!editable || save.isPending} onChange={e => { setDraft({ ...draft, enabled: e.target.checked }); setMessage(''); }} />Formu Etkinleştir</label>
     </div>}</div>
     {settings.isPending && <p role="status">Ayarlar yükleniyor…</p>}
     {settings.error && <p className="error" role="alert">{errorText(settings.error)}</p>}

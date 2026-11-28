@@ -46,13 +46,15 @@ const currencySchema = z.object({
   isActive: z.boolean().default(true),
 }).strict();
 
+const storedCurrencySchema = currencySchema.extend({ updatedAt: z.string().optional() });
+
 async function loadStored(): Promise<CurrencyRecord[]> {
   const row = await db.systemSettings.findUnique({ where: { id: RECORD_ID }, select: { roleTemplates: true } });
   const raw = row?.roleTemplates;
   if (!Array.isArray(raw) || !raw.length) return defaultCurrencies.map(item => ({ ...item }));
   const valid: CurrencyRecord[] = [];
   for (const entry of raw) {
-    const parsed = currencySchema.safeParse(entry);
+    const parsed = storedCurrencySchema.safeParse(entry);
     if (parsed.success) {
       valid.push({
         ...parsed.data,

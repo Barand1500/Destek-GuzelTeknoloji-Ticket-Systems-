@@ -5,6 +5,7 @@ for (const theme of ['light', 'dark']) {
     const errors: string[] = [];
     const searches: string[] = [];
     let euroActive = true;
+    let formEnabled = true;
     const writes: { path: string; body: any }[] = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(theme => localStorage.setItem('helpdesk-theme', theme), theme);
@@ -18,6 +19,7 @@ for (const theme of ['light', 'dark']) {
         const body = route.request().postDataJSON();
         writes.push({ path, body });
         if (path === '/credit-sales/currencies') euroActive = body.isActive;
+        if (path === '/integrations/form') formEnabled = body.enabled;
       }
       if (path === '/auth/refresh') data = { accessToken: 'test', user: { id: 'admin', name: 'Admin', role: 'ADMIN' } };
       if (path === '/auth/security') data = { enabled: false };
@@ -25,7 +27,7 @@ for (const theme of ['light', 'dark']) {
       if (path === '/integrations/inbound-warnings') data = { total: 0, items: [] };
       if (path === '/skill-catalog') data = { categories: [], levels: [], skills: [] };
       if (path === '/integrations/turnstile') data = { enabled: false, siteKey: 'test-site-key', secretConfigured: true, secretLength: 16 };
-      if (path === '/integrations/form') data = { enabled: true, title: 'Destek Talebi', departmentId: null };
+      if (path === '/integrations/form') data = { enabled: formEnabled, title: 'Destek Talebi', departmentId: null };
       if (path === '/reports') data = { period: { from: '2026-11-01', to: '2026-11-26' }, total: 0, statuses: {}, priorities: {}, departments: [], staff: [], daily: [], firstResponseMinutes: null, resolutionMinutes: null };
       if (path === '/reports/credit-usage') return route.fulfill({ json: { success: true, data: [], totalCredits: 0, pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } } });
       if (path === '/credit-sales/currencies') data = [
@@ -140,6 +142,13 @@ for (const theme of ['light', 'dark']) {
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           await page.setViewportSize({ width: 1440, height: 1000 });
           if (theme === 'dark') await page.screenshot({ path: 'test-results/currency-controls-dark.png' });
+          await page.getByRole('button', { name: 'Ekle', exact: true }).click();
+          const modal = page.getByRole('dialog', { name: 'Para Birimi Ekle', exact: true });
+          await expect(modal).toBeVisible();
+          const surface = await modal.evaluate(el => getComputedStyle(el).backgroundColor);
+          for (const label of await modal.locator('.styled-dropdown-label').all()) await expect(label).toHaveCSS('background-color', surface);
+          await page.screenshot({ path: `test-results/currency-modal-${theme}.png` });
+          await modal.getByRole('button', { name: 'Kapat', exact: true }).click();
         }
         if (path === '/admin/tags/skills') {
           await expect(page.getByRole('link', { name: 'Personel Yetenekleri', exact: true })).toBeVisible();
@@ -155,6 +164,20 @@ for (const theme of ['light', 'dark']) {
           await page.getByRole('tab', { name: 'Form', exact: true }).click();
           const border = await page.getByRole('textbox', { name: 'Form Başlığı', exact: true }).locator('xpath=..').evaluate(el => getComputedStyle(el).borderColor);
           await expect(page.locator('.form-required-fields')).toHaveCSS('border-color', border);
+          const formToggle = page.getByRole('switch', { name: 'Formu Etkinleştir', exact: true });
+          await expect(formToggle).toBeChecked();
+          await expect(page.locator('[aria-label="Form Ayarları"] > .integration-heading .status-toggle')).toContainText('Formu Etkinleştir');
+          await formToggle.focus();
+          await formToggle.press('Space');
+          await expect(formToggle).not.toBeChecked();
+          await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
+          await expect.poll(() => writes.some(write => write.path === '/integrations/form' && write.body.enabled === false)).toBe(true);
+          await expect(formToggle).not.toBeChecked();
+          await page.setViewportSize({ width: 390, height: 844 });
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+          await expect(formToggle).toBeVisible();
+          await page.setViewportSize({ width: 1440, height: 1000 });
+          await page.locator('[aria-label="Form Ayarları"]').screenshot({ path: `test-results/form-settings-toggle-${theme}.png` });
           await page.getByRole('tab', { name: 'Cloudflare', exact: true }).click();
           const toggle = page.getByRole('switch', { name: 'Doğrulamayı Etkinleştir', exact: true });
           await toggle.check();

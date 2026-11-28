@@ -60,7 +60,7 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
   const [params] = useSearchParams();
   const subscriptionId = params.get("subscriptionId") || undefined;
   const base = admin ? "/credit-sales/orders" : "/my/credit-store/orders";
-  const canCancel = admin && hasPermission(user, "integrations.update");
+  const canCancel = admin ? hasPermission(user, "integrations.update") : user?.role === 'CUSTOMER';
   const [page, setPage] = useState(1),
     [limit, setLimit] = useState(20),
     [search, setSearch] = useState(""),
@@ -103,6 +103,8 @@ export function CreditOrders({ admin = false }: { admin?: boolean }) {
       setMessage("Sipariş iptal edildi. Kredi bakiyeniz değişmedi.");
       await Promise.all([
         client.invalidateQueries({ queryKey: [base] }),
+        client.invalidateQueries({ queryKey: ["credit-store"] }),
+        client.invalidateQueries({ queryKey: ["/my/credit-store/subscriptions"] }),
         client.invalidateQueries({ queryKey: ["agreements"] }),
         client.invalidateQueries({ queryKey: ["notifications"] }),
       ]);

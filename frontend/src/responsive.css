@@ -402,6 +402,7 @@ html[data-theme=dark] .whatsapp-window-warning{background:#3c3219;border-color:#
   .app-shell .ticket-panel .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 20px 16px; align-items: center; }
   .app-shell .ticket-panel .filters > .management-search { grid-column: 1 / -1; min-width: 0; width: 100%; margin: 0; }
   .app-shell .ticket-panel .filters > .styled-dropdown { width: 100%; min-width: 0; }
+  .app-shell .ticket-panel .filters > .styled-dropdown:has(> [aria-label="Kaynak Siteye Göre Filtrele"]) { grid-column: 1 / -1; }
   .app-shell .ticket-panel .filters .inbox-limit { grid-column: 1; gap: 8px; margin: 0; }
   .app-shell .ticket-panel .filters .inbox-limit .styled-dropdown { width: 72px; }
   .app-shell .ticket-panel .filters .inbox-delete { justify-self: end; height: 44px; margin: 0; box-sizing: border-box; }
